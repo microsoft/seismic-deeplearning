@@ -14,5 +14,9 @@ class Generator(object):
         self.dtype = dtype
         self._prng = np.random.RandomState(seed)
 
-    def generate(self, seed: Optional[int]) -> np.ndarray:
+    def generate(self) -> np.ndarray:
         raise NotImplementedError
+
+    def generate_many(self) -> np.ndarray:
+        while True:
+            yield self.generate()

@@ -18,8 +18,17 @@ setuptools.setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Software Development",
     ],
+    dependency_links=[
+        "https://github.com/opesci/devito/archive/v3.4.tar.gz#egg=devito-3.4"
+    ],
     description="DeepSeismic",
-    install_requires=[],
+    install_requires=[
+        "devito==3.4",
+        "h5py==2.9.0",
+        "numpy==1.17.0",
+        "scipy==1.3.0",
+        "sympy==1.4",
+    ],
     license="MIT",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -29,6 +38,7 @@ setuptools.setup(
     ),
     platforms="any",
     python_requires=">= 3.5",
+    scripts=["bin/vpgen"],
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
     url="https://github.com/microsoft/deepseismic",
