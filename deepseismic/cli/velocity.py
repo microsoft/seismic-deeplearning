@@ -1,14 +1,22 @@
+from functools import partial
 from itertools import islice
+from typing import Tuple
 
 import click
 import h5py
 
 from ..velocity import RoethTarantolaGenerator
 
+click.option = partial(click.option, show_default=True)
+
 
 @click.group()
 @click.argument("output", type=click.Path())
-@click.option("--append/--no-append", default=False)
+@click.option(
+    "--append/--no-append",
+    default=False,
+    help="Whether to append to output file",
+)
 @click.option("-n", default=1, type=int, help="Number of simulations")
 @click.option(
     "-nx",
@@ -41,8 +49,13 @@ def vp(
     shape = (nx, ny)
     if nz is not None:
         shape += (nz,)
+    output_file = h5py.File(output, mode=("a" if append else "w"))
+    output_group = output_file.create_group(
+        str(max((int(x) for x in output_file.keys()), default=-1) + 1)
+    )
     ctx.obj["n"] = n
-    ctx.obj["output"] = h5py.File(output, mode=("a" if append else "w"))
+    ctx.obj["output_file"] = output_file
+    ctx.obj["output_group"] = output_group
     ctx.obj["seed"] = seed
     ctx.obj["shape"] = shape
 
@@ -62,7 +75,12 @@ def vp(
     help="Per-layer Vp perturbation",
 )
 @click.pass_context
-def rt(ctx, layers, initial_vp, vp_perturbation):
+def rt(
+    ctx,
+    layers: int,
+    initial_vp: Tuple[float, float],
+    vp_perturbation: Tuple[float, float],
+):
     """Röth-Tarantola model"""
     model = RoethTarantolaGenerator(
         shape=ctx.obj["shape"],
@@ -71,5 +89,8 @@ def rt(ctx, layers, initial_vp, vp_perturbation):
         initial_vp=initial_vp,
         vp_perturbation=vp_perturbation,
     )
-    for i, data in enumerate(islice(model.generate_many(), ctx.obj["n"])):
-        ctx.obj["output"].create_dataset(str(i), data=data, compression="gzip")
+    group = ctx.obj["output_group"]
+    with click.progressbar(length=ctx.obj["n"]) as bar:
+        for i, data in enumerate(islice(model.generate_many(), ctx.obj["n"])):
+            group.create_dataset(str(i), data=data, compression="gzip")
+            bar.update(1)

@@ -9,6 +9,7 @@ from devito import (
     Operator,
     SubDomain,
     TimeFunction,
+    logger,
     mmax,
     mmin,
     solve,
@@ -18,6 +19,8 @@ from .sources import PointSource
 from .subdomains import PhysicalDomain
 from .time import TimeAxis
 from .types import Kernel
+
+logger.set_log_level("WARNING")
 
 
 class Model(object):
@@ -74,12 +77,12 @@ class Model(object):
         self.shape = shape
 
     @property
-    def dtype(self) -> type:
-        return self.grid.dtype
+    def domain_size(self) -> Tuple[float, ...]:
+        return tuple((d - 1) * s for d, s in zip(self.shape, self.spacing))
 
     @property
-    def npml(self) -> int:
-        return self.npml
+    def dtype(self) -> type:
+        return self.grid.dtype
 
     @property
     def spacing(self):
@@ -143,15 +146,11 @@ class VelocityModel(Model):
         self,
         source: PointSource,
         receivers: PointSource,
-        start: Optional[float] = 0.0,
-        stop: Optional[float] = 1000.0,
-        step: Optional[float] = None,
+        time_range: TimeAxis,
         space_order: Optional[int] = 4,
         kernel: Optional[Kernel] = Kernel.OT2,
     ) -> np.ndarray:
-        assert kernel in Kernel.__members__
-        if step is None:
-            step = self.critical_dt
+        assert isinstance(kernel, Kernel)
         u = TimeFunction(
             name="u", grid=self.grid, time_order=2, space_order=space_order
         )
@@ -166,6 +165,5 @@ class VelocityModel(Model):
         )
         rec_term = receivers.interpolate(expr=u)
         op = Operator([eq] + src_term + rec_term, subs=self.spacing_map)
-        time_range = TimeAxis(start=start, stop=stop, step=step)
         op(time=time_range.num - 1, dt=time_range.step)
         return receivers.data
