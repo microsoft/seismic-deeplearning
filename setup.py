@@ -1,7 +1,7 @@
 import setuptools
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+with open("README.md", "r") as f:
+    long_description = f.read()
 
 setuptools.setup(
     author="DeepSeismic Maintainers",
@@ -23,6 +23,7 @@ setuptools.setup(
     ],
     description="DeepSeismic",
     install_requires=[
+        "click==7.0",
         "devito==3.4",
         "h5py==2.9.0",
         "numpy==1.17.0",
@@ -38,7 +39,7 @@ setuptools.setup(
     ),
     platforms="any",
     python_requires=">= 3.5",
-    scripts=["bin/vpgen"],
+    scripts=["bin/ds"],
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
     url="https://github.com/microsoft/deepseismic",

@@ -1,3 +1,3 @@
-from . import forward, velocity
+from . import cli, forward, velocity
 
-__all__ = ["forward", "velocity"]
+__all__ = ["cli", "forward", "velocity"]
