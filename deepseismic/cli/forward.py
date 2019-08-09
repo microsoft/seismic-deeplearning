@@ -13,11 +13,21 @@ click.option = partial(click.option, show_default=True)
 @click.argument("input", type=click.Path())
 @click.argument("output", type=click.Path())
 @click.option(
-    "-d", "--duration", default=1000.0, type=float, help="Simulation duration"
+    "-d",
+    "--duration",
+    default=1000.0,
+    type=float,
+    help="Simulation duration (in ms)",
 )
-@click.option("-dt", type=float, help="Time increment")
+@click.option("-dt", type=float, help="Time increment (in ms)")
 @click.option(
     "--n-pml", default=10, type=int, help="PML size (in grid points)"
+)
+@click.option(
+    "--n-receivers",
+    default=11,
+    type=int,
+    help="Number of receivers per horizontal dimension",
 )
 @click.option("--space-order", default=2, type=int, help="Space order")
 @click.option(
@@ -30,6 +40,7 @@ def fwd(
     duration: float,
     input: str,
     n_pml: int,
+    n_receivers: int,
     output: str,
     space_order: int,
     spacing: float,
@@ -39,7 +50,8 @@ def fwd(
         ctx.obj["dt"] = dt
     ctx.obj["duration"] = duration
     ctx.obj["input_file"] = h5py.File(input, mode="r")
-    ctx.obj["npml"] = n_pml
+    ctx.obj["n_pml"] = n_pml
+    ctx.obj["n_receivers"] = n_receivers
     ctx.obj["output_file"] = h5py.File(output, mode="w")
     ctx.obj["space_order"] = space_order
     ctx.obj["spacing"] = spacing
@@ -72,7 +84,7 @@ def ricker(ctx, f0: float):
                         ),
                         vp=vp[()],
                         space_order=ctx.obj["space_order"],
-                        npml=ctx.obj["npml"],
+                        n_pml=ctx.obj["n_pml"],
                     )
                 else:
                     model.vp = vp[()]
@@ -92,17 +104,18 @@ def ricker(ctx, f0: float):
                     np.array(model.domain_size) * 0.5
                 )
                 source.coordinates.data[0, -1] = 0.0
-                n_receivers = 11 ** (len(model.domain_size) - 1)
+                n_receivers = ctx.obj["n_receivers"]
+                total_receivers = n_receivers ** (len(model.shape) - 1)
                 receivers = Receiver(
                     name="receivers",
                     grid=model.grid,
-                    npoint=n_receivers,
+                    npoint=total_receivers,
                     time_range=time_range,
                 )
                 receivers_coords = np.meshgrid(
                     *(
-                        np.linspace(start=0, stop=s, num=11)
-                        for s in model.domain_size
+                        np.linspace(start=0, stop=s, num=n_receivers + 2)[1:-1]
+                        for s in model.domain_size[:-1]
                     )
                 )
                 for d in range(len(receivers_coords)):

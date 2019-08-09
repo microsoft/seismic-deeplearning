@@ -61,31 +61,31 @@ def vp(
 
 
 @vp.command()
-@click.option("-l", "--layers", default=8, type=int, help="Number of layers")
+@click.option("--n-layers", default=8, type=int, help="Number of layers")
 @click.option(
     "--initial-vp",
     default=(1350.0, 1650.0),
     type=(float, float),
-    help="Initial Vp",
+    help="Initial Vp (in km/s)",
 )
 @click.option(
     "--vp-perturbation",
     default=(-190.0, 570.0),
     type=(float, float),
-    help="Per-layer Vp perturbation",
+    help="Per-layer Vp perturbation (in km/s)",
 )
 @click.pass_context
 def rt(
     ctx,
-    layers: int,
     initial_vp: Tuple[float, float],
+    n_layers: int,
     vp_perturbation: Tuple[float, float],
 ):
     """Röth-Tarantola model"""
     model = RoethTarantolaGenerator(
         shape=ctx.obj["shape"],
         seed=ctx.obj["seed"],
-        nlayers=layers,
+        n_layers=n_layers,
         initial_vp=initial_vp,
         vp_perturbation=vp_perturbation,
     )

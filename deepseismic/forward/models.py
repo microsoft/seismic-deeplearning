@@ -10,8 +10,6 @@ from devito import (
     SubDomain,
     TimeFunction,
     logger,
-    mmax,
-    mmin,
     solve,
 )
 
@@ -29,18 +27,18 @@ class Model(object):
         shape: Tuple[int, ...],
         origin: Tuple[float, ...],
         spacing: Tuple[float, ...],
-        npml: Optional[int] = 0,
+        n_pml: Optional[int] = 0,
         dtype: Optional[type] = np.float32,
         subdomains: Optional[Tuple[SubDomain]] = (),
     ):
         shape = tuple(int(x) for x in shape)
         origin = tuple(dtype(x) for x in origin)
-        npml = int(npml)
-        subdomains = tuple(subdomains) + (PhysicalDomain(npml),)
-        shape_pml = tuple(x + 2 * npml for x in shape)
+        n_pml = int(n_pml)
+        subdomains = tuple(subdomains) + (PhysicalDomain(n_pml),)
+        shape_pml = tuple(x + 2 * n_pml for x in shape)
         extent_pml = tuple(s * (d - 1) for s, d in zip(spacing, shape_pml))
         origin_pml = tuple(
-            dtype(o - s * npml) for o, s in zip(origin, spacing)
+            dtype(o - s * n_pml) for o, s in zip(origin, spacing)
         )
         self.grid = Grid(
             shape=shape_pml,
@@ -49,17 +47,17 @@ class Model(object):
             dtype=dtype,
             subdomains=subdomains,
         )
-        self.npml = npml
+        self.n_pml = n_pml
         self.pml = Function(name="pml", grid=self.grid)
         pml_data = np.pad(
             np.zeros(shape, dtype=dtype),
-            [(npml,) * 2 for _ in range(self.pml.ndim)],
+            [(n_pml,) * 2 for _ in range(self.pml.ndim)],
             mode="edge",
         )
         pml_coef = 1.5 * np.log(1000.0) / 40.0
         for d in range(self.pml.ndim):
-            for i in range(npml):
-                pos = np.abs((npml - i + 1) / npml)
+            for i in range(n_pml):
+                pos = np.abs((n_pml - i + 1) / n_pml)
                 val = pml_coef * (pos - np.sin(2 * np.pi * pos) / (2 * np.pi))
                 idx = [slice(0, x) for x in pml_data.shape]
                 idx[d] = slice(i, i + 1)
@@ -105,11 +103,11 @@ class VelocityModel(Model):
         spacing: Tuple[float, ...],
         vp: Union[float, np.ndarray],
         space_order: Optional[int] = None,
-        npml: Optional[int] = 0,
+        n_pml: Optional[int] = 0,
         dtype: Optional[type] = np.float32,
         subdomains: Optional[Tuple[SubDomain]] = (),
     ):
-        super().__init__(shape, origin, spacing, npml, dtype, subdomains)
+        super().__init__(shape, origin, spacing, n_pml, dtype, subdomains)
         if isinstance(vp, np.ndarray):
             assert space_order is not None
             self.m = Function(
@@ -120,11 +118,6 @@ class VelocityModel(Model):
         self.vp = vp
 
     @property
-    def critical_dt(self):
-        coef = 0.38 if len(self.shape) == 3 else 0.42
-        return self.dtype(coef * mmin(self.spacing) / mmax(self.vp))
-
-    @property
     def vp(self) -> Union[float, np.ndarray]:
         return self._vp
 
@@ -133,11 +126,11 @@ class VelocityModel(Model):
         self._vp = vp
         if isinstance(vp, np.ndarray):
             pad_widths = [
-                (self.npml + i.left, self.npml + i.right)
+                (self.n_pml + i.left, self.n_pml + i.right)
                 for i in self.m._size_halo
             ]
             self.m.data_with_halo[:] = np.pad(
-                1 / self.vp ** 2, pad_widths, mode="edge"
+                1.0 / self.vp ** 2.0, pad_widths, mode="edge"
             )
         else:
             self.m.data = 1.0 / float(vp) ** 2.0
