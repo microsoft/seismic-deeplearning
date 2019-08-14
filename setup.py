@@ -19,12 +19,12 @@ setuptools.setup(
         "Topic :: Software Development",
     ],
     dependency_links=[
-        "https://github.com/opesci/devito/archive/v3.4.tar.gz#egg=devito-3.4"
+        "https://github.com/opesci/devito/archive/v3.5.tar.gz#egg=devito-3.5"
     ],
     description="DeepSeismic",
     install_requires=[
         "click==7.0",
-        "devito==3.4",
+        "devito==3.5",
         "h5py==2.9.0",
         "numpy==1.17.0",
         "scipy==1.3.0",
@@ -43,5 +43,6 @@ setuptools.setup(
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
     url="https://github.com/microsoft/deepseismic",
-    version="0.0.1",
+    version="0.1.0",
+    zip_safe=False,
 )
