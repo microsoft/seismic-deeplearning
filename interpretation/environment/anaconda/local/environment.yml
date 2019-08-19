@@ -1,4 +1,4 @@
-name: cvseg
+name: seismic-interpetation
 channels:
  - conda-forge
 dependencies:
@@ -11,6 +11,7 @@ dependencies:
   - scikit-learn
   - pip:
     - pytorch-ignite
+    - pytorch
     - fire
     - toolz
     - tabulate==0.8.2
@@ -22,3 +23,4 @@ dependencies:
     - tqdm
     - invoke
     - yacs
+    - "--editable=git+https://masalvar@dev.azure.com/aicat-ongip/AI%20CAT%20OnG%20IP/_git/ComputerVision_fork/mat/dev@c4939283ae7a187047f4e1a1b2f8ea5266d14731#egg=cv_lib&subdirectory=contrib"
