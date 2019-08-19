@@ -1,0 +1,24 @@
+name: cvseg
+channels:
+ - conda-forge
+dependencies:
+  - python=3.6
+  - jupyter
+  - ipykernel
+  - torchvision
+  - pandas
+  - opencv-python
+  - scikit-learn
+  - pip:
+    - pytorch-ignite
+    - fire
+    - toolz
+    - tabulate==0.8.2
+    - Jinja2
+    - gitpython
+    - tensorflow # Installing for Tensorboard
+    - tensorboard
+    - tensorboardx
+    - tqdm
+    - invoke
+    - yacs
