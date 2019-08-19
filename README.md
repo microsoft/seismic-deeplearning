@@ -1,10 +1,20 @@
 # DeepSeismic
 
-
 ## Interpretation
 
 ### Setting up Env
+Go to interpretation/environments/anaconda/local/environment.yml
+Edit the final line to add your Git username for the ComputerVision repo
+Then run
+```bash
+conda env create -f environment.yml
+```
+This will create the appropriate environment to run experiments
 
+The compute vision repo will be downloaded into the src folder under interpretation/environments/anaconda/local/
+
+### Data
+The scripts expect the data to be contained in /mnt/tgssalt
 
 ## Contributing
 

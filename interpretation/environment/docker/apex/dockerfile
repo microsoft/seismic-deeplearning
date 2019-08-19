@@ -11,6 +11,7 @@ RUN git clone https://github.com/NVIDIA/apex && \
     pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
 
 RUN pip install toolz pytorch-ignite torchvision pandas opencv-python fire tensorboardx scikit-learn yacs
+RUN pip install --editable=git+https://masalvar@dev.azure.com/aicat-ongip/AI%20CAT%20OnG%20IP/_git/ComputerVision_fork@c4939283ae7a187047f4e1a1b2f8ea5266d14731#egg=cv_lib&subdirectory=contrib
 
 WORKDIR /workspace
 CMD /bin/bash

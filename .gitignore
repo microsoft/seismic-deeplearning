@@ -47,3 +47,20 @@ var/
 venv/
 venv.bak/
 wheels/
+
+*/.vscode/*
+.vscode/settings.json
+.vscode/launch.json
+
+.dev_env
+
+.azureml
+
+# Logs
+*.tfevents.*
+**/runs
+**/log
+**/output
+
+#
+interpetation/anaconda/local/src
