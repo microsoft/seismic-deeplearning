@@ -207,6 +207,11 @@ def run(*options, cfg=None, local_rank=0):
                 config.TEST.BATCH_SIZE_PER_GPU,
                 output_transform=lambda x: (x["y_pred"], x["mask"]),
             ),
+            "pixa": apex.PixelwiseAccuracyMetric(
+                world_size,
+                config.TEST.BATCH_SIZE_PER_GPU,
+                output_transform=lambda x: (x["y_pred"], x["mask"])
+            ),
         },
         device=device,
         output_transform=padded_val_transform(
@@ -239,7 +244,7 @@ def run(*options, cfg=None, local_rank=0):
             Events.EPOCH_COMPLETED,
             logging_handlers.log_metrics(
                 "Validation results",
-                metrics_dict={"kaggle": "Kaggle :", "nll": "Avg loss :"},
+                metrics_dict={"kaggle": "Kaggle :", "nll": "Avg loss :", "pixa": "Pixelwise Accuracy :"},
             ),
         )
         evaluator.add_event_handler(

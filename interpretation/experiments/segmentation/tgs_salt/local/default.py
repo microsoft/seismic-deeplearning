@@ -21,7 +21,8 @@ _C.WORKERS = 4
 _C.PRINT_FREQ = 20
 _C.AUTO_RESUME = False
 _C.PIN_MEMORY = True
-_C.RANK = 0
+_C.LOG_CONFIG = "logging.conf"
+_C.SEED = 42
 
 # Cudnn related params
 _C.CUDNN = CN()
@@ -31,6 +32,7 @@ _C.CUDNN.ENABLED = True
 
 # DATASET related params
 _C.DATASET = CN()
+_C.DATASET.ROOT = "/mnt/tgssalt"
 _C.DATASET.NUM_CLASSES = 1
 
 
@@ -59,6 +61,11 @@ _C.TRAIN.SAVE_LOCATION = "/tmp/models"
 # testing
 _C.TEST = CN()
 _C.TEST.BATCH_SIZE_PER_GPU = 32
+_C.TEST.CV = CN()
+_C.TEST.CV.N_SPLITS = 5
+_C.TEST.CV.SEED = 42
+_C.TEST.CV.SHUFFLE = True
+
 
 
 def update_config(cfg, options=None, config_file=None):
