@@ -36,7 +36,8 @@ from cv_lib.segmentation.tgs_salt.engine import (
     create_supervised_evaluator,
     create_supervised_trainer,
 )
-from cv_lib.segmentation.tgs_salt.metrics import KaggleMetric
+from cv_lib.segmentation.tgs_salt.metrics import KaggleMetric, PixelwiseAccuracy
+from cv_lib.segmentation.tgs_salt.data import get_data_ids
 
 
 def run(*options, cfg=None):
@@ -57,12 +58,18 @@ def run(*options, cfg=None):
     logging.config.fileConfig(config.LOG_CONFIG)
     scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
+    train_ids, _, _ = get_data_ids(
+        config.DATASET.ROOT, train_csv="train.csv", depths_csv="depths.csv"
+    )
     fold_generator = kfold_split(
-        tgs_salt.data.train_id, n_splits=5, random_state=42, shuffle=True
+        train_ids,
+        n_splits=config.TEST.CV.N_SPLITS,
+        random_state=config.TEST.CV.SEED,
+        shuffle=config.TEST.CV.SHUFFLE,
     )
     train_idx, val_idx = next(fold_generator)
-    train_ids = tgs_salt.data.train_id[train_idx]
-    val_ids = tgs_salt.data.train_id[val_idx]
+    val_ids = train_ids[val_idx]
+    train_ids = train_ids[train_idx]
     train_loader, val_loader = get_data_loaders(
         train_ids,
         val_ids,
@@ -71,6 +78,7 @@ def run(*options, cfg=None):
         config.TRAIN.FINE_SIZE,
         config.TRAIN.PAD_LEFT,
         config.TRAIN.PAD_RIGHT,
+        config.DATASET.ROOT,
     )
 
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
@@ -119,6 +127,7 @@ def run(*options, cfg=None):
         metrics={
             "kaggle": KaggleMetric(output_transform=lambda x: (x["y_pred"], x["mask"])),
             "nll": Loss(criterion, output_transform=lambda x: (x["y_pred"], x["mask"])),
+            "pixa": PixelwiseAccuracy(output_transform=lambda x: (x["y_pred"], x["mask"]))
         },
         device=device,
         output_transform=padded_val_transform(config.TRAIN.PAD_LEFT, config.TRAIN.FINE_SIZE),
@@ -131,7 +140,7 @@ def run(*options, cfg=None):
         Events.EPOCH_COMPLETED,
         logging_handlers.log_metrics(
             "Validation results",
-            metrics_dict={"kaggle": "Kaggle :", "nll": "Avg loss :"},
+            metrics_dict={"kaggle": "Kaggle :", "nll": "Avg loss :", "pixa": "Pixelwise Accuracy :"},
         ),
     )
     evaluator.add_event_handler(
@@ -161,7 +170,7 @@ def run(*options, cfg=None):
 
     checkpoint_handler = SnapshotHandler(
         config.OUTPUT_DIR,
-        "hrnet",
+        config.MODEL.NAME,
         tgs_salt.extract_metric_from("kaggle"),
         snapshot_function,
     )
