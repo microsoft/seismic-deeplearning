@@ -3,11 +3,9 @@
 ## Interpretation
 
 ### Setting up Env
-Go to interpretation/environments/anaconda/local/environment.yml
-Edit the final line to add your Git username for the ComputerVision repo
-Then run
+Run
 ```bash
-conda env create -f environment.yml
+conda env create -f DeepSeismic/interpretation/environments/anaconda/local/environment.yml
 ```
 This will create the appropriate environment to run experiments
 

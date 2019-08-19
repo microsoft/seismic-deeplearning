@@ -61,7 +61,6 @@ RUN pip install numpy
 RUN pip install https://download.pytorch.org/whl/cu100/torch-${PYTORCH_VERSION}-$(python -c "import wheel.pep425tags as w; print('-'.join(w.get_supported()[0]))").whl \
         https://download.pytorch.org/whl/cu100/torchvision-${TORCHVISION_VERSION}-$(python -c "import wheel.pep425tags as w; print('-'.join(w.get_supported()[0]))").whl
 RUN pip install --no-cache-dir torchvision h5py toolz pytorch-ignite pandas opencv-python fire tensorboardx scikit-learn tqdm yacs
-RUN pip install --editable=git+https://masalvar@dev.azure.com/aicat-ongip/AI%20CAT%20OnG%20IP/_git/ComputerVision_fork@c4939283ae7a187047f4e1a1b2f8ea5266d14731#egg=cv_lib&subdirectory=contrib
 
 # Install Open MPI
 RUN mkdir /tmp/openmpi && \
