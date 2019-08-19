@@ -7,7 +7,7 @@ dependencies:
   - ipykernel
   - torchvision
   - pandas
-  - opencv-python
+  - opencv
   - scikit-learn
   - pip:
     - pytorch-ignite
