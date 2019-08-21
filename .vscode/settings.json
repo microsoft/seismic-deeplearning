@@ -1,6 +1,23 @@
 {
+    "python.jediEnabled": false,    "[python]": {
+        "editor.defaultFormatter": "ms-python.python"
+    },
     "python.formatting.provider": "black",
-    "python.linting.enabled": true,
-    "python.linting.flake8Enabled": true,
-    "python.linting.pylintEnabled": false,
+    "git.autofetch": true,
+    "python.linting.pylintEnabled": true,
+    "python.pythonPath": "/anaconda/envs/seismic-interpretation/bin/python",
+    "python.linting.pylintArgs": [
+        "--enable=W0614"
+    ],    
+    "window.zoomLevel": 0,
+    "autoDocstring.docstringFormat": "google",
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 100,
+    "editor.suggestSelection": "first",
+    "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",    
+    "remote.SSH.showLoginTerminal": true,
+    "docker.host": "tcp://msnarwal.eastus.cloudapp.azure.com:2375",
+    "terminal.integrated.env.linux":{
+        "PYTHONPATH": "${env:PYTHONPATH}"
+    }
 }

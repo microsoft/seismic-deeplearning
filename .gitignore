@@ -63,4 +63,7 @@ wheels/
 **/output
 
 #
-interpetation/anaconda/local/src
+interpretation/environment/anaconda/local/src/*
+interpretation/environment/anaconda/local/src/cv-lib
+.code-workspace.code-workspace
+.vscode
