@@ -1,0 +1,41 @@
+CUDNN:
+  BENCHMARK: true
+  DETERMINISTIC: false
+  ENABLED: true
+GPUS: (0,)
+OUTPUT_DIR: 'output'
+LOG_DIR: 'log'
+WORKERS: 4
+PRINT_FREQ: 10
+LOG_CONFIG: /data/home/mat/repos/DeepSeismic/logging.conf
+SEED: 2019
+
+DATASET:
+  NUM_CLASSES: 6
+  ROOT: /mnt/alaudah
+
+MODEL:
+  NAME: patch_deconvnet
+  IN_CHANNELS: 1
+
+
+TRAIN:
+  BATCH_SIZE_PER_GPU: 64
+  BEGIN_EPOCH: 0
+  END_EPOCH: 300
+  MIN_LR: 0.001
+  MAX_LR: 0.1
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.0001
+  SNAPSHOTS: 5
+
+VALIDATION:
+  BATCH_SIZE_PER_GPU: 128
+
+TEST:
+  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/mat/exp/188e66a26115760b7cbde7e9f6a626b6519a3bb7/patch_deconvnet/Aug25_102649/patch_deconvnet_running_model_25.pth"
+  TEST_STRIDE: 10
+  SPLIT: 'Both' # Can be Both, Test1, Test2
+  INLINE: True
+  CROSSLINE: True
+

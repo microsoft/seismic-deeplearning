@@ -15,7 +15,7 @@ from yacs.config import CfgNode as CN
 _C = CN()
 
 _C.OUTPUT_DIR = "output"
-_C.LOG_DIR = ""
+_C.LOG_DIR = "log"
 _C.GPUS = (0,)
 _C.WORKERS = 4
 _C.PRINT_FREQ = 20
@@ -32,17 +32,27 @@ _C.CUDNN.ENABLED = True
 
 # DATASET related params
 _C.DATASET = CN()
-_C.DATASET.ROOT = ""
+_C.DATASET.ROOT = "/mnt/alaudah"
 _C.DATASET.NUM_CLASSES = 1
 _C.DATASET.STRIDE = 50
 _C.DATASET.PATCH_SIZE = 99
 _C.DATASET.AUGMENTATION = True
-
+_C.DATASET.DEPTH = 'no' # Options are None, Patch and Section
+# None adds no depth information and the num of channels remains at 1
+# Patch adds depth per patch so is simply the height of that patch from 0 to 1, channels=3
+# Section adds depth per section so contains depth information for the whole section, channels=3
 
 # common params for NETWORK
 _C.MODEL = CN()
 _C.MODEL.NAME = "patch_deconvnet"
 _C.MODEL.IN_CHANNELS = 1
+_C.MODEL.NUM_CLASSES = 6
+
+_C.LOSS = CN()
+_C.LOSS.WEIGHTS = (0.01, 1)
+_C.LOSS.ADJUST_EPOCH = 50
+_C.LOSS.ADJUSTED_WEIGHTS = (0.3, 0.7)
+
 
 # training
 _C.TRAIN = CN()

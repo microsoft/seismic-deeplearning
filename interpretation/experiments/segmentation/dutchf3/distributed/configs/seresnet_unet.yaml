@@ -1,0 +1,37 @@
+CUDNN:
+  BENCHMARK: true
+  DETERMINISTIC: false
+  ENABLED: true
+GPUS: (0,)
+OUTPUT_DIR: 'output'
+LOG_DIR: 'log'
+WORKERS: 4
+PRINT_FREQ: 10
+LOG_CONFIG: /data/home/mat/repos/DeepSeismic/logging.conf
+SEED: 2019
+
+DATASET:
+  NUM_CLASSES: 6
+  ROOT: /mnt/alaudah
+  DEPTH: "patch" # Options are No, Patch and Section
+  STRIDE: 128
+  PATCH_SIZE: 256
+
+MODEL:
+  NAME: resnet_unet
+  IN_CHANNELS: 3
+
+
+TRAIN:
+  BATCH_SIZE_PER_GPU: 16
+  BEGIN_EPOCH: 0
+  END_EPOCH: 300
+  MIN_LR: 0.001
+  MAX_LR: 0.02
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.0001
+  SNAPSHOTS: 5
+  AUGMENTATION: False
+
+TEST:
+  BATCH_SIZE_PER_GPU: 32
