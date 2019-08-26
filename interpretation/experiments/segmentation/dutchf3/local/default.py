@@ -14,7 +14,7 @@ from yacs.config import CfgNode as CN
 
 _C = CN()
 
-_C.OUTPUT_DIR = ""
+_C.OUTPUT_DIR = "output"
 _C.LOG_DIR = ""
 _C.GPUS = (0,)
 _C.WORKERS = 4
@@ -41,10 +41,8 @@ _C.DATASET.AUGMENTATION = True
 
 # common params for NETWORK
 _C.MODEL = CN()
-_C.MODEL.NAME = "seg_hrnet"
-_C.MODEL.PRETRAINED = ""
-_C.MODEL.EXTRA = CN(new_allowed=True)
-
+_C.MODEL.NAME = "patch_deconvnet"
+_C.MODEL.IN_CHANNELS = 1
 
 # training
 _C.TRAIN = CN()
@@ -55,20 +53,21 @@ _C.TRAIN.BEGIN_EPOCH = 0
 _C.TRAIN.END_EPOCH = 484
 _C.TRAIN.BATCH_SIZE_PER_GPU = 32
 _C.TRAIN.WEIGHT_DECAY = 0.0001
-_C.TRAIN.PAD_LEFT = 27
-_C.TRAIN.PAD_RIGHT = 27
-_C.TRAIN.FINE_SIZE = 202
 _C.TRAIN.SNAPSHOTS = 5
 _C.TRAIN.SAVE_LOCATION = "/tmp/models"
+_C.TRAIN.AUGMENTATION = True
 
-# testing
+# validation
+_C.VALIDATION = CN()
+_C.VALIDATION.BATCH_SIZE_PER_GPU = 32
+
+# TEST
 _C.TEST = CN()
-_C.TEST.BATCH_SIZE_PER_GPU = 32
-_C.TEST.CV = CN()
-_C.TEST.CV.N_SPLITS = 5
-_C.TEST.CV.SEED = 42
-_C.TEST.CV.SHUFFLE = True
-
+_C.TEST.MODEL_PATH = ""
+_C.TEST.TEST_STRIDE = 10
+_C.TEST.SPLIT = 'Both' # Can be Both, Test1, Test2
+_C.TEST.INLINE = True
+_C.TEST.CROSSLINE = True
 
 
 def update_config(cfg, options=None, config_file=None):
