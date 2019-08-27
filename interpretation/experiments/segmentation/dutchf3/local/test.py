@@ -36,11 +36,13 @@ from cv_lib.event_handlers.tensorboard_handlers import (
     create_image_writer,
     create_summary_writer,
 )
-from cv_lib.segmentation.dutchf3.augmentations import (
-    AddNoise,
+from albumentations import (
     Compose,
-    RandomHorizontallyFlip,
-    RandomRotate,
+    HorizontalFlip,
+    GaussNoise,
+    Normalize,
+    Resize,
+    PadIfNeeded,
 )
 from cv_lib.segmentation.dutchf3.data import (
     decode_segmap,
@@ -48,6 +50,7 @@ from cv_lib.segmentation.dutchf3.data import (
     split_non_overlapping_train_val,
     split_train_val,
     section_loader,
+    add_patch_depth_channels
 )
 from cv_lib.segmentation.dutchf3.engine import (
     create_supervised_evaluator,
@@ -77,7 +80,7 @@ from default import update_config
 from toolz.itertoolz import take
 import itertools
 from toolz import itertoolz
-
+import cv2
 
 class_names = [
     "upper_ns",
@@ -145,19 +148,57 @@ class runningScore(object):
         self.confusion_matrix = np.zeros((self.n_classes, self.n_classes))
 
 
-def _extract_patch(img_p, hdx, wdx, ps, patch_size):
+@curry
+def _extract_patch(img_p, hdx, wdx, ps, patch_size, aug=None):
     patch = img_p[
-                hdx + ps : hdx + ps + patch_size,
-                wdx + ps : wdx + ps + patch_size,
-            ]
-    return patch.unsqueeze(dim=0) 
+        hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size
+    ]
+    if aug is not None:
+        # TODO: Make depth optional from config
+        patch = add_patch_depth_channels(aug(image=patch.numpy())['image'])
+        return torch.from_numpy(patch).to(torch.float32)
+    else:
+        return patch.unsqueeze(dim=0)
 
-def _generate_batches(img_p, h, w, ps, patch_size, stride, batch_size=64):
-    hdc_wdx_generator = itertools.product(range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride))
-    for batch_indexes in itertoolz.partition_all(batch_size, hdc_wdx_generator):
-        yield batch_indexes, torch.stack([_extract_patch(img_p, hdx, wdx, ps, patch_size) for hdx, wdx in batch_indexes], dim=0)
 
-def patch_label_2d(model, img, patch_size, stride, device):
+def _generate_batches(
+    img_p, h, w, ps, patch_size, stride, config, batch_size=64
+):
+    hdc_wdx_generator = itertools.product(
+        range(0, h - patch_size + ps, stride),
+        range(0, w - patch_size + ps, stride),
+    )
+
+    test_aug = Compose(
+        [
+            Resize(
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+                always_apply=True,
+            ),
+            PadIfNeeded(
+                min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
+                min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
+                border_mode=cv2.BORDER_CONSTANT,
+                always_apply=True,
+                mask_value=255,
+            ),
+        ]
+    )
+
+    for batch_indexes in itertoolz.partition_all(
+        batch_size, hdc_wdx_generator
+    ):
+        yield batch_indexes, torch.stack(
+            [
+                _extract_patch(img_p, hdx, wdx, ps, patch_size, test_aug)
+                for hdx, wdx in batch_indexes
+            ],
+            dim=0,
+        )
+
+
+def patch_label_2d(model, img, patch_size, stride, config, device):
     img = torch.squeeze(img)
     h, w = img.shape  # height and width
 
@@ -168,14 +209,31 @@ def patch_label_2d(model, img, patch_size, stride, device):
     num_classes = 6
     output_p = torch.zeros([1, num_classes, h + 2 * ps, w + 2 * ps])
     # generate output:
-    for batch_indexes, batch in _generate_batches(img_p, h, w, ps, patch_size, stride, batch_size=512):
+    for batch_indexes, batch in _generate_batches(
+        img_p, h, w, ps, patch_size, stride, config, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU
+    ):
         model_output = model(batch.to(device))
-        for (hdx, wdx), output  in zip(batch_indexes, model_output.detach().cpu()):
+        for (hdx, wdx), output in zip(
+            batch_indexes, model_output.detach().cpu()
+        ):
+            output=output.unsqueeze(0)
+            if config.TRAIN.AUGMENTATIONS.PAD.HEIGHT > 0:
+                height_diff = (config.TRAIN.AUGMENTATIONS.PAD.HEIGHT - config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT)//2
+                output = output[
+                    :,
+                    :,
+                    height_diff : output.shape[2]-height_diff,
+                    height_diff : output.shape[3]-height_diff,
+                ]
+            
+            if config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT > 0:
+                output=F.interpolate(output, size=(patch_size, patch_size), mode="bilinear")
+            
             output_p[
-                    :,
-                    :,
-                    hdx + ps : hdx + ps + patch_size,
-                    wdx + ps : wdx + ps + patch_size,
+                :,
+                :,
+                hdx + ps : hdx + ps + patch_size,
+                wdx + ps : wdx + ps + patch_size,
             ] += torch.squeeze(output)
 
     # crop the output_p in the middke
@@ -194,16 +252,24 @@ def test(*options, cfg=None):
 
     # load model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
-    model.load_state_dict(torch.load(config.TEST.MODEL_PATH))
+    model.load_state_dict(torch.load(config.TEST.MODEL_PATH), strict=False)
     model = model.to(device)  # Send to GPU if available
 
     running_metrics_overall = runningScore(6)
 
-    splits = ["test1","test2"] if "Both" in config.TEST.SPLIT else [config.TEST.SPLIT] 
+    splits = (
+        ["test1", "test2"]
+        if "Both" in config.TEST.SPLIT
+        else [config.TEST.SPLIT]
+    )
     for sdx, split in enumerate(splits):
         DATA_ROOT = path.join("/mnt", "alaudah")
-        labels = np.load(path.join(DATA_ROOT, "test_once", split + "_labels.npy"))
-        section_file = path.join(DATA_ROOT, "splits", "section_" + split + ".txt")
+        labels = np.load(
+            path.join(DATA_ROOT, "test_once", split + "_labels.npy")
+        )
+        section_file = path.join(
+            DATA_ROOT, "splits", "section_" + split + ".txt"
+        )
         # define indices of the array
         irange, xrange, depth = labels.shape
 
@@ -248,9 +314,10 @@ def test(*options, cfg=None):
                 outputs = patch_label_2d(
                     model=model,
                     img=images,
-                    patch_size=config.DATASET.PATCH_SIZE,
+                    patch_size=config.TRAIN.PATCH_SIZE,
                     stride=config.TEST.TEST_STRIDE,
-                    device=device
+                    config=config,
+                    device=device,
                 )
 
                 pred = outputs.detach().max(1)[1].numpy()

@@ -41,13 +41,12 @@ TRAIN:
       HEIGHT: 256
       WIDTH: 256
 
+
 VALIDATION:
   BATCH_SIZE_PER_GPU: 32
 
-  output/mat/exp/74d07f41ff0dc72920c279cc93f2eb1f42ed8a0d/resnet_unet/Aug26_165055/
-
 TEST:
-  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/mat/exp/188e66a26115760b7cbde7e9f6a626b6519a3bb7/patch_deconvnet/Aug25_102649/patch_deconvnet_running_model_25.pth"
+  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/distributed/output/mat/exp/74d07f41ff0dc72920c279cc93f2eb1f42ed8a0d/resnet_unet/Aug26_165055/resnet_unet_running_model_31.pth"
   TEST_STRIDE: 10
   SPLIT: 'Both' # Can be Both, Test1, Test2
   INLINE: True

@@ -40,17 +40,12 @@ from cv_lib.event_handlers.tensorboard_handlers import (
     create_image_writer,
     create_summary_writer,
 )
-from cv_lib.segmentation.dutchf3.augmentations import (
-    AddNoise,
-    Compose,
-    RandomHorizontallyFlip,
-    RandomRotate,
-)
+
 from cv_lib.segmentation.dutchf3.data import (
     get_train_loader,
     decode_segmap,
     split_train_val,
-    split_non_overlapping_train_val
+    split_non_overlapping_train_val,
 )
 from cv_lib.segmentation.dutchf3.engine import (
     create_supervised_evaluator,
@@ -65,19 +60,23 @@ from cv_lib.segmentation.dutchf3.utils import (
     git_hash,
     np_to_tb,
 )
-    get_data_ids,
-    get_distributed_data_loaders,
-    kfold_split,
-)
+from cv_lib.segmentation.dutchf3.engine import (
     create_supervised_evaluator,
     create_supervised_trainer,
 )
 from cv_lib.segmentation.dutchf3.metrics import apex
 from default import _C as config
 from default import update_config
+from albumentations import (
+    Compose,
+    HorizontalFlip,
+    GaussNoise,
+    Normalize,
+    Resize,
+    PadIfNeeded,
+)
 
-CLASS_WEIGHTS = [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
-
+import cv2
 
 def prepare_batch(batch, device=None, non_blocking=False):
     x, y = batch
@@ -126,44 +125,98 @@ def run(*options, cfg=None, local_rank=0):
 
     scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
-    if local_rank==0: #Only do this on local rank otherwise overwriting
+    if local_rank == 0:  # Only do this on local rank otherwise overwriting
         # Generate the train and validation sets for the model:
         split_non_overlapping_train_val(
-            config.DATASET.STRIDE, per_val=fraction_validation, loader_type="patch"
+            config.TRAIN.STRIDE,
+            per_val=fraction_validation,
+            loader_type="patch",
         )
 
     # Setup Augmentations
     if config.TRAIN.AUGMENTATION:
-        data_aug = Compose(
-            # [RandomRotate(10), RandomHorizontallyFlip(), AddNoise()]
-            [RandomHorizontallyFlip(), AddNoise()]
+        train_aug = Compose(
+            # TODO: Should we apply std scaling?
+            [
+                Resize(
+                    config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+                    config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+                    always_apply=True,
+                ),
+                HorizontalFlip(p=0.5),
+                # GaussNoise(var_limit=(0.02) ** 2),
+                # Normalize(
+                #     mean=(config.TRAIN.MEAN,),
+                #     std=(config.TRAIN.STD,),
+                #     max_pixel_value=1,
+                # ),
+                PadIfNeeded(
+                    min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
+                    min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
+                    border_mode=cv2.BORDER_CONSTANT,
+                    always_apply=True,
+                    mask_value=255,
+                ),
+            ]
+        )
+        val_aug = Compose(
+            # TODO: Should we apply std scaling?
+            [
+                Resize(
+                    config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+                    config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+                    always_apply=True,
+                ),
+                # Normalize(
+                #     mean=(config.TRAIN.MEAN,),
+                #     std=(config.TRAIN.STD,),
+                #     max_pixel_value=1,
+                # ),
+                PadIfNeeded(
+                    min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
+                    min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
+                    border_mode=cv2.BORDER_CONSTANT,
+                    always_apply=True,
+                    mask_value=255,
+                ),
+            ]
         )
     else:
-        data_aug = None
+        train_aug = Compose(
+            [
+                Normalize(
+                    mean=(config.TRAIN.MEAN,),
+                    std=(config.TRAIN.STD,),
+                    max_pixel_value=1,
+                )
+            ]
+        )
+        val_aug = train_aug
 
     TrainPatchLoader = get_train_loader(config)
 
     train_set = TrainPatchLoader(
         split="train",
         is_transform=True,
-        stride=config.DATASET.STRIDE,
-        patch_size=config.DATASET.PATCH_SIZE,
-        augmentations=data_aug,
+        stride=config.TRAIN.STRIDE,
+        patch_size=config.TRAIN.PATCH_SIZE,
+        augmentations=train_aug,
     )
     logger.info(f"Training examples {len(train_set)}")
-    
+
     # Without Augmentation:
     val_set = TrainPatchLoader(
         split="val",
         is_transform=True,
-        stride=config.DATASET.STRIDE,
-        patch_size=config.DATASET.PATCH_SIZE,
+        stride=config.TRAIN.STRIDE,
+        patch_size=config.TRAIN.PATCH_SIZE,
+        augmentations=val_aug
     )
     logger.info(f"Validation examples {len(val_set)}")
     n_classes = train_set.n_classes
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(
-        train_set,  num_replicas=world_size, rank=local_rank
+        train_set, num_replicas=world_size, rank=local_rank
     )
 
     train_loader = data.DataLoader(
@@ -179,13 +232,12 @@ def run(*options, cfg=None, local_rank=0):
 
     val_loader = data.DataLoader(
         val_set,
-        batch_size=config.TEST.BATCH_SIZE_PER_GPU,
+        batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU,
         num_workers=config.WORKERS,
         sampler=val_sampler,
     )
 
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
-    # model = get_model(config.MODEL.NAME, False, n_classes)
 
     device = "cpu"
     if torch.cuda.is_available():
@@ -201,7 +253,7 @@ def run(*options, cfg=None, local_rank=0):
 
     # weights are inversely proportional to the frequency of the classes in the training set
     class_weights = torch.tensor(
-        CLASS_WEIGHTS, device=device, requires_grad=False
+        config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False
     )
 
     criterion = torch.nn.CrossEntropyLoss(
@@ -248,7 +300,9 @@ def run(*options, cfg=None, local_rank=0):
         Events.ITERATION_COMPLETED,
         logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
     )
-    trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
+    trainer.add_event_handler(
+        Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer)
+    )
 
     if silence_other_ranks & local_rank != 0:
         logging.getLogger("ignite.engine.engine.Engine").setLevel(
@@ -260,7 +314,7 @@ def run(*options, cfg=None, local_rank=0):
             model_out_dict["y_pred"].squeeze(),
             model_out_dict["mask"].squeeze(),
         )
-
+    # Need to fix so that the mask isn't used
     evaluator = create_supervised_evaluator(
         model,
         prepare_batch,
@@ -271,7 +325,7 @@ def run(*options, cfg=None, local_rank=0):
             "nll": salt_metrics.LossMetric(
                 criterion,
                 world_size,
-                config.TEST.BATCH_SIZE_PER_GPU,
+                config.VALIDATION.BATCH_SIZE_PER_GPU,
                 output_transform=_select_pred_and_mask,
             ),
             "pixa": apex.PixelwiseAccuracy(
@@ -287,7 +341,13 @@ def run(*options, cfg=None, local_rank=0):
     )
 
     if local_rank == 0:  # Run only on master process
-        tboard_log_dir = generate_path(config.LOG_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime())
+        tboard_log_dir = generate_path(
+            config.LOG_DIR,
+            git_branch(),
+            git_hash(),
+            config.MODEL.NAME,
+            current_datetime(),
+        )
         logger.info(f"Logging Tensorboard to {tboard_log_dir}")
         summary_writer = create_summary_writer(log_dir=tboard_log_dir)
         trainer.add_event_handler(
@@ -327,7 +387,7 @@ def run(*options, cfg=None, local_rank=0):
 
         def _tensor_to_numpy(pred_tensor):
             return pred_tensor.squeeze().cpu().numpy()
-
+        #TODO: Add removal of border on all images
         transform_func = compose(
             np_to_tb, decode_segmap(n_classes=n_classes), _tensor_to_numpy
         )
@@ -360,7 +420,13 @@ def run(*options, cfg=None, local_rank=0):
         def snapshot_function():
             return (trainer.state.iteration % snapshot_duration) == 0
 
-        output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime())
+        output_dir = generate_path(
+            config.OUTPUT_DIR,
+            git_branch(),
+            git_hash(),
+            config.MODEL.NAME,
+            current_datetime(),
+        )
         checkpoint_handler = SnapshotHandler(
             output_dir,
             config.MODEL.NAME,

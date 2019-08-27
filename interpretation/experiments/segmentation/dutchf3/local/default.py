@@ -33,16 +33,14 @@ _C.CUDNN.ENABLED = True
 # DATASET related params
 _C.DATASET = CN()
 _C.DATASET.ROOT = ""
-_C.DATASET.NUM_CLASSES = 1
-_C.DATASET.STRIDE = 50
-_C.DATASET.PATCH_SIZE = 99
-_C.DATASET.AUGMENTATION = True
-
+_C.DATASET.NUM_CLASSES = 6
+_C.DATASET.CLASS_WEIGHTS = [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 # common params for NETWORK
 _C.MODEL = CN()
 _C.MODEL.NAME = "patch_deconvnet"
 _C.MODEL.IN_CHANNELS = 1
+
 
 # training
 _C.TRAIN = CN()
@@ -56,6 +54,23 @@ _C.TRAIN.WEIGHT_DECAY = 0.0001
 _C.TRAIN.SNAPSHOTS = 5
 _C.TRAIN.SAVE_LOCATION = "/tmp/models"
 _C.TRAIN.AUGMENTATION = True
+_C.TRAIN.STRIDE = 50
+_C.TRAIN.PATCH_SIZE = 99
+_C.TRAIN.MEAN = 0.0009997 # 0.0009996710808862074
+_C.TRAIN.STD = 0.20977 # 0.20976548783479299 
+_C.TRAIN.DEPTH = 'no' # Options are None, Patch and Section
+# None adds no depth information and the num of channels remains at 1
+# Patch adds depth per patch so is simply the height of that patch from 0 to 1, channels=3
+# Section adds depth per section so contains depth information for the whole section, channels=3
+_C.TRAIN.AUGMENTATIONS = CN()
+_C.TRAIN.AUGMENTATIONS.RESIZE = CN()
+_C.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT = 200
+_C.TRAIN.AUGMENTATIONS.RESIZE.WIDTH = 200
+_C.TRAIN.AUGMENTATIONS.PAD = CN()
+_C.TRAIN.AUGMENTATIONS.PAD.HEIGHT = 256
+_C.TRAIN.AUGMENTATIONS.PAD.WIDTH = 256
+
+
 
 # validation
 _C.VALIDATION = CN()

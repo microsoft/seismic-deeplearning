@@ -20,26 +20,49 @@ from toolz import compose
 from torch.utils import data
 from tqdm import tqdm
 
-from cv_lib.event_handlers import (SnapshotHandler, logging_handlers,
-                                   tensorboard_handlers)
+from cv_lib.event_handlers import (
+    SnapshotHandler,
+    logging_handlers,
+    tensorboard_handlers,
+)
 from cv_lib.event_handlers.logging_handlers import Evaluator
-from cv_lib.event_handlers.tensorboard_handlers import (create_image_writer,
-                                                        create_summary_writer)
-from cv_lib.segmentation.dutchf3.augmentations import (AddNoise, Compose,
-                                                       RandomHorizontallyFlip,
-                                                       RandomRotate)
-from cv_lib.segmentation.dutchf3.data import (TrainPatchLoader, decode_segmap,
-                                              split_train_val, split_non_overlapping_train_val)
-from cv_lib.segmentation.dutchf3.engine import (create_supervised_evaluator,
-                                                create_supervised_trainer)
+from cv_lib.event_handlers.tensorboard_handlers import (
+    create_image_writer,
+    create_summary_writer,
+)
+
+from cv_lib.segmentation.dutchf3.data import (
+    get_train_loader,
+    decode_segmap,
+    split_train_val,
+    split_non_overlapping_train_val,
+)
+from cv_lib.segmentation.dutchf3.engine import (
+    create_supervised_evaluator,
+    create_supervised_trainer,
+)
 from cv_lib.segmentation.dutchf3.metrics import MeanIoU, PixelwiseAccuracy
 from cv_lib.segmentation import models
-from cv_lib.segmentation.dutchf3.utils import (current_datetime, generate_path,
-                                               git_branch, git_hash, np_to_tb)
+from cv_lib.segmentation.dutchf3.utils import (
+    current_datetime,
+    generate_path,
+    git_branch,
+    git_hash,
+    np_to_tb,
+)
 from default import _C as config
 from default import update_config
+from albumentations import (
+    Compose,
+    HorizontalFlip,
+    GaussNoise,
+    Normalize,
+    Resize,
+    PadIfNeeded,
+)
+import cv2
+from toolz import itertoolz
 
-CLASS_WEIGHTS=[0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 def prepare_batch(batch, device=None, non_blocking=False):
     x, y = batch
@@ -47,6 +70,7 @@ def prepare_batch(batch, device=None, non_blocking=False):
         convert_tensor(x, device=device, non_blocking=non_blocking),
         convert_tensor(y, device=device, non_blocking=non_blocking),
     )
+
 
 def run(*options, cfg=None):
     """Run training and validation of model
@@ -61,7 +85,7 @@ def run(*options, cfg=None):
                                       To see what options are available consult default.py
         cfg (str, optional): Location of config file to load. Defaults to None.
     """
-    fraction_validation=0.2
+    fraction_validation = 0.2
     update_config(config, options=options, config_file=cfg)
     logging.config.fileConfig(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
@@ -75,40 +99,100 @@ def run(*options, cfg=None):
     np.random.seed(seed=config.SEED)
 
     # Generate the train and validation sets for the model:
-    split_train_val(config.DATASET.STRIDE, per_val=fraction_validation, loader_type="patch")
+    split_non_overlapping_train_val(
+        config.TRAIN.STRIDE, per_val=fraction_validation, loader_type="patch"
+    )
 
     # Setup Augmentations
     if config.TRAIN.AUGMENTATION:
-        data_aug = Compose(
-            # [RandomRotate(10), RandomHorizontallyFlip(), AddNoise()]
-            [RandomHorizontallyFlip(), AddNoise()]
+        train_aug = Compose(
+            # TODO: Should we apply std scaling?
+            [
+                Resize(
+                    config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+                    config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+                    always_apply=True,
+                ),
+                HorizontalFlip(p=0.5),
+                # GaussNoise(var_limit=(0.02) ** 2),
+                Normalize(
+                    mean=(config.TRAIN.MEAN,),
+                    std=(config.TRAIN.STD,),
+                    max_pixel_value=1,
+                ),
+                PadIfNeeded(
+                    min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
+                    min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
+                    border_mode=cv2.BORDER_CONSTANT,
+                    always_apply=True,
+                    mask_value=255,
+                ),
+            ]
+        )
+        val_aug = Compose(
+            # TODO: Should we apply std scaling?
+            [
+                Resize(
+                    config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+                    config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+                    always_apply=True,
+                ),
+                Normalize(
+                    mean=(config.TRAIN.MEAN,),
+                    std=(config.TRAIN.STD,),
+                    max_pixel_value=1,
+                ),
+                PadIfNeeded(
+                    min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
+                    min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
+                    border_mode=cv2.BORDER_CONSTANT,
+                    always_apply=True,
+                    mask_value=255,
+                ),
+            ]
         )
     else:
-        data_aug = None
+        data_aug = Compose(
+            [
+                Normalize(
+                    mean=(config.TRAIN.MEAN,),
+                    std=(config.TRAIN.STD,),
+                    max_pixel_value=1,
+                ),
+            ]
+        )
+    
+    TrainPatchLoader = get_train_loader(config)
 
     train_set = TrainPatchLoader(
         split="train",
         is_transform=True,
-        stride=config.DATASET.STRIDE,
-        patch_size=config.DATASET.PATCH_SIZE,
-        augmentations=data_aug,
+        stride=config.TRAIN.STRIDE,
+        patch_size=config.TRAIN.PATCH_SIZE,
+        augmentations=train_aug,
     )
 
     # Without Augmentation:
     val_set = TrainPatchLoader(
         split="val",
         is_transform=True,
-        stride=config.DATASET.STRIDE,
-        patch_size=config.DATASET.PATCH_SIZE,
+        stride=config.TRAIN.STRIDE,
+        patch_size=config.TRAIN.PATCH_SIZE,
+        augmentations=val_aug
     )
 
     n_classes = train_set.n_classes
 
     train_loader = data.DataLoader(
-        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True
+        train_set,
+        batch_size=config.TRAIN.BATCH_SIZE_PER_GPU,
+        num_workers=config.WORKERS,
+        shuffle=True,
     )
     val_loader = data.DataLoader(
-        train_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS
+        train_set,
+        batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU,
+        num_workers=config.WORKERS,
     )
 
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
@@ -125,21 +209,31 @@ def run(*options, cfg=None):
         weight_decay=config.TRAIN.WEIGHT_DECAY,
     )
 
-    tboard_log_dir = generate_path(config.LOG_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime())
+    tboard_log_dir = generate_path(
+        config.LOG_DIR,
+        git_branch(),
+        git_hash(),
+        config.MODEL.NAME,
+        current_datetime(),
+    )
     summary_writer = create_summary_writer(log_dir=tboard_log_dir)
     snapshot_duration = scheduler_step * len(train_set)
     scheduler = CosineAnnealingScheduler(
-        optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration
+        optimizer,
+        "lr",
+        config.TRAIN.MAX_LR,
+        config.TRAIN.MIN_LR,
+        snapshot_duration,
     )
 
     # weights are inversely proportional to the frequency of the classes in the training set
     class_weights = torch.tensor(
-        CLASS_WEIGHTS,
-        device=device,
-        requires_grad=False,
+        config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False
     )
-   
-    criterion = torch.nn.CrossEntropyLoss(weight=class_weights, ignore_index=255, reduction='mean')
+
+    criterion = torch.nn.CrossEntropyLoss(
+        weight=class_weights, ignore_index=255, reduction="mean"
+    )
 
     trainer = create_supervised_trainer(
         model, optimizer, criterion, prepare_batch, device=device
@@ -151,7 +245,9 @@ def run(*options, cfg=None):
         Events.ITERATION_COMPLETED,
         logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
     )
-    trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
+    trainer.add_event_handler(
+        Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer)
+    )
     trainer.add_event_handler(
         Events.EPOCH_STARTED,
         tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"),
@@ -162,27 +258,40 @@ def run(*options, cfg=None):
     )
 
     def _select_pred_and_mask(model_out_dict):
-        return (model_out_dict["y_pred"].squeeze(), model_out_dict["mask"].squeeze())
+        return (
+            model_out_dict["y_pred"].squeeze(),
+            model_out_dict["mask"].squeeze(),
+        )
 
     evaluator = create_supervised_evaluator(
         model,
         prepare_batch,
         metrics={
-            "IoU": MeanIoU(n_classes, device, output_transform=_select_pred_and_mask),
+            "IoU": MeanIoU(
+                n_classes, device, output_transform=_select_pred_and_mask
+            ),
             "nll": Loss(criterion, output_transform=_select_pred_and_mask),
-            "pixa": PixelwiseAccuracy(n_classes, device, output_transform=_select_pred_and_mask)
+            "pixa": PixelwiseAccuracy(
+                n_classes, device, output_transform=_select_pred_and_mask
+            ),
         },
         device=device,
     )
 
     # Set the validation run to start on the epoch completion of the training run
-    trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
+    trainer.add_event_handler(
+        Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader)
+    )
 
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
         logging_handlers.log_metrics(
             "Validation results",
-            metrics_dict={"IoU": "IoU :", "nll": "Avg loss :", "pixa": "Pixelwise Accuracy :"},
+            metrics_dict={
+                "IoU": "IoU :",
+                "nll": "Avg loss :",
+                "pixa": "Pixelwise Accuracy :",
+            },
         ),
     )
     evaluator.add_event_handler(
@@ -202,15 +311,10 @@ def run(*options, cfg=None):
         return pred_tensor.squeeze().cpu().numpy()
 
     transform_func = compose(
-        np_to_tb,
-        decode_segmap(n_classes=n_classes),
-        _tensor_to_numpy
+        np_to_tb, decode_segmap(n_classes=n_classes), _tensor_to_numpy
     )
 
-    transform_pred = compose(
-        transform_func,
-        _select_max
-    )
+    transform_pred = compose(transform_func, _select_max)
 
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
@@ -218,17 +322,33 @@ def run(*options, cfg=None):
     )
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
-        create_image_writer(summary_writer, "Validation/Mask", "mask", transform_func=transform_func),
+        create_image_writer(
+            summary_writer,
+            "Validation/Mask",
+            "mask",
+            transform_func=transform_func,
+        ),
     )
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
-        create_image_writer(summary_writer, "Validation/Pred", "y_pred", transform_func=transform_pred),
+        create_image_writer(
+            summary_writer,
+            "Validation/Pred",
+            "y_pred",
+            transform_func=transform_pred,
+        ),
     )
 
     def snapshot_function():
         return (trainer.state.iteration % snapshot_duration) == 0
 
-    output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime())
+    output_dir = generate_path(
+        config.OUTPUT_DIR,
+        git_branch(),
+        git_hash(),
+        config.MODEL.NAME,
+        current_datetime(),
+    )
     checkpoint_handler = SnapshotHandler(
         output_dir,
         config.MODEL.NAME,
@@ -237,9 +357,10 @@ def run(*options, cfg=None):
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model}
     )
-  
+
     logger.info("Starting training")
-    trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
+    trainer.run(itertoolz.take(2, train_loader), max_epochs=config.TRAIN.END_EPOCH)
+
 
 if __name__ == "__main__":
     fire.Fire(run)
