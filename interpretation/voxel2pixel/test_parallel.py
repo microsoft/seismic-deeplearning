@@ -44,9 +44,10 @@ from data import writeSEGY
 # graphical progress bar
 from tqdm import tqdm
 
+
 class ModelWrapper(nn.Module):
     """
-    Wrap TextureNet for DataParallel to invoke classify method
+    Wrap TextureNet for (Distributed)DataParallel to invoke classify method
     """
 
     def __init__(self, texture_model):
@@ -176,7 +177,9 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # we need to map the data manually to each rank - DistributedDataParallel doesn't do this at score time
     print("take a subset of coord_list by chunk")
-    coord_list = list(np.array_split(np.array(coord_list), args.world_size)[args.rank])
+    coord_list = list(
+        np.array_split(np.array(coord_list), args.world_size)[args.rank]
+    )
     coord_list = [tuple(x) for x in coord_list]
 
     # we only score first batch in debug mode
@@ -244,13 +247,13 @@ def main_worker(gpu, ngpus_per_node, args):
             f,
         )
 
-    # TODO: we cannot use pickle do dump from multiprocess - processes lock up
+    # TODO: we cannot use pickle to dump from multiprocess - processes lock up
     # with open("result_predictions_{}.pkl".format(args.rank), "wb") as f:
     #    print ("dumping predictions pickle file")
     #    pickle.dump(predictions, f)
 
 
-parser = argparse.ArgumentParser(description="PyTorch ImageNet Training")
+parser = argparse.ArgumentParser(description="Seismic Distributed Scoring")
 parser.add_argument(
     "-d", "--data", default="F3", type=str, help="default dataset folder name"
 )
@@ -292,12 +295,15 @@ parser.add_argument(
 parser.add_argument(
     "--dist-backend", default="nccl", type=str, help="distributed backend"
 )
-parser.add_argument("--seed", default=0, type=int, help="default random number seed")
+parser.add_argument(
+    "--seed", default=0, type=int, help="default random number seed"
+)
 parser.add_argument(
     "--debug",
     action="store_true",
     help="debug flag - if on we will only process one batch",
 )
+
 
 def main():
 
@@ -450,6 +456,7 @@ def main():
         get_slice(classified_cube, data_info, args.slice, args.slice_num),
         cm="binary",
     )
+
 
 if __name__ == "__main__":
     main()
