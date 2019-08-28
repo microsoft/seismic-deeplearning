@@ -5,14 +5,14 @@
 ### Setting up Env
 Run
 ```bash
-conda env create -f DeepSeismic/interpretation/environments/anaconda/local/environment.yml
+conda env create -f DeepSeismic/interpretation/environment/anaconda/local/environment.yml
 ```
 This will create the appropriate environment to run experiments
 
 The compute vision repo will be downloaded into the src folder under interpretation/environments/anaconda/local/
 
 ### Data
-The scripts expect the data to be contained in /mnt/tgssalt
+The scripts expect the data to be contained in /mnt/alaudah
 
 ## Contributing
 
