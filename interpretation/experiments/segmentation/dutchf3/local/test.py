@@ -1,3 +1,13 @@
+# Copyright (c) Microsoft Corporation. All rights reserved. 
+# Licensed under the MIT License. 
+# commitHash: c76bf579a0d5090ebd32426907d051d499f3e847
+# url: https://github.com/olivesgatech/facies_classification_benchmark
+
+"""
+Modified version of the Alaudah testing script
+#TODO: Needs to be improved. Needs to be able to run across multiple GPUs and better factoring around the loader
+"""
+
 import argparse
 import logging
 import logging.config
@@ -155,8 +165,9 @@ def _extract_patch(img_p, hdx, wdx, ps, patch_size, aug=None):
     ]
     if aug is not None:
         # TODO: Make depth optional from config
-        patch = add_patch_depth_channels(aug(image=patch.numpy())['image'])
-        return torch.from_numpy(patch).to(torch.float32)
+        # patch = add_patch_depth_channels(aug(image=patch.numpy())['image'])
+        patch = aug(image=patch.numpy())['image']
+        return torch.from_numpy(patch).to(torch.float32).unsqueeze(0)
     else:
         return patch.unsqueeze(dim=0)
 
@@ -171,6 +182,11 @@ def _generate_batches(
 
     test_aug = Compose(
         [
+             Normalize(
+                mean=(config.TRAIN.MEAN,),
+                std=(config.TRAIN.STD,),
+                max_pixel_value=1,
+            ),
             Resize(
                 config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
                 config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,

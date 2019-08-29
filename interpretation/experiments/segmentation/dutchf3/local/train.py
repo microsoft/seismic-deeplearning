@@ -1,67 +1,48 @@
+# Copyright (c) Microsoft Corporation. All rights reserved. 
+# Licensed under the MIT License.  
 # /* spell-checker: disable */
 
 import logging
 import logging.config
 import os
 from datetime import datetime
+from os import path
 
+import cv2
 import fire
 import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision.utils as vutils
+from albumentations import (Compose, GaussNoise, HorizontalFlip, Normalize,
+                            PadIfNeeded, Resize)
 from ignite.contrib.handlers import CosineAnnealingScheduler
 from ignite.engine import Events
 from ignite.metrics import Loss
 from ignite.utils import convert_tensor
 from sklearn.model_selection import train_test_split
 from tensorboardX import SummaryWriter
-from toolz import compose
+from toolz import compose, itertoolz
 from torch.utils import data
 from tqdm import tqdm
 
-from cv_lib.event_handlers import (
-    SnapshotHandler,
-    logging_handlers,
-    tensorboard_handlers,
-)
+from cv_lib.event_handlers import (SnapshotHandler, logging_handlers,
+                                   tensorboard_handlers)
 from cv_lib.event_handlers.logging_handlers import Evaluator
-from cv_lib.event_handlers.tensorboard_handlers import (
-    create_image_writer,
-    create_summary_writer,
-)
-
-from cv_lib.segmentation.dutchf3.data import (
-    get_train_loader,
-    decode_segmap,
-    split_train_val,
-    split_non_overlapping_train_val,
-)
-from cv_lib.segmentation.dutchf3.engine import (
-    create_supervised_evaluator,
-    create_supervised_trainer,
-)
-from cv_lib.segmentation.dutchf3.metrics import MeanIoU, PixelwiseAccuracy
-from cv_lib.segmentation import models
-from cv_lib.segmentation.dutchf3.utils import (
-    current_datetime,
-    generate_path,
-    git_branch,
-    git_hash,
-    np_to_tb,
-)
+from cv_lib.event_handlers.tensorboard_handlers import (create_image_writer,
+                                                        create_summary_writer)
+from cv_lib.segmentation.dutchf3.data import (decode_segmap, get_train_loader,
+                                              split_non_overlapping_train_val,
+                                              split_train_val)
+from cv_lib.segmentation.dutchf3.engine import (create_supervised_evaluator,
+                                                create_supervised_trainer)
+from cv_lib.segmentation.dutchf3.metrics import (FrequencyWeightedIoU,
+                                                 MeanClassAccuracy, MeanIoU,
+                                                 PixelwiseAccuracy)
+from cv_lib.segmentation.dutchf3.utils import (current_datetime, generate_path,
+                                               git_branch, git_hash, np_to_tb)
 from default import _C as config
 from default import update_config
-from albumentations import (
-    Compose,
-    HorizontalFlip,
-    GaussNoise,
-    Normalize,
-    Resize,
-    PadIfNeeded,
-)
-import cv2
-from toolz import itertoolz
 
 
 def prepare_batch(batch, device=None, non_blocking=False):
@@ -104,64 +85,38 @@ def run(*options, cfg=None):
     )
 
     # Setup Augmentations
+    basic_aug = Compose(
+        [
+            Normalize(
+                mean=(config.TRAIN.MEAN,),
+                std=(config.TRAIN.STD,),
+                max_pixel_value=1,
+            ),
+            Resize(
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+                always_apply=True,
+            ),
+            PadIfNeeded(
+                min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
+                min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
+                border_mode=cv2.BORDER_CONSTANT,
+                always_apply=True,
+                mask_value=255,
+            ),
+        ]
+    )
     if config.TRAIN.AUGMENTATION:
         train_aug = Compose(
-            # TODO: Should we apply std scaling?
             [
-                Resize(
-                    config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-                    config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-                    always_apply=True,
-                ),
+                basic_aug,
                 HorizontalFlip(p=0.5),
-                # GaussNoise(var_limit=(0.02) ** 2),
-                Normalize(
-                    mean=(config.TRAIN.MEAN,),
-                    std=(config.TRAIN.STD,),
-                    max_pixel_value=1,
-                ),
-                PadIfNeeded(
-                    min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
-                    min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                    border_mode=cv2.BORDER_CONSTANT,
-                    always_apply=True,
-                    mask_value=255,
-                ),
             ]
         )
-        val_aug = Compose(
-            # TODO: Should we apply std scaling?
-            [
-                Resize(
-                    config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-                    config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-                    always_apply=True,
-                ),
-                Normalize(
-                    mean=(config.TRAIN.MEAN,),
-                    std=(config.TRAIN.STD,),
-                    max_pixel_value=1,
-                ),
-                PadIfNeeded(
-                    min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
-                    min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                    border_mode=cv2.BORDER_CONSTANT,
-                    always_apply=True,
-                    mask_value=255,
-                ),
-            ]
-        )
+        val_aug = basic_aug
     else:
-        data_aug = Compose(
-            [
-                Normalize(
-                    mean=(config.TRAIN.MEAN,),
-                    std=(config.TRAIN.STD,),
-                    max_pixel_value=1,
-                ),
-            ]
-        )
-    
+        train_aug = val_aug = basic_aug
+
     TrainPatchLoader = get_train_loader(config)
 
     train_set = TrainPatchLoader(
@@ -172,13 +127,12 @@ def run(*options, cfg=None):
         augmentations=train_aug,
     )
 
-    # Without Augmentation:
     val_set = TrainPatchLoader(
         split="val",
         is_transform=True,
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
-        augmentations=val_aug
+        augmentations=val_aug,
     )
 
     n_classes = train_set.n_classes
@@ -190,7 +144,7 @@ def run(*options, cfg=None):
         shuffle=True,
     )
     val_loader = data.DataLoader(
-        train_set,
+        val_set,
         batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU,
         num_workers=config.WORKERS,
     )
@@ -202,6 +156,7 @@ def run(*options, cfg=None):
         device = "cuda"
     model = model.to(device)  # Send to GPU
 
+
     optimizer = torch.optim.SGD(
         model.parameters(),
         lr=config.TRAIN.MAX_LR,
@@ -209,15 +164,17 @@ def run(*options, cfg=None):
         weight_decay=config.TRAIN.WEIGHT_DECAY,
     )
 
-    tboard_log_dir = generate_path(
-        config.LOG_DIR,
+    output_dir = generate_path(
+        config.OUTPUT_DIR,
         git_branch(),
         git_hash(),
         config.MODEL.NAME,
         current_datetime(),
     )
-    summary_writer = create_summary_writer(log_dir=tboard_log_dir)
-    snapshot_duration = scheduler_step * len(train_set)
+    summary_writer = create_summary_writer(
+        log_dir=path.join(output_dir, config.LOG_DIR)
+    )
+    snapshot_duration = scheduler_step * len(train_loader)
     scheduler = CosineAnnealingScheduler(
         optimizer,
         "lr",
@@ -271,6 +228,12 @@ def run(*options, cfg=None):
                 n_classes, device, output_transform=_select_pred_and_mask
             ),
             "nll": Loss(criterion, output_transform=_select_pred_and_mask),
+            "mca": MeanClassAccuracy(
+                n_classes, device, output_transform=_select_pred_and_mask
+            ),
+            "fiou": FrequencyWeightedIoU(
+                n_classes, device, output_transform=_select_pred_and_mask
+            ),
             "pixa": PixelwiseAccuracy(
                 n_classes, device, output_transform=_select_pred_and_mask
             ),
@@ -291,6 +254,8 @@ def run(*options, cfg=None):
                 "IoU": "IoU :",
                 "nll": "Avg loss :",
                 "pixa": "Pixelwise Accuracy :",
+                "mca": "Mean Class Accuracy :",
+                "fiou": "Freq Weighted IoU :",
             },
         ),
     )
@@ -300,7 +265,12 @@ def run(*options, cfg=None):
             summary_writer,
             trainer,
             "epoch",
-            metrics_dict={"IoU": "Validation/IoU", "nll": "Validation/Loss"},
+            metrics_dict={
+                "IoU": "Validation/IoU",
+                "nll": "Validation/Loss",
+                "mca": "Validation/MCA",
+                "fiou": "Validation/FIoU",
+            },
         ),
     )
 
@@ -342,15 +312,8 @@ def run(*options, cfg=None):
     def snapshot_function():
         return (trainer.state.iteration % snapshot_duration) == 0
 
-    output_dir = generate_path(
-        config.OUTPUT_DIR,
-        git_branch(),
-        git_hash(),
-        config.MODEL.NAME,
-        current_datetime(),
-    )
     checkpoint_handler = SnapshotHandler(
-        output_dir,
+        path.join(output_dir, config.TRAIN.MODEL_DIR),
         config.MODEL.NAME,
         snapshot_function,
     )
@@ -359,7 +322,7 @@ def run(*options, cfg=None):
     )
 
     logger.info("Starting training")
-    trainer.run(itertoolz.take(2, train_loader), max_epochs=config.TRAIN.END_EPOCH)
+    trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
 
 
 if __name__ == "__main__":
