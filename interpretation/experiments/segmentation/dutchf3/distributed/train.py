@@ -75,6 +75,7 @@ from albumentations import (
     Resize,
     PadIfNeeded,
 )
+from os import path
 
 import cv2
 
@@ -104,7 +105,6 @@ def run(*options, cfg=None, local_rank=0):
                                       To see what options are available consult default.py
         cfg (str, optional): Location of config file to load. Defaults to None.
     """
-    fraction_validation = 0.2
     update_config(config, options=options, config_file=cfg)
     logging.config.fileConfig(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
@@ -125,73 +125,39 @@ def run(*options, cfg=None, local_rank=0):
 
     scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
-    if local_rank == 0:  # Only do this on local rank otherwise overwriting
-        # Generate the train and validation sets for the model:
-        split_non_overlapping_train_val(
-            config.TRAIN.STRIDE,
-            per_val=fraction_validation,
-            loader_type="patch",
-        )
 
     # Setup Augmentations
+    basic_aug = Compose(
+        [
+            Normalize(
+                mean=(config.TRAIN.MEAN,),
+                std=(config.TRAIN.STD,),
+                max_pixel_value=1,
+            ),
+            Resize(
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+                always_apply=True,
+            ),
+            PadIfNeeded(
+                min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
+                min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
+                border_mode=cv2.BORDER_CONSTANT,
+                always_apply=True,
+                mask_value=255,
+            ),
+        ]
+    )
     if config.TRAIN.AUGMENTATION:
         train_aug = Compose(
-            # TODO: Should we apply std scaling?
             [
-                Resize(
-                    config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-                    config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-                    always_apply=True,
-                ),
+                basic_aug,
                 HorizontalFlip(p=0.5),
-                # GaussNoise(var_limit=(0.02) ** 2),
-                # Normalize(
-                #     mean=(config.TRAIN.MEAN,),
-                #     std=(config.TRAIN.STD,),
-                #     max_pixel_value=1,
-                # ),
-                PadIfNeeded(
-                    min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
-                    min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                    border_mode=cv2.BORDER_CONSTANT,
-                    always_apply=True,
-                    mask_value=255,
-                ),
             ]
         )
-        val_aug = Compose(
-            # TODO: Should we apply std scaling?
-            [
-                Resize(
-                    config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-                    config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-                    always_apply=True,
-                ),
-                # Normalize(
-                #     mean=(config.TRAIN.MEAN,),
-                #     std=(config.TRAIN.STD,),
-                #     max_pixel_value=1,
-                # ),
-                PadIfNeeded(
-                    min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
-                    min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                    border_mode=cv2.BORDER_CONSTANT,
-                    always_apply=True,
-                    mask_value=255,
-                ),
-            ]
-        )
+        val_aug = basic_aug
     else:
-        train_aug = Compose(
-            [
-                Normalize(
-                    mean=(config.TRAIN.MEAN,),
-                    std=(config.TRAIN.STD,),
-                    max_pixel_value=1,
-                )
-            ]
-        )
-        val_aug = train_aug
+        train_aug = val_aug = basic_aug
 
     TrainPatchLoader = get_train_loader(config)
 
@@ -204,7 +170,6 @@ def run(*options, cfg=None, local_rank=0):
     )
     logger.info(f"Training examples {len(train_set)}")
 
-    # Without Augmentation:
     val_set = TrainPatchLoader(
         split="val",
         is_transform=True,
@@ -314,7 +279,7 @@ def run(*options, cfg=None, local_rank=0):
             model_out_dict["y_pred"].squeeze(),
             model_out_dict["mask"].squeeze(),
         )
-    # Need to fix so that the mask isn't used
+    
     evaluator = create_supervised_evaluator(
         model,
         prepare_batch,
@@ -327,6 +292,12 @@ def run(*options, cfg=None, local_rank=0):
                 world_size,
                 config.VALIDATION.BATCH_SIZE_PER_GPU,
                 output_transform=_select_pred_and_mask,
+            ),
+            "mca": apex.MeanClassAccuracy(
+                n_classes, device, output_transform=_select_pred_and_mask
+            ),
+            "fiou": apex.FrequencyWeightedIoU(
+                n_classes, device, output_transform=_select_pred_and_mask
             ),
             "pixa": apex.PixelwiseAccuracy(
                 n_classes, device, output_transform=_select_pred_and_mask
@@ -341,15 +312,17 @@ def run(*options, cfg=None, local_rank=0):
     )
 
     if local_rank == 0:  # Run only on master process
-        tboard_log_dir = generate_path(
-            config.LOG_DIR,
+        output_dir = generate_path(
+            config.OUTPUT_DIR,
             git_branch(),
             git_hash(),
             config.MODEL.NAME,
             current_datetime(),
         )
-        logger.info(f"Logging Tensorboard to {tboard_log_dir}")
-        summary_writer = create_summary_writer(log_dir=tboard_log_dir)
+        summary_writer = create_summary_writer(
+            log_dir=path.join(output_dir, config.LOG_DIR)
+        )
+        logger.info(f"Logging Tensorboard to {path.join(output_dir, config.LOG_DIR)}")
         trainer.add_event_handler(
             Events.EPOCH_STARTED,
             tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"),
@@ -366,6 +339,8 @@ def run(*options, cfg=None, local_rank=0):
                     "IoU": "IoU :",
                     "nll": "Avg loss :",
                     "pixa": "Pixelwise Accuracy :",
+                    "mca": "Mean Class Accuracy :",
+                    "fiou": "Freq Weighted IoU :",  
                 },
             ),
         )
@@ -378,6 +353,8 @@ def run(*options, cfg=None, local_rank=0):
                 metrics_dict={
                     "IoU": "Validation/IoU",
                     "nll": "Validation/Loss",
+                    "mca": "Validation/MCA",
+                    "fiou": "Validation/FIoU",
                 },
             ),
         )
@@ -387,7 +364,7 @@ def run(*options, cfg=None, local_rank=0):
 
         def _tensor_to_numpy(pred_tensor):
             return pred_tensor.squeeze().cpu().numpy()
-        #TODO: Add removal of border on all images
+        
         transform_func = compose(
             np_to_tb, decode_segmap(n_classes=n_classes), _tensor_to_numpy
         )
@@ -420,15 +397,9 @@ def run(*options, cfg=None, local_rank=0):
         def snapshot_function():
             return (trainer.state.iteration % snapshot_duration) == 0
 
-        output_dir = generate_path(
-            config.OUTPUT_DIR,
-            git_branch(),
-            git_hash(),
-            config.MODEL.NAME,
-            current_datetime(),
-        )
+       
         checkpoint_handler = SnapshotHandler(
-            output_dir,
+            path.join(output_dir, config.TRAIN.MODEL_DIR),
             config.MODEL.NAME,
             snapshot_function,
         )
@@ -436,7 +407,7 @@ def run(*options, cfg=None, local_rank=0):
             Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model}
         )
 
-        logger = logging.getLogger(__name__)
+        
         logger.info("Starting training")
 
     trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)

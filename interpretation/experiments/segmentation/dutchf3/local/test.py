@@ -57,10 +57,9 @@ from albumentations import (
 from cv_lib.segmentation.dutchf3.data import (
     decode_segmap,
     get_train_loader,
-    split_non_overlapping_train_val,
-    split_train_val,
     section_loader,
-    add_patch_depth_channels
+    add_patch_depth_channels,
+    get_seismic_labels
 )
 from cv_lib.segmentation.dutchf3.engine import (
     create_supervised_evaluator,
@@ -165,9 +164,9 @@ def _extract_patch(img_p, hdx, wdx, ps, patch_size, aug=None):
     ]
     if aug is not None:
         # TODO: Make depth optional from config
-        # patch = add_patch_depth_channels(aug(image=patch.numpy())['image'])
-        patch = aug(image=patch.numpy())['image']
-        return torch.from_numpy(patch).to(torch.float32).unsqueeze(0)
+        patch = add_patch_depth_channels(aug(image=patch.numpy())['image'])
+        # patch = aug(image=patch.numpy())['image']
+        return torch.from_numpy(patch).to(torch.float32)#.unsqueeze(0)
     else:
         return patch.unsqueeze(dim=0)
 
@@ -233,18 +232,15 @@ def patch_label_2d(model, img, patch_size, stride, config, device):
             batch_indexes, model_output.detach().cpu()
         ):
             output=output.unsqueeze(0)
-            if config.TRAIN.AUGMENTATIONS.PAD.HEIGHT > 0:
-                height_diff = (config.TRAIN.AUGMENTATIONS.PAD.HEIGHT - config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT)//2
-                output = output[
+            # TODO: This is specific to hrnet need to make general
+            output=F.interpolate(output, size=(128, 128), mode="bilinear")
+            output = output[
                     :,
                     :,
-                    height_diff : output.shape[2]-height_diff,
-                    height_diff : output.shape[3]-height_diff,
-                ]
-            
-            if config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT > 0:
-                output=F.interpolate(output, size=(patch_size, patch_size), mode="bilinear")
-            
+                    14 : output.shape[2]-14,
+                    14 : output.shape[3]-14,
+            ]
+                
             output_p[
                 :,
                 :,
@@ -255,6 +251,28 @@ def patch_label_2d(model, img, patch_size, stride, config, device):
     # crop the output_p in the middke
     output = output_p[:, :, ps:-ps, ps:-ps]
     return output
+
+
+
+
+from PIL import Image
+@curry
+def to_image(label_mask, n_classes=6):
+    label_colours = get_seismic_labels()
+    r = label_mask.copy()
+    g = label_mask.copy()
+    b = label_mask.copy()
+    for ll in range(0, n_classes):
+        r[label_mask == ll] = label_colours[ll, 0]
+        g[label_mask == ll] = label_colours[ll, 1]
+        b[label_mask == ll] = label_colours[ll, 2]
+    rgb = np.zeros(
+        (label_mask.shape[0], label_mask.shape[1], label_mask.shape[2], 3)
+    )
+    rgb[:, :, :, 0] = r 
+    rgb[:, :, :, 1] = g
+    rgb[:, :, :, 2] = b
+    return rgb
 
 
 def test(*options, cfg=None):
@@ -340,9 +358,9 @@ def test(*options, cfg=None):
                 gt = labels.numpy()
                 running_metrics_split.update(gt, pred)
                 running_metrics_overall.update(gt, pred)
-                decoded = decode_segmap(pred)
 
-        # get scores and save in writer()
+
+        # get scores
         score, class_iou = running_metrics_split.get_scores()
 
         # Add split results to TB:

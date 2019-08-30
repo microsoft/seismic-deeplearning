@@ -73,7 +73,7 @@ TRAIN:
   WEIGHT_DECAY: 0.0001
   SNAPSHOTS: 5
   AUGMENTATION: True
-  DEPTH: "patch" # Options are No, Patch and Section
+  DEPTH: "section" #"patch" # Options are No, Patch and Section
   STRIDE: 50
   PATCH_SIZE: 100
   AUGMENTATIONS:
@@ -92,7 +92,7 @@ VALIDATION:
   BATCH_SIZE_PER_GPU: 32
 
 TEST:
-  MODEL_PATH: ""
+  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/mat/exp/5cc37bbe5302e1989ef1388d629400a16f82d1a9/seg_hrnet/Aug29_154238/models/seg_hrnet_running_model_16.pth"
   TEST_STRIDE: 10
   SPLIT: 'Both' # Can be Both, Test1, Test2
   INLINE: True

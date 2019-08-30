@@ -31,9 +31,7 @@ from cv_lib.event_handlers import (SnapshotHandler, logging_handlers,
 from cv_lib.event_handlers.logging_handlers import Evaluator
 from cv_lib.event_handlers.tensorboard_handlers import (create_image_writer,
                                                         create_summary_writer)
-from cv_lib.segmentation.dutchf3.data import (decode_segmap, get_train_loader,
-                                              split_non_overlapping_train_val,
-                                              split_train_val)
+from cv_lib.segmentation.dutchf3.data import (decode_segmap, get_train_loader)
 from cv_lib.segmentation.dutchf3.engine import (create_supervised_evaluator,
                                                 create_supervised_trainer)
 from cv_lib.segmentation.dutchf3.metrics import (FrequencyWeightedIoU,
@@ -66,7 +64,7 @@ def run(*options, cfg=None):
                                       To see what options are available consult default.py
         cfg (str, optional): Location of config file to load. Defaults to None.
     """
-    fraction_validation = 0.2
+
     update_config(config, options=options, config_file=cfg)
     logging.config.fileConfig(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
@@ -78,11 +76,6 @@ def run(*options, cfg=None):
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(config.SEED)
     np.random.seed(seed=config.SEED)
-
-    # Generate the train and validation sets for the model:
-    split_non_overlapping_train_val(
-        config.TRAIN.STRIDE, per_val=fraction_validation, loader_type="patch"
-    )
 
     # Setup Augmentations
     basic_aug = Compose(
