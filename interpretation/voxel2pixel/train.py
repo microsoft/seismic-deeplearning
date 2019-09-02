@@ -1,57 +1,55 @@
-# Compatability Imports
+# Copyright (c) Microsoft. All rights reserved.
+# Licensed under the MIT license.
+
+# code modified from https://github.com/waldeland/CNN-for-ASI
+
 from __future__ import print_function
 from os.path import join
-
 import torch
 from torch import nn
-import torch.nn.functional as F
-from data import readSEGY, readLabels, get_slice
+from data import read_segy, read_labels, get_slice
 from batch import get_random_batch
 from torch.autograd import Variable
-from torch.utils.data import DataLoader, Dataset
+from texture_net import TextureNet
 import tb_logger
-
-
-import numpy as np
-from utils import *
-
-# This is the network definition proposed in the paper
+import utils
 
 # Parameters
-dataset_name = "F3"
-im_size = 65
-batch_size = (
-    32
-)  # If you have a GPU with little memory, try reducing this to 16 (may degrade results)
-use_gpu = True  # Switch to toggle the use of GPU or not
-log_tensorboard = True  # Log progress on tensor board
-if log_tensorboard:
+DATASET_NAME = "F3"
+IM_SIZE = 65
+# If you have a GPU with little memory, try reducing this to 16 (may degrade results)
+BATCH_SIZE = 32
+# Switch to toggle the use of GPU or not
+USE_GPU = True
+# Log progress on tensor board
+LOG_TENSORBOARD = True
+
+# the rest of the code
+if LOG_TENSORBOARD:
     logger = tb_logger.TBLogger("log", "Train")
 
-# See the texture_net.py file for the network configuration
-from texture_net import TextureNet
-
+# This is the network definition proposed in the paper
 network = TextureNet(n_classes=2)
 
-# Loss function
-cross_entropy = nn.CrossEntropyLoss()  # Softmax function is included
+# Loss function - Softmax function is included
+cross_entropy = nn.CrossEntropyLoss()
 
 # Optimizer to control step size in gradient descent
 optimizer = torch.optim.Adam(network.parameters())
 
 # Transfer model to gpu
-if use_gpu:
+if USE_GPU and torch.cuda.is_available():
     network = network.cuda()
 
 # Load the data cube and labels
-data, data_info = readSEGY(join(dataset_name, "data.segy"))
-train_class_imgs, train_coordinates = readLabels(
-    join(dataset_name, "train"), data_info
+data, data_info = read_segy(join(DATASET_NAME, "data.segy"))
+train_class_imgs, train_coordinates = read_labels(
+    join(DATASET_NAME, "train"), data_info
 )
-val_class_imgs, _ = readLabels(join(dataset_name, "val"), data_info)
+val_class_imgs, _ = read_labels(join(DATASET_NAME, "val"), data_info)
 
 # Plot training/validation data with labels
-if log_tensorboard:
+if LOG_TENSORBOARD:
     for class_img in train_class_imgs + val_class_imgs:
         logger.log_images(
             class_img[1] + "_" + str(class_img[2]),
@@ -63,7 +61,6 @@ if log_tensorboard:
             class_img[0],
         )
 
-
 # Training loop
 for i in range(2000):
 
@@ -72,8 +69,8 @@ for i in range(2000):
     [batch, labels] = get_random_batch(
         data,
         train_coordinates,
-        im_size,
-        batch_size,
+        IM_SIZE,
+        BATCH_SIZE,
         random_flip=True,
         random_stretch=0.2,
         random_rot_xy=180,
@@ -85,7 +82,7 @@ for i in range(2000):
     labels = Variable(torch.Tensor(labels).long())
 
     # Transfer data to gpu
-    if use_gpu:
+    if USE_GPU and torch.cuda.is_available():
         batch = batch.cuda()
         labels = labels.cuda()
 
@@ -109,16 +106,18 @@ for i in range(2000):
         network.eval()
 
         # Log to training loss/acc
-        print("Iteration:", i, "Training loss:", var_to_np(loss))
-        if log_tensorboard:
-            logger.log_scalar("training_loss", var_to_np(loss), i)
-        for k, v in computeAccuracy(torch.argmax(output, 1), labels).items():
-            if log_tensorboard:
+        print("Iteration:", i, "Training loss:", utils.var_to_np(loss))
+        if LOG_TENSORBOARD:
+            logger.log_scalar("training_loss", utils.var_to_np(loss), i)
+        for k, v in utils.compute_accuracy(
+            torch.argmax(output, 1), labels
+        ).items():
+            if LOG_TENSORBOARD:
                 logger.log_scalar("training_" + k, v, i)
             print(" -", k, v, "%")
 
     # every 100th iteration
-    if i % 100 == 0 and log_tensorboard:
+    if i % 100 == 0 and LOG_TENSORBOARD:
         network.eval()
 
         # Output predicted train/validation class/probability images
@@ -127,35 +126,35 @@ for i in range(2000):
             slice = class_img[1]
             slice_no = class_img[2]
 
-            class_img = interpret(
+            class_img = utils.interpret(
                 network.classify,
                 data,
                 data_info,
                 slice,
                 slice_no,
-                im_size,
+                IM_SIZE,
                 16,
                 return_full_size=True,
-                use_gpu=use_gpu,
+                use_gpu=USE_GPU,
             )
             logger.log_images(
                 slice + "_" + str(slice_no) + "_pred_class", class_img, i
             )
 
-            class_img = interpret(
+            class_img = utils.interpret(
                 network,
                 data,
                 data_info,
                 slice,
                 slice_no,
-                im_size,
+                IM_SIZE,
                 16,
                 return_full_size=True,
-                use_gpu=use_gpu,
+                use_gpu=USE_GPU,
             )
             logger.log_images(
                 slice + "_" + str(slice_no) + "_pred_prob", class_img, i
             )
 
         # Store trained network
-        torch.save(network.state_dict(), join(dataset_name, "saved_model.pt"))
+        torch.save(network.state_dict(), join(DATASET_NAME, "saved_model.pt"))

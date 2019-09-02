@@ -12,7 +12,12 @@ EAGE E-lecture which you can watch: [*Seismic interpretation with deep learning*
 ### Setup to get started
 - make sure you follow `SETUP.md` file in root of repo to install all the proper dependencies.
 - download the data by running `scrips/get_F3_voxel.sh` from the root of this repo, i.e. from DeepSeismic folder.
-This will automatically download the required data and will place it in the `F3` subfolder of this repo.
+This will download the training and validation labels/masks.
+- to get the main input dataset which is the [Dutch F3 dataset](https://terranubis.com/datainfo/Netherlands-Offshore-F3-Block-Complete), 
+navigate to [MalenoV](https://github.com/bolgebrygg/MalenoV) project website and follow the links (which will lead to 
+[this](https://drive.google.com/drive/folders/0B7brcf-eGK8CbGhBdmZoUnhiTWs) download). Save this file as 
+`interpretation/voxel2pixel/F3/data.segy`
+
  
 ### Monitoring progress with TensorBoard
 - from the `voxel2pixel` directory, run `tensorboard --logdir='log'` (all runtime logging information is

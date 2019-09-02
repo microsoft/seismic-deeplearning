@@ -1,4 +1,7 @@
-# Compatability Imports
+# Copyright (c) Microsoft. All rights reserved.
+# Licensed under the MIT license.
+
+# code modified from https://github.com/waldeland/CNN-for-ASI
 from __future__ import print_function
 
 import os
@@ -34,12 +37,12 @@ else:
 import multiprocessing
 
 from os.path import join
-from data import readSEGY, get_slice
+from data import read_segy, get_slice
 from texture_net import TextureNet
 import itertools
 import numpy as np
 import tb_logger
-from data import writeSEGY
+from data import write_segy
 
 # graphical progress bar
 from tqdm import tqdm
@@ -54,8 +57,8 @@ class ModelWrapper(nn.Module):
         super(ModelWrapper, self).__init__()
         self.texture_model = texture_model
 
-    def forward(self, input):
-        return self.texture_model.classify(input)
+    def forward(self, input_net):
+        return self.texture_model.classify(input_net)
 
 
 class MyDataset(Dataset):
@@ -74,9 +77,9 @@ class MyDataset(Dataset):
         x, y, z = pixel
         # TODO: current bottleneck - can we slice out voxels any faster
         small_cube = self.data[
-            x - self.window : x + self.window + 1,
-            y - self.window : y + self.window + 1,
-            z - self.window : z + self.window + 1,
+            x - self.window: x + self.window + 1,
+            y - self.window: y + self.window + 1,
+            z - self.window: z + self.window + 1,
         ]
 
         return small_cube[np.newaxis, :, :, :], pixel
@@ -122,12 +125,12 @@ def main_worker(gpu, ngpus_per_node, args):
     # set default GPU device for this worker
     torch.cuda.set_device(args.gpu)
     # set up device for the rest of the code
-    device = torch.device("cuda:" + str(args.gpu))
+    local_device = torch.device("cuda:" + str(args.gpu))
 
     # Load trained model (run train.py to create trained
     network = TextureNet(n_classes=N_CLASSES)
     model_state_dict = torch.load(
-        join(args.data, "saved_model.pt"), map_location=device
+        join(args.data, "saved_model.pt"), map_location=local_device
     )
     network.load_state_dict(model_state_dict)
     network.eval()
@@ -155,14 +158,14 @@ def main_worker(gpu, ngpus_per_node, args):
     # Read 3D cube
     # NOTE: we cannot pass this data manually as serialization of data into each python process is costly,
     # so each worker has to load the data on its own.
-    data, data_info = readSEGY(join(args.data, "data.segy"))
+    data, data_info = read_segy(join(args.data, "data.segy"))
 
     # Get half window size
     window = IM_SIZE // 2
 
     # reduce data size for debugging
     if args.debug:
-        data = data[0 : 3 * window]
+        data = data[0: 3 * window]
 
     # generate full list of coordinates
     # memory footprint of this isn't large yet, so not need to wrap as a generator
@@ -184,7 +187,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # we only score first batch in debug mode
     if args.debug:
-        coord_list = coord_list[0 : args.batch_size]
+        coord_list = coord_list[0: args.batch_size]
 
     # prepare the data
     print("setup dataset")
@@ -220,8 +223,8 @@ def main_worker(gpu, ngpus_per_node, args):
     with torch.no_grad():
         print("no grad")
         for (chunk, pixel) in tqdm(my_loader):
-            input = chunk.cuda(args.gpu, non_blocking=True)
-            output = model(input)
+            data_input = chunk.cuda(args.gpu, non_blocking=True)
+            output = model(data_input)
             # save and deal with it later on CPU
             # we want to make sure order is preserved
             pixels_x += pixel[0].tolist()
@@ -388,7 +391,7 @@ def main():
     print("-- aggregating results --")
 
     # Read 3D cube
-    data, data_info = readSEGY(join(args.data, "data.segy"))
+    data, data_info = read_segy(join(args.data, "data.segy"))
 
     # Log to tensorboard - input slice
     logger = tb_logger.TBLogger("log", "Test")
@@ -404,12 +407,12 @@ def main():
     predictions = []
     for i in range(args.world_size):
         with open("results_{}.json".format(i), "r") as f:
-            dict = json.load(f)
+            results_dict = json.load(f)
 
-        x_coords += dict["pixels_x"]
-        y_coords += dict["pixels_y"]
-        z_coords += dict["pixels_z"]
-        predictions += dict["preds"]
+        x_coords += results_dict["pixels_x"]
+        y_coords += results_dict["pixels_y"]
+        z_coords += results_dict["pixels_z"]
+        predictions += results_dict["preds"]
 
     """
     So because of Python's GIL having multiple workers write to the same array is not efficient - basically
@@ -446,7 +449,7 @@ def main():
     print("-- writing segy --")
     in_file = join(args.data, "data.segy".format(RESOLUTION))
     out_file = join(args.data, "salt_{}.segy".format(RESOLUTION))
-    writeSEGY(out_file, in_file, classified_cube)
+    write_segy(out_file, in_file, classified_cube)
 
     print("-- logging prediction --")
     # log prediction to tensorboard
