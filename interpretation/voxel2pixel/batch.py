@@ -1,14 +1,20 @@
+# Copyright (c) Microsoft. All rights reserved.
+# Licensed under the MIT license.
+
+# code modified from https://github.com/waldeland/CNN-for-ASI
+
 import numpy as np
 
+
 def get_random_batch(
-        data_cube,
-        label_coordinates,
-        im_size,
-        num_batch_size,
-        random_flip=False,
-        random_stretch=None,
-        random_rot_xy=None,
-        random_rot_z=None,
+    data_cube,
+    label_coordinates,
+    im_size,
+    num_batch_size,
+    random_flip=False,
+    random_stretch=None,
+    random_rot_xy=None,
+    random_rot_z=None,
 ):
     """
     Returns a batch of augmented samples with center pixels randomly drawn from label_coordinates
@@ -65,7 +71,7 @@ def get_random_batch(
         # Pick random location from the label_coordinates for this class:
         coords_for_class = label_coordinates[class_keys[class_ind]]
         random_index = rand_int(0, coords_for_class.shape[1])
-        coord = coords_for_class[:, random_index: random_index + 1]
+        coord = coords_for_class[:, random_index : random_index + 1]
 
         # Move grid to be centered around this location
         grid += coord
@@ -220,18 +226,18 @@ def trilinear_interpolation(input_array, indices):
 
     # put all samples outside datacube to 0
     inds_out_of_range = (
-            (x0 < 0)
-            | (x1 < 0)
-            | (y0 < 0)
-            | (y1 < 0)
-            | (z0 < 0)
-            | (z1 < 0)
-            | (x0 >= n0)
-            | (x1 >= n0)
-            | (y0 >= n1)
-            | (y1 >= n1)
-            | (z0 >= n2)
-            | (z1 >= n2)
+        (x0 < 0)
+        | (x1 < 0)
+        | (y0 < 0)
+        | (y1 < 0)
+        | (z0 < 0)
+        | (z1 < 0)
+        | (x0 >= n0)
+        | (x1 >= n0)
+        | (y0 >= n1)
+        | (y1 >= n1)
+        | (z0 >= n2)
+        | (z1 >= n2)
     )
 
     x0[inds_out_of_range] = 0
@@ -245,14 +251,14 @@ def trilinear_interpolation(input_array, indices):
     y = y_indices - y0
     z = z_indices - z0
     output = (
-            input_array[x0, y0, z0] * (1 - x) * (1 - y) * (1 - z)
-            + input_array[x1, y0, z0] * x * (1 - y) * (1 - z)
-            + input_array[x0, y1, z0] * (1 - x) * y * (1 - z)
-            + input_array[x0, y0, z1] * (1 - x) * (1 - y) * z
-            + input_array[x1, y0, z1] * x * (1 - y) * z
-            + input_array[x0, y1, z1] * (1 - x) * y * z
-            + input_array[x1, y1, z0] * x * y * (1 - z)
-            + input_array[x1, y1, z1] * x * y * z
+        input_array[x0, y0, z0] * (1 - x) * (1 - y) * (1 - z)
+        + input_array[x1, y0, z0] * x * (1 - y) * (1 - z)
+        + input_array[x0, y1, z0] * (1 - x) * y * (1 - z)
+        + input_array[x0, y0, z1] * (1 - x) * (1 - y) * z
+        + input_array[x1, y0, z1] * x * (1 - y) * z
+        + input_array[x0, y1, z1] * (1 - x) * y * z
+        + input_array[x1, y1, z0] * x * y * (1 - z)
+        + input_array[x1, y1, z1] * x * y * z
     )
 
     output[inds_out_of_range] = 0
@@ -302,12 +308,12 @@ TODO: the following is not needed and should be added as tests later.
 
 # Test the batch-functions
 if __name__ == "__main__":
-    from data import readSEGY, readLabels, get_slice
+    from data import read_segy, read_labels, get_slice
     import tb_logger
     import numpy as np
     import os
 
-    data, data_info = readSEGY(os.path.join("F3", "data.segy"))
+    data, data_info = read_segy(os.path.join("F3", "data.segy"))
 
     train_coordinates = {"1": np.expand_dims(np.array([50, 50, 50]), 1)}
 
@@ -336,7 +342,7 @@ if __name__ == "__main__":
     )
     logger.log_images("dip", batch)
 
-    train_cls_imgs, train_coordinates = readLabels(
+    train_cls_imgs, train_coordinates = read_labels(
         os.path.join("F3", "train"), data_info
     )
     [batch, labels] = get_random_batch(data, train_coordinates, 65, 32)

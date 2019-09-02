@@ -1,4 +1,8 @@
-# Compatability Imports
+# Copyright (c) Microsoft. All rights reserved.
+# Licensed under the MIT license.
+
+# code modified from https://github.com/waldeland/CNN-for-ASI
+
 from __future__ import print_function
 from os.path import isfile, join
 
@@ -8,7 +12,17 @@ import numpy as np
 import scipy.misc
 
 
-def readSEGY(filename):
+def read_segy(filename):
+    """
+    Read in a SEGY-format file given a filename
+
+    Args:
+        filename: input filename
+
+    Returns:
+        numpy data array and its info as a dictionary (tuple)
+
+    """
     print("Loading data cube from", filename, "with:")
 
     # Read full data cube
@@ -17,7 +31,7 @@ def readSEGY(filename):
     # Put temporal axis first
     data = np.moveaxis(data, -1, 0)
 
-    # Make data cube fast to acess
+    # Make data cube fast to access
     data = np.ascontiguousarray(data, "float32")
 
     # Read meta data
@@ -27,18 +41,30 @@ def readSEGY(filename):
     print("  Timeslices: ", "1", ":", data.shape[0])
 
     # Make dict with cube-info
-    data_info = {}
-    data_info["crossline_start"] = segyfile.xlines[0]
-    data_info["inline_start"] = segyfile.ilines[0]
-    data_info["timeslice_start"] = 1  # Todo: read this from segy
-    data_info["shape"] = data.shape
+    # TODO: read this from segy
     # Read dt and other params needed to do create a new
+    data_info = {
+        "crossline_start": segyfile.xlines[0],
+        "inline_start": segyfile.ilines[0],
+        "timeslice_start": 1,
+        "shape": data.shape,
+    }
 
     return data, data_info
 
 
-# Writes out_cube to a segy-file (out_filename) with same header/size as in_filename
-def writeSEGY(out_filename, in_filename, out_cube):
+def write_segy(out_filename, in_filename, out_cube):
+    """
+    Writes out_cube to a segy-file (out_filename) with same header/size as in_filename
+
+    Args:
+        out_filename:
+        in_filename:
+        out_cube:
+
+    Returns:
+
+    """
     # Select last channel
     if type(out_cube) is list:
         out_cube = out_cube[-1]
@@ -61,6 +87,7 @@ def writeSEGY(out_filename, in_filename, out_cube):
             iline = out_cube[i - iline_start, :, :]
             src.iline[i] = np.ascontiguousarray(iline.astype(dtype))
 
+    # TODO: rewrite this whole function - this is terrible
     # Moving temporal axis first again - just in case the user want to keep working on it
     out_cube = np.moveaxis(out_cube, -1, 0)
 
@@ -73,8 +100,18 @@ inline_alias = ["inline", "in-line", "iline", "y"]
 crossline_alias = ["crossline", "cross-line", "xline", "x"]
 timeslice_alias = ["timeslice", "time-slice", "t", "z", "depthslice", "depth"]
 
-# Read labels from an image
-def readLabels(foldername, data_info):
+
+def read_labels(foldername, data_info):
+    """
+    Read labels from an image.
+
+    Args:
+        foldername: folder which contains the image.
+        data_info: dictionary describing the data
+
+    Returns:
+        list of labels and list of coordinates
+    """
     files = [f for f in listdir(foldername) if isfile(join(foldername, f))]
 
     label_imgs = []
@@ -117,7 +154,7 @@ def readLabels(foldername, data_info):
                 img = interpolate_to_fit_data(
                     img, slice_type, slice_no, data_info
                 )
-                label_img = parseLabelsInImage(img)
+                label_img = parse_labels_in_image(img)
 
                 # Get coordinates for slice
                 coords = get_coordinates_for_slice(
@@ -163,8 +200,17 @@ class_color_coding = [
     [255, 255, 0],  # yellow
 ]
 
-# Convert RGB image to class img
-def parseLabelsInImage(img):
+
+def parse_labels_in_image(img):
+    """
+    Convert RGB image to class img.
+
+    Args:
+        img: 3-channel image array
+
+    Returns:
+        monotonically increasing class labels
+    """
     label_img = np.int16(img[:, :, 0]) * 0 - 1  # -1 = no class
 
     # decompose color channels (#Alpha is ignored)
@@ -195,8 +241,21 @@ def parseLabelsInImage(img):
     return label_img
 
 
-# Function to resize image if needed
 def interpolate_to_fit_data(img, slice_type, slice_no, data_info):
+    """
+    Function to resize image if needed
+
+    Args:
+        img: image array
+        slice_type: inline, crossline or timeslice slice type
+        slice_no: slice number
+        data_info: data info dictionary distracted from SEGY file
+
+    Returns:
+        resized image array
+
+    """
+
     # Get wanted output size
     if slice_type == "inline":
         n0 = data_info["shape"][0]
@@ -210,8 +269,20 @@ def interpolate_to_fit_data(img, slice_type, slice_no, data_info):
     return scipy.misc.imresize(img, (n0, n1), interp="nearest")
 
 
-# Get coordinates for slice in the full cube
 def get_coordinates_for_slice(slice_type, slice_no, data_info):
+    """
+
+    Get coordinates for slice in the full cube
+
+    Args:
+        slice_type: type of slice, e.g. inline, crossline, etc
+        slice_no: slice number
+        data_info: data dictionary array
+
+    Returns:
+        index coordinates of the voxel
+
+    """
     ds = data_info["shape"]
 
     # Coordinates for cube
@@ -251,22 +322,32 @@ def get_coordinates_for_slice(slice_type, slice_no, data_info):
     return coords
 
 
-# Return data-slice
 def get_slice(data, data_info, slice_type, slice_no, window=0):
+    """
+    Return data-slice
+
+    Args:
+        data: input 3D voxel numpy array
+        data_info: data info dictionary
+        slice_type: type of slice, like inline, crossline, etc
+        slice_no: slice number
+        window: window size around center pixel
+
+    Returns:
+        2D slice of the voxel as a numpy array
+
+    """
 
     if slice_type == "inline":
         start = data_info["inline_start"]
-        slice_no = slice_no - start
 
-        slice = data[:, slice_no - window : slice_no + window + 1, :]
     elif slice_type == "crossline":
         start = data_info["crossline_start"]
-        slice_no = slice_no - start
-        slice = data[:, slice_no - window : slice_no + window + 1, :]
 
     elif slice_type == "timeslice":
         start = data_info["timeslice_start"]
-        slice_no = slice_no - start
-        slice = data[:, slice_no - window : slice_no + window + 1, :]
+
+    slice_no = slice_no - start
+    slice = data[:, slice_no - window : slice_no + window + 1, :]
 
     return np.squeeze(slice)

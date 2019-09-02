@@ -1,7 +1,12 @@
-# Compatability Imports
+# Copyright (c) Microsoft. All rights reserved.
+# Licensed under the MIT license.
+
+# code modified from https://github.com/waldeland/CNN-for-ASI
+
 from __future__ import print_function
 from os.path import join
 
+# TODO: make this nicer and remove the non-bare except for PEP8 compliance
 try:
     import tensorflow as tf
 except:
@@ -15,8 +20,12 @@ import numpy as np
 import torch
 import datetime
 
-
+# TODO: it looks like the majority of the methods of this class are static and as such they should be in utils
 class TBLogger(object):
+    """
+    TensorBoard logger class
+    """
+
     def __init__(self, log_dir, folder_name=""):
 
         self.log_dir = join(
@@ -28,15 +37,34 @@ class TBLogger(object):
         self.log_dir = self.log_dir.replace("//", "/")
         self.writer = tf.summary.FileWriter(self.log_dir)
 
-    # Add scalar
     def log_scalar(self, tag, value, step=0):
+        """
+        Add scalar
+
+        Args:
+            tag: tag
+            value: simple_value
+            step: step
+
+        """
         summary = tf.Summary(
             value=[tf.Summary.Value(tag=tag, simple_value=value)]
         )
         self.writer.add_summary(summary, step)
 
-    def make_list_of_2D_array(self, im):
-        if type(im) == type([]):
+    # TODO: this should probably be a static method - take care of this when re-writing the whole thing
+    def make_list_of_2d_array(self, im):
+        """
+        Flatten 2D array to a list
+
+        Args:
+            im: image
+
+        Returns:
+            Flattened image list
+
+        """
+        if isinstance(im, list):
             return im
         ims = []
         if len(im.shape) == 2:
@@ -51,23 +79,32 @@ class TBLogger(object):
         return ims
 
     def log_images(self, tag, images, step=0, dim=2, max_imgs=50, cm="jet"):
+        """
+        Log images to TensorBoard
+
+        Args:
+            tag: image tag
+            images: list of images
+            step: training step
+            dim: image shape (3 for voxel)
+            max_imgs: max number of images
+            cm: colormap
+
+        """
 
         # Make sure images are on numpy format in case the input is a Torch-variable
         images = self.convert_to_numpy(images)
 
-        try:
-            if len(images.shape) > 2:
-                dim = 3
-        except:
-            None
+        if len(images.shape) > 2:
+            dim = 3
 
         # Make list of images
         if dim == 2:
-            images = self.make_list_of_2D_array(images)
+            images = self.make_list_of_2d_array(images)
 
         # If 3D we make one list for each slice-type
         if dim == 3:
-            new_images_ts, new_images_il, new_images_cl = self.get_slices_from_3D(
+            new_images_ts, new_images_il, new_images_cl = self.get_slices_from_3d(
                 images
             )
             self.log_images(
@@ -114,8 +151,15 @@ class TBLogger(object):
         summary = tf.Summary(value=im_summaries)
         self.writer.add_summary(summary, step)
 
-    # Cuts out middle slices from image
-    def get_slices_from_3D(self, img):
+    # TODO: probably another static method
+    def get_slices_from_3d(self, img):
+        """
+        Cuts out middle slices from image
+
+        Args:
+            img: image array
+
+        """
 
         new_images_ts = []
         new_images_il = []
@@ -152,8 +196,16 @@ class TBLogger(object):
 
         return new_images_ts, new_images_il, new_images_cl
 
-    # Convert torch to numpy
+    # TODO: another static method most likely
     def convert_to_numpy(self, im):
+        """
+        Convert torch to numpy
+
+        Args:
+            im: image array
+
+        """
+
         if type(im) == torch.autograd.Variable:
             # Put on CPU
             im = im.cpu()

@@ -1,10 +1,20 @@
-# Compatability Imports
+# Copyright (c) Microsoft. All rights reserved.
+# Licensed under the MIT license.
+
+# code modified from https://github.com/waldeland/CNN-for-ASI
+
 from __future__ import print_function
 
 import torch
 import numpy as np
 from torch.autograd import Variable
 from scipy.interpolate import interpn
+import sys
+import time
+
+# global parameters
+ST = 0
+LAST_UPDATE = 0
 
 
 def interpret(
@@ -18,17 +28,38 @@ def interpret(
     return_full_size=True,
     use_gpu=True,
 ):
+    """
+    Down-samples a slice from the classified image and upsamples to full resolution if needed. Basically
+    given a full 3D-classified voxel at a particular resolution (say we classify every n-th pixel as given by the
+    subsampl variable below) we take a particular slice from the voxel and optoinally blow it up to full resolution
+    as if we classified every single pixel.
+
+    Args:
+        network: pytorch model definition
+        data: input voxel
+        data_info: input voxel information
+        slice: slice type which we want to interpret
+        slice_no: slice number
+        im_size: size of the voxel
+        subsampl: at what resolution do we want to subsample, e.g. we move across every subsampl pixels
+        return_full_size: boolean flag, enable if you want to return full size without downsampling
+        use_gpu: boolean flag to use the GPU
+
+    Returns:
+        upsampled slice
+
+    """
+
     # Wrap np.linspace in compact function call
-    def ls(N):
-        return np.linspace(0, N - 1, N, dtype="int")
+    ls = lambda N: np.linspace(0, N - 1, N, dtype="int")
 
     # Size of cube
-    N0, N1, N2 = data.shape
+    n0, n1, n2 = data.shape
 
     # Coords for full cube
-    x0_range = ls(N0)
-    x1_range = ls(N1)
-    x2_range = ls(N2)
+    x0_range = ls(n0)
+    x1_range = ls(n1)
+    x2_range = ls(n2)
 
     # Coords for subsampled cube
     pred_points = (
@@ -59,6 +90,9 @@ def interpret(
         x0_range = np.array([slice_no])
         pred_points = (pred_points[1], pred_points[2])
 
+    else:
+        class_cube = None
+
     # Grid for small class slice/cube
     n0, n1, n2 = class_cube.shape
     x0_grid, x1_grid, x2_grid = np.meshgrid(
@@ -66,43 +100,41 @@ def interpret(
     )
 
     # Grid for full slice/cube
-    X0_grid, X1_grid, X2_grid = np.meshgrid(
+    full_x0_grid, full_x1_grid, full_x2_grid = np.meshgrid(
         x0_range, x1_range, x2_range, indexing="ij"
     )
 
     # Indexes for large cube at small cube pixels
-    X0_grid_sub = X0_grid[::subsampl, ::subsampl, ::subsampl]
-    X1_grid_sub = X1_grid[::subsampl, ::subsampl, ::subsampl]
-    X2_grid_sub = X2_grid[::subsampl, ::subsampl, ::subsampl]
+    full_x0_grid_sub = full_x0_grid[::subsampl, ::subsampl, ::subsampl]
+    full_x1_grid_sub = full_x1_grid[::subsampl, ::subsampl, ::subsampl]
+    full_x2_grid_sub = full_x2_grid[::subsampl, ::subsampl, ::subsampl]
 
     # Get half window size
     w = im_size // 2
 
     # Loop through center pixels in output cube
-    for i in range(X0_grid_sub.size):
+    for i in range(full_x0_grid_sub.size):
 
         # Get coordinates in small and large cube
         x0 = x0_grid.ravel()[i]
         x1 = x1_grid.ravel()[i]
         x2 = x2_grid.ravel()[i]
 
-        X0 = X0_grid_sub.ravel()[i]
-        X1 = X1_grid_sub.ravel()[i]
-        X2 = X2_grid_sub.ravel()[i]
+        full_x0 = full_x0_grid_sub.ravel()[i]
+        full_x1 = full_x1_grid_sub.ravel()[i]
+        full_x2 = full_x2_grid_sub.ravel()[i]
 
         # Only compute when a full 65x65x65 cube can be extracted around center pixel
         if (
-            X0 > w
-            and X1 > w
-            and X2 > w
-            and X0 < N0 - w + 1
-            and X1 < N1 - w + 1
-            and X2 < N2 - w + 1
+            min(full_x0, full_x1, full_x2) > w
+            and full_x0 < n0 - w + 1
+            and full_x1 < n1 - w + 1
+            and full_x2 < n2 - w + 1
         ):
 
             # Get mini-cube around center pixel
             mini_cube = data[
-                X0 - w : X0 + w + 1, X1 - w : X1 + w + 1, X2 - w : X2 + w + 1
+                full_x0 - w: full_x0 + w + 1, full_x1 - w: full_x1 + w + 1, full_x2 - w: full_x2 + w + 1
             ]
 
             # Get predicted "probabilities"
@@ -120,7 +152,7 @@ def interpret(
             out = np.squeeze(out)
 
             # Make one output pr output channel
-            if type(class_cube) != type(list()):
+            if not isinstance(class_cube, list):
                 class_cube = np.split(
                     np.repeat(class_cube[:, :, :, np.newaxis], out.size, 3),
                     out.size,
@@ -136,37 +168,39 @@ def interpret(
 
         # Keep user informed about progress
         if slice == "full":
-            printProgressBar(i, x0_grid.size)
+            print_progress_bar(i, x0_grid.size)
 
     # Resize to input size
     if return_full_size:
         if slice == "full":
             print("Interpolating down sampled results to fit input cube")
 
-        N = X0_grid.size
+        N = full_x0_grid.size
 
         # Output grid
         if slice == "full":
             grid_output_cube = np.concatenate(
                 [
-                    X0_grid.reshape([N, 1]),
-                    X1_grid.reshape([N, 1]),
-                    X2_grid.reshape([N, 1]),
+                    full_x0_grid.reshape([N, 1]),
+                    full_x1_grid.reshape([N, 1]),
+                    full_x2_grid.reshape([N, 1]),
                 ],
                 1,
             )
         elif slice == "inline":
             grid_output_cube = np.concatenate(
-                [X0_grid.reshape([N, 1]), X2_grid.reshape([N, 1])], 1
+                [full_x0_grid.reshape([N, 1]), full_x2_grid.reshape([N, 1])], 1
             )
         elif slice == "crossline":
             grid_output_cube = np.concatenate(
-                [X0_grid.reshape([N, 1]), X1_grid.reshape([N, 1])], 1
+                [full_x0_grid.reshape([N, 1]), full_x1_grid.reshape([N, 1])], 1
             )
         elif slice == "timeslice":
             grid_output_cube = np.concatenate(
-                [X1_grid.reshape([N, 1]), X2_grid.reshape([N, 1])], 1
+                [full_x1_grid.reshape([N, 1]), full_x2_grid.reshape([N, 1])], 1
             )
+        else:
+            grid_output_cube = None
 
         # Interpolation
         for i in range(len(class_cube)):
@@ -189,7 +223,7 @@ def interpret(
                 [x0_range.size, x1_range.size, x2_range.size]
             )
 
-            # If ouput is class labels we convert the interpolated array to ints
+            # If output is class labels we convert the interpolated array to ints
             if is_int:
                 class_cube[i] = class_cube[i].astype("int32")
 
@@ -203,24 +237,32 @@ def interpret(
     return class_cube
 
 
-# Print progress information
-import sys
-import time
-
-st = 0
-last_update = 0
-
-# Adapted from https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console/14879561#14879561
-def printProgressBar(
+# TODO: this should probably be replaced with TQDM
+def print_progress_bar(
     iteration, total, prefix="", suffix="", decimals=1, length=100, fill="="
 ):
-    global st, last_update
+    """
+    Privides a progress bar implementation.
+
+    Adapted from https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console/14879561#14879561
+
+    Args:
+        iteration: iteration number
+        total: total number of iterations
+        prefix: comment prefix in display
+        suffix: comment suffix in display
+        decimals: how many decimals to display
+        length: character length of progress bar
+        fill: character to display as progress bar
+
+    """
+    global ST, LAST_UPDATE
 
     # Expect itteration to go from 0 to N-1
     iteration = iteration + 1
 
     # Only update every 5 second
-    if time.time() - last_update < 5:
+    if time.time() - LAST_UPDATE < 5:
         if iteration == total:
             time.sleep(1)
         else:
@@ -232,13 +274,13 @@ def printProgressBar(
         exp_m = ""
         exp_s = ""
     elif iteration == total:
-        exp_time = time.time() - st
+        exp_time = time.time() - ST
         exp_h = int(exp_time / 3600)
         exp_m = int(exp_time / 60 - exp_h * 60.0)
         exp_s = int(exp_time - exp_m * 60.0 - exp_h * 3600.0)
     else:
-        exp_time = (time.time() - st) / (iteration - 1) * total - (
-            time.time() - st
+        exp_time = (time.time() - ST) / (iteration - 1) * total - (
+            time.time() - ST
         )
         exp_h = int(exp_time / 3600)
         exp_m = int(exp_time / 60 - exp_h * 60.0)
@@ -247,8 +289,8 @@ def printProgressBar(
     percent = ("{0:." + str(decimals) + "f}").format(
         100 * (iteration / float(total))
     )
-    filledLength = int(length * iteration // total)
-    bar = fill * filledLength + "-" * (length - filledLength)
+    filled_length = int(length * iteration // total)
+    bar = fill * filled_length + "-" * (length - filled_length)
     if iteration != total:
         print(
             "\r%s |%s| %s%% %s - %sh %smin %ss left"
@@ -262,12 +304,24 @@ def printProgressBar(
     sys.stdout.write("\033[F")
     # Print New Line on Complete
     if iteration == total:
-        print
-    last_update = time.time()
+        print("")
+    # last_update = time.time()
 
 
-# Function that returns the GPU number of a variable/module (or False if on CPU)
+# TODO: rewrite this whole function to get rid of excepts
+# TODO: also not sure what this function is for - it's almost as if it's not needed - try to remove it.
 def gpu_no_of_var(var):
+    """
+    Function that returns the GPU number or whether the tensor is on GPU or not
+
+    Args:
+        var: torch tensor
+
+    Returns:
+        The CUDA device that the torch tensor is on, or whether the tensor is on GPU
+
+    """
+
     try:
         is_cuda = next(var.parameters()).is_cuda
     except:
@@ -282,8 +336,18 @@ def gpu_no_of_var(var):
         return False
 
 
-# Take a pytorch variable and make numpy
+# TODO: remove all the try except statements
 def var_to_np(var):
+    """
+    Take a pyTorch tensor and convert it to numpy array of the same shape, as the name suggests.
+
+    Args:
+        var: input variable
+
+    Returns:
+        numpy array of the tensor
+
+    """
     if type(var) in [np.array, np.ndarray]:
         return var
 
@@ -312,7 +376,18 @@ def var_to_np(var):
     return var
 
 
-def computeAccuracy(predicted_class, labels):
+def compute_accuracy(predicted_class, labels):
+    """
+    Accuracy performance metric which needs to be computed
+
+    Args:
+        predicted_class: pyTorch tensor with predictions
+        labels: pyTorch tensor with ground truth labels
+
+    Returns:
+        Accuracy calculation as a dictionary per class and average class accuracy across classes
+
+    """
     labels = var_to_np(labels)
     predicted_class = var_to_np(predicted_class)
 
