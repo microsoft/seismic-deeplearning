@@ -83,6 +83,9 @@ _C.TEST.TEST_STRIDE = 10
 _C.TEST.SPLIT = 'Both' # Can be Both, Test1, Test2
 _C.TEST.INLINE = True
 _C.TEST.CROSSLINE = True
+_C.TEST.POST_PROCESSING = CN() # Model output postprocessing
+_C.TEST.POST_PROCESSING.SIZE = 128 # Size to interpolate to in pixels
+_C.TEST.POST_PROCESSING.CROP_PIXELS = 14 # Number of pixels to crop top, bottom, left and right
 
 
 def update_config(cfg, options=None, config_file=None):

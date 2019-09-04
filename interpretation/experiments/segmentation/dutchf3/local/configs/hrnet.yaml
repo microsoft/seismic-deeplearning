@@ -91,9 +91,12 @@ TRAIN:
 VALIDATION:
   BATCH_SIZE_PER_GPU: 32
 
-TEST:
-  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/mat/exp/5cc37bbe5302e1989ef1388d629400a16f82d1a9/seg_hrnet/Aug29_154238/models/seg_hrnet_running_model_16.pth"
+TEST: 
+  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/mat/exp/ccb7206b41dc7411609705e49d9f4c2d74c6eb88/seg_hrnet/Aug30_141919/models/seg_hrnet_running_model_18.pth"
   TEST_STRIDE: 10
   SPLIT: 'Both' # Can be Both, Test1, Test2
   INLINE: True
   CROSSLINE: True
+  POST_PROCESSING: # Expect output to be 64x64 and label to be 128x128 with 28 being padding
+    SIZE: 128 # 
+    CROP_PIXELS: 14 # Number of pixels to crop top, bottom, left and right
