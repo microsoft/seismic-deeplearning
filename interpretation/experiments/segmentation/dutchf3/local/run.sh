@@ -1,3 +1,4 @@
 #!/bin/bash
 export PYTHONPATH=/data/home/mat/repos/DeepSeismic/interpretation:$PYTHONPATH
-python train.py --cfg "configs/hrnet.yaml"
+export CUDA_VISIBLE_DEVICES=1
+python train.py --cfg "configs/seresnet_unet.yaml"
