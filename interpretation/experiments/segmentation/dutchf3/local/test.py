@@ -319,11 +319,6 @@ def to_image(label_mask, n_classes=6):
     rgb[:, :, :, 2] = b
     return rgb
 
-from PIL import Image
-def save_image(numpy_array, n_classes, filename):
-    if len(numpy_array.shape)==4:
-        numpy_array=numpy_array.squeeze(0)
-    Image.fromarray(to_image(numpy_array, n_classes=n_classes).squeeze(0).astype('uint8')).save(filename)
 
 def _evaluate_split(
     split,
@@ -374,9 +369,6 @@ def _evaluate_split(
             gt = labels.numpy()
             running_metrics_split.update(gt, pred)
             running_metrics_overall.update(gt, pred)
-            #image out here
-            # save_image(pred, 6, f"{config.MODEL.NAME}_{split}_{i}_pred.jpeg")
-            # save_image(gt, 6, f"{config.MODEL.NAME}_{split}_{i}_label.jpeg")
             
 
     # get scores
@@ -419,8 +411,8 @@ def _write_section_file(labels, section_file):
 
 
 def test(*options, cfg=None):
-    n_classes = 6
     update_config(config, options=options, config_file=cfg)
+    n_classes = config.DATASET.NUM_CLASSES
     logging.config.fileConfig(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

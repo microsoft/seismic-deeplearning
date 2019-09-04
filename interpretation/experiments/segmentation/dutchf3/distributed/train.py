@@ -24,7 +24,6 @@ from ignite.contrib.handlers import (
 from ignite.engine import Events
 from ignite.metrics import Loss
 from ignite.utils import convert_tensor
-from sklearn.model_selection import train_test_split
 from tensorboardX import SummaryWriter
 from toolz import compose, curry
 from torch.utils import data
@@ -44,8 +43,6 @@ from cv_lib.event_handlers.tensorboard_handlers import (
 from cv_lib.segmentation.dutchf3.data import (
     get_train_loader,
     decode_segmap,
-    split_train_val,
-    split_non_overlapping_train_val,
 )
 from cv_lib.segmentation.dutchf3.engine import (
     create_supervised_evaluator,
@@ -126,6 +123,10 @@ def run(*options, cfg=None, local_rank=0):
     scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
+    torch.manual_seed(config.SEED)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(config.SEED)
+    np.random.seed(seed=config.SEED)
     # Setup Augmentations
     basic_aug = Compose(
         [

@@ -3,22 +3,22 @@ CUDNN:
   DETERMINISTIC: false
   ENABLED: true
 GPUS: (0,)
-OUTPUT_DIR: 'output'
+OUTPUT_DIR: 'output' 
 LOG_DIR: 'log'
 WORKERS: 4
 PRINT_FREQ: 10
 LOG_CONFIG: /data/home/mat/repos/DeepSeismic/logging.conf
 SEED: 2019
 
+
 DATASET:
   NUM_CLASSES: 6
   ROOT: /mnt/alaudah
-
+  CLASS_WEIGHTS: [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 MODEL:
   NAME: resnet_unet
   IN_CHANNELS: 3
-
 
 TRAIN:
   BATCH_SIZE_PER_GPU: 16
@@ -30,7 +30,7 @@ TRAIN:
   WEIGHT_DECAY: 0.0001
   SNAPSHOTS: 5
   AUGMENTATION: True
-  DEPTH: "patch" # Options are No, Patch and Section
+  DEPTH: "section" # Options are No, Patch and Section
   STRIDE: 50
   PATCH_SIZE: 100
   AUGMENTATIONS:
@@ -40,15 +40,20 @@ TRAIN:
     PAD:
       HEIGHT: 256
       WIDTH: 256
+  MEAN: 0.0009997 # 0.0009996710808862074
+  STD: 0.20977 # 0.20976548783479299 
+  MODEL_DIR: "models"
+
 
 VALIDATION:
   BATCH_SIZE_PER_GPU: 32
 
-  output/mat/exp/74d07f41ff0dc72920c279cc93f2eb1f42ed8a0d/resnet_unet/Aug26_165055/
-
 TEST:
-  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/mat/exp/188e66a26115760b7cbde7e9f6a626b6519a3bb7/patch_deconvnet/Aug25_102649/patch_deconvnet_running_model_25.pth"
+  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/mat/exp/dc2e2d20b7f6d508beb779ffff37c77d0139e588/resnet_unet/Sep01_125513/models/resnet_unet_snapshot1model_52.pth"
   TEST_STRIDE: 10
   SPLIT: 'Both' # Can be Both, Test1, Test2
   INLINE: True
   CROSSLINE: True
+  POST_PROCESSING: 
+    SIZE: 128 
+    CROP_PIXELS: 14 # Number of pixels to crop top, bottom, left and right
