@@ -3,20 +3,22 @@ CUDNN:
   DETERMINISTIC: false
   ENABLED: true
 GPUS: (0,)
-OUTPUT_DIR: 'output'
+OUTPUT_DIR: 'output' 
 LOG_DIR: 'log'
 WORKERS: 4
 PRINT_FREQ: 10
 LOG_CONFIG: /data/home/mat/repos/DeepSeismic/logging.conf
 SEED: 2019
 
+
 DATASET:
-  NUM_CLASSES: 1
+  NUM_CLASSES: 6
   ROOT: /mnt/alaudah
+  CLASS_WEIGHTS: [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 MODEL:
   NAME: patch_deconvnet
-  IN_CHANNELS: 3
+  IN_CHANNELS: 1
 
 
 TRAIN:
@@ -24,10 +26,34 @@ TRAIN:
   BEGIN_EPOCH: 0
   END_EPOCH: 300
   MIN_LR: 0.001
-  MAX_LR: 0.1
+  MAX_LR: 0.02
   MOMENTUM: 0.9
   WEIGHT_DECAY: 0.0001
   SNAPSHOTS: 5
+  AUGMENTATION: True
+  DEPTH: "No" # Options are No, Patch and Section
+  STRIDE: 50
+  PATCH_SIZE: 99
+  AUGMENTATIONS:
+    RESIZE:
+      HEIGHT: 99
+      WIDTH: 99
+    PAD:
+      HEIGHT: 99
+      WIDTH: 99
+  MEAN: 0.0009997 # 0.0009996710808862074
+  STD: 0.20977 # 0.20976548783479299 
+  MODEL_DIR: "models"
+
+VALIDATION:
+  BATCH_SIZE_PER_GPU: 512
 
 TEST:
-  BATCH_SIZE_PER_GPU: 128
+  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/mat/exp/5cc37bbe5302e1989ef1388d629400a16f82d1a9/patch_deconvnet/Aug27_200339/models/patch_deconvnet_snapshot1model_50.pth"
+  TEST_STRIDE: 10
+  SPLIT: 'Both' # Can be Both, Test1, Test2
+  INLINE: True
+  CROSSLINE: True
+  POST_PROCESSING: 
+    SIZE: 99 
+    CROP_PIXELS: 0 # Number of pixels to crop top, bottom, left and right

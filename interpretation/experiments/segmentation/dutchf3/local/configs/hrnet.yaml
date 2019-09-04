@@ -97,6 +97,6 @@ TEST:
   SPLIT: 'Both' # Can be Both, Test1, Test2
   INLINE: True
   CROSSLINE: True
-  POST_PROCESSING: # Expect output to be 64x64 and label to be 128x128 with 28 being padding
+  POST_PROCESSING: 
     SIZE: 128 # 
     CROP_PIXELS: 14 # Number of pixels to crop top, bottom, left and right
