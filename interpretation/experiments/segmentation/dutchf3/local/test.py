@@ -8,58 +8,27 @@ Modified version of the Alaudah testing script
 #TODO: Needs to be improved. Needs to be able to run across multiple GPUs and better factoring around the loader
 """
 
-import argparse
 import itertools
 import logging
 import logging.config
 import os
-from datetime import datetime
 from os import path
-from os.path import join as pjoin
 
 import cv2
 import fire
 import numpy as np
 import torch
 import torch.nn.functional as F
-import torchvision.utils as vutils
-from albumentations import (Compose, GaussNoise, HorizontalFlip, Normalize,
+from albumentations import (Compose, Normalize,
                             PadIfNeeded, Resize)
-from ignite.contrib.handlers import (ConcatScheduler, CosineAnnealingScheduler,
-                                     CustomPeriodicEvent,
-                                     LinearCyclicalScheduler)
-from ignite.engine import Events
-from ignite.metrics import Loss
-from ignite.utils import convert_tensor
-from sklearn.model_selection import train_test_split
-from tensorboardX import SummaryWriter
-from toolz import compose, curry, itertoolz, pipe
-from toolz.itertoolz import take
-from torch.utils import data
-from tqdm import tqdm
-
-from cv_lib.event_handlers import (SnapshotHandler, logging_handlers,
-                                   tensorboard_handlers)
-from cv_lib.event_handlers.logging_handlers import Evaluator
-from cv_lib.event_handlers.tensorboard_handlers import (create_image_writer,
-                                                        create_summary_writer)
-from cv_lib.segmentation.dutchf3.data import (TestSectionLoaderWithDepth,
-                                              add_patch_depth_channels,
-                                              decode_segmap,
+from cv_lib.segmentation import models
+from cv_lib.segmentation.dutchf3.data import (add_patch_depth_channels,
                                               get_seismic_labels,
-                                              get_test_loader,
-                                              get_train_loader)
-from cv_lib.segmentation.dutchf3.engine import (create_supervised_evaluator,
-                                                create_supervised_trainer)
-from cv_lib.segmentation.dutchf3.metrics import (MeanIoU, PixelwiseAccuracy,
-                                                 apex)
-from cv_lib.segmentation.dutchf3.utils import (current_datetime, generate_path,
-                                               git_branch, git_hash, np_to_tb)
-                                               get_distributed_data_loaders,
-                                               kfold_split)
-                                                 create_supervised_trainer)
+                                              get_test_loader)
 from default import _C as config
 from default import update_config
+from toolz import compose, curry, itertoolz, pipe
+from torch.utils import data
 
 _CLASS_NAMES = [
     "upper_ns",
@@ -351,7 +320,6 @@ def _evaluate_split(
         for i, (images, labels) in enumerate(test_loader):
             logger.info(f"split: {split}, section: {i}")
             total_iteration = total_iteration + 1
-            image_original, labels_original = images, labels
 
             outputs = _patch_label_2d(
                 model,

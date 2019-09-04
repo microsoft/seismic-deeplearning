@@ -8,27 +8,19 @@ Uses a warmup schedule that then goes into a cyclic learning rate
 import logging
 import logging.config
 import os
-from datetime import datetime
+from os import path
 
+import cv2
 import fire
 import numpy as np
 import torch
-import torch.nn.functional as F
-import torchvision.utils as vutils
-from ignite.contrib.handlers import (
-    ConcatScheduler,
-    CosineAnnealingScheduler,
-    CustomPeriodicEvent,
-    LinearCyclicalScheduler,
+from albumentations import (
+    Compose,
+    HorizontalFlip,
+    Normalize,
+    Resize,
+    PadIfNeeded,
 )
-from ignite.engine import Events
-from ignite.metrics import Loss
-from ignite.utils import convert_tensor
-from tensorboardX import SummaryWriter
-from toolz import compose, curry
-from torch.utils import data
-from tqdm import tqdm
-
 from cv_lib.event_handlers import (
     SnapshotHandler,
     logging_handlers,
@@ -39,7 +31,7 @@ from cv_lib.event_handlers.tensorboard_handlers import (
     create_image_writer,
     create_summary_writer,
 )
-
+from cv_lib.segmentation import models
 from cv_lib.segmentation.dutchf3.data import (
     get_train_loader,
     decode_segmap,
@@ -48,8 +40,7 @@ from cv_lib.segmentation.dutchf3.engine import (
     create_supervised_evaluator,
     create_supervised_trainer,
 )
-from cv_lib.segmentation.dutchf3.metrics import MeanIoU, PixelwiseAccuracy
-from cv_lib.segmentation import models
+from cv_lib.segmentation.dutchf3.metrics import apex
 from cv_lib.segmentation.dutchf3.utils import (
     current_datetime,
     generate_path,
@@ -57,24 +48,18 @@ from cv_lib.segmentation.dutchf3.utils import (
     git_hash,
     np_to_tb,
 )
-from cv_lib.segmentation.dutchf3.engine import (
-    create_supervised_evaluator,
-    create_supervised_trainer,
-)
-from cv_lib.segmentation.dutchf3.metrics import apex
 from default import _C as config
 from default import update_config
-from albumentations import (
-    Compose,
-    HorizontalFlip,
-    GaussNoise,
-    Normalize,
-    Resize,
-    PadIfNeeded,
+from ignite.contrib.handlers import (
+    ConcatScheduler,
+    CosineAnnealingScheduler,
+    LinearCyclicalScheduler,
 )
-from os import path
+from ignite.engine import Events
+from ignite.utils import convert_tensor
+from toolz import compose, curry
+from torch.utils import data
 
-import cv2
 
 def prepare_batch(batch, device=None, non_blocking=False):
     x, y = batch
