@@ -106,23 +106,3 @@ if __name__ == "__main__":
         print(_C, file=f)
 
 
-
-
-def update_config(cfg, options=None, config_file=None):
-    cfg.defrost()
-
-    if config_file:
-        cfg.merge_from_file(config_file)
-
-    if options:
-        cfg.merge_from_list(options)
-
-    cfg.freeze()
-
-
-if __name__ == "__main__":
-    import sys
-
-    with open(sys.argv[1], "w") as f:
-        print(_C, file=f)
-
