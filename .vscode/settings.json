@@ -1,6 +1,40 @@
 {
+    "python.jediEnabled": false,    
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.python"
+    },
     "python.formatting.provider": "black",
-    "python.linting.enabled": true,
-    "python.linting.flake8Enabled": true,
-    "python.linting.pylintEnabled": false,
+    "git.autofetch": true,
+    "python.linting.pylintEnabled": true,
+    "python.pythonPath": "/anaconda/envs/seismic-interpretation/bin/python",
+    "python.linting.pylintArgs": [
+        "--enable=W0614"
+    ],  
+    "python.envFile": "${workspaceFolder}/.env",  
+    "window.zoomLevel": 0,
+    "autoDocstring.docstringFormat": "google",
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 100,
+    "editor.suggestSelection": "first",
+    "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",    
+    "remote.SSH.showLoginTerminal": true,
+    "docker.host": "tcp://msnarwal.eastus.cloudapp.azure.com:2375",
+    "terminal.integrated.env.linux":{
+        "PYTHONPATH": "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local:/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/loader:/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/models:${env:PYTHONPATH}"
+    },
+    "files.exclude": {
+        "**/__pycache__":true,
+        "**/bin":true,
+        "**/deepseismic":true,
+    },
+    "files.watcherExclude":{
+        "**/__pycache__":true,
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/bin": true,
+        "**/deepseismic": true,
+        "**/log": true,
+        "**/output": true,
+        "**/cv_lib.egg-info": true,
+    }
 }
