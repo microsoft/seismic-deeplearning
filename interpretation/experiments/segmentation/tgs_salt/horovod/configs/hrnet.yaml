@@ -1,0 +1,76 @@
+# HRNet configuration
+
+CUDNN:
+  BENCHMARK: true
+  DETERMINISTIC: false
+  ENABLED: true
+OUTPUT_DIR: 'output'
+LOG_DIR: 'log'
+WORKERS: 4
+PRINT_FREQ: 10
+LOG_CONFIG: /workspace/logging.conf
+
+DATASET:
+  NUM_CLASSES: 1
+  ROOT: /data/tgssalt
+
+MODEL:
+  NAME: seg_hrnet
+  PRETRAINED: 'pretrained_models/hrnetv2_w48_imagenet_pretrained.pth'
+  EXTRA:
+    FINAL_CONV_KERNEL: 1
+    STAGE2:
+      NUM_MODULES: 1
+      NUM_BRANCHES: 2
+      BLOCK: BASIC
+      NUM_BLOCKS:
+      - 4
+      - 4
+      NUM_CHANNELS:
+      - 48
+      - 96
+      FUSE_METHOD: SUM
+    STAGE3:
+      NUM_MODULES: 4
+      NUM_BRANCHES: 3
+      BLOCK: BASIC
+      NUM_BLOCKS:
+      - 4
+      - 4
+      - 4
+      NUM_CHANNELS:
+      - 48
+      - 96
+      - 192
+      FUSE_METHOD: SUM
+    STAGE4:
+      NUM_MODULES: 3
+      NUM_BRANCHES: 4
+      BLOCK: BASIC
+      NUM_BLOCKS:
+      - 4
+      - 4
+      - 4
+      - 4
+      NUM_CHANNELS:
+      - 48
+      - 96
+      - 192
+      - 384
+      FUSE_METHOD: SUM
+
+TRAIN:
+  BATCH_SIZE_PER_GPU: 32
+  BEGIN_EPOCH: 0
+  END_EPOCH: 300
+  MIN_LR: 0.001
+  MAX_LR: 0.01
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.0001
+  PAD_LEFT: 27
+  PAD_RIGHT: 27
+  FINE_SIZE: 202
+  SNAPSHOTS: 5
+
+TEST:
+  BATCH_SIZE_PER_GPU: 64
