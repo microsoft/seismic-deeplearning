@@ -1,0 +1,29 @@
+name: seismic-interpretation
+channels:
+ - conda-forge
+ - pytorch
+dependencies:
+  - python=3.6
+  - pip
+  - pytorch
+  - jupyter
+  - ipykernel
+  - torchvision
+  - pandas
+  - opencv
+  - scikit-learn
+  - pip:
+    - pytorch-ignite
+    - fire
+    - toolz
+    - tabulate==0.8.2
+    - Jinja2
+    - gitpython
+    - tensorflow # Installing for Tensorboard
+    - tensorboard
+    - tensorboardx
+    - tqdm
+    - invoke
+    - yacs
+    - albumentations
+    - "--editable=git+https://dev.azure.com/aicat-ongip/AI%20CAT%20OnG%20IP/_git/ComputerVision_fork@c4939283ae7a187047f4e1a1b2f8ea5266d14731#egg=cv_lib&subdirectory=contrib"
