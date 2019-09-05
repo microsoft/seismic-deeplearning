@@ -48,12 +48,8 @@ venv/
 venv.bak/
 wheels/
 
-*/.vscode/*
-.vscode/settings.json
-.vscode/launch.json
 
 .dev_env
-
 .azureml
 
 # Logs
@@ -66,4 +62,5 @@ wheels/
 interpretation/environment/anaconda/local/src/*
 interpretation/environment/anaconda/local/src/cv-lib
 .code-workspace.code-workspace
-.vscode
+**/.vscode
+**/.idea
