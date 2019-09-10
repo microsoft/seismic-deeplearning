@@ -25,7 +25,7 @@ data
     └── train_seismic.npy
 ```
 
-### Data processing
+### Data preparation
 
 To split the dataset into training and validation, please run the [prepare_data.py](prepare_data.py) script.
 
