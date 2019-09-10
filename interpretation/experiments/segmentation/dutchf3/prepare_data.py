@@ -45,17 +45,30 @@ def split_non_overlapping_train_val(
     iline, xline, depth = labels.shape
     logger.debug(f"Data shape [iline|xline|depth] {labels.shape}")
     
-    # INLINE SECTIONS AND PATCHES: ------------------------------------------------
+    # Inline sections
     test_iline = math.floor(iline * per_val/2)
     test_iline_range = itertools.chain(
         range(0, test_iline), range(iline - test_iline, iline)
     )
     train_iline_range = range(test_iline, iline - test_iline)
-    
+
+    # Xline sections
+    test_xline = math.floor(xline * per_val/2)
+    test_xline_range = itertools.chain(
+        range(0, test_xline), range(xline - test_xline, xline)
+    )
+    train_xline_range = range(test_xline, xline - test_xline)
+
+    # Generate entire slices (sections)
     if loader_type == "section":
         train_i_list = ["i_" + str(i) for i in train_iline_range]
         test_i_list = ["i_" + str(i) for i in test_iline_range]
+    
+        train_x_list = ["x_" + str(x) for x in train_xline_range]
+        test_x_list = ["x_" + str(x) for x in test_xline_range]
+    # Generate patches from sections
     elif loader_type == "patch":
+        # Process inlines
         horz_locations = range(0, xline - stride, stride)
         vert_locations = range(0, depth - stride, stride)
         logger.debug("Generating Inline patches")
@@ -76,21 +89,8 @@ def split_non_overlapping_train_val(
         train_i_list = list(
             _i_extract_patches(train_iline_range, horz_locations, vert_locations)
         )
-    else:
-        raise ValueError(f"{loader_type} is not valid category.")
 
-
-    # XLINE SECTIONS AND PATCHES: ------------------------------------------------
-    test_xline = math.floor(xline * per_val/2)
-    test_xline_range = itertools.chain(
-        range(0, test_xline), range(xline - test_xline, xline)
-    )
-    train_xline_range = range(test_xline, xline - test_xline)
-
-    if loader_type == "section":
-        train_x_list = ["x_" + str(x) for x in train_xline_range]
-        test_x_list = ["x_" + str(x) for x in test_xline_range]
-    elif loader_type == "patch":
+        # Process crosslines
         horz_locations = range(0, iline - stride, stride)
         vert_locations = range(0, depth - stride, stride)
 
@@ -110,7 +110,6 @@ def split_non_overlapping_train_val(
         )
     else:
         raise ValueError(f"{loader_type} is not valid category.")
-
 
     train_list = train_x_list + train_i_list
     test_list = test_x_list + test_i_list
@@ -150,9 +149,9 @@ def split_train_val(data_dir, stride, per_val=0.2, loader_type="patch"):
     iline, xline, depth = labels.shape
     logger.debug(f"Data shape [iline|xline|depth] {labels.shape}")
 
-    # INLINE SECTIONS AND PATCHES: ------------------------------------------------
     if (loader_type == "section"):
         i_list =  ["i_" + str(i) for i in range(iline)]
+        x_list = ["x_" + str(x) for x in range(xline)]
     elif (loader_type == "patch"):
         i_list = []
         horz_locations = range(0, xline - stride, stride)
@@ -171,13 +170,7 @@ def split_train_val(data_dir, stride, per_val=0.2, loader_type="patch"):
 
         # flatten the list
         i_list = list(itertools.chain(*i_list))
-    else:
-        raise ValueError(f"{loader_type} is not valid category.")
 
-    # XLINE SECTIONS AND PATCHES: ------------------------------------------------
-    if loader_type == "section":
-        x_list = ["x_" + str(x) for x in range(xline)]
-    elif loader_type == "patch":
         x_list = []
         horz_locations = range(0, iline - stride, stride)
         vert_locations = range(0, depth - stride, stride)
