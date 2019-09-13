@@ -18,7 +18,7 @@ _C.WORKERS = 4
 _C.PRINT_FREQ = 20
 _C.AUTO_RESUME = False
 _C.PIN_MEMORY = True
-_C.LOG_CONFIG = "/data/home/mat/repos/DeepSeismic/logging.conf"
+_C.LOG_CONFIG = "/data/home/vapaunic/repos/DeepSeismic/logging.conf"
 _C.SEED = 42
 
 # Cudnn related params
@@ -35,7 +35,7 @@ _C.DATASET.CLASS_WEIGHTS = [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 # common params for NETWORK
 _C.MODEL = CN()
-_C.MODEL.NAME = "patch_deconvnet"
+_C.MODEL.NAME = "section_deconvnet"
 _C.MODEL.IN_CHANNELS = 1
 _C.MODEL.PRETRAINED = ""
 _C.MODEL.EXTRA = CN(new_allowed=True)
@@ -48,11 +48,12 @@ _C.TRAIN.MAX_LR = 0.01
 _C.TRAIN.MOMENTUM = 0.9
 _C.TRAIN.BEGIN_EPOCH = 0
 _C.TRAIN.END_EPOCH = 484
-_C.TRAIN.BATCH_SIZE_PER_GPU = 32
+_C.TRAIN.BATCH_SIZE_PER_GPU = 16
 _C.TRAIN.WEIGHT_DECAY = 0.0001
 _C.TRAIN.SNAPSHOTS = 5
 _C.TRAIN.MODEL_DIR = "models" # This will be a subdirectory inside OUTPUT_DIR
 _C.TRAIN.AUGMENTATION = True
+_C.TRAIN.USE_SECTIONS = True
 _C.TRAIN.STRIDE = 50
 _C.TRAIN.PATCH_SIZE = 99
 _C.TRAIN.MEAN = 0.0009997 # 0.0009996710808862074
@@ -71,11 +72,11 @@ _C.TRAIN.AUGMENTATIONS.PAD.WIDTH = 256
 
 # validation
 _C.VALIDATION = CN()
-_C.VALIDATION.BATCH_SIZE_PER_GPU = 32
+_C.VALIDATION.BATCH_SIZE_PER_GPU = 16
 
 # TEST
 _C.TEST = CN()
-_C.TEST.MODEL_PATH = ""
+_C.TEST.MODEL_PATH = "/home/vapaunic/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/vapaunic/section/d5f988697aff873d9b6c5f9770aa238c349b9eae/section_deconvnet/Sep11_205127/models/section_deconvnet_running_model_30.pth"
 _C.TEST.TEST_STRIDE = 10
 _C.TEST.SPLIT = 'Both' # Can be Both, Test1, Test2
 _C.TEST.INLINE = True
