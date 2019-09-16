@@ -194,26 +194,26 @@ class runningScore(object):
 #         yield batch_indexes
 
 
-@curry
-def _output_processing_pipeline(config, output):
-    output = output.unsqueeze(0)
-    _, _, h, w = output.shape
-    if config.TEST.POST_PROCESSING.SIZE != h or config.TEST.POST_PROCESSING.SIZE != w:
-        output = F.interpolate(
-            output,
-            size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE),
-            mode="bilinear",
-        )
+# @curry
+# def _output_processing_pipeline(config, output):
+#     output = output.unsqueeze(0)
+#     _, _, h, w = output.shape
+#     if config.TEST.POST_PROCESSING.SIZE != h or config.TEST.POST_PROCESSING.SIZE != w:
+#         output = F.interpolate(
+#             output,
+#             size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE),
+#             mode="bilinear",
+#         )
 
-    if config.TEST.POST_PROCESSING.CROP_PIXELS > 0:
-        _, _, h, w = output.shape
-        output = output[
-            :,
-            :,
-            config.TEST.POST_PROCESSING.CROP_PIXELS : h - config.TEST.POST_PROCESSING.CROP_PIXELS,
-            config.TEST.POST_PROCESSING.CROP_PIXELS : w - config.TEST.POST_PROCESSING.CROP_PIXELS,
-        ]
-    return output.squeeze()
+#     if config.TEST.POST_PROCESSING.CROP_PIXELS > 0:
+#         _, _, h, w = output.shape
+#         output = output[
+#             :,
+#             :,
+#             config.TEST.POST_PROCESSING.CROP_PIXELS : h - config.TEST.POST_PROCESSING.CROP_PIXELS,
+#             config.TEST.POST_PROCESSING.CROP_PIXELS : w - config.TEST.POST_PROCESSING.CROP_PIXELS,
+#         ]
+#     return output.squeeze()
 
 # @curry
 # def to_image(label_mask, n_classes=6):
@@ -239,7 +239,7 @@ def _evaluate_split(
     section_aug,
     model,
 #    pre_processing,
-    output_processing,
+#    output_processing,
     device,
     running_metrics_overall,
     config,
@@ -335,31 +335,19 @@ def test(*options, cfg=None):
                 mean=(config.TRAIN.MEAN,),
                 std=(config.TRAIN.STD,),
                 max_pixel_value=1,
-            )
+            ),
+            Resize(
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+                always_apply=True,
+            ),
         ]
     )
-
-    # patch_aug = Compose(
-    #     [
-    #         Resize(
-    #             config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-    #             config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-    #             always_apply=True,
-    #         ),
-    #         PadIfNeeded(
-    #             min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
-    #             min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-    #             border_mode=cv2.BORDER_CONSTANT,
-    #             always_apply=True,
-    #             mask_value=255,
-    #         ),
-    #     ]
-    # )
 
     # pre_processing = _compose_processing_pipeline(
     #     config.TRAIN.DEPTH, aug=patch_aug
     # )
-    output_processing = _output_processing_pipeline(config)
+    # output_processing = _output_processing_pipeline(config)
 
     splits = (
         ["test1", "test2"]
@@ -380,7 +368,7 @@ def test(*options, cfg=None):
             section_aug,
             model,
             # pre_processing,
-            output_processing,
+            # output_processing,
             device,
             running_metrics_overall,
             config,
