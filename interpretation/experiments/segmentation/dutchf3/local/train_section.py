@@ -18,7 +18,7 @@ from cv_lib.event_handlers.logging_handlers import Evaluator
 from cv_lib.event_handlers.tensorboard_handlers import (create_image_writer,
                                                         create_summary_writer)
 from cv_lib.segmentation import models, tgs_salt
-from cv_lib.segmentation.dutchf3.data import (decode_segmap, get_train_loader)
+from cv_lib.segmentation.dutchf3.data import (decode_segmap, get_section_loader)
 from cv_lib.segmentation.dutchf3.engine import (create_supervised_evaluator,
                                                 create_supervised_trainer)
 from cv_lib.segmentation.dutchf3.metrics import (FrequencyWeightedIoU,
@@ -83,13 +83,13 @@ def run(*options, cfg=None):
                 config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
                 always_apply=True,
             ),
-            PadIfNeeded(
-                min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
-                min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                border_mode=cv2.BORDER_CONSTANT,
-                always_apply=True,
-                mask_value=255,
-            ),
+            # PadIfNeeded(
+            #     min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
+            #     min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
+            #     border_mode=cv2.BORDER_CONSTANT,
+            #     always_apply=True,
+            #     mask_value=255,
+            # ),
         ]
     )
     if config.TRAIN.AUGMENTATION:
@@ -103,21 +103,17 @@ def run(*options, cfg=None):
     else:
         train_aug = val_aug = basic_aug
 
-    TrainLoader = get_train_loader(config)
+    TrainLoader = get_section_loader(config)
 
     train_set = TrainLoader(
         split="train",
         is_transform=True,
-        # stride=config.TRAIN.STRIDE,
-        # patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=train_aug,
     )
 
     val_set = TrainLoader(
         split="val",
         is_transform=True,
-        # stride=config.TRAIN.STRIDE,
-        # patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=val_aug,
     )
 
