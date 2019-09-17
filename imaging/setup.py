@@ -1,7 +1,10 @@
 import setuptools
 
-with open("README.md", "r") as f:
+with open("../README.md", "r") as f:
     long_description = f.read()
+
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
 
 setuptools.setup(
     author="DeepSeismic Maintainers",
@@ -22,23 +25,16 @@ setuptools.setup(
         "https://github.com/opesci/devito/archive/v3.5.tar.gz#egg=devito-3.5"
     ],
     description="DeepSeismic",
-    install_requires=[
-        "click==7.0",
-        "devito==3.5",
-        "h5py==2.9.0",
-        "numpy==1.17.0",
-        "scipy==1.3.0",
-        "sympy==1.4",
-    ],
+    install_requires=requirements,
     license="MIT",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    name="deepseismic",
+    name="deepseismic_imaging",
     packages=setuptools.find_packages(
-        include=["deepseismic", "deepseismic.*"]
+        include=["deepseismic_imaging", "deepseismic_imaging.*"]
     ),
     platforms="any",
-    python_requires=">= 3.5",
+    python_requires=">= 3.6",
     scripts=["bin/ds"],
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],

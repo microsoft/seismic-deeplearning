@@ -4,26 +4,21 @@
 # url: https://github.com/olivesgatech/facies_classification_benchmark
 """Script to generate train and validation sets for Netherlands F3 dataset
 """
-import collections
 import itertools
-import json
 import logging
 import logging.config
 import math
-import os
 import warnings
 from os import path
 
 import fire
 import numpy as np
-import torch
 from sklearn.model_selection import train_test_split
-from toolz import curry
-from torch.utils import data
 
 
 def _get_splits_path(data_dir):
     return path.join(data_dir, "splits")
+
 
 def _get_labels_path(data_dir):
     return path.join(data_dir, "train", "train_labels.npy")
@@ -50,11 +45,11 @@ def _get_aline_range(aline, per_val):
     train_aline_range = range(test_aline, aline - test_aline)
 
     return train_aline_range, test_aline_range
-    
+
 
 def split_section_train_val(data_dir, per_val=0.2, log_config=None):
     """Generate train and validation files for Netherlands F3 dataset.
-    
+
     Args:
         data_dir (str): data directory path
         per_val (float, optional):  the fraction of the volume to use for validation. Defaults to 0.2.
@@ -72,13 +67,13 @@ def split_section_train_val(data_dir, per_val=0.2, log_config=None):
     logger.info(f"Loading {labels_path}")
     labels = np.load(labels_path)
     logger.debug(f"Data shape [iline|xline|depth] {labels.shape}")
-    
+
     iline, xline, _ = labels.shape
     # Inline sections
     train_iline_range, test_iline_range = _get_aline_range(iline, per_val)
     train_i_list = ["i_" + str(i) for i in train_iline_range]
-    test_i_list = ["i_" + str(i) for i in test_iline_range]   
-    
+    test_i_list = ["i_" + str(i) for i in test_iline_range]
+
     # Xline sections
     train_xline_range, test_xline_range = _get_aline_range(xline, per_val)
     train_x_list = ["x_" + str(x) for x in train_xline_range]
@@ -92,10 +87,9 @@ def split_section_train_val(data_dir, per_val=0.2, log_config=None):
     _write_split_files(splits_path, train_list, test_list, "section")
 
 
-
 def split_patch_train_val(data_dir, stride, per_val=0.2, log_config=None):
     """Generate train and validation files for Netherlands F3 dataset.
-    
+
     Args:
         data_dir (str): data directory path
         stride (int): stride to use when sectioning of the volume
@@ -106,19 +100,19 @@ def split_patch_train_val(data_dir, stride, per_val=0.2, log_config=None):
         logging.config.fileConfig(log_config)
 
     logger = logging.getLogger(__name__)
-    
+
     logger.info('Splitting data into patches .... ')
     logger.info(f"Reading data from {data_dir}")
-    
+
     labels_path = _get_labels_path(data_dir)
     logger.info(f"Loading {labels_path}")
     labels = np.load(labels_path)
     logger.debug(f"Data shape [iline|xline|depth] {labels.shape}")
-    
+
     iline, xline, depth = labels.shape
     # Inline sections
     train_iline_range, test_iline_range = _get_aline_range(iline, per_val)
-    
+
     # Xline sections
     train_xline_range, test_xline_range = _get_aline_range(xline, per_val)
 
@@ -198,7 +192,7 @@ def split_alaudah_et_al_19(
     """Generate train and validation files (with overlap) for Netherlands F3 dataset.
     This is the original spliting method from https://github.com/olivesgatech/facies_classification_benchmark
     DON'T USE, SEE NOTES BELOW
-    
+
     Args:
         data_dir (str): data directory path
         stride (int): stride to use when sectioning of the volume
@@ -217,10 +211,10 @@ def split_alaudah_et_al_19(
 
     assert loader_type in ["section", "patch"], f"Loader type {loader_type} is not valid. \
         Please specify either 'section' or 'patch' for loader_type"
-    
+
     # create inline and crossline pacthes for training and validation:
     logger = logging.getLogger(__name__)
-        
+
     logger.info("Reading data from {data_dir}")
 
     labels_path = _get_labels_path(data_dir)
@@ -265,7 +259,7 @@ def split_alaudah_et_al_19(
 
         # flatten the list
         x_list = list(itertools.chain(*x_list))
-    
+
     list_train_val = i_list + x_list
 
     # create train and test splits:
@@ -276,7 +270,6 @@ def split_alaudah_et_al_19(
     _write_split_files(splits_path, train_list, test_list, loader_type)
 
 
-
 if __name__ == "__main__":
     """Example:
     python prepare_data.py split_train_val --data-dir=/mnt/dutch --loader-type="section"
@@ -284,8 +277,6 @@ if __name__ == "__main__":
     python prepare_data.py split_train_val --data-dir=/mnt/dutch --loader-type="patch" --stride=50
 
     """
-    
-    
     fire.Fire(
         {
             "split_train_val": run_split_func,

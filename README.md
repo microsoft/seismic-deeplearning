@@ -2,14 +2,26 @@
 
 ## Interpretation
 
-### Setting up Env
+### Setting up Environment
 Run
 ```bash
-conda env create -f DeepSeismic/interpretation/environment/anaconda/local/environment.yml
+conda env create -f DeepSeismic/environment/anaconda/local/environment.yml
 ```
 This will create the appropriate environment to run experiments
 
-The compute vision repo will be downloaded into the src folder under interpretation/environments/anaconda/local/
+Then you will need to install the common packages for interpretation
+```bash
+conda activate seismic-interpretation
+pip install -e DeepSeismic/deepseismic_interpretation
+```
+
+Then you will also need to pull computer vision contrib
+```bash
+git clone https://aicat-ongip@dev.azure.com/aicat-ongip/AI%20CAT%20OnG%20IP/_git/ComputerVision_fork
+pip install -e ComputerVision_fork/contrib
+```
+
+Both repos are installed in developer mode with the -e flag. This means that to update simply go to the folder and pull the appropriate commit or branch
 
 ### Data
 The scripts expect the data to be contained in /mnt/alaudah

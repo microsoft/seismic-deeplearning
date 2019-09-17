@@ -10,14 +10,21 @@ import cv2
 import fire
 import numpy as np
 import torch
-from albumentations import (Compose, HorizontalFlip, Normalize,
-                            PadIfNeeded, Resize)
+from albumentations import (Compose, HorizontalFlip, Normalize, PadIfNeeded,
+                            Resize)
+from ignite.contrib.handlers import CosineAnnealingScheduler
+from ignite.engine import Events
+from ignite.metrics import Loss
+from ignite.utils import convert_tensor
+from toolz import compose
+from torch.utils import data
+
+from deepseismic_interpretation.dutchf3.data import get_train_loader, decode_segmap
 from cv_lib.event_handlers import (SnapshotHandler, logging_handlers,
                                    tensorboard_handlers)
 from cv_lib.event_handlers.logging_handlers import Evaluator
 from cv_lib.event_handlers.tensorboard_handlers import (create_image_writer,
                                                         create_summary_writer)
-from cv_lib.segmentation.dutchf3.data import (decode_segmap, get_train_loader)
 from cv_lib.segmentation.dutchf3.engine import (create_supervised_evaluator,
                                                 create_supervised_trainer)
 from cv_lib.segmentation.dutchf3.metrics import (FrequencyWeightedIoU,
@@ -25,14 +32,9 @@ from cv_lib.segmentation.dutchf3.metrics import (FrequencyWeightedIoU,
                                                  PixelwiseAccuracy)
 from cv_lib.segmentation.dutchf3.utils import (current_datetime, generate_path,
                                                git_branch, git_hash, np_to_tb)
+
 from default import _C as config
 from default import update_config
-from ignite.contrib.handlers import CosineAnnealingScheduler
-from ignite.engine import Events
-from ignite.metrics import Loss
-from ignite.utils import convert_tensor
-from toolz import compose
-from torch.utils import data
 
 
 def prepare_batch(batch, device=None, non_blocking=False):

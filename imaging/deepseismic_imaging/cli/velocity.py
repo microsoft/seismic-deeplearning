@@ -5,7 +5,7 @@ from typing import Tuple
 import click
 import h5py
 
-from ..velocity import RoethTarantolaGenerator
+from deepseismic_imaging.velocity import RoethTarantolaGenerator
 
 click.option = partial(click.option, show_default=True)
 
