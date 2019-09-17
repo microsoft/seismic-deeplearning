@@ -33,7 +33,7 @@ from cv_lib.event_handlers.tensorboard_handlers import (
 )
 from cv_lib.segmentation import models
 from cv_lib.segmentation import tgs_salt
-from cv_lib.segmentation.dutchf3.data import (
+from deepseismic_interpretation.dutchf3.data import (
     get_train_loader,
     decode_segmap,
 )
