@@ -341,6 +341,13 @@ def test(*options, cfg=None):
                 config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
                 always_apply=True,
             ),
+            PadIfNeeded(
+                min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
+                min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
+                border_mode=cv2.BORDER_CONSTANT,
+                always_apply=True,
+                mask_value=255,
+            ),
         ]
     )
 

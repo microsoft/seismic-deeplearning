@@ -78,11 +78,11 @@ def run(*options, cfg=None):
                 std=(config.TRAIN.STD,),
                 max_pixel_value=1,
             ),
-            Resize(
-                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-                always_apply=True,
-            ),
+            # Resize(
+            #     config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+            #     config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+            #     always_apply=True,
+            # ),
             # PadIfNeeded(
             #     min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
             #     min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
