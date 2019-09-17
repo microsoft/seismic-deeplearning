@@ -33,7 +33,7 @@ from cv_lib.event_handlers.tensorboard_handlers import (
 )
 from cv_lib.segmentation import models
 from deepseismic_interpretation.dutchf3.data import (
-    get_train_loader,
+    get_patch_loader,
     decode_segmap,
 )
 from cv_lib.segmentation.dutchf3.engine import (
@@ -145,7 +145,7 @@ def run(*options, cfg=None, local_rank=0):
     else:
         train_aug = val_aug = basic_aug
 
-    TrainPatchLoader = get_train_loader(config)
+    TrainPatchLoader = get_patch_loader(config)
 
     train_set = TrainPatchLoader(
         split="train",

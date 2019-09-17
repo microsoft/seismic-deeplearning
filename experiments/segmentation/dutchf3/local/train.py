@@ -19,7 +19,7 @@ from ignite.utils import convert_tensor
 from toolz import compose
 from torch.utils import data
 
-from deepseismic_interpretation.dutchf3.data import get_train_loader, decode_segmap
+from deepseismic_interpretation.dutchf3.data import get_patch_loader, decode_segmap
 from cv_lib.event_handlers import (SnapshotHandler, logging_handlers,
                                    tensorboard_handlers)
 from cv_lib.event_handlers.logging_handlers import Evaluator
@@ -104,7 +104,7 @@ def run(*options, cfg=None):
     else:
         train_aug = val_aug = basic_aug
 
-    TrainPatchLoader = get_train_loader(config)
+    TrainPatchLoader = get_patch_loader(config)
 
     train_set = TrainPatchLoader(
         split="train",
