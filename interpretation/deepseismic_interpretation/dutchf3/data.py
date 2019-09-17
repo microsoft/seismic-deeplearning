@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 from toolz import curry
 from torch.utils import data
 
-DATA_ROOT = path.join("/mnt", "alaudah")
+DATA_ROOT = path.join("/mnt", "dutchf3")
 SPLITS = path.join(DATA_ROOT, "splits")
 LABELS = path.join(DATA_ROOT, "train", "train_labels.npy")
 
@@ -56,6 +56,8 @@ class SectionLoader(data.Dataset):
         elif direction == "x":
             im = self.seismic[:, int(number), :]
             lbl = self.labels[:, int(number), :]
+
+        im, lbl = _transform_WH_to_HW(im), _transform_WH_to_HW(lbl)
 
         if self.augmentations is not None:
             augmented_dict = self.augmentations(image=im, mask=lbl)
@@ -104,7 +106,7 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
     def __init__(
         self, split="train", is_transform=True, augmentations=None
     ):
-        super(TrainSectionLoader, self).__init__(
+        super(TrainSectionLoaderWithDepth, self).__init__(
             split=split, is_transform=is_transform, augmentations=augmentations
         )
         self.seismic = add_section_depth_channels(self.seismic)#NCWH
@@ -116,10 +118,10 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
 
         if direction == "i": 
             im = self.seismic[int(number), :, :, :]
-            lbl = self.labels[int(number), :, :, :]
+            lbl = self.labels[int(number), :, :]
         elif direction == "x":
             im = self.seismic[:, :, int(number), :]
-            lbl = self.labels[:, :, int(number), :]
+            lbl = self.labels[ :, int(number), :]
 
             im = np.swapaxes(im, 0, 1)  # From WCH to CWH
 
@@ -135,6 +137,7 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
             im, lbl = self.transform(im, lbl)
 
         return im, lbl
+
 
 class TestSectionLoader(SectionLoader):
     def __init__(
@@ -249,7 +252,7 @@ class PatchLoader(data.Dataset):
 
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
-        # TODO: Remember we are cancelling the shit since we no longer pad
+        # TODO: Remember we are cancelling the shift since we no longer pad
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
 
@@ -456,7 +459,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
 
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
-        # TODO: Remember we are cancelling the shit since we no longer pad
+        # TODO: Remember we are cancelling the shift since we no longer pad
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
         if direction == "i":
@@ -494,14 +497,25 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
         return im, lbl
 
 
-_TRAIN_LOADERS = {
+_TRAIN_PATCH_LOADERS = {
     "section": TrainPatchLoaderWithSectionDepth,
     "patch": TrainPatchLoaderWithDepth,
 }
 
+_TRAIN_SECTION_LOADERS = {
+    "section": TrainSectionLoaderWithDepth
+}
 
-def get_train_loader(cfg):
-    return _TRAIN_LOADERS.get(cfg.TRAIN.DEPTH, TrainPatchLoader)
+
+def get_patch_loader(cfg):
+    assert cfg.TRAIN.DEPTH in ["section", "patch", "none"], f"Depth {cfg.TRAIN.DEPTH} not supported for patch data. \
+            Valid values: section, patch, none."
+    return _TRAIN_PATCH_LOADERS.get(cfg.TRAIN.DEPTH, TrainPatchLoader)
+
+def get_section_loader(cfg):
+    assert cfg.TRAIN.DEPTH in ["section", "none"], f"Depth {cfg.TRAIN.DEPTH} not supported for section data. \
+        Valid values: section, none."
+    return _TRAIN_SECTION_LOADERS.get(cfg.TRAIN.DEPTH, TrainSectionLoader)
 
 
 _TEST_LOADERS = {
@@ -590,13 +604,3 @@ def decode_segmap(label_mask, n_classes=6):
     rgb[:, :, :, 1] = g / 255.0
     rgb[:, :, :, 2] = b / 255.0
     return np.transpose(rgb, (0, 3, 1, 2))
-
-
-def get_loader(arch):
-    if "patch" in arch:
-        return patch_loader
-    elif "section" in arch:
-        return section_loader
-    else:
-        NotImplementedError()
-
