@@ -23,8 +23,35 @@ pip install -e ComputerVision_fork/contrib
 
 Both repos are installed in developer mode with the -e flag. This means that to update simply go to the folder and pull the appropriate commit or branch
 
+## Benchmarks
+
+### Dense Labels
+
+This section contains benchmarks of different algorithms for seismic interpretation on 3D seismic datasets with densely-annotated data.
+
+### Sparse Labels
+
+This section contains benchmarks of different algorithms for seismic interpretation on 3D seismic datasets with sparsely-annotated data and is organized by the levels of sparsity.
+
+| Model \ Dataset | Dutch F3 (Alaudah) | Penobscot |
+| :---:           |    :---:           |     :---: |
+Alaudah base slice | Pixel Acc,  IoU <br> train time (s), score time (s)| |
+Alaudah base patch | Pixel Acc,  IoU <br> train time (s), score time (s)| |
+HRNet slice | | |
+DeepLab V3 slice | | |
+| TODO: add all models | | |
+
+
+#### Scribble-Level Labels
+
+We present results of algorithms which are based on scribble-level annotations, where the annotator labels a large collection of consecutive pixels with no gaps, e.g. brushstroke label.
+
+#### Pixel-Level Labels
+
+We present results of algorithms which are based on pixel-level annotations, where the annotator labels individual pixels and gaps are allowed between pixels; the annotator can also label a small neighborhood of pixels, e.g. large dot of ~100 pixels.
+
 ### Data
-The scripts expect the data to be contained in /mnt/alaudah
+The scripts expect the data to be contained in /mnt/dutchf3
 
 ## Contributing
 
