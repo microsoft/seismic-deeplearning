@@ -1,0 +1,3 @@
+#!/bin/bash
+export PYTHONPATH=/workspace:$PYTHONPATH
+mpirun -np 8 -bind-to none -map-by slot -x NCCL_DEBUG=INFO -x LD_LIBRARY_PATH -x PATH -mca pml ob1 -mca btl ^openib python train.py LOG_CONFIG /workspace/logging.conf DATASET.ROOT /data/dutchf3 MODEL.PRETRAINED /data/hrnet_pretrained/image_classification/hrnetv2_w48_imagenet_pretrained.pth --cfg "/workspace/experiments/segmentation/dutchf3/horovod/configs/hrnet.yaml"

@@ -14,29 +14,38 @@ from sklearn.model_selection import train_test_split
 from toolz import curry
 from torch.utils import data
 
-DATA_ROOT = path.join("/mnt", "dutchf3")
-SPLITS = path.join(DATA_ROOT, "splits")
-LABELS = path.join(DATA_ROOT, "train", "train_labels.npy")
 
-TRAIN_PATH = path.join(DATA_ROOT, "train")
-TEST_PATH = path.join(DATA_ROOT, "test_once")
-TRAIN_SEISMIC = path.join(TRAIN_PATH, "train_seismic.npy")
-TRAIN_LABELS = path.join(TRAIN_PATH, "train_labels.npy")
 
-TEST1_SEISMIC = path.join(TEST_PATH, "test1_seismic.npy")
-TEST2_SEISMIC = path.join(TEST_PATH, "test2_seismic.npy")
+def _train_data_for(data_dir):
+    return path.join(data_dir, "train", "train_seismic.npy")
 
-TEST1_LABELS = path.join(TEST_PATH, "test1_labels.npy")
-TEST2_LABELS = path.join(TEST_PATH, "test2_labels.npy")
 
+def _train_labels_for(data_dir):
+    return path.join(data_dir, "train", "train_labels.npy")
+
+
+def _test1_data_for(data_dir):
+    return path.join(data_dir, "test_once", "test1_seismic.npy")
+
+
+def _test1_labels_for(data_dir):
+    return path.join(data_dir, "test_once", "test1_labels.npy")
+
+
+def _test2_data_for(data_dir):
+    return path.join(data_dir, "test_once", "test2_seismic.npy")
+
+
+def _test2_labels_for(data_dir):
+    return path.join(data_dir, "test_once", "test2_labels.npy")
 
 
 class SectionLoader(data.Dataset):
     def __init__(
-        self, split="train", is_transform=True, augmentations=None
+        self, data_dir, split="train", is_transform=True, augmentations=None
     ):
         self.split = split
-        self.root = DATA_ROOT
+        self.data_dir = data_dir
         self.is_transform = is_transform
         self.augmentations = augmentations
         self.n_classes = 6
@@ -77,24 +86,22 @@ class SectionLoader(data.Dataset):
 
 
 class TrainSectionLoader(SectionLoader):
-
     def __init__(
-        self, split="train", is_transform=True, augmentations=None
+        self, data_dir, split="train", is_transform=True, augmentations=None
     ):
         super(TrainSectionLoader, self).__init__(
-            split=split, is_transform=is_transform, augmentations=augmentations
+            data_dir,
+            split=split,
+            is_transform=is_transform,
+            augmentations=augmentations,
         )
 
-        self.seismic = np.load(
-                path.join(DATA_ROOT, "train", "train_seismic.npy")
-            )
-        self.labels = np.load(
-            path.join(DATA_ROOT, "train", "train_labels.npy")
-        )
+        self.seismic = np.load(_train_data_for(self.data_dir))
+        self.labels = np.load(_train_labels_for(self.data_dir))
         for split in ["train", "val", "train_val"]:
             # reading the file names for 'train', 'val', 'trainval'""
             txt_path = path.join(
-                DATA_ROOT, "splits", "section_" + split + ".txt"
+                self.data_dir, "splits", "section_" + split + ".txt"
             )
             file_list = tuple(open(txt_path, "r"))
             file_list = [id_.rstrip() for id_ in file_list]
@@ -102,21 +109,23 @@ class TrainSectionLoader(SectionLoader):
 
 
 class TrainSectionLoaderWithDepth(TrainSectionLoader):
-
     def __init__(
-        self, split="train", is_transform=True, augmentations=None
+        self, data_dir, split="train", is_transform=True, augmentations=None
     ):
-        super(TrainSectionLoaderWithDepth, self).__init__(
-            split=split, is_transform=is_transform, augmentations=augmentations
+        super(TrainSectionLoader, self).__init__(
+            data_dir,
+            split=split,
+            is_transform=is_transform,
+            augmentations=augmentations,
         )
-        self.seismic = add_section_depth_channels(self.seismic)#NCWH
+        self.seismic = add_section_depth_channels(self.seismic)  # NCWH
 
     def __getitem__(self, index):
 
         section_name = self.sections[self.split][index]
         direction, number = section_name.split(sep="_")
 
-        if direction == "i": 
+        if direction == "i":
             im = self.seismic[int(number), :, :, :]
             lbl = self.labels[int(number), :, :]
         elif direction == "x":
@@ -141,31 +150,26 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
 
 class TestSectionLoader(SectionLoader):
     def __init__(
-        self, split="test1", is_transform=True, augmentations=None
+        self, data_dir, split="test1", is_transform=True, augmentations=None
     ):
         super(TestSectionLoader, self).__init__(
-            split=split, is_transform=is_transform, augmentations=augmentations
+            data_dir,
+            split=split,
+            is_transform=is_transform,
+            augmentations=augmentations,
         )
 
         if "test1" in self.split:
-            self.seismic = np.load(
-                path.join(DATA_ROOT, "test_once", "test1_seismic.npy")
-            )
-            self.labels = np.load(
-                path.join(DATA_ROOT, "test_once", "test1_labels.npy")
-            )
+            self.seismic = np.load(_test1_data_for(self.data_dir))
+            self.labels = np.load(_test1_labels_for(self.data_dir))
         elif "test2" in self.split:
-            self.seismic = np.load(
-                path.join(DATA_ROOT, "test_once", "test2_seismic.npy")
-            )
-            self.labels = np.load(
-                path.join(DATA_ROOT, "test_once", "test2_labels.npy")
-            )
-        
+            self.seismic = np.load(_test2_data_for(self.data_dir))
+            self.labels = np.load(_test2_labels_for(self.data_dir))
+
         # We are in test mode. Only read the given split. The other one might not
         # be available.
         txt_path = path.join(
-            DATA_ROOT, "splits", "section_" + split + ".txt"
+            self.data_dir, "splits", "section_" + split + ".txt"
         )
         file_list = tuple(open(txt_path, "r"))
         file_list = [id_.rstrip() for id_ in file_list]
@@ -174,20 +178,23 @@ class TestSectionLoader(SectionLoader):
 
 class TestSectionLoaderWithDepth(TestSectionLoader):
     def __init__(
-        self, split="test1", is_transform=True, augmentations=None
+        self, data_dir, split="test1", is_transform=True, augmentations=None
     ):
         super(TestSectionLoaderWithDepth, self).__init__(
-            split=split, is_transform=is_transform, augmentations=augmentations
+            data_dir,
+            split=split,
+            is_transform=is_transform,
+            augmentations=augmentations,
         )
 
-        self.seismic = add_section_depth_channels(self.seismic)#NCWH
+        self.seismic = add_section_depth_channels(self.seismic)  # NCWH
 
     def __getitem__(self, index):
 
         section_name = self.sections[self.split][index]
         direction, number = section_name.split(sep="_")
 
-        if direction == "i": 
+        if direction == "i":
             im = self.seismic[int(number), :, :, :]
             lbl = self.labels[int(number), :, :]
         elif direction == "x":
@@ -207,7 +214,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
         if self.is_transform:
             im, lbl = self.transform(im, lbl)
 
-        return im, lbl   
+        return im, lbl
 
 
 def _transform_WH_to_HW(numpy_array):
@@ -221,9 +228,14 @@ class PatchLoader(data.Dataset):
     """
 
     def __init__(
-        self, stride=30, patch_size=99, is_transform=True, augmentations=None
+        self,
+        data_dir,
+        stride=30,
+        patch_size=99,
+        is_transform=True,
+        augmentations=None,
     ):
-        self.root = DATA_ROOT
+        self.data_dir = data_dir
         self.is_transform = is_transform
         self.augmentations = augmentations
         self.n_classes = 6
@@ -292,27 +304,27 @@ class PatchLoader(data.Dataset):
 class TestPatchLoader(PatchLoader):
     def __init__(
         self,
+        data_dir,
         stride=30,
         patch_size=99,
         is_transform=True,
         augmentations=None,
-        seismic_path=TEST1_SEISMIC,
-        labels_path=TEST1_LABELS,
     ):
         super(TestPatchLoader, self).__init__(
+            data_dir,
             stride=stride,
             patch_size=patch_size,
             is_transform=is_transform,
             augmentations=augmentations,
         )
-        self.seismic = np.load(seismic_path)
-        self.labels = np.load(labels_path)
+        self.seismic = np.load(_train_data_for(self.data_dir))
+        self.labels = np.load(_train_labels_for(self.data_dir))
 
         # We are in test mode. Only read the given split. The other one might not
         # be available.
         self.split = "test1"  # TODO: Fix this can also be test2
         txt_path = path.join(
-            DATA_ROOT, "splits", "patch_" + self.split + ".txt"
+            self.data_dir, "splits", "patch_" + self.split + ".txt"
         )
         patch_list = tuple(open(txt_path, "r"))
         self.patches[split] = patch_list
@@ -321,15 +333,15 @@ class TestPatchLoader(PatchLoader):
 class TrainPatchLoader(PatchLoader):
     def __init__(
         self,
+        data_dir,
         split="train",
         stride=30,
         patch_size=99,
         is_transform=True,
         augmentations=None,
-        seismic_path=TRAIN_SEISMIC,
-        labels_path=TRAIN_LABELS,
     ):
         super(TrainPatchLoader, self).__init__(
+            data_dir,
             stride=stride,
             patch_size=patch_size,
             is_transform=is_transform,
@@ -338,15 +350,15 @@ class TrainPatchLoader(PatchLoader):
         # self.seismic = self.pad_volume(np.load(seismic_path))
         # self.labels = self.pad_volume(np.load(labels_path))
         warnings.warn("This no longer pads the volume")
-        self.seismic = np.load(seismic_path)
-        self.labels = np.load(labels_path)
+        self.seismic = np.load(_train_data_for(self.data_dir))
+        self.labels = np.load(_train_labels_for(self.data_dir))
         # We are in train/val mode. Most likely the test splits are not saved yet,
         # so don't attempt to load them.
         self.split = split
         for split in ["train", "val", "train_val"]:
             # reading the file names for 'train', 'val', 'trainval'""
             txt_path = path.join(
-                DATA_ROOT, "splits", "patch_" + split + ".txt"
+                self.data_dir, "splits", "patch_" + split + ".txt"
             )
             patch_list = tuple(open(txt_path, "r"))
             self.patches[split] = patch_list
@@ -355,29 +367,29 @@ class TrainPatchLoader(PatchLoader):
 class TrainPatchLoaderWithDepth(TrainPatchLoader):
     def __init__(
         self,
+        data_dir,
         split="train",
         stride=30,
         patch_size=99,
         is_transform=True,
         augmentations=None,
-        seismic_path=TRAIN_SEISMIC,
-        labels_path=TRAIN_LABELS,
     ):
         super(TrainPatchLoaderWithDepth, self).__init__(
+            data_dir,
             stride=stride,
             patch_size=patch_size,
             is_transform=is_transform,
             augmentations=augmentations,
         )
-        self.seismic = np.load(seismic_path)
-        self.labels = np.load(labels_path)
+        self.seismic = np.load(_train_data_for(self.data_dir))
+        self.labels = np.load(_train_labels_for(self.data_dir))
         # We are in train/val mode. Most likely the test splits are not saved yet,
         # so don't attempt to load them.
         self.split = split
         for split in ["train", "val", "train_val"]:
             # reading the file names for 'train', 'val', 'trainval'""
             txt_path = path.join(
-                DATA_ROOT, "splits", "patch_" + split + ".txt"
+                self.data_dir, "splits", "patch_" + split + ".txt"
             )
             patch_list = tuple(open(txt_path, "r"))
             self.patches[split] = patch_list
@@ -433,22 +445,20 @@ def _transform_HWC_to_CHW(numpy_array):
 class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
     def __init__(
         self,
+        data_dir,
         split="train",
         stride=30,
         patch_size=99,
         is_transform=True,
         augmentations=None,
-        seismic_path=TRAIN_SEISMIC,
-        labels_path=TRAIN_LABELS,
     ):
         super(TrainPatchLoaderWithSectionDepth, self).__init__(
+            data_dir,
             split=split,
             stride=stride,
             patch_size=patch_size,
             is_transform=is_transform,
             augmentations=augmentations,
-            seismic_path=seismic_path,
-            labels_path=labels_path,
         )
         self.seismic = add_section_depth_channels(self.seismic)
 

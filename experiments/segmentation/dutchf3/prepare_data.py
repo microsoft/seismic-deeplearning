@@ -25,7 +25,9 @@ def _get_labels_path(data_dir):
 
 
 def _write_split_files(splits_path, train_list, test_list, loader_type):
-    file_object = open(path.join(splits_path,  loader_type + "_train_val.txt"), "w")
+    file_object = open(
+        path.join(splits_path, loader_type + "_train_val.txt"), "w"
+    )
     file_object.write("\n".join(train_list + test_list))
     file_object.close()
     file_object = open(path.join(splits_path, loader_type + "_train.txt"), "w")
@@ -38,7 +40,7 @@ def _write_split_files(splits_path, train_list, test_list, loader_type):
 
 def _get_aline_range(aline, per_val):
     # Inline sections
-    test_aline = math.floor(aline * per_val/2)
+    test_aline = math.floor(aline * per_val / 2)
     test_aline_range = itertools.chain(
         range(0, test_aline), range(aline - test_aline, aline)
     )
@@ -60,7 +62,7 @@ def split_section_train_val(data_dir, per_val=0.2, log_config=None):
 
     logger = logging.getLogger(__name__)
 
-    logger.info('Splitting data into sections .... ')
+    logger.info("Splitting data into sections .... ")
     logger.info(f"Reading data from {data_dir}")
 
     labels_path = _get_labels_path(data_dir)
@@ -87,12 +89,13 @@ def split_section_train_val(data_dir, per_val=0.2, log_config=None):
     _write_split_files(splits_path, train_list, test_list, "section")
 
 
-def split_patch_train_val(data_dir, stride, per_val=0.2, log_config=None):
+def split_patch_train_val(data_dir, stride, patch, per_val=0.2, log_config=None):
     """Generate train and validation files for Netherlands F3 dataset.
 
     Args:
         data_dir (str): data directory path
         stride (int): stride to use when sectioning of the volume
+        patch (int): size of patch to extract
         per_val (float, optional):  the fraction of the volume to use for validation. Defaults to 0.2.
     """
 
@@ -101,7 +104,7 @@ def split_patch_train_val(data_dir, stride, per_val=0.2, log_config=None):
 
     logger = logging.getLogger(__name__)
 
-    logger.info('Splitting data into patches .... ')
+    logger.info("Splitting data into patches .... ")
     logger.info(f"Reading data from {data_dir}")
 
     labels_path = _get_labels_path(data_dir)
@@ -118,8 +121,8 @@ def split_patch_train_val(data_dir, stride, per_val=0.2, log_config=None):
 
     # Generate patches from sections
     # Process inlines
-    horz_locations = range(0, xline - stride, stride)
-    vert_locations = range(0, depth - stride, stride)
+    horz_locations = range(0, xline - patch, stride)
+    vert_locations = range(0, depth - patch, stride)
     logger.debug("Generating Inline patches")
     logger.debug(horz_locations)
     logger.debug(vert_locations)
@@ -140,8 +143,8 @@ def split_patch_train_val(data_dir, stride, per_val=0.2, log_config=None):
     )
 
     # Process crosslines
-    horz_locations = range(0, iline - stride, stride)
-    vert_locations = range(0, depth - stride, stride)
+    horz_locations = range(0, iline - patch, stride)
+    vert_locations = range(0, depth - patch, stride)
 
     def _x_extract_patches(xline_range, horz_locations, vert_locations):
         for j in xline_range:
@@ -157,7 +160,7 @@ def split_patch_train_val(data_dir, stride, per_val=0.2, log_config=None):
     train_x_list = list(
         _x_extract_patches(train_xline_range, horz_locations, vert_locations)
     )
-    
+
     train_list = train_x_list + train_i_list
     test_list = test_x_list + test_i_list
 
@@ -209,7 +212,10 @@ def split_alaudah_et_al_19(
 
     warnings.warn("THIS CREATES OVERLAPPING TRAINING AND VALIDATION SETS")
 
-    assert loader_type in ["section", "patch"], f"Loader type {loader_type} is not valid. \
+    assert loader_type in [
+        "section",
+        "patch",
+    ], f"Loader type {loader_type} is not valid. \
         Please specify either 'section' or 'patch' for loader_type"
 
     # create inline and crossline pacthes for training and validation:
@@ -223,10 +229,10 @@ def split_alaudah_et_al_19(
     iline, xline, depth = labels.shape
     logger.debug(f"Data shape [iline|xline|depth] {labels.shape}")
 
-    if (loader_type == "section"):
-        i_list =  ["i_" + str(i) for i in range(iline)]
+    if loader_type == "section":
+        i_list = ["i_" + str(i) for i in range(iline)]
         x_list = ["x_" + str(x) for x in range(xline)]
-    elif (loader_type == "patch"):
+    elif loader_type == "patch":
         i_list = []
         horz_locations = range(0, xline - stride, stride)
         vert_locations = range(0, depth - stride, stride)
@@ -236,9 +242,12 @@ def split_alaudah_et_al_19(
         for i in range(iline):
             # for every inline:
             # images are references by top-left corner:
-            locations = [[j, k] for j in horz_locations for k in vert_locations]
+            locations = [
+                [j, k] for j in horz_locations for k in vert_locations
+            ]
             patches_list = [
-                "i_" + str(i) + "_" + str(j) + "_" + str(k) for j, k in locations
+                "i_" + str(i) + "_" + str(j) + "_" + str(k)
+                for j, k in locations
             ]
             i_list.append(patches_list)
 
@@ -251,9 +260,12 @@ def split_alaudah_et_al_19(
         for j in range(xline):
             # for every xline:
             # images are references by top-left corner:
-            locations = [[i, k] for i in horz_locations for k in vert_locations]
+            locations = [
+                [i, k] for i in horz_locations for k in vert_locations
+            ]
             patches_list = [
-                "x_" + str(i) + "_" + str(j) + "_" + str(k) for i, k in locations
+                "x_" + str(i) + "_" + str(j) + "_" + str(k)
+                for i, k in locations
             ]
             x_list.append(patches_list)
 
@@ -263,23 +275,50 @@ def split_alaudah_et_al_19(
     list_train_val = i_list + x_list
 
     # create train and test splits:
-    train_list, test_list = train_test_split(list_train_val, test_size=fraction_validation, shuffle=True)
+    train_list, test_list = train_test_split(
+        list_train_val, test_size=fraction_validation, shuffle=True
+    )
 
     # write to files to disk:
     splits_path = _get_splits_path(data_dir)
     _write_split_files(splits_path, train_list, test_list, loader_type)
 
+#TODO: Try https://github.com/Chilipp/docrep for doscstring reuse
+class SplitTrainValCLI(object):
+
+    def section(self, data_dir, per_val=0.2, log_config=None):
+        """Generate section based train and validation files for Netherlands F3 dataset.
+
+        Args:
+            data_dir (str): data directory path
+            per_val (float, optional):  the fraction of the volume to use for validation. Defaults to 0.2.
+            log_config (str): path to log configurations
+        """
+        return split_section_train_val(data_dir, per_val=per_val, log_config=log_config)
+
+    def patch(self, data_dir, stride, patch, per_val=0.2, log_config=None):
+        """Generate patch based train and validation files for Netherlands F3 dataset.
+
+        Args:
+            data_dir (str): data directory path
+            stride (int): stride to use when sectioning of the volume
+            patch (int): size of patch to extract
+            per_val (float, optional):  the fraction of the volume to use for validation. Defaults to 0.2.
+            log_config (str): path to log configurations
+        """
+        return split_patch_train_val(data_dir, stride, patch, per_val=per_val, log_config=log_config)
+
 
 if __name__ == "__main__":
     """Example:
-    python prepare_data.py split_train_val --data-dir=/mnt/dutch --loader-type="section"
+    python prepare_data.py split_train_val section --data-dir=/mnt/dutch 
     or
-    python prepare_data.py split_train_val --data-dir=/mnt/dutch --loader-type="patch" --stride=50
+    python prepare_data.py split_train_val patch --data-dir=/mnt/dutch --stride=50 --patch=100
 
     """
     fire.Fire(
         {
-            "split_train_val": run_split_func,
-            "split_alaudah_et_al_19": split_alaudah_et_al_19
+            "split_train_val": SplitTrainValCLI,
+            "split_alaudah_et_al_19": split_alaudah_et_al_19,
         }
     )

@@ -19,12 +19,13 @@ import fire
 import numpy as np
 import torch
 import torch.nn.functional as F
-from albumentations import (Compose, Normalize,
-                            PadIfNeeded, Resize)
+from albumentations import Compose, Normalize, PadIfNeeded, Resize
 from cv_lib.segmentation import models
-from cv_lib.segmentation.dutchf3.data import (add_patch_depth_channels,
-                                              get_seismic_labels,
-                                              get_test_loader)
+from deepseismic_interpretation.dutchf3.data import (
+    add_patch_depth_channels,
+    get_seismic_labels,
+    get_test_loader,
+)
 from default import _C as config
 from default import update_config
 from toolz import compose, curry, itertoolz, pipe
@@ -38,8 +39,6 @@ _CLASS_NAMES = [
     "scruff",
     "zechstein",
 ]
-
-DATA_ROOT = path.join("/mnt", "alaudah")
 
 
 class runningScore(object):
@@ -198,10 +197,16 @@ def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
 def _output_processing_pipeline(config, output):
     output = output.unsqueeze(0)
     _, _, h, w = output.shape
-    if config.TEST.POST_PROCESSING.SIZE != h or config.TEST.POST_PROCESSING.SIZE != w:
+    if (
+        config.TEST.POST_PROCESSING.SIZE != h
+        or config.TEST.POST_PROCESSING.SIZE != w
+    ):
         output = F.interpolate(
             output,
-            size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE),
+            size=(
+                config.TEST.POST_PROCESSING.SIZE,
+                config.TEST.POST_PROCESSING.SIZE,
+            ),
             mode="bilinear",
         )
 
@@ -210,8 +215,10 @@ def _output_processing_pipeline(config, output):
         output = output[
             :,
             :,
-            config.TEST.POST_PROCESSING.CROP_PIXELS : h - config.TEST.POST_PROCESSING.CROP_PIXELS,
-            config.TEST.POST_PROCESSING.CROP_PIXELS : w - config.TEST.POST_PROCESSING.CROP_PIXELS,
+            config.TEST.POST_PROCESSING.CROP_PIXELS : h
+            - config.TEST.POST_PROCESSING.CROP_PIXELS,
+            config.TEST.POST_PROCESSING.CROP_PIXELS : w
+            - config.TEST.POST_PROCESSING.CROP_PIXELS,
         ]
     return output.squeeze()
 
@@ -303,7 +310,10 @@ def _evaluate_split(
 
     TestSectionLoader = get_test_loader(config)
     test_set = TestSectionLoader(
-        split=split, is_transform=True, augmentations=section_aug
+        config.DATASET.ROOT,
+        split=split,
+        is_transform=True,
+        augmentations=section_aug,
     )
 
     n_classes = test_set.n_classes
@@ -337,7 +347,6 @@ def _evaluate_split(
             gt = labels.numpy()
             running_metrics_split.update(gt, pred)
             running_metrics_overall.update(gt, pred)
-            
 
     # get scores
     score, class_iou = running_metrics_split.get_scores()
@@ -433,10 +442,10 @@ def test(*options, cfg=None):
     )
     for sdx, split in enumerate(splits):
         labels = np.load(
-            path.join(DATA_ROOT, "test_once", split + "_labels.npy")
+            path.join(config.DATASEST.ROOT, "test_once", split + "_labels.npy")
         )
         section_file = path.join(
-            DATA_ROOT, "splits", "section_" + split + ".txt"
+            config.DATASEST.ROOT, "splits", "section_" + split + ".txt"
         )
         _write_section_file(labels, section_file)
         _evaluate_split(

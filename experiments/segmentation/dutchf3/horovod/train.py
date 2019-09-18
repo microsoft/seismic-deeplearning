@@ -3,7 +3,6 @@
 Trains models using PyTorch DistributedDataParallel
 Uses a warmup schedule that then goes into a cyclic learning rate
 """
-# /* spell-checker: disable */
 
 import logging
 import logging.config
@@ -21,6 +20,21 @@ from albumentations import (
     Resize,
     PadIfNeeded,
 )
+import fire
+import horovod.torch as hvd
+import torch
+import torch.nn.functional as F
+from default import _C as config
+from default import update_config
+from ignite.contrib.handlers import (
+    CustomPeriodicEvent,
+    CosineAnnealingScheduler,
+    LinearCyclicalScheduler,
+    ConcatScheduler,
+)
+from ignite.engine import Events
+from toolz import curry
+
 from cv_lib.event_handlers import (
     SnapshotHandler,
     logging_handlers,
@@ -40,7 +54,7 @@ from cv_lib.segmentation.dutchf3.engine import (
     create_supervised_evaluator,
     create_supervised_trainer,
 )
-from cv_lib.segmentation.dutchf3.metrics import apex
+from cv_lib.segmentation.dutchf3.metrics import horovod
 from cv_lib.segmentation.dutchf3.utils import (
     current_datetime,
     generate_path,
@@ -68,46 +82,37 @@ def prepare_batch(batch, device=None, non_blocking=False):
         convert_tensor(y, device=device, non_blocking=non_blocking),
     )
 
-
 @curry
 def update_sampler_epoch(data_loader, engine):
     data_loader.sampler.epoch = engine.state.epoch
 
 
-def run(*options, cfg=None, local_rank=0):
+def run(*options, cfg=None):
     """Run training and validation of model
 
     Notes:
         Options can be passed in via the options argument and loaded from the cfg file
         Options loaded from default.py will be overridden by options loaded from cfg file
         Options passed in through options argument will override option loaded from cfg file
-    
+
     Args:
-        *options (str,int ,optional): Options used to overide what is loaded from the config. 
+        *options (str,int ,optional): Options used to overide what is loaded from the config.
                                       To see what options are available consult default.py
         cfg (str, optional): Location of config file to load. Defaults to None.
     """
+
     update_config(config, options=options, config_file=cfg)
+    hvd.init()
+    silence_other_ranks = True
     logging.config.fileConfig(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
-    logger.debug(config.WORKERS)
-    silence_other_ranks = True
-    world_size = int(os.environ.get("WORLD_SIZE", 1))
-    distributed = world_size > 1
-
-    if distributed:
-        # FOR DISTRIBUTED:  Set the device according to local_rank.
-        torch.cuda.set_device(local_rank)
-
-        # FOR DISTRIBUTED:  Initialize the backend.  torch.distributed.launch will provide
-        # environment variables, and requires that you use init_method=`env://`.
-        torch.distributed.init_process_group(
-            backend="nccl", init_method="env://"
-        )
+    torch.manual_seed(config.SEED)
+    torch.cuda.set_device(hvd.local_rank())
+    torch.cuda.manual_seed(config.SEED)
+    rank, world_size = hvd.rank(), hvd.size()
 
     scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
-
     torch.manual_seed(config.SEED)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(config.SEED)
@@ -169,7 +174,7 @@ def run(*options, cfg=None, local_rank=0):
     n_classes = train_set.n_classes
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(
-        train_set, num_replicas=world_size, rank=local_rank
+        train_set, num_replicas=world_size, rank=rank
     )
 
     train_loader = data.DataLoader(
@@ -180,7 +185,7 @@ def run(*options, cfg=None, local_rank=0):
     )
 
     val_sampler = torch.utils.data.distributed.DistributedSampler(
-        val_set, num_replicas=world_size, rank=local_rank
+        val_set, num_replicas=world_size, rank=rank
     )
 
     val_loader = data.DataLoader(
@@ -203,7 +208,6 @@ def run(*options, cfg=None, local_rank=0):
         momentum=config.TRAIN.MOMENTUM,
         weight_decay=config.TRAIN.WEIGHT_DECAY,
     )
-
     # weights are inversely proportional to the frequency of the classes in the training set
     class_weights = torch.tensor(
         config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False
@@ -212,11 +216,19 @@ def run(*options, cfg=None, local_rank=0):
     criterion = torch.nn.CrossEntropyLoss(
         weight=class_weights, ignore_index=255, reduction="mean"
     )
+    # Horovod: broadcast parameters & optimizer state.
+    hvd.broadcast_parameters(model.state_dict(), root_rank=0)
+    hvd.broadcast_optimizer_state(optimizer, root_rank=0)
 
-    model = torch.nn.parallel.DistributedDataParallel(
-        model, device_ids=[device], find_unused_parameters=True
-    )
+    # Horovod: (optional) compression algorithm.
+    compression = hvd.Compression.fp16 if config.HOROVOD.FP16 else hvd.Compression.none
 
+    # Horovod: wrap optimizer with DistributedOptimizer.
+    optimizer = hvd.DistributedOptimizer(optimizer,
+                                         named_parameters=model.named_parameters(),
+                                         compression=compression)
+
+    # summary_writer = create_summary_writer(log_dir=config.LOG_DIR)
     snapshot_duration = scheduler_step * len(train_loader)
     warmup_duration = 5 * len(train_loader)
     warmup_scheduler = LinearCyclicalScheduler(
@@ -235,8 +247,7 @@ def run(*options, cfg=None, local_rank=0):
     )
 
     scheduler = ConcatScheduler(
-        schedulers=[warmup_scheduler, cosine_scheduler],
-        durations=[warmup_duration],
+        schedulers=[warmup_scheduler, cosine_scheduler], durations=[warmup_duration]
     )
 
     trainer = create_supervised_trainer(
@@ -245,11 +256,9 @@ def run(*options, cfg=None, local_rank=0):
 
     trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
     # Set to update the epoch parameter of our distributed data sampler so that we get different shuffles
-    trainer.add_event_handler(
-        Events.EPOCH_STARTED, update_sampler_epoch(train_loader)
-    )
+    trainer.add_event_handler(Events.EPOCH_STARTED, update_sampler_epoch(train_loader))
 
-    if silence_other_ranks & local_rank != 0:
+    if silence_other_ranks & rank != 0:
         logging.getLogger("ignite.engine.engine.Engine").setLevel(
             logging.WARNING
         )
@@ -259,12 +268,13 @@ def run(*options, cfg=None, local_rank=0):
             model_out_dict["y_pred"].squeeze(),
             model_out_dict["mask"].squeeze(),
         )
-    
+
+
     evaluator = create_supervised_evaluator(
         model,
         prepare_batch,
         metrics={
-            "IoU": apex.MeanIoU(
+            "IoU": horovod.MeanIoU(
                 n_classes, device, output_transform=_select_pred_and_mask
             ),
             "nll": salt_metrics.LossMetric(
@@ -273,13 +283,13 @@ def run(*options, cfg=None, local_rank=0):
                 config.VALIDATION.BATCH_SIZE_PER_GPU,
                 output_transform=_select_pred_and_mask,
             ),
-            "mca": apex.MeanClassAccuracy(
+            "mca": horovod.MeanClassAccuracy(
                 n_classes, device, output_transform=_select_pred_and_mask
             ),
-            "fiou": apex.FrequencyWeightedIoU(
+            "fiou": horovod.FrequencyWeightedIoU(
                 n_classes, device, output_transform=_select_pred_and_mask
             ),
-            "pixa": apex.PixelwiseAccuracy(
+            "pixa": horovod.PixelwiseAccuracy(
                 n_classes, device, output_transform=_select_pred_and_mask
             ),
         },
@@ -287,20 +297,9 @@ def run(*options, cfg=None, local_rank=0):
     )
 
     # Set the validation run to start on the epoch completion of the training run
-    trainer.add_event_handler(
-        Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader)
-    )
+    trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
-    if local_rank == 0:  # Run only on master process
-
-        trainer.add_event_handler(
-            Events.ITERATION_COMPLETED,
-            logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
-        )
-        trainer.add_event_handler(
-            Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer)
-        )
-
+    if rank == 0:  # Run only on master process
         output_dir = generate_path(
             config.OUTPUT_DIR,
             git_branch(),
@@ -313,6 +312,13 @@ def run(*options, cfg=None, local_rank=0):
         )
         logger.info(f"Logging Tensorboard to {path.join(output_dir, config.LOG_DIR)}")
         trainer.add_event_handler(
+            Events.ITERATION_COMPLETED,
+            logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
+        )
+        trainer.add_event_handler(
+            Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer)
+        )
+        trainer.add_event_handler(
             Events.EPOCH_STARTED,
             tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"),
         )
@@ -320,6 +326,7 @@ def run(*options, cfg=None, local_rank=0):
             Events.ITERATION_COMPLETED,
             tensorboard_handlers.log_training_output(summary_writer),
         )
+
         evaluator.add_event_handler(
             Events.EPOCH_COMPLETED,
             logging_handlers.log_metrics(
@@ -347,7 +354,6 @@ def run(*options, cfg=None, local_rank=0):
                 },
             ),
         )
-
         def _select_max(pred_tensor):
             return pred_tensor.max(1)[1]
 
@@ -386,7 +392,6 @@ def run(*options, cfg=None, local_rank=0):
         def snapshot_function():
             return (trainer.state.iteration % snapshot_duration) == 0
 
-       
         checkpoint_handler = SnapshotHandler(
             path.join(output_dir, config.TRAIN.MODEL_DIR),
             config.MODEL.NAME,
