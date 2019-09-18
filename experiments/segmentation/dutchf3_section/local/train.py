@@ -1,31 +1,54 @@
-# Copyright (c) Microsoft Corporation. All rights reserved. 
-# Licensed under the MIT License.  
-# /* spell-checker: disable */
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# # Licensed under the MIT License.
+# # /* spell-checker: disable */
 
 import logging
 import logging.config
 from os import path
 
-import cv2
+# import cv2
 import fire
 import numpy as np
 import torch
-from albumentations import (Compose, HorizontalFlip, Normalize,
-                            PadIfNeeded, Resize)
-from cv_lib.event_handlers import (SnapshotHandler, logging_handlers,
-                                   tensorboard_handlers)
+from albumentations import (
+    Compose,
+    HorizontalFlip,
+    Normalize,
+    PadIfNeeded,
+    Resize,
+)
+from deepseismic_interpretation.dutchf3.data import (
+    decode_segmap,
+    get_section_loader,
+)
+from cv_lib.event_handlers import (
+    SnapshotHandler,
+    logging_handlers,
+    tensorboard_handlers,
+)
 from cv_lib.event_handlers.logging_handlers import Evaluator
-from cv_lib.event_handlers.tensorboard_handlers import (create_image_writer,
-                                                        create_summary_writer)
+from cv_lib.event_handlers.tensorboard_handlers import (
+    create_image_writer,
+    create_summary_writer,
+)
 from cv_lib.segmentation import models, tgs_salt
-from cv_lib.segmentation.dutchf3.data import (decode_segmap, get_section_loader)
-from cv_lib.segmentation.dutchf3.engine import (create_supervised_evaluator,
-                                                create_supervised_trainer)
-from cv_lib.segmentation.dutchf3.metrics import (FrequencyWeightedIoU,
-                                                 MeanClassAccuracy, MeanIoU,
-                                                 PixelwiseAccuracy)
-from cv_lib.segmentation.dutchf3.utils import (current_datetime, generate_path,
-                                               git_branch, git_hash, np_to_tb)
+from cv_lib.segmentation.dutchf3.engine import (
+    create_supervised_evaluator,
+    create_supervised_trainer,
+)
+from cv_lib.segmentation.dutchf3.metrics import (
+    FrequencyWeightedIoU,
+    MeanClassAccuracy,
+    MeanIoU,
+    PixelwiseAccuracy,
+)
+from cv_lib.segmentation.dutchf3.utils import (
+    current_datetime,
+    generate_path,
+    git_branch,
+    git_hash,
+    np_to_tb,
+)
 from default import _C as config
 from default import update_config
 from ignite.contrib.handlers import CosineAnnealingScheduler
@@ -93,28 +116,39 @@ def run(*options, cfg=None):
         ]
     )
     if config.TRAIN.AUGMENTATION:
-        train_aug = Compose(
-            [
-                basic_aug,
-                HorizontalFlip(p=0.5),
-            ]
-        )
+        train_aug = Compose([basic_aug, HorizontalFlip(p=0.5)])
         val_aug = basic_aug
     else:
         train_aug = val_aug = basic_aug
 
     TrainLoader = get_section_loader(config)
 
+    class CustomSamplerTrain(torch.utils.data.Sampler):
+        def __iter__(self):
+            char = ['i' if np.random.randint(2) == 1 else 'x']
+            self.indices = [idx for (idx, name) in enumerate(
+                train_list) if char[0] in name]
+            return (self.indices[i] for i in torch.randperm(len(self.indices)))
+
+
+    class CustomSamplerVal(torch.utils.data.Sampler):
+        def __iter__(self):
+            char = ['i' if np.random.randint(2) == 1 else 'x']
+            self.indices = [idx for (idx, name) in enumerate(
+                val_list) if char[0] in name]
+            return (self.indices[i] for i in torch.randperm(len(self.indices)))
+
     train_set = TrainLoader(
+        data_dir=config.DATASET.ROOT,
         split="train",
         is_transform=True,
         augmentations=train_aug,
     )
 
     val_set = TrainLoader(
-        split="val",
-        is_transform=True,
-        augmentations=val_aug,
+        data_dir=config.DATASET.ROOT,
+        split="val", is_transform=True, 
+        augmentations=val_aug
     )
 
     n_classes = train_set.n_classes
@@ -125,7 +159,7 @@ def run(*options, cfg=None):
         num_workers=config.WORKERS,
         shuffle=True,
     )
-    
+
     val_loader = data.DataLoader(
         val_set,
         batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU,
@@ -138,7 +172,6 @@ def run(*options, cfg=None):
     if torch.cuda.is_available():
         device = "cuda"
     model = model.to(device)  # Send to GPU
-
 
     optimizer = torch.optim.SGD(
         model.parameters(),
