@@ -150,6 +150,7 @@ def run(*options, cfg=None, local_rank=0):
     TrainPatchLoader = get_patch_loader(config)
 
     train_set = TrainPatchLoader(
+        config.DATASET.ROOT,
         split="train",
         is_transform=True,
         stride=config.TRAIN.STRIDE,
@@ -159,6 +160,7 @@ def run(*options, cfg=None, local_rank=0):
     logger.info(f"Training examples {len(train_set)}")
 
     val_set = TrainPatchLoader(
+        config.DATASET.ROOT,
         split="val",
         is_transform=True,
         stride=config.TRAIN.STRIDE,
@@ -249,14 +251,6 @@ def run(*options, cfg=None, local_rank=0):
         Events.EPOCH_STARTED, update_sampler_epoch(train_loader)
     )
 
-    trainer.add_event_handler(
-        Events.ITERATION_COMPLETED,
-        logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
-    )
-    trainer.add_event_handler(
-        Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer)
-    )
-
     if silence_other_ranks & local_rank != 0:
         logging.getLogger("ignite.engine.engine.Engine").setLevel(
             logging.WARNING
@@ -300,6 +294,15 @@ def run(*options, cfg=None, local_rank=0):
     )
 
     if local_rank == 0:  # Run only on master process
+
+        trainer.add_event_handler(
+            Events.ITERATION_COMPLETED,
+            logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
+        )
+        trainer.add_event_handler(
+            Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer)
+        )
+
         output_dir = generate_path(
             config.OUTPUT_DIR,
             git_branch(),

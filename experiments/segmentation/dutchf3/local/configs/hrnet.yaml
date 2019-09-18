@@ -13,7 +13,7 @@ SEED: 2019
 
 DATASET:
   NUM_CLASSES: 6
-  ROOT: /mnt/alaudah
+  ROOT: /mnt/dutchf3
   CLASS_WEIGHTS: [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 
@@ -89,10 +89,10 @@ TRAIN:
 
 
 VALIDATION:
-  BATCH_SIZE_PER_GPU: 32
+  BATCH_SIZE_PER_GPU: 128
 
 TEST: 
-  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/mat/exp/ccb7206b41dc7411609705e49d9f4c2d74c6eb88/seg_hrnet/Aug30_141919/models/seg_hrnet_running_model_18.pth"
+  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/experiments/segmentation/dutchf3/local/output/mat/exp/237c16780794800631c3f1895cacc475e15aca99/seg_hrnet/Sep17_115731/models/seg_hrnet_running_model_33.pth"
   TEST_STRIDE: 10
   SPLIT: 'Both' # Can be Both, Test1, Test2
   INLINE: True
