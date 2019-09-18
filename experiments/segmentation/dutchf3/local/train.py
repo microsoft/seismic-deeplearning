@@ -107,6 +107,7 @@ def run(*options, cfg=None):
     TrainPatchLoader = get_patch_loader(config)
 
     train_set = TrainPatchLoader(
+        config.DATASET.ROOT,
         split="train",
         is_transform=True,
         stride=config.TRAIN.STRIDE,
@@ -115,6 +116,7 @@ def run(*options, cfg=None):
     )
 
     val_set = TrainPatchLoader(
+        config.DATASET.ROOT,
         split="val",
         is_transform=True,
         stride=config.TRAIN.STRIDE,

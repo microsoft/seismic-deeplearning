@@ -14,7 +14,8 @@ IMAGE_NAME:=horovod_image
 NAME:=horovod_container # Name of running container
 DATA:=/mnt
 
-BASEDIR:=$(shell dirname $(shell dirname ${PWD}))
+BASEDIR:=$(shell dirname $(shell dirname $(shell dirname ${PWD})))
+REPODIR:=$(shell dirname ${BASEDIR})
 
 local_code_volume:=-v $(BASEDIR):/workspace
 volumes:=-v $(DATA):/data \
@@ -24,7 +25,7 @@ help:
 	echo "$$PROJECT_HELP_MSG" | less
 	
 build:
-	docker build -t $(IMAGE_NAME) -f dockerfile .
+	docker build -t $(IMAGE_NAME) -f dockerfile ${REPODIR}
 
 run: 
 	@echo ${BASEDIR}

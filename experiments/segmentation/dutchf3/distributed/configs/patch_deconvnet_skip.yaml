@@ -12,7 +12,7 @@ SEED: 2019
 
 DATASET:
   NUM_CLASSES: 6
-  ROOT: /mnt/alaudah
+  ROOT: /mnt/dutchf3
   DEPTH: 'no'
 
 MODEL:
