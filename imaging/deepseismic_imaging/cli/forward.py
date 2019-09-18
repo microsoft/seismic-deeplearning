@@ -4,7 +4,7 @@ import click
 import h5py
 import numpy as np
 
-from ..forward import Receiver, RickerSource, TimeAxis, VelocityModel
+from deepseismic_imaging.forward import Receiver, RickerSource, TimeAxis, VelocityModel
 
 click.option = partial(click.option, show_default=True)
 
