@@ -49,14 +49,14 @@ class SectionLoader(data.Dataset):
         self.is_transform = is_transform
         self.augmentations = augmentations
         self.n_classes = 6
-        self.sections = collections.defaultdict(list)
+        self.sections = list()
 
     def __len__(self):
-        return len(self.sections[self.split])
+        return len(self.sections)
 
     def __getitem__(self, index):
 
-        section_name = self.sections[self.split][index]
+        section_name = self.sections[index]
         direction, number = section_name.split(sep="_")
 
         if direction == "i":
@@ -98,21 +98,21 @@ class TrainSectionLoader(SectionLoader):
 
         self.seismic = np.load(_train_data_for(self.data_dir))
         self.labels = np.load(_train_labels_for(self.data_dir))
-        for split in ["train", "val", "train_val"]:
-            # reading the file names for 'train', 'val', 'trainval'""
-            txt_path = path.join(
-                self.data_dir, "splits", "section_" + split + ".txt"
-            )
-            file_list = tuple(open(txt_path, "r"))
-            file_list = [id_.rstrip() for id_ in file_list]
-            self.sections[split] = file_list
+
+        # reading the file names for split
+        txt_path = path.join(
+            self.data_dir, "splits", "section_" + split + ".txt"
+        )
+        file_list = tuple(open(txt_path, "r"))
+        file_list = [id_.rstrip() for id_ in file_list]
+        self.sections = file_list
 
 
 class TrainSectionLoaderWithDepth(TrainSectionLoader):
     def __init__(
         self, data_dir, split="train", is_transform=True, augmentations=None
     ):
-        super(TrainSectionLoader, self).__init__(
+        super(TrainSectionLoaderWithDepth, self).__init__(
             data_dir,
             split=split,
             is_transform=is_transform,
@@ -122,7 +122,7 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
 
     def __getitem__(self, index):
 
-        section_name = self.sections[self.split][index]
+        section_name = self.sections[index]
         direction, number = section_name.split(sep="_")
 
         if direction == "i":
@@ -173,7 +173,7 @@ class TestSectionLoader(SectionLoader):
         )
         file_list = tuple(open(txt_path, "r"))
         file_list = [id_.rstrip() for id_ in file_list]
-        self.sections[split] = file_list
+        self.sections = file_list
 
 
 class TestSectionLoaderWithDepth(TestSectionLoader):
@@ -186,12 +186,11 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
             is_transform=is_transform,
             augmentations=augmentations,
         )
-
         self.seismic = add_section_depth_channels(self.seismic)  # NCWH
 
     def __getitem__(self, index):
 
-        section_name = self.sections[self.split][index]
+        section_name = self.sections[index]
         direction, number = section_name.split(sep="_")
 
         if direction == "i":
@@ -239,7 +238,7 @@ class PatchLoader(data.Dataset):
         self.is_transform = is_transform
         self.augmentations = augmentations
         self.n_classes = 6
-        self.patches = collections.defaultdict(list)
+        self.patches = list()
         self.patch_size = patch_size
         self.stride = stride
 
@@ -255,11 +254,11 @@ class PatchLoader(data.Dataset):
         )
 
     def __len__(self):
-        return len(self.patches[self.split])
+        return len(self.patches)
 
     def __getitem__(self, index):
 
-        patch_name = self.patches[self.split][index]
+        patch_name = self.patches[index]
         direction, idx, xdx, ddx = patch_name.split(sep="_")
 
         # Shift offsets the padding that is added in training
@@ -317,6 +316,8 @@ class TestPatchLoader(PatchLoader):
             is_transform=is_transform,
             augmentations=augmentations,
         )
+        ## Warning: this is not used or tested
+        raise NotImplementedError('This class is not correctly implemented.')
         self.seismic = np.load(_train_data_for(self.data_dir))
         self.labels = np.load(_train_labels_for(self.data_dir))
 
@@ -327,7 +328,8 @@ class TestPatchLoader(PatchLoader):
             self.data_dir, "splits", "patch_" + self.split + ".txt"
         )
         patch_list = tuple(open(txt_path, "r"))
-        self.patches[split] = patch_list
+        patch_list = [id_.rstrip() for id_ in patch_list]
+        self.patches = patch_list
 
 
 class TrainPatchLoader(PatchLoader):
@@ -355,13 +357,13 @@ class TrainPatchLoader(PatchLoader):
         # We are in train/val mode. Most likely the test splits are not saved yet,
         # so don't attempt to load them.
         self.split = split
-        for split in ["train", "val", "train_val"]:
-            # reading the file names for 'train', 'val', 'trainval'""
-            txt_path = path.join(
+        # reading the file names for split
+        txt_path = path.join(
                 self.data_dir, "splits", "patch_" + split + ".txt"
             )
-            patch_list = tuple(open(txt_path, "r"))
-            self.patches[split] = patch_list
+        patch_list = tuple(open(txt_path, "r"))
+        patch_list = [id_.rstrip() for id_ in patch_list]
+        self.patches = patch_list
 
 
 class TrainPatchLoaderWithDepth(TrainPatchLoader):
@@ -381,22 +383,10 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
             is_transform=is_transform,
             augmentations=augmentations,
         )
-        self.seismic = np.load(_train_data_for(self.data_dir))
-        self.labels = np.load(_train_labels_for(self.data_dir))
-        # We are in train/val mode. Most likely the test splits are not saved yet,
-        # so don't attempt to load them.
-        self.split = split
-        for split in ["train", "val", "train_val"]:
-            # reading the file names for 'train', 'val', 'trainval'""
-            txt_path = path.join(
-                self.data_dir, "splits", "patch_" + split + ".txt"
-            )
-            patch_list = tuple(open(txt_path, "r"))
-            self.patches[split] = patch_list
 
     def __getitem__(self, index):
 
-        patch_name = self.patches[self.split][index]
+        patch_name = self.patches[index]
         direction, idx, xdx, ddx = patch_name.split(sep="_")
 
         # Shift offsets the padding that is added in training
@@ -464,7 +454,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
 
     def __getitem__(self, index):
 
-        patch_name = self.patches[self.split][index]
+        patch_name = self.patches[index]
         direction, idx, xdx, ddx = patch_name.split(sep="_")
 
         # Shift offsets the padding that is added in training
