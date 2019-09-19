@@ -71,11 +71,11 @@ _C.TRAIN.AUGMENTATIONS.PAD.WIDTH = 256
 
 # validation
 _C.VALIDATION = CN()
-_C.VALIDATION.BATCH_SIZE_PER_GPU = 8
+_C.VALIDATION.BATCH_SIZE_PER_GPU = 16
 
 # TEST
 _C.TEST = CN()
-_C.TEST.MODEL_PATH = "/data/home/vapaunic/repos/DeepSeismic/experiments/segmentation/dutchf3_section/local/output/vapaunic/section/007d911a773c0a554c84de17903617e7de2ffe50/section_deconvnet_skip/Sep19_094315/models/section_deconvnet_skip_running_model_43.pth"
+_C.TEST.MODEL_PATH = "/data/home/vapaunic/repos/DeepSeismic/experiments/segmentation/dutchf3_section/local/output/vapaunic/section/a90ee2bfb469bba801b279e06c03e13210de62e6/section_deconvnet_skip/Sep19_130318/models/section_deconvnet_skip_snapshot1model_32.pth"
 _C.TEST.TEST_STRIDE = 10
 _C.TEST.SPLIT = 'Both' # Can be Both, Test1, Test2
 _C.TEST.INLINE = True
