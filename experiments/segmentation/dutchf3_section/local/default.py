@@ -29,7 +29,7 @@ _C.CUDNN.ENABLED = True
 
 # DATASET related params
 _C.DATASET = CN()
-_C.DATASET.ROOT = ""
+_C.DATASET.ROOT = "/mnt/dutchf3"
 _C.DATASET.NUM_CLASSES = 6
 _C.DATASET.CLASS_WEIGHTS = [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
@@ -47,8 +47,8 @@ _C.TRAIN.MIN_LR = 0.001
 _C.TRAIN.MAX_LR = 0.01
 _C.TRAIN.MOMENTUM = 0.9
 _C.TRAIN.BEGIN_EPOCH = 0
-_C.TRAIN.END_EPOCH = 25
-_C.TRAIN.BATCH_SIZE_PER_GPU = 1
+_C.TRAIN.END_EPOCH = 50
+_C.TRAIN.BATCH_SIZE_PER_GPU = 16
 _C.TRAIN.WEIGHT_DECAY = 0.0001
 _C.TRAIN.SNAPSHOTS = 5
 _C.TRAIN.MODEL_DIR = "models" # This will be a subdirectory inside OUTPUT_DIR
@@ -56,7 +56,7 @@ _C.TRAIN.AUGMENTATION = True
 _C.TRAIN.STRIDE = 50
 _C.TRAIN.PATCH_SIZE = 99
 _C.TRAIN.MEAN = 0.0009997 # 0.0009996710808862074
-_C.TRAIN.STD = 0.20977 # 0.20976548783479299  # TODO: Should we apply std scaling?
+_C.TRAIN.STD = 0.20977 # 0.20976548783479299 
 _C.TRAIN.DEPTH = 'none' # Options are 'none', 'patch' and 'section'
 # None adds no depth information and the num of channels remains at 1
 # Patch adds depth per patch so is simply the height of that patch from 0 to 1, channels=3
@@ -71,11 +71,11 @@ _C.TRAIN.AUGMENTATIONS.PAD.WIDTH = 256
 
 # validation
 _C.VALIDATION = CN()
-_C.VALIDATION.BATCH_SIZE_PER_GPU = 16
+_C.VALIDATION.BATCH_SIZE_PER_GPU = 8
 
 # TEST
 _C.TEST = CN()
-_C.TEST.MODEL_PATH = "/home/vapaunic/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/vapaunic/section/b369d30361b4da0654c8b60179e1e5a192110f29/section_deconvnet_skip/Sep16_140144/models/section_deconvnet_skip_snapshot4model_7.pth"
+_C.TEST.MODEL_PATH = "/data/home/vapaunic/repos/DeepSeismic/experiments/segmentation/dutchf3_section/local/output/vapaunic/section/007d911a773c0a554c84de17903617e7de2ffe50/section_deconvnet_skip/Sep19_094315/models/section_deconvnet_skip_running_model_43.pth"
 _C.TEST.TEST_STRIDE = 10
 _C.TEST.SPLIT = 'Both' # Can be Both, Test1, Test2
 _C.TEST.INLINE = True

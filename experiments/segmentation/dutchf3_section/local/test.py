@@ -19,12 +19,13 @@ import fire
 import numpy as np
 import torch
 import torch.nn.functional as F
-from albumentations import (Compose, Normalize,
-                            PadIfNeeded, Resize)
+from albumentations import Compose, Normalize, PadIfNeeded, Resize
 from cv_lib.segmentation import models
-from cv_lib.segmentation.dutchf3.data import (add_patch_depth_channels,
-                                              get_seismic_labels,
-                                              get_test_loader)
+from deepseismic_interpretation.dutchf3.data import (
+    add_patch_depth_channels,
+    get_seismic_labels,
+    get_test_loader,
+)
 from default import _C as config
 from default import update_config
 from toolz import compose, curry, itertoolz, pipe
@@ -39,8 +40,7 @@ _CLASS_NAMES = [
     "zechstein",
 ]
 
-DATA_ROOT = path.join("/mnt", "dutchf3")
-
+DATA_ROOT = config.DATASET.ROOT
 
 class runningScore(object):
     def __init__(self, n_classes):
@@ -166,8 +166,8 @@ class runningScore(object):
 #             hdx + ps : hdx + ps + patch_size,
 #             wdx + ps : wdx + ps + patch_size,
 #         ]
-# 
-# 
+#
+#
 # def _compose_processing_pipeline(depth, aug=None):
 #     steps = []
 #     if aug is not None:
@@ -180,8 +180,8 @@ class runningScore(object):
 #     steps.append(_expand_dims_if_necessary)
 #     steps.reverse()
 #     return compose(*steps)
-# 
-# 
+#
+#
 # def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
 #     hdc_wdx_generator = itertools.product(
 #         range(0, h - patch_size + ps, stride),
@@ -238,8 +238,8 @@ def _evaluate_split(
     split,
     section_aug,
     model,
-#    pre_processing,
-#    output_processing,
+    #    pre_processing,
+    #    output_processing,
     device,
     running_metrics_overall,
     config,
@@ -248,7 +248,10 @@ def _evaluate_split(
 
     TestSectionLoader = get_test_loader(config)
     test_set = TestSectionLoader(
-        split=split, is_transform=True, augmentations=section_aug
+        data_dir = DATA_ROOT,
+        split=split, 
+        is_transform=True, 
+        augmentations=section_aug
     )
 
     n_classes = test_set.n_classes
@@ -266,13 +269,12 @@ def _evaluate_split(
             logger.info(f"split: {split}, section: {i}")
             total_iteration = total_iteration + 1
 
-            outputs = model(images.to(device))            
+            outputs = model(images.to(device))
 
             pred = outputs.detach().max(1)[1].cpu().numpy()
             gt = labels.numpy()
             running_metrics_split.update(gt, pred)
             running_metrics_overall.update(gt, pred)
-            
 
     # get scores
     score, class_iou = running_metrics_split.get_scores()
@@ -336,18 +338,18 @@ def test(*options, cfg=None):
                 std=(config.TRAIN.STD,),
                 max_pixel_value=1,
             ),
-            Resize(
-                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-                always_apply=True,
-            ),
-            PadIfNeeded(
-                min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
-                min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                border_mode=cv2.BORDER_CONSTANT,
-                always_apply=True,
-                mask_value=255,
-            ),
+            # Resize(
+            #     config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+            #     config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+            #     always_apply=True,
+            # ),
+            # PadIfNeeded(
+            #     min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
+            #     min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
+            #     border_mode=cv2.BORDER_CONSTANT,
+            #     always_apply=True,
+            #     mask_value=255,
+            # ),
         ]
     )
 

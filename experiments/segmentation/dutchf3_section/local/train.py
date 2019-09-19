@@ -101,11 +101,6 @@ def run(*options, cfg=None):
                 std=(config.TRAIN.STD,),
                 max_pixel_value=1,
             ),
-            # Resize(
-            #     config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-            #     config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-            #     always_apply=True,
-            # ),
             # PadIfNeeded(
             #     min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
             #     min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
@@ -123,21 +118,6 @@ def run(*options, cfg=None):
 
     TrainLoader = get_section_loader(config)
 
-    class CustomSamplerTrain(torch.utils.data.Sampler):
-        def __iter__(self):
-            char = ['i' if np.random.randint(2) == 1 else 'x']
-            self.indices = [idx for (idx, name) in enumerate(
-                train_list) if char[0] in name]
-            return (self.indices[i] for i in torch.randperm(len(self.indices)))
-
-
-    class CustomSamplerVal(torch.utils.data.Sampler):
-        def __iter__(self):
-            char = ['i' if np.random.randint(2) == 1 else 'x']
-            self.indices = [idx for (idx, name) in enumerate(
-                val_list) if char[0] in name]
-            return (self.indices[i] for i in torch.randperm(len(self.indices)))
-
     train_set = TrainLoader(
         data_dir=config.DATASET.ROOT,
         split="train",
@@ -147,22 +127,44 @@ def run(*options, cfg=None):
 
     val_set = TrainLoader(
         data_dir=config.DATASET.ROOT,
-        split="val", is_transform=True, 
-        augmentations=val_aug
+        split="val",
+        is_transform=True,
+        augmentations=val_aug,
     )
+
+    val_list = val_set.sections[val_set.split]
+    train_list = val_set.sections[val_set.split]
+
+    class CustomSamplerTrain(torch.utils.data.Sampler):
+        def __iter__(self):
+            char = ["i" if np.random.randint(2) == 1 else "x"]
+            self.indices = [
+                idx for (idx, name) in enumerate(train_list) if char[0] in name
+            ]
+            return (self.indices[i] for i in torch.randperm(len(self.indices)))
+
+    class CustomSamplerVal(torch.utils.data.Sampler):
+        def __iter__(self):
+            char = ["i" if np.random.randint(2) == 1 else "x"]
+            self.indices = [
+                idx for (idx, name) in enumerate(val_list) if char[0] in name
+            ]
+            return (self.indices[i] for i in torch.randperm(len(self.indices)))
 
     n_classes = train_set.n_classes
 
     train_loader = data.DataLoader(
         train_set,
         batch_size=config.TRAIN.BATCH_SIZE_PER_GPU,
+        sampler=CustomSamplerTrain(train_list),
         num_workers=config.WORKERS,
-        shuffle=True,
+        shuffle=False,
     )
 
     val_loader = data.DataLoader(
         val_set,
         batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU,
+        sampler=CustomSamplerVal(val_list),
         num_workers=config.WORKERS,
     )
 
@@ -187,10 +189,12 @@ def run(*options, cfg=None):
         config.MODEL.NAME,
         current_datetime(),
     )
+
     summary_writer = create_summary_writer(
         log_dir=path.join(output_dir, config.LOG_DIR)
     )
-    snapshot_duration = scheduler_step * len(train_loader)
+
+    snapshot_duration = scheduler_step * len(train_list)
     scheduler = CosineAnnealingScheduler(
         optimizer,
         "lr",
@@ -218,13 +222,16 @@ def run(*options, cfg=None):
         Events.ITERATION_COMPLETED,
         logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
     )
+
     trainer.add_event_handler(
         Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer)
     )
+
     trainer.add_event_handler(
         Events.EPOCH_STARTED,
         tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"),
     )
+
     trainer.add_event_handler(
         Events.ITERATION_COMPLETED,
         tensorboard_handlers.log_training_output(summary_writer),
