@@ -47,7 +47,7 @@ _C.TRAIN.MIN_LR = 0.001
 _C.TRAIN.MAX_LR = 0.01
 _C.TRAIN.MOMENTUM = 0.9
 _C.TRAIN.BEGIN_EPOCH = 0
-_C.TRAIN.END_EPOCH = 50
+_C.TRAIN.END_EPOCH = 100
 _C.TRAIN.BATCH_SIZE_PER_GPU = 16
 _C.TRAIN.WEIGHT_DECAY = 0.0001
 _C.TRAIN.SNAPSHOTS = 5
@@ -75,7 +75,7 @@ _C.VALIDATION.BATCH_SIZE_PER_GPU = 16
 
 # TEST
 _C.TEST = CN()
-_C.TEST.MODEL_PATH = "/data/home/vapaunic/repos/DeepSeismic/experiments/segmentation/dutchf3_section/local/output/vapaunic/section/a90ee2bfb469bba801b279e06c03e13210de62e6/section_deconvnet_skip/Sep19_130318/models/section_deconvnet_skip_snapshot1model_32.pth"
+_C.TEST.MODEL_PATH = ""
 _C.TEST.TEST_STRIDE = 10
 _C.TEST.SPLIT = 'Both' # Can be Both, Test1, Test2
 _C.TEST.INLINE = True
