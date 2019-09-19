@@ -10,13 +10,7 @@ from os import path
 import fire
 import numpy as np
 import torch
-from albumentations import (
-    Compose,
-    HorizontalFlip,
-    Normalize,
-    PadIfNeeded,
-    Resize,
-)
+from albumentations import Compose, HorizontalFlip, Normalize
 from deepseismic_interpretation.dutchf3.data import (
     decode_segmap,
     get_section_loader,
@@ -100,14 +94,7 @@ def run(*options, cfg=None):
                 mean=(config.TRAIN.MEAN,),
                 std=(config.TRAIN.STD,),
                 max_pixel_value=1,
-            ),
-            # PadIfNeeded(
-            #     min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
-            #     min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-            #     border_mode=cv2.BORDER_CONSTANT,
-            #     always_apply=True,
-            #     mask_value=255,
-            # ),
+            )
         ]
     )
     if config.TRAIN.AUGMENTATION:
@@ -132,31 +119,31 @@ def run(*options, cfg=None):
         augmentations=val_aug,
     )
 
-    val_list = val_set.sections[val_set.split]
-    train_list = val_set.sections[val_set.split]
+    class CustomSampler(torch.utils.data.Sampler):
+        def __init__(self, data_source):
+            self.data_source = data_source
 
-    class CustomSamplerTrain(torch.utils.data.Sampler):
         def __iter__(self):
             char = ["i" if np.random.randint(2) == 1 else "x"]
             self.indices = [
-                idx for (idx, name) in enumerate(train_list) if char[0] in name
+                idx
+                for (idx, name) in enumerate(self.data_source)
+                if char[0] in name
             ]
             return (self.indices[i] for i in torch.randperm(len(self.indices)))
 
-    class CustomSamplerVal(torch.utils.data.Sampler):
-        def __iter__(self):
-            char = ["i" if np.random.randint(2) == 1 else "x"]
-            self.indices = [
-                idx for (idx, name) in enumerate(val_list) if char[0] in name
-            ]
-            return (self.indices[i] for i in torch.randperm(len(self.indices)))
+        def __len__(self):
+            return len(self.data_source)
 
     n_classes = train_set.n_classes
+
+    val_list = val_set.sections
+    train_list = val_set.sections
 
     train_loader = data.DataLoader(
         train_set,
         batch_size=config.TRAIN.BATCH_SIZE_PER_GPU,
-        sampler=CustomSamplerTrain(train_list),
+        sampler=CustomSampler(train_list),
         num_workers=config.WORKERS,
         shuffle=False,
     )
@@ -164,7 +151,7 @@ def run(*options, cfg=None):
     val_loader = data.DataLoader(
         val_set,
         batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU,
-        sampler=CustomSamplerVal(val_list),
+        sampler=CustomSampler(val_list),
         num_workers=config.WORKERS,
     )
 
@@ -194,7 +181,7 @@ def run(*options, cfg=None):
         log_dir=path.join(output_dir, config.LOG_DIR)
     )
 
-    snapshot_duration = scheduler_step * len(train_list)
+    snapshot_duration = scheduler_step * len(train_loader)
     scheduler = CosineAnnealingScheduler(
         optimizer,
         "lr",

@@ -19,7 +19,7 @@ import fire
 import numpy as np
 import torch
 import torch.nn.functional as F
-from albumentations import Compose, Normalize, PadIfNeeded, Resize
+from albumentations import Compose, Normalize
 from cv_lib.segmentation import models
 from deepseismic_interpretation.dutchf3.data import (
     add_patch_depth_channels,
@@ -41,6 +41,7 @@ _CLASS_NAMES = [
 ]
 
 DATA_ROOT = config.DATASET.ROOT
+
 
 class runningScore(object):
     def __init__(self, n_classes):
@@ -98,148 +99,10 @@ class runningScore(object):
         self.confusion_matrix = np.zeros((self.n_classes, self.n_classes))
 
 
-# def _transform_CHW_to_HWC(numpy_array):
-#     return np.moveaxis(numpy_array, 0, -1)
-
-
-# def _transform_HWC_to_CHW(numpy_array):
-#     return np.moveaxis(numpy_array, -1, 0)
-
-
-# @curry
-# def _apply_augmentation3D(aug, numpy_array):
-#     assert len(numpy_array.shape) == 3, "This method only accepts 3D arrays"
-#     patch = _transform_CHW_to_HWC(numpy_array)
-#     patch = aug(image=patch)["image"]
-#     return _transform_HWC_to_CHW(patch)
-
-
-# @curry
-# def _apply_augmentation2D(aug, numpy_array):
-#     assert len(numpy_array.shape) == 2, "This method only accepts 2D arrays"
-#     return aug(image=numpy_array)["image"]
-
-
-# _AUGMENTATION = {3: _apply_augmentation3D, 2: _apply_augmentation2D}
-
-
-# @curry
-# def _apply_augmentation(aug, image):
-#     if isinstance(image, torch.Tensor):
-#         image = image.numpy()
-
-#     if aug is not None:
-#         return _AUGMENTATION[len(image.shape)](aug, image)
-#     else:
-#         return image
-
-
-# def _add_depth(image):
-#     if isinstance(image, torch.Tensor):
-#         image = image.numpy()
-#     return add_patch_depth_channels(image)
-
-
-# def _to_torch(image):
-#     if isinstance(image, torch.Tensor):
-#         return image
-#     else:
-#         return torch.from_numpy(image).to(torch.float32)
-
-
-# def _expand_dims_if_necessary(torch_tensor):
-#     if len(torch_tensor.shape) == 2:
-#         return torch_tensor.unsqueeze(dim=0)
-#     else:
-#         return torch_tensor
-
-
-# @curry
-# def _extract_patch(hdx, wdx, ps, patch_size, img_p):
-#     if len(img_p.shape) == 2:  # 2D
-#         return img_p[
-#             hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size
-#         ]
-#     else:  # 3D
-#         return img_p[
-#             :,
-#             hdx + ps : hdx + ps + patch_size,
-#             wdx + ps : wdx + ps + patch_size,
-#         ]
-#
-#
-# def _compose_processing_pipeline(depth, aug=None):
-#     steps = []
-#     if aug is not None:
-#         steps.append(_apply_augmentation(aug))
-
-#     if depth == "patch":
-#         steps.append(_add_depth)
-
-#     steps.append(_to_torch)
-#     steps.append(_expand_dims_if_necessary)
-#     steps.reverse()
-#     return compose(*steps)
-#
-#
-# def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
-#     hdc_wdx_generator = itertools.product(
-#         range(0, h - patch_size + ps, stride),
-#         range(0, w - patch_size + ps, stride),
-#     )
-
-#     for batch_indexes in itertoolz.partition_all(
-#         batch_size, hdc_wdx_generator
-#     ):
-#         yield batch_indexes
-
-
-# @curry
-# def _output_processing_pipeline(config, output):
-#     output = output.unsqueeze(0)
-#     _, _, h, w = output.shape
-#     if config.TEST.POST_PROCESSING.SIZE != h or config.TEST.POST_PROCESSING.SIZE != w:
-#         output = F.interpolate(
-#             output,
-#             size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE),
-#             mode="bilinear",
-#         )
-
-#     if config.TEST.POST_PROCESSING.CROP_PIXELS > 0:
-#         _, _, h, w = output.shape
-#         output = output[
-#             :,
-#             :,
-#             config.TEST.POST_PROCESSING.CROP_PIXELS : h - config.TEST.POST_PROCESSING.CROP_PIXELS,
-#             config.TEST.POST_PROCESSING.CROP_PIXELS : w - config.TEST.POST_PROCESSING.CROP_PIXELS,
-#         ]
-#     return output.squeeze()
-
-# @curry
-# def to_image(label_mask, n_classes=6):
-#     label_colours = get_seismic_labels()
-#     r = label_mask.copy()
-#     g = label_mask.copy()
-#     b = label_mask.copy()
-#     for ll in range(0, n_classes):
-#         r[label_mask == ll] = label_colours[ll, 0]
-#         g[label_mask == ll] = label_colours[ll, 1]
-#         b[label_mask == ll] = label_colours[ll, 2]
-#     rgb = np.zeros(
-#         (label_mask.shape[0], label_mask.shape[1], label_mask.shape[2], 3)
-#     )
-#     rgb[:, :, :, 0] = r
-#     rgb[:, :, :, 1] = g
-#     rgb[:, :, :, 2] = b
-#     return rgb
-
-
 def _evaluate_split(
     split,
     section_aug,
     model,
-    #    pre_processing,
-    #    output_processing,
     device,
     running_metrics_overall,
     config,
@@ -248,10 +111,10 @@ def _evaluate_split(
 
     TestSectionLoader = get_test_loader(config)
     test_set = TestSectionLoader(
-        data_dir = DATA_ROOT,
-        split=split, 
-        is_transform=True, 
-        augmentations=section_aug
+        data_dir=DATA_ROOT,
+        split=split,
+        is_transform=True,
+        augmentations=section_aug,
     )
 
     n_classes = test_set.n_classes
@@ -337,26 +200,9 @@ def test(*options, cfg=None):
                 mean=(config.TRAIN.MEAN,),
                 std=(config.TRAIN.STD,),
                 max_pixel_value=1,
-            ),
-            # Resize(
-            #     config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-            #     config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-            #     always_apply=True,
-            # ),
-            # PadIfNeeded(
-            #     min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
-            #     min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-            #     border_mode=cv2.BORDER_CONSTANT,
-            #     always_apply=True,
-            #     mask_value=255,
-            # ),
+            )
         ]
     )
-
-    # pre_processing = _compose_processing_pipeline(
-    #     config.TRAIN.DEPTH, aug=patch_aug
-    # )
-    # output_processing = _output_processing_pipeline(config)
 
     splits = (
         ["test1", "test2"]
@@ -373,14 +219,7 @@ def test(*options, cfg=None):
         )
         _write_section_file(labels, section_file)
         _evaluate_split(
-            split,
-            section_aug,
-            model,
-            # pre_processing,
-            # output_processing,
-            device,
-            running_metrics_overall,
-            config,
+            split, section_aug, model, device, running_metrics_overall, config
         )
 
     # FINAL TEST RESULTS:
