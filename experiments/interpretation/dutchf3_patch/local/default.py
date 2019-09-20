@@ -18,7 +18,8 @@ _C.WORKERS = 4
 _C.PRINT_FREQ = 20
 _C.AUTO_RESUME = False
 _C.PIN_MEMORY = True
-_C.LOG_CONFIG = "/data/home/mat/repos/DeepSeismic/logging.conf"
+# TODO: this should be loaded by automatically figuring out the file path location
+_C.LOG_CONFIG = "/home/maxkaz/repos/DeepSeismic/logging.conf"
 _C.SEED = 42
 
 # Cudnn related params
