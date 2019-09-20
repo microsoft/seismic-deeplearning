@@ -22,7 +22,13 @@ Then you will also need to install cv_lib
 pip install -e cv_lib
 ```
 
-Both repos are installed in developer mode with the -e flag. This means that to update simply go to the folder and pull the appropriate commit or branch
+Both repos are installed in developer mode with the -e flag. This means that to update simply go to the folder and pull the appropriate commit or branch. 
+
+During development, in case you need to update the environment due to a conda env file change, you can run
+```
+conda env update --file environment/anaconda/local/environment.yml
+```
+from the root of DeepSeismic repo.
 
 ## Benchmarks
 
