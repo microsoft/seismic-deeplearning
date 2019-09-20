@@ -30,6 +30,18 @@ Both repos are installed in developer mode with the -e flag. This means that to 
 
 This section contains benchmarks of different algorithms for seismic interpretation on 3D seismic datasets with densely-annotated data.
 
+Below are the results from the models contained in this repo. To run them check the instructions in <benchmarks> folder. Alternatively take a look in <examples> for how to run them on your own dataset
+
+|    Authorship    |    Experiment                     |    PA       |    FW IoU    |    MCA     |
+|------------------|-----------------------------------|-------------|--------------|------------|
+|    Alaudah       |    Section-based                  |    0.905    |    0.817     |    .832    |
+|                  |    Patch-based                    |    0.852    |    0.743     |    .689    |
+|    Ours          |    Patch-based+fixed              |    .869     |    .761      |    .775    |
+|                  |    SEResNet UNet+section depth    |    .917     |    .849      |    .834    |
+|                  |    HRNet(patch)+patch_depth       |    .908     |    .843      |    .837    |
+|                  |    HRNet(patch)+section_depth     |    .928     |    .871      |    .871    |
+
+
 ### Sparse Labels
 
 This section contains benchmarks of different algorithms for seismic interpretation on 3D seismic datasets with sparsely-annotated data and is organized by the levels of sparsity.
