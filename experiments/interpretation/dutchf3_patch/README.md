@@ -32,10 +32,10 @@ To split the dataset into training and validation, please run the [prepare_data.
 Example run:
 ```
 // To split data into sections
-python prepare_data.py split_train_val --data-dir=/mnt/dutchf3 --loader-type="section" --log-config=../logging.conf
+python prepare_data.py split_train_val section --data-dir=/mnt/dutchf3
 
 // To split data into patches
-python prepare_data.py split_train_val --data-dir=/mnt/dutchf3 --loader-type="patch" --stride=50 --log-config=../logging.conf
+python prepare_data.py split_train_val patch --data-dir=/mnt/dutch --stride=50 --patch=100
 ```
 
 Please see `prepare_data.py` script for more arguments.
