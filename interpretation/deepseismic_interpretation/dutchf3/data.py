@@ -15,7 +15,6 @@ from toolz import curry
 from torch.utils import data
 
 
-
 def _train_data_for(data_dir):
     return path.join(data_dir, "train", "train_seismic.npy")
 
@@ -38,6 +37,47 @@ def _test2_data_for(data_dir):
 
 def _test2_labels_for(data_dir):
     return path.join(data_dir, "test_once", "test2_labels.npy")
+
+
+def readSEGY(filename):
+    """[summary]
+    Read the segy file and return the data as a numpy array and a dictionary describing what has been read in.
+
+    Arguments:
+        filename {str} -- .segy file location.
+    
+    Returns:
+        [type] -- 3D segy data as numy array and a dictionary with metadata information
+    """
+    
+    # TODO: we really need to add logging to this repo
+    print('Loading data cube from', filename,'with:')
+
+    # Read full data cube
+    data = segyio.tools.cube(filename)
+
+    # Put temporal axis first
+    data = np.moveaxis(data, -1, 0)
+
+    #Make data cube fast to acess
+    data = np.ascontiguousarray(data,'float32')
+
+    #Read meta data
+    segyfile = segyio.open(filename, "r")
+    print('  Crosslines: ', segyfile.xlines[0], ':', segyfile.xlines[-1])
+    print('  Inlines:    ', segyfile.ilines[0], ':', segyfile.ilines[-1])
+    print('  Timeslices: ', '1', ':', data.shape[0])
+
+    #Make dict with cube-info
+    data_info = {}
+    data_info['crossline_start'] = segyfile.xlines[0]
+    data_info['inline_start'] = segyfile.ilines[0]
+    data_info['timeslice_start'] = 1 #Todo: read this from segy
+    data_info['shape'] = data.shape
+    #Read dt and other params needed to do create a new
+
+
+    return data, data_info
 
 
 class SectionLoader(data.Dataset):
@@ -84,6 +124,49 @@ class SectionLoader(data.Dataset):
             img = np.expand_dims(img, 0)
         return torch.from_numpy(img).float(), torch.from_numpy(lbl).long()
 
+
+class VoxelLoader(data.Dataset):
+    def __init__(
+        self, data_dir, window, coord_list, split="train", n_classes = 2
+    ):
+        self.data_dir = data_dir
+        # TODO: write loader to poppulate data from directory
+        self.split = split
+        self.n_classes = n_classes
+        self.window = window
+        self.len = len(coord_list)
+
+        # Read 3D cube
+        # NOTE: we cannot pass this data manually as serialization of data into each python process is costly,
+        # so each worker has to load the data on its own.
+        self.data, self.data_info = readSEGY(os.path.join(self.data_dir, "data.segy"))
+
+    def __len__(self):
+        return self.len
+
+    def __getitem__(self, index):
+
+        # TODO: can we specify a pixel mathematically by index?
+        pixel = self.coord_list[index]
+        x, y, z = pixel
+        # TODO: current bottleneck - can we slice out voxels any faster
+        small_cube = self.data[
+            x - self.window : x + self.window + 1,
+            y - self.window : y + self.window + 1,
+            z - self.window : z + self.window + 1,
+        ]
+
+        return small_cube[np.newaxis, :, :, :], pixel
+
+    # TODO: do we need a transformer for voxels?
+    """
+    def transform(self, img, lbl):
+        # to be in the BxCxHxW that PyTorch uses:
+        lbl = np.expand_dims(lbl, 0)
+        if len(img.shape) == 2:
+            img = np.expand_dims(img, 0)
+        return torch.from_numpy(img).float(), torch.from_numpy(lbl).long()
+    """
 
 class TrainSectionLoader(SectionLoader):
     def __init__(
@@ -147,6 +230,18 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
 
         return im, lbl
 
+
+class TrainVoxelLoader(VoxelLoader):
+    def __init__(
+        self, data_dir, split="train"
+    ):
+        super(TrainVoxelLoader, self).__init__(
+            data_dir,
+            split=split            
+        )
+
+# TODO: write TrainVoxelLoaderWithDepth
+TrainVoxelLoaderWithDepth = TrainVoxelLoader
 
 class TestSectionLoader(SectionLoader):
     def __init__(
@@ -215,6 +310,17 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
 
         return im, lbl
 
+class TestVoxelLoader(VoxelLoader):
+    def __init__(
+        self, data_dir, split="test"
+    ):
+        super(TestVoxelLoader, self).__init__(
+            data_dir,
+            split=split            
+        )
+
+# TODO: write TestVoxelLoaderWithDepth
+TestVoxelLoaderWithDepth = TestVoxelLoader
 
 def _transform_WH_to_HW(numpy_array):
     assert len(numpy_array.shape) >= 2, "This method needs at least 2D arrays"
@@ -506,6 +612,9 @@ _TRAIN_SECTION_LOADERS = {
     "section": TrainSectionLoaderWithDepth
 }
 
+_TRAIN_VOXEL_LOADERS = {
+    "voxel": TrainVoxelLoaderWithDepth,  
+}
 
 def get_patch_loader(cfg):
     assert cfg.TRAIN.DEPTH in ["section", "patch", "none"], f"Depth {cfg.TRAIN.DEPTH} not supported for patch data. \
@@ -517,11 +626,14 @@ def get_section_loader(cfg):
         Valid values: section, none."
     return _TRAIN_SECTION_LOADERS.get(cfg.TRAIN.DEPTH, TrainSectionLoader)
 
+def get_voxel_loader(cfg):
+    assert cfg.TRAIN.DEPTH in ["voxel", "none"], f"Depth {cfg.TRAIN.DEPTH} not supported for section data. \
+        Valid values: voxel, none."
+    return _TRAIN_SECTION_LOADERS.get(cfg.TRAIN.DEPTH, TrainVoxelLoader)
 
 _TEST_LOADERS = {
     "section": TestSectionLoaderWithDepth,
 }
-
 
 def get_test_loader(cfg):
     return _TEST_LOADERS.get(cfg.TRAIN.DEPTH, TestSectionLoader)
