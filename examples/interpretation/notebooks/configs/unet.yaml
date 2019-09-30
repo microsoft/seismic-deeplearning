@@ -8,14 +8,14 @@ GPUS: (0,)
 OUTPUT_DIR: 'output' 
 LOG_DIR: 'log'
 WORKERS: 4
-PRINT_FREQ: 10
-LOG_CONFIG: /data/home/mat/repos/DeepSeismic/logging.conf
+PRINT_FREQ: 50
+LOG_CONFIG: /home/vapaunic/repos/DeepSeismic/logging.conf
 SEED: 2019
 
 
 DATASET:
   NUM_CLASSES: 6
-  ROOT:/mnt/dutchf3
+  ROOT: '/mnt/dutchf3'
   CLASS_WEIGHTS: [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 MODEL:
@@ -26,7 +26,7 @@ MODEL:
 TRAIN:
   BATCH_SIZE_PER_GPU: 16
   BEGIN_EPOCH: 0
-  END_EPOCH: 300
+  END_EPOCH: 10
   MIN_LR: 0.001
   MAX_LR: 0.02
   MOMENTUM: 0.9
@@ -46,10 +46,6 @@ TRAIN:
   MEAN: 0.0009997 # 0.0009996710808862074
   STD: 0.20977 # 0.20976548783479299 
   MODEL_DIR: "models"
-
-
-VALIDATION:
-  BATCH_SIZE_PER_GPU: 32
 
 TEST:
   MODEL_PATH: ""

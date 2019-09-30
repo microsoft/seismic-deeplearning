@@ -28,3 +28,4 @@ dependencies:
     - albumentations
     - black
     - pylint
+
