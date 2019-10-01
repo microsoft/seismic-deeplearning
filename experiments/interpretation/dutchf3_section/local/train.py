@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation.
 # # Licensed under the MIT License.
 # # /* spell-checker: disable */
 
@@ -6,7 +6,6 @@ import logging
 import logging.config
 from os import path
 
-# import cv2
 import fire
 import numpy as np
 import torch
@@ -25,16 +24,17 @@ from cv_lib.event_handlers.tensorboard_handlers import (
     create_image_writer,
     create_summary_writer,
 )
-from cv_lib.segmentation import models, tgs_salt
+from cv_lib.segmentation import models
 from cv_lib.segmentation.dutchf3.engine import (
     create_supervised_evaluator,
     create_supervised_trainer,
 )
 from cv_lib.segmentation.dutchf3.metrics import (
-    FrequencyWeightedIoU,
-    MeanClassAccuracy,
-    MeanIoU,
-    PixelwiseAccuracy,
+    class_accuracy,
+    mean_class_accuracy,
+    class_iou,
+    mean_iou,
+    extract_metric_from,
 )
 from cv_lib.segmentation.dutchf3.utils import (
     current_datetime,
@@ -47,10 +47,11 @@ from default import _C as config
 from default import update_config
 from ignite.contrib.handlers import CosineAnnealingScheduler
 from ignite.engine import Events
-from ignite.metrics import Loss
 from ignite.utils import convert_tensor
+from ignite.metrics import Loss, Accuracy
 from toolz import compose
 from torch.utils import data
+
 
 
 def prepare_batch(batch, device=None, non_blocking=False):
@@ -234,18 +235,19 @@ def run(*options, cfg=None):
         model,
         prepare_batch,
         metrics={
-            "IoU": MeanIoU(
-                n_classes, device, output_transform=_select_pred_and_mask
-            ),
+            "pixacc": Accuracy(output_transform=_select_pred_and_mask),
             "nll": Loss(criterion, output_transform=_select_pred_and_mask),
-            "mca": MeanClassAccuracy(
-                n_classes, device, output_transform=_select_pred_and_mask
+            "cacc": class_accuracy(
+                n_classes, output_transform=_select_pred_and_mask
             ),
-            "fiou": FrequencyWeightedIoU(
-                n_classes, device, output_transform=_select_pred_and_mask
+            "mca": mean_class_accuracy(
+                n_classes, output_transform=_select_pred_and_mask
             ),
-            "pixa": PixelwiseAccuracy(
-                n_classes, device, output_transform=_select_pred_and_mask
+            "ciou": class_iou(
+                n_classes, output_transform=_select_pred_and_mask
+            ),
+            "mIoU": mean_iou(
+                n_classes, output_transform=_select_pred_and_mask
             ),
         },
         device=device,
@@ -261,12 +263,19 @@ def run(*options, cfg=None):
         logging_handlers.log_metrics(
             "Validation results",
             metrics_dict={
-                "IoU": "IoU :",
                 "nll": "Avg loss :",
-                "pixa": "Pixelwise Accuracy :",
-                "mca": "Mean Class Accuracy :",
-                "fiou": "Freq Weighted IoU :",
+                "pixacc": "Pixelwise Accuracy :",
+                "mca": "Avg Class Accuracy :",
+                "mIoU": "Avg Class IoU :",
             },
+        ),
+    )
+
+    evaluator.add_event_handler(
+        Events.EPOCH_COMPLETED,
+        logging_handlers.log_class_metrics(
+            "Per class validation results",
+            metrics_dict={"ciou": "Class IoU :", "cacc": "Class Accuracy :"},
         ),
     )
 
@@ -277,10 +286,10 @@ def run(*options, cfg=None):
             trainer,
             "epoch",
             metrics_dict={
-                "IoU": "Validation/IoU",
+                "mIoU": "Validation/mIoU",
                 "nll": "Validation/Loss",
                 "mca": "Validation/MCA",
-                "fiou": "Validation/FIoU",
+                "pixacc": "Validation/Pixel_Acc",
             },
         ),
     )
@@ -328,7 +337,7 @@ def run(*options, cfg=None):
     checkpoint_handler = SnapshotHandler(
         path.join(output_dir, config.TRAIN.MODEL_DIR),
         config.MODEL.NAME,
-        tgs_salt.extract_metric_from("fiou"),
+        extract_metric_from("mIoU"),
         snapshot_function,
     )
 
