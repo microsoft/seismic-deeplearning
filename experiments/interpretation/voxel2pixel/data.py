@@ -101,92 +101,84 @@ crossline_alias = ["crossline", "cross-line", "xline", "x"]
 timeslice_alias = ["timeslice", "time-slice", "t", "z", "depthslice", "depth"]
 
 
-def read_labels(foldername, data_info):
+def read_labels(fname, data_info):
     """
     Read labels from an image.
 
     Args:
-        foldername: folder which contains the image.
+        fname: filename of labelling mask (image)
         data_info: dictionary describing the data
 
     Returns:
         list of labels and list of coordinates
-    """
-    files = [f for f in listdir(foldername) if isfile(join(foldername, f))]
+    """    
 
     label_imgs = []
     label_coordinates = {}
 
     # Find image files in folder
-    for file in files:
-        if (
-            file[-3:].lower() in ["jpg", "png", "peg", "bmp", "gif"]
-            and file[0] != "."
-        ):
-            if True:
-                tmp = file.split("_")
-                slice_type = tmp[0].lower()
-                tmp = tmp[1].split(".")
-                slice_no = int(tmp[0])
+    
+    tmp = fname.split('/')[-1].split("_")
+    slice_type = tmp[0].lower()
+    tmp = tmp[1].split(".")
+    slice_no = int(tmp[0])
 
-                if (
-                    slice_type
-                    not in inline_alias + crossline_alias + timeslice_alias
-                ):
-                    print(
-                        "File:",
-                        file,
-                        "could not be loaded.",
-                        "Unknown slice type",
-                    )
-                    continue
+    if (
+        slice_type
+        not in inline_alias + crossline_alias + timeslice_alias
+    ):
+        print(
+            "File:",
+            fname,
+            "could not be loaded.",
+            "Unknown slice type",
+        )
+        return None
 
-                if slice_type in inline_alias:
-                    slice_type = "inline"
-                if slice_type in crossline_alias:
-                    slice_type = "crossline"
-                if slice_type in timeslice_alias:
-                    slice_type = "timeslice"
+    if slice_type in inline_alias:
+        slice_type = "inline"
+    if slice_type in crossline_alias:
+        slice_type = "crossline"
+    if slice_type in timeslice_alias:
+        slice_type = "timeslice"
 
-                # Read file
-                print("Loading labels for", slice_type, slice_no, "with")
-                img = scipy.misc.imread(join(foldername, file))
-                img = interpolate_to_fit_data(
-                    img, slice_type, slice_no, data_info
+    # Read file
+    print("Loading labels for", slice_type, slice_no, "with")
+    img = scipy.misc.imread(fname)
+    img = interpolate_to_fit_data(
+        img, slice_type, slice_no, data_info
+    )
+    label_img = parse_labels_in_image(img)
+
+    # Get coordinates for slice
+    coords = get_coordinates_for_slice(
+        slice_type, slice_no, data_info
+    )
+
+    # Loop through labels in label_img and append to label_coordinates
+    for cls in np.unique(label_img):
+        if cls > -1:
+            if str(cls) not in label_coordinates.keys():
+                label_coordinates[str(cls)] = np.array(
+                    np.zeros([3, 0])
                 )
-                label_img = parse_labels_in_image(img)
+            inds_with_cls = label_img == cls
+            cords_with_cls = coords[:, inds_with_cls.ravel()]
+            label_coordinates[str(cls)] = np.concatenate(
+                (label_coordinates[str(cls)], cords_with_cls), 1
+            )
+            print(
+                " ",
+                str(np.sum(inds_with_cls)),
+                "labels for class",
+                str(cls),
+            )
+    if len(np.unique(label_img)) == 1:
+        print(" ", 0, "labels", str(cls))
 
-                # Get coordinates for slice
-                coords = get_coordinates_for_slice(
-                    slice_type, slice_no, data_info
-                )
+    # Add label_img to output
+    label_imgs.append([label_img, slice_type, slice_no])
 
-                # Loop through labels in label_img and append to label_coordinates
-                for cls in np.unique(label_img):
-                    if cls > -1:
-                        if str(cls) not in label_coordinates.keys():
-                            label_coordinates[str(cls)] = np.array(
-                                np.zeros([3, 0])
-                            )
-                        inds_with_cls = label_img == cls
-                        cords_with_cls = coords[:, inds_with_cls.ravel()]
-                        label_coordinates[str(cls)] = np.concatenate(
-                            (label_coordinates[str(cls)], cords_with_cls), 1
-                        )
-                        print(
-                            " ",
-                            str(np.sum(inds_with_cls)),
-                            "labels for class",
-                            str(cls),
-                        )
-                if len(np.unique(label_img)) == 1:
-                    print(" ", 0, "labels", str(cls))
-
-                # Add label_img to output
-                label_imgs.append([label_img, slice_type, slice_no])
-
-            # except:
-            #    print('File:', file, 'could not be loaded.')
     return label_imgs, label_coordinates
 
 
