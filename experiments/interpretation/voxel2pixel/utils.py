@@ -53,189 +53,130 @@ def interpret(
     # Wrap np.linspace in compact function call
     ls = lambda N: np.linspace(0, N - 1, N, dtype="int")
 
-    # Size of cube
-    n0, n1, n2 = data.shape
+     #Size of cube
+    N0, N1, N2 = data.shape
 
-    # Coords for full cube
-    x0_range = ls(n0)
-    x1_range = ls(n1)
-    x2_range = ls(n2)
+    #Coords for full cube
+    x0_range = ls(N0)
+    x1_range = ls(N1)
+    x2_range = ls(N2)
 
-    # Coords for subsampled cube
-    pred_points = (
-        x0_range[::subsampl],
-        x1_range[::subsampl],
-        x2_range[::subsampl],
-    )
+    #Coords for subsampled cube
+    pred_points = (x0_range[::subsampl], x1_range[::subsampl], x2_range[::subsampl])
 
-    # Select slice
-    if slice == "full":
+    #Select slice
+    if slice == 'full':
         class_cube = data[::subsampl, ::subsampl, ::subsampl] * 0
 
-    elif slice == "inline":
-        slice_no = slice_no - data_info["inline_start"]
+    elif slice == 'inline':
+        slice_no = slice_no - data_info['inline_start']
         class_cube = data[::subsampl, 0:1, ::subsampl] * 0
         x1_range = np.array([slice_no])
-        pred_points = (pred_points[0], pred_points[2])
+        pred_points = (pred_points[0],pred_points[2])
 
-    elif slice == "crossline":
-        slice_no = slice_no - data_info["crossline_start"]
-        class_cube = data[::subsampl, ::subsampl, 0:1] * 0
+    elif slice == 'crossline':
+        slice_no = slice_no - data_info['crossline_start']
+        class_cube = data[::subsampl, ::subsampl, 0:1,] * 0
         x2_range = np.array([slice_no])
         pred_points = (pred_points[0], pred_points[1])
 
-    elif slice == "timeslice":
-        slice_no = slice_no - data_info["timeslice_start"]
+    elif slice == 'timeslice':
+        slice_no = slice_no - data_info['timeslice_start']
         class_cube = data[0:1, ::subsampl, ::subsampl] * 0
         x0_range = np.array([slice_no])
         pred_points = (pred_points[1], pred_points[2])
 
-    else:
-        class_cube = None
 
-    # Grid for small class slice/cube
-    n0, n1, n2 = class_cube.shape
-    x0_grid, x1_grid, x2_grid = np.meshgrid(
-        ls(n0), ls(n1), ls(n2), indexing="ij"
-    )
+    #Grid for small class slice/cube
+    n0,n1,n2 = class_cube.shape
+    x0_grid, x1_grid, x2_grid = np.meshgrid(ls(n0,), ls(n1), ls(n2), indexing='ij')
 
-    # Grid for full slice/cube
-    full_x0_grid, full_x1_grid, full_x2_grid = np.meshgrid(
-        x0_range, x1_range, x2_range, indexing="ij"
-    )
+    #Grid for full slice/cube
+    X0_grid, X1_grid, X2_grid = np.meshgrid(x0_range, x1_range, x2_range, indexing='ij')
 
-    # Indexes for large cube at small cube pixels
-    full_x0_grid_sub = full_x0_grid[::subsampl, ::subsampl, ::subsampl]
-    full_x1_grid_sub = full_x1_grid[::subsampl, ::subsampl, ::subsampl]
-    full_x2_grid_sub = full_x2_grid[::subsampl, ::subsampl, ::subsampl]
+    #Indexes for large cube at small cube pixels
+    X0_grid_sub = X0_grid[::subsampl, ::subsampl, ::subsampl]
+    X1_grid_sub = X1_grid[::subsampl, ::subsampl, ::subsampl]
+    X2_grid_sub = X2_grid[::subsampl, ::subsampl, ::subsampl]
 
-    # Get half window size
-    w = im_size // 2
+    #Get half window size
+    w = im_size//2
 
-    # Loop through center pixels in output cube
-    for i in range(full_x0_grid_sub.size):
+    #Loop through center pixels in output cube
+    for i in range(X0_grid_sub.size):
 
-        # Get coordinates in small and large cube
+        #Get coordinates in small and large cube
         x0 = x0_grid.ravel()[i]
         x1 = x1_grid.ravel()[i]
         x2 = x2_grid.ravel()[i]
 
-        full_x0 = full_x0_grid_sub.ravel()[i]
-        full_x1 = full_x1_grid_sub.ravel()[i]
-        full_x2 = full_x2_grid_sub.ravel()[i]
+        X0 = X0_grid_sub.ravel()[i]
+        X1 = X1_grid_sub.ravel()[i]
+        X2 = X2_grid_sub.ravel()[i]
 
-        # Only compute when a full 65x65x65 cube can be extracted around center pixel
-        if (
-            min(full_x0, full_x1, full_x2) > w
-            and full_x0 < n0 - w + 1
-            and full_x1 < n1 - w + 1
-            and full_x2 < n2 - w + 1
-        ):
 
-            # Get mini-cube around center pixel
-            mini_cube = data[
-                full_x0 - w: full_x0 + w + 1, full_x1 - w: full_x1 + w + 1, full_x2 - w: full_x2 + w + 1
-            ]
+        #Only compute when a full 65x65x65 cube can be extracted around center pixel
+        if X0>w and X1>w and X2>w and X0<N0-w+1 and X1<N1-w+1 and X2<N2-w+1:
 
-            # Get predicted "probabilities"
-            mini_cube = Variable(
-                torch.FloatTensor(mini_cube[np.newaxis, np.newaxis, :, :, :])
-            )
-            if use_gpu:
-                mini_cube = mini_cube.cuda()
+            #Get mini-cube around center pixel
+            mini_cube = data[X0-w:X0+w+ 1, X1-w:X1+w+ 1, X2-w:X2+w+ 1]
+
+            #Get predicted "probabilities"
+            mini_cube = Variable( torch.FloatTensor(mini_cube[np.newaxis,np.newaxis,:,:,:]) )
+            if use_gpu: mini_cube = mini_cube.cuda()
             out = network(mini_cube)
             out = out.data.cpu().numpy()
 
-            out = out[
-                :, :, out.shape[2] // 2, out.shape[3] // 2, out.shape[4] // 2
-            ]
+            out = out[:,:, out.shape[2]//2, out.shape[3]//2, out.shape[4]//2]
             out = np.squeeze(out)
 
             # Make one output pr output channel
             if not isinstance(class_cube, list):
-                class_cube = np.split(
-                    np.repeat(class_cube[:, :, :, np.newaxis], out.size, 3),
-                    out.size,
-                    axis=3,
-                )
+                class_cube = np.split( np.repeat(class_cube[:,:,:,np.newaxis],out.size,3), out.size, axis=3)
 
             # Insert into output
             if out.size == 1:
                 class_cube[0][x0, x1, x2] = out
             else:
                 for i in range(out.size):
-                    class_cube[i][x0, x1, x2] = out[i]
+                    class_cube[i][x0,x1,x2] = out[i]
 
-        # Keep user informed about progress
-        if slice == "full":
-            print_progress_bar(i, x0_grid.size)
+        #Keep user informed about progress
+        if slice == 'full': printProgressBar(i,x0_grid.size)
 
-    # Resize to input size
+    #Resize to input size
     if return_full_size:
-        if slice == "full":
-            print("Interpolating down sampled results to fit input cube")
+        if slice == 'full': print('Interpolating down sampled results to fit input cube')
 
-        N = full_x0_grid.size
+        N = X0_grid.size
 
-        # Output grid
-        if slice == "full":
-            grid_output_cube = np.concatenate(
-                [
-                    full_x0_grid.reshape([N, 1]),
-                    full_x1_grid.reshape([N, 1]),
-                    full_x2_grid.reshape([N, 1]),
-                ],
-                1,
-            )
-        elif slice == "inline":
-            grid_output_cube = np.concatenate(
-                [full_x0_grid.reshape([N, 1]), full_x2_grid.reshape([N, 1])], 1
-            )
-        elif slice == "crossline":
-            grid_output_cube = np.concatenate(
-                [full_x0_grid.reshape([N, 1]), full_x1_grid.reshape([N, 1])], 1
-            )
-        elif slice == "timeslice":
-            grid_output_cube = np.concatenate(
-                [full_x1_grid.reshape([N, 1]), full_x2_grid.reshape([N, 1])], 1
-            )
-        else:
-            grid_output_cube = None
+        #Output grid
+        if slice == 'full':
+            grid_output_cube = np.concatenate( [X0_grid.reshape([N, 1]), X1_grid.reshape([N, 1]), X2_grid.reshape([N, 1])], 1)
+        elif slice == 'inline':
+            grid_output_cube = np.concatenate( [X0_grid.reshape([N, 1]), X2_grid.reshape([N, 1])], 1)
+        elif slice == 'crossline':
+            grid_output_cube = np.concatenate( [X0_grid.reshape([N, 1]), X1_grid.reshape([N, 1])], 1)
+        elif slice == 'timeslice':
+            grid_output_cube = np.concatenate( [X1_grid.reshape([N, 1]), X2_grid.reshape([N, 1])], 1)
 
-        # Interpolation
+        #Interpolation
         for i in range(len(class_cube)):
-            is_int = (
-                np.sum(
-                    np.unique(class_cube[i]).astype("float")
-                    - np.unique(class_cube[i]).astype("int32").astype("float")
-                )
-                == 0
-            )
-            class_cube[i] = interpn(
-                pred_points,
-                class_cube[i].astype("float").squeeze(),
-                grid_output_cube,
-                method="linear",
-                fill_value=0,
-                bounds_error=False,
-            )
-            class_cube[i] = class_cube[i].reshape(
-                [x0_range.size, x1_range.size, x2_range.size]
-            )
+            is_int = np.sum(np.unique(class_cube[i]).astype('float') - np.unique(class_cube[i]).astype('int32').astype('float') ) == 0
+            class_cube[i] = interpn(pred_points, class_cube[i].astype('float').squeeze(), grid_output_cube, method='linear', fill_value=0, bounds_error=False)
+            class_cube[i] = class_cube[i].reshape([x0_range.size, x1_range.size, x2_range.size])
 
-            # If output is class labels we convert the interpolated array to ints
+            #If ouput is class labels we convert the interpolated array to ints
             if is_int:
-                class_cube[i] = class_cube[i].astype("int32")
+                class_cube[i] = class_cube[i].astype('int32')
 
-        if slice == "full":
-            print("Finished interpolating")
+        if slice == 'full': print('Finished interpolating')
 
-    # Squeeze outputs
+    #Squeeze outputs
     for i in range(len(class_cube)):
-        class_cube[i] = class_cube[i].squeeze()
+        class_cube[i]= class_cube[i].squeeze()
 
     return class_cube
-
 
 # TODO: this should probably be replaced with TQDM
 def print_progress_bar(

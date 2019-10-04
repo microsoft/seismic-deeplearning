@@ -13,6 +13,7 @@ dependencies:
   - opencv
   - scikit-learn
   - pip:
+    - segyio
     - pytorch-ignite
     - fire
     - toolz
@@ -28,4 +29,5 @@ dependencies:
     - albumentations
     - black
     - pylint
+    - scipy==1.1.0
 

@@ -15,7 +15,10 @@ import tb_logger
 import utils
 
 # Parameters
-DATASET_NAME = "F3"
+ROOT_PATH = "/mnt/dutchf3"
+INPUT_VOXEL = "data.segy"
+TRAIN_MASK = "inline_339.png"
+VAL_MASK = "inline_405.png"
 IM_SIZE = 65
 # If you have a GPU with little memory, try reducing this to 16 (may degrade results)
 BATCH_SIZE = 32
@@ -42,11 +45,11 @@ if USE_GPU and torch.cuda.is_available():
     network = network.cuda()
 
 # Load the data cube and labels
-data, data_info = read_segy(join(DATASET_NAME, "data.segy"))
+data, data_info = read_segy(join(ROOT_PATH, INPUT_VOXEL))
 train_class_imgs, train_coordinates = read_labels(
-    join(DATASET_NAME, "train"), data_info
+    join(ROOT_PATH, TRAIN_MASK), data_info
 )
-val_class_imgs, _ = read_labels(join(DATASET_NAME, "val"), data_info)
+val_class_imgs, _ = read_labels(join(ROOT_PATH, VAL_MASK), data_info)
 
 # Plot training/validation data with labels
 if LOG_TENSORBOARD:
@@ -138,7 +141,7 @@ for i in range(2000):
                 use_gpu=USE_GPU,
             )
             logger.log_images(
-                slice + "_" + str(slice_no) + "_pred_class", class_img, i
+                slice + "_" + str(slice_no) + "_pred_class", class_img[0], step=i
             )
 
             class_img = utils.interpret(
@@ -153,8 +156,8 @@ for i in range(2000):
                 use_gpu=USE_GPU,
             )
             logger.log_images(
-                slice + "_" + str(slice_no) + "_pred_prob", class_img, i
+                slice + "_" + str(slice_no) + "_pred_prob", class_img[0], i
             )
 
         # Store trained network
-        torch.save(network.state_dict(), join(DATASET_NAME, "saved_model.pt"))
+        torch.save(network.state_dict(), join(ROOT_PATH, "saved_model.pt"))
