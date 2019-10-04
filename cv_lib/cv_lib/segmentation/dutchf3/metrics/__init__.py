@@ -43,7 +43,7 @@ def mean_class_accuracy(num_classes, output_transform=lambda x: x):
     ).mean()
 
 
-def class_iou(num_classes, output_transform=lambda x: x):
+def class_iou(num_classes, output_transform=lambda x: x, ignore_index=None):
     """Calculates per-class intersection-over-union
 
     Args:
@@ -58,10 +58,10 @@ def class_iou(num_classes, output_transform=lambda x: x):
     cm = ignite.metrics.ConfusionMatrix(
         num_classes=num_classes, output_transform=output_transform
     )
-    return ignite.metrics.IoU(cm)
+    return ignite.metrics.IoU(cm, ignore_index=ignore_index)
 
 
-def mean_iou(num_classes, output_transform=lambda x: x):
+def mean_iou(num_classes, output_transform=lambda x: x, ignore_index=None):
     """Calculates mean intersection-over-union
 
     Args:
@@ -76,7 +76,7 @@ def mean_iou(num_classes, output_transform=lambda x: x):
     cm = ignite.metrics.ConfusionMatrix(
         num_classes=num_classes, output_transform=output_transform
     )
-    return ignite.metrics.mIoU(cm)
+    return ignite.metrics.mIoU(cm, ignore_index=ignore_index)
 
 
 @curry
