@@ -22,6 +22,7 @@ _C.PIN_MEMORY = True
 _C.LOG_CONFIG = "/home/maxkaz/repos/DeepSeismic/logging.conf"
 _C.SEED = 42
 
+
 # Cudnn related params
 _C.CUDNN = CN()
 _C.CUDNN.BENCHMARK = True

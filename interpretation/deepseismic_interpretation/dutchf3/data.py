@@ -693,15 +693,14 @@ def get_seismic_labels():
 
 
 @curry
-def decode_segmap(label_mask, n_classes=6):
-    """Decode segmentation class labels into a color image
+def decode_segmap(label_mask, n_classes=6, label_colours=get_seismic_labels()):
+    """Decode segmentation class labels into a colour image
     Args:
         label_mask (np.ndarray): an (N,H,W) array of integer values denoting
             the class label at each spatial location.
     Returns:
         (np.ndarray): the resulting decoded color image (NCHW).
     """
-    label_colours = get_seismic_labels()
     r = label_mask.copy()
     g = label_mask.copy()
     b = label_mask.copy()

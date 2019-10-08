@@ -1,0 +1,68 @@
+# UNet configuration
+
+CUDNN:
+  BENCHMARK: true
+  DETERMINISTIC: false
+  ENABLED: true
+GPUS: (0,)
+OUTPUT_DIR: 'output' 
+LOG_DIR: 'log'
+WORKERS: 4
+PRINT_FREQ: 10
+LOG_CONFIG: /home/mat/repos/DeepSeismic/logging.conf
+SEED: 2019
+
+
+DATASET:
+  NUM_CLASSES: 7
+  ROOT: /data/penobscot
+  CLASS_WEIGHTS:  [0.02630481, 0.05448931, 0.0811898 , 0.01866496, 0.15868563, 0.0875993 , 0.5730662]
+  INLINE_HEIGHT: 1501
+  INLINE_WIDTH: 481
+
+MODEL:
+  NAME: resnet_unet
+  IN_CHANNELS: 3
+
+
+TRAIN:
+  COMPLETE_PATCHES_ONLY: False
+  BATCH_SIZE_PER_GPU: 16
+  BEGIN_EPOCH: 0
+  END_EPOCH: 300
+  MIN_LR: 0.001
+  MAX_LR: 0.02
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.0001
+  SNAPSHOTS: 5
+  AUGMENTATION: True
+  DEPTH: "none" #"patch" # Options are none, patch and section
+  STRIDE: 50
+  PATCH_SIZE: 100
+  AUGMENTATIONS:
+    RESIZE:
+      HEIGHT: 200
+      WIDTH: 200
+    PAD:
+      HEIGHT: 256
+      WIDTH: 256
+  MEAN: -6.0668 # -6.0668283 # The statistics are estimated from a filtered value that are less than 10000 as dataset contains outliers
+  STD: 1367.8212 # 1367.8212 
+  MAX: 10000 # The possible max is actually 32767 but the dataset contains outliers so limiting to 10000
+  MODEL_DIR: "models"
+
+
+VALIDATION:
+  BATCH_SIZE_PER_GPU: 32
+  COMPLETE_PATCHES_ONLY: False
+
+TEST:
+  COMPLETE_PATCHES_ONLY: False
+  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/experiments/segmentation/penobscot/local/output/penobscot/437970c875226e7e39c8109c0de8d21c5e5d6e3b/seg_hrnet/Sep25_144942/models/seg_hrnet_running_model_28.pth"
+  AUGMENTATIONS:
+    RESIZE:
+      HEIGHT: 200
+      WIDTH: 200
+    PAD:
+      HEIGHT: 256
+      WIDTH: 256
