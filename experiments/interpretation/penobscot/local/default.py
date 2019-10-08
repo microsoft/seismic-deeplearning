@@ -22,6 +22,8 @@ _C.PIN_MEMORY = True
 _C.LOG_CONFIG = "/home/maxkaz/repos/DeepSeismic/logging.conf"
 _C.SEED = 42
 
+# size of voxel cube: WINDOW_SIZE x WINDOW_SIZE x WINDOW_SIZE; used for 3D models only
+_C.WINDOW_SIZE = 65
 
 # Cudnn related params
 _C.CUDNN = CN()
@@ -32,8 +34,10 @@ _C.CUDNN.ENABLED = True
 # DATASET related params
 _C.DATASET = CN()
 _C.DATASET.ROOT = ""
-_C.DATASET.NUM_CLASSES = 6
-_C.DATASET.CLASS_WEIGHTS = [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
+_C.DATASET.NUM_CLASSES = 7
+_C.DATASET.CLASS_WEIGHTS = [0.02630481, 0.05448931, 0.0811898 , 0.01866496, 0.15868563, 0.0875993 , 0.5730662]
+_C.DATASET.INLINE_HEIGHT = 1501
+_C.DATASET.INLINE_WIDTH = 481
 
 # common params for NETWORK
 _C.MODEL = CN()
@@ -45,6 +49,7 @@ _C.MODEL.EXTRA = CN(new_allowed=True)
 
 # training
 _C.TRAIN = CN()
+_C.TRAIN.COMPLETE_PATCHES_ONLY = False
 _C.TRAIN.MIN_LR = 0.001
 _C.TRAIN.MAX_LR = 0.01
 _C.TRAIN.MOMENTUM = 0.9
@@ -57,8 +62,9 @@ _C.TRAIN.MODEL_DIR = "models" # This will be a subdirectory inside OUTPUT_DIR
 _C.TRAIN.AUGMENTATION = True
 _C.TRAIN.STRIDE = 50
 _C.TRAIN.PATCH_SIZE = 99
-_C.TRAIN.MEAN = 0.0009997 # 0.0009996710808862074
-_C.TRAIN.STD = 0.20977 # 0.20976548783479299  # TODO: Should we apply std scaling?
+_C.TRAIN.MEAN = [0.0009997] # 0.0009996710808862074
+_C.TRAIN.STD = [0.20977] # 0.20976548783479299  
+_C.TRAIN.MAX = 255   
 _C.TRAIN.DEPTH = 'no' # Options are None, Patch and Section
 # None adds no depth information and the num of channels remains at 1
 # Patch adds depth per patch so is simply the height of that patch from 0 to 1, channels=3
@@ -74,17 +80,19 @@ _C.TRAIN.AUGMENTATIONS.PAD.WIDTH = 256
 # validation
 _C.VALIDATION = CN()
 _C.VALIDATION.BATCH_SIZE_PER_GPU = 32
+_C.VALIDATION.COMPLETE_PATCHES_ONLY = False
 
 # TEST
 _C.TEST = CN()
 _C.TEST.MODEL_PATH = ""
-_C.TEST.TEST_STRIDE = 10
-_C.TEST.SPLIT = 'Both' # Can be Both, Test1, Test2
-_C.TEST.INLINE = True
-_C.TEST.CROSSLINE = True
-_C.TEST.POST_PROCESSING = CN() # Model output postprocessing
-_C.TEST.POST_PROCESSING.SIZE = 128 # Size to interpolate to in pixels
-_C.TEST.POST_PROCESSING.CROP_PIXELS = 14 # Number of pixels to crop top, bottom, left and right
+_C.TEST.COMPLETE_PATCHES_ONLY = True
+_C.TEST.AUGMENTATIONS = CN()
+_C.TEST.AUGMENTATIONS.RESIZE = CN()
+_C.TEST.AUGMENTATIONS.RESIZE.HEIGHT = 200
+_C.TEST.AUGMENTATIONS.RESIZE.WIDTH = 200
+_C.TEST.AUGMENTATIONS.PAD = CN()
+_C.TEST.AUGMENTATIONS.PAD.HEIGHT = 256
+_C.TEST.AUGMENTATIONS.PAD.WIDTH = 256
 
 
 def update_config(cfg, options=None, config_file=None):
