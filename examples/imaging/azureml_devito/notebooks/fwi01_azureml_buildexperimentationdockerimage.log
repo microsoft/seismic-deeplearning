@@ -1,0 +1,201 @@
+============================= test session starts ==============================
+platform linux -- Python 3.6.9, pytest-5.2.0, py-1.8.0, pluggy-0.13.0
+rootdir: /devito, inifile: setup.cfg
+plugins: nbval-0.9.3, cov-2.7.1
+collected 879 items / 2 skipped / 877 selected
+
+tests/test_adjoint.py ..........................                         [  2%]
+tests/test_autotuner.py ..........s....                                  [  4%]
+tests/test_checkpointing.py .......                                      [  5%]
+tests/test_constant.py .                                                 [  5%]
+tests/test_data.py ..........................ssssssssssssss.ss.          [ 10%]
+tests/test_dependency_bugs.py .                                          [ 10%]
+tests/test_derivatives.py .............................................. [ 15%]
+........................................................................ [ 24%]
+........................................................FF...F.......... [ 32%]
+......                                                                   [ 32%]
+tests/test_dimension.py ...............................                  [ 36%]
+tests/test_dle.py ...................................................... [ 42%]
+.........................................                                [ 47%]
+tests/test_docstrings.py ..............                                  [ 48%]
+tests/test_dse.py ......x............................................... [ 55%]
+......................s....                                              [ 58%]
+tests/test_gradient.py ....                                              [ 58%]
+tests/test_interpolation.py ........................                     [ 61%]
+tests/test_ir.py ....................................................... [ 67%]
+................                                                         [ 69%]
+tests/test_mpi.py ssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 75%]
+s                                                                        [ 75%]
+tests/test_operator.py ................................................. [ 81%]
+........................................................................ [ 89%]
+..................                                                       [ 91%]
+tests/test_pickle.py ..............ss.                                   [ 93%]
+tests/test_resample.py .                                                 [ 93%]
+tests/test_save.py ..                                                    [ 93%]
+tests/test_subdomains.py ...                                             [ 94%]
+tests/test_symbol_caching.py ......................                      [ 96%]
+tests/test_symbolic_coefficients.py .....                                [ 97%]
+tests/test_timestepping.py .......                                       [ 97%]
+tests/test_tools.py .....                                                [ 98%]
+tests/test_tti.py ....                                                   [ 98%]
+tests/test_visitors.py .........                                         [100%]
+
+=================================== FAILURES ===================================
+____________________ TestFD.test_fd_adjoint[dx2-dx2-1-1-8] _____________________
+
+self = <test_derivatives.TestFD object at 0x7fdc40d8cf60>, so = 8, ndim = 1
+derivative = 'dx2', adjoint_name = 'dx2', adjoint_coeff = 1
+
+    @pytest.mark.parametrize('so', [2, 4, 8, 12])
+    @pytest.mark.parametrize('ndim', [1, 2])
+    @pytest.mark.parametrize('derivative, adjoint_name, adjoint_coeff', [
+        ('dx', 'dx', -1),
+        ('dx2', 'dx2', 1),
+        ('dxl', 'dxr', -1),
+        ('dxr', 'dxl', -1)])
+    def test_fd_adjoint(self, so, ndim, derivative, adjoint_name, adjoint_coeff):
+        clear_cache()
+        grid = Grid(shape=tuple([51]*ndim), extent=tuple([25]*ndim))
+        x = grid.dimensions[0]
+        f = Function(name='f', grid=grid, space_order=so)
+        f_deriv = Function(name='f_deriv', grid=grid, space_order=so)
+        g = Function(name='g', grid=grid, space_order=so)
+        g_deriv = Function(name='g_deriv', grid=grid, space_order=so)
+    
+        # Fill f and g with smooth cos/sin
+        Operator([Eq(g, cos(2*np.pi*x/5)), Eq(f, sin(2*np.pi*x/8))]).apply()
+        # Check symbolic expression are expected ones for the adjoint .T
+        deriv = getattr(f, derivative)
+        expected = adjoint_coeff * getattr(f, adjoint_name).evaluate
+        assert deriv.T.evaluate == expected
+    
+        # Compute numerical derivatives and verify dot test
+        #  i.e <f.dx, g> = <f, g.dx.T>
+    
+        eq_f = Eq(f_deriv, deriv)
+        eq_g = Eq(g_deriv, getattr(g, derivative).T)
+    
+        op = Operator([eq_f, eq_g])
+        op()
+    
+        a = np.dot(f_deriv.data.reshape(-1), g.data.reshape(-1))
+        b = np.dot(g_deriv.data.reshape(-1), f.data.reshape(-1))
+>       assert np.isclose(1 - a/b, 0, atol=1e-5)
+E       assert False
+E        +  where False = <function isclose at 0x7fdc82f3c2f0>((1 - (0.3281994 / 0.3282032)), 0, atol=1e-05)
+E        +    where <function isclose at 0x7fdc82f3c2f0> = np.isclose
+
+tests/test_derivatives.py:397: AssertionError
+----------------------------- Captured stderr call -----------------------------
+Operator `Kernel` run in 0.01 s
+Operator `Kernel` run in 0.01 s
+------------------------------ Captured log call -------------------------------
+INFO     Devito:logger.py:121 Operator `Kernel` run in 0.01 s
+INFO     Devito:logger.py:121 Operator `Kernel` run in 0.01 s
+____________________ TestFD.test_fd_adjoint[dx2-dx2-1-1-12] ____________________
+
+self = <test_derivatives.TestFD object at 0x7fdbb221eef0>, so = 12, ndim = 1
+derivative = 'dx2', adjoint_name = 'dx2', adjoint_coeff = 1
+
+    @pytest.mark.parametrize('so', [2, 4, 8, 12])
+    @pytest.mark.parametrize('ndim', [1, 2])
+    @pytest.mark.parametrize('derivative, adjoint_name, adjoint_coeff', [
+        ('dx', 'dx', -1),
+        ('dx2', 'dx2', 1),
+        ('dxl', 'dxr', -1),
+        ('dxr', 'dxl', -1)])
+    def test_fd_adjoint(self, so, ndim, derivative, adjoint_name, adjoint_coeff):
+        clear_cache()
+        grid = Grid(shape=tuple([51]*ndim), extent=tuple([25]*ndim))
+        x = grid.dimensions[0]
+        f = Function(name='f', grid=grid, space_order=so)
+        f_deriv = Function(name='f_deriv', grid=grid, space_order=so)
+        g = Function(name='g', grid=grid, space_order=so)
+        g_deriv = Function(name='g_deriv', grid=grid, space_order=so)
+    
+        # Fill f and g with smooth cos/sin
+        Operator([Eq(g, cos(2*np.pi*x/5)), Eq(f, sin(2*np.pi*x/8))]).apply()
+        # Check symbolic expression are expected ones for the adjoint .T
+        deriv = getattr(f, derivative)
+        expected = adjoint_coeff * getattr(f, adjoint_name).evaluate
+        assert deriv.T.evaluate == expected
+    
+        # Compute numerical derivatives and verify dot test
+        #  i.e <f.dx, g> = <f, g.dx.T>
+    
+        eq_f = Eq(f_deriv, deriv)
+        eq_g = Eq(g_deriv, getattr(g, derivative).T)
+    
+        op = Operator([eq_f, eq_g])
+        op()
+    
+        a = np.dot(f_deriv.data.reshape(-1), g.data.reshape(-1))
+        b = np.dot(g_deriv.data.reshape(-1), f.data.reshape(-1))
+>       assert np.isclose(1 - a/b, 0, atol=1e-5)
+E       assert False
+E        +  where False = <function isclose at 0x7fdc82f3c2f0>((1 - (0.2223196 / 0.22231674)), 0, atol=1e-05)
+E        +    where <function isclose at 0x7fdc82f3c2f0> = np.isclose
+
+tests/test_derivatives.py:397: AssertionError
+----------------------------- Captured stderr call -----------------------------
+Operator `Kernel` run in 0.01 s
+Operator `Kernel` run in 0.01 s
+------------------------------ Captured log call -------------------------------
+INFO     Devito:logger.py:121 Operator `Kernel` run in 0.01 s
+INFO     Devito:logger.py:121 Operator `Kernel` run in 0.01 s
+____________________ TestFD.test_fd_adjoint[dx2-dx2-1-2-12] ____________________
+
+self = <test_derivatives.TestFD object at 0x7fdc41f0a9b0>, so = 12, ndim = 2
+derivative = 'dx2', adjoint_name = 'dx2', adjoint_coeff = 1
+
+    @pytest.mark.parametrize('so', [2, 4, 8, 12])
+    @pytest.mark.parametrize('ndim', [1, 2])
+    @pytest.mark.parametrize('derivative, adjoint_name, adjoint_coeff', [
+        ('dx', 'dx', -1),
+        ('dx2', 'dx2', 1),
+        ('dxl', 'dxr', -1),
+        ('dxr', 'dxl', -1)])
+    def test_fd_adjoint(self, so, ndim, derivative, adjoint_name, adjoint_coeff):
+        clear_cache()
+        grid = Grid(shape=tuple([51]*ndim), extent=tuple([25]*ndim))
+        x = grid.dimensions[0]
+        f = Function(name='f', grid=grid, space_order=so)
+        f_deriv = Function(name='f_deriv', grid=grid, space_order=so)
+        g = Function(name='g', grid=grid, space_order=so)
+        g_deriv = Function(name='g_deriv', grid=grid, space_order=so)
+    
+        # Fill f and g with smooth cos/sin
+        Operator([Eq(g, cos(2*np.pi*x/5)), Eq(f, sin(2*np.pi*x/8))]).apply()
+        # Check symbolic expression are expected ones for the adjoint .T
+        deriv = getattr(f, derivative)
+        expected = adjoint_coeff * getattr(f, adjoint_name).evaluate
+        assert deriv.T.evaluate == expected
+    
+        # Compute numerical derivatives and verify dot test
+        #  i.e <f.dx, g> = <f, g.dx.T>
+    
+        eq_f = Eq(f_deriv, deriv)
+        eq_g = Eq(g_deriv, getattr(g, derivative).T)
+    
+        op = Operator([eq_f, eq_g])
+        op()
+    
+        a = np.dot(f_deriv.data.reshape(-1), g.data.reshape(-1))
+        b = np.dot(g_deriv.data.reshape(-1), f.data.reshape(-1))
+>       assert np.isclose(1 - a/b, 0, atol=1e-5)
+E       assert False
+E        +  where False = <function isclose at 0x7fdc82f3c2f0>((1 - (11.338287 / 11.338157)), 0, atol=1e-05)
+E        +    where <function isclose at 0x7fdc82f3c2f0> = np.isclose
+
+tests/test_derivatives.py:397: AssertionError
+----------------------------- Captured stderr call -----------------------------
+Operator `Kernel` run in 0.01 s
+/tmp/devito-jitcache-uid0/d9e038c50e679daec98f5e80704a19e4aaf8e62c.c: In function ‘Kernel’:
+/tmp/devito-jitcache-uid0/d9e038c50e679daec98f5e80704a19e4aaf8e62c.c:39: warning: ignoring #pragma omp simd [-Wunknown-pragmas]
+     #pragma omp simd aligned(f,f_deriv,g,g_deriv:32)
+ 
+Operator `Kernel` run in 0.01 s
+------------------------------ Captured log call -------------------------------
+INFO     Devito:logger.py:121 Operator `Kernel` run in 0.01 s
+INFO     Devito:logger.py:121 Operator `Kernel` run in 0.01 s
+======= 3 failed, 800 passed, 77 skipped, 1 xfailed in 866.14s (0:14:26) =======
