@@ -1,23 +1,23 @@
 ============================= test session starts ==============================
-platform linux -- Python 3.6.9, pytest-5.2.0, py-1.8.0, pluggy-0.13.0
+platform linux -- Python 3.6.9, pytest-5.2.1, py-1.8.0, pluggy-0.13.0
 rootdir: /devito, inifile: setup.cfg
 plugins: nbval-0.9.3, cov-2.7.1
-collected 879 items / 2 skipped / 877 selected
+collected 881 items / 2 skipped / 879 selected
 
 tests/test_adjoint.py ..........................                         [  2%]
 tests/test_autotuner.py ..........s....                                  [  4%]
 tests/test_checkpointing.py .......                                      [  5%]
 tests/test_constant.py .                                                 [  5%]
-tests/test_data.py ..........................ssssssssssssss.ss.          [ 10%]
+tests/test_data.py ..........................ssssssssssssss.ss..         [ 10%]
 tests/test_dependency_bugs.py .                                          [ 10%]
-tests/test_derivatives.py .............................................. [ 15%]
+tests/test_derivatives.py .............................................. [ 16%]
 ........................................................................ [ 24%]
 ........................................................FF...F.......... [ 32%]
-......                                                                   [ 32%]
+......                                                                   [ 33%]
 tests/test_dimension.py ...............................                  [ 36%]
 tests/test_dle.py ...................................................... [ 42%]
 .........................................                                [ 47%]
-tests/test_docstrings.py ..............                                  [ 48%]
+tests/test_docstrings.py ...............                                 [ 49%]
 tests/test_dse.py ......x............................................... [ 55%]
 ......................s....                                              [ 58%]
 tests/test_gradient.py ....                                              [ 58%]
@@ -43,7 +43,7 @@ tests/test_visitors.py .........                                         [100%]
 =================================== FAILURES ===================================
 ____________________ TestFD.test_fd_adjoint[dx2-dx2-1-1-8] _____________________
 
-self = <test_derivatives.TestFD object at 0x7fdc40d8cf60>, so = 8, ndim = 1
+self = <test_derivatives.TestFD object at 0x7eff9be300b8>, so = 8, ndim = 1
 derivative = 'dx2', adjoint_name = 'dx2', adjoint_coeff = 1
 
     @pytest.mark.parametrize('so', [2, 4, 8, 12])
@@ -82,8 +82,8 @@ derivative = 'dx2', adjoint_name = 'dx2', adjoint_coeff = 1
         b = np.dot(g_deriv.data.reshape(-1), f.data.reshape(-1))
 >       assert np.isclose(1 - a/b, 0, atol=1e-5)
 E       assert False
-E        +  where False = <function isclose at 0x7fdc82f3c2f0>((1 - (0.3281994 / 0.3282032)), 0, atol=1e-05)
-E        +    where <function isclose at 0x7fdc82f3c2f0> = np.isclose
+E        +  where False = <function isclose at 0x7effe13edea0>((1 - (0.3281994 / 0.3282032)), 0, atol=1e-05)
+E        +    where <function isclose at 0x7effe13edea0> = np.isclose
 
 tests/test_derivatives.py:397: AssertionError
 ----------------------------- Captured stderr call -----------------------------
@@ -94,7 +94,7 @@ INFO     Devito:logger.py:121 Operator `Kernel` run in 0.01 s
 INFO     Devito:logger.py:121 Operator `Kernel` run in 0.01 s
 ____________________ TestFD.test_fd_adjoint[dx2-dx2-1-1-12] ____________________
 
-self = <test_derivatives.TestFD object at 0x7fdbb221eef0>, so = 12, ndim = 1
+self = <test_derivatives.TestFD object at 0x7effa83fb470>, so = 12, ndim = 1
 derivative = 'dx2', adjoint_name = 'dx2', adjoint_coeff = 1
 
     @pytest.mark.parametrize('so', [2, 4, 8, 12])
@@ -133,8 +133,8 @@ derivative = 'dx2', adjoint_name = 'dx2', adjoint_coeff = 1
         b = np.dot(g_deriv.data.reshape(-1), f.data.reshape(-1))
 >       assert np.isclose(1 - a/b, 0, atol=1e-5)
 E       assert False
-E        +  where False = <function isclose at 0x7fdc82f3c2f0>((1 - (0.2223196 / 0.22231674)), 0, atol=1e-05)
-E        +    where <function isclose at 0x7fdc82f3c2f0> = np.isclose
+E        +  where False = <function isclose at 0x7effe13edea0>((1 - (0.2223196 / 0.22231674)), 0, atol=1e-05)
+E        +    where <function isclose at 0x7effe13edea0> = np.isclose
 
 tests/test_derivatives.py:397: AssertionError
 ----------------------------- Captured stderr call -----------------------------
@@ -145,7 +145,7 @@ INFO     Devito:logger.py:121 Operator `Kernel` run in 0.01 s
 INFO     Devito:logger.py:121 Operator `Kernel` run in 0.01 s
 ____________________ TestFD.test_fd_adjoint[dx2-dx2-1-2-12] ____________________
 
-self = <test_derivatives.TestFD object at 0x7fdc41f0a9b0>, so = 12, ndim = 2
+self = <test_derivatives.TestFD object at 0x7effa9524da0>, so = 12, ndim = 2
 derivative = 'dx2', adjoint_name = 'dx2', adjoint_coeff = 1
 
     @pytest.mark.parametrize('so', [2, 4, 8, 12])
@@ -184,8 +184,8 @@ derivative = 'dx2', adjoint_name = 'dx2', adjoint_coeff = 1
         b = np.dot(g_deriv.data.reshape(-1), f.data.reshape(-1))
 >       assert np.isclose(1 - a/b, 0, atol=1e-5)
 E       assert False
-E        +  where False = <function isclose at 0x7fdc82f3c2f0>((1 - (11.338287 / 11.338157)), 0, atol=1e-05)
-E        +    where <function isclose at 0x7fdc82f3c2f0> = np.isclose
+E        +  where False = <function isclose at 0x7effe13edea0>((1 - (11.338287 / 11.338157)), 0, atol=1e-05)
+E        +    where <function isclose at 0x7effe13edea0> = np.isclose
 
 tests/test_derivatives.py:397: AssertionError
 ----------------------------- Captured stderr call -----------------------------
@@ -198,4 +198,4 @@ Operator `Kernel` run in 0.01 s
 ------------------------------ Captured log call -------------------------------
 INFO     Devito:logger.py:121 Operator `Kernel` run in 0.01 s
 INFO     Devito:logger.py:121 Operator `Kernel` run in 0.01 s
-======= 3 failed, 800 passed, 77 skipped, 1 xfailed in 866.14s (0:14:26) =======
+======= 3 failed, 802 passed, 77 skipped, 1 xfailed in 885.98s (0:14:45) =======
