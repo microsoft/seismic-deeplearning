@@ -12,6 +12,8 @@ dependencies:
   - pandas
   - opencv
   - scikit-learn
+  - tensorflow-gpu=1.14
+  - tqdm
   - pip:
     - segyio
     - pytorch-ignite
@@ -20,7 +22,6 @@ dependencies:
     - tabulate==0.8.2
     - Jinja2
     - gitpython
-    - tensorflow # Installing for Tensorboard
     - tensorboard
     - tensorboardx
     - tqdm
@@ -30,4 +31,4 @@ dependencies:
     - black
     - pylint
     - scipy==1.1.0
-
+        

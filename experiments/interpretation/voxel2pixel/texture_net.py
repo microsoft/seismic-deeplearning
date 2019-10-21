@@ -10,32 +10,32 @@ from utils import gpu_no_of_var
 
 
 class TextureNet(nn.Module):
-    def __init__(self, n_classes=2):
+    def __init__(self, n_classes=2, n_filters=50):
         super(TextureNet, self).__init__()
 
         # Network definition
         # Parameters  #in_channels, #out_channels, filter_size, stride (downsampling factor)
         self.net = nn.Sequential(
             nn.Conv3d(
-                1, 50, 5, 4, padding=2
+                1, n_filters, 5, 4, padding=2
             ),
-            nn.BatchNorm3d(50),
+            nn.BatchNorm3d(n_filters),
             # nn.Dropout3d() #Droput can be added like this ...
             nn.ReLU(),
-            nn.Conv3d(50, 50, 3, 2, padding=1, bias=False),
-            nn.BatchNorm3d(50),
+            nn.Conv3d(n_filters, n_filters, 3, 2, padding=1, bias=False),
+            nn.BatchNorm3d(n_filters),
             nn.ReLU(),
-            nn.Conv3d(50, 50, 3, 2, padding=1, bias=False),
-            nn.BatchNorm3d(50),
+            nn.Conv3d(n_filters, n_filters, 3, 2, padding=1, bias=False),
+            nn.BatchNorm3d(n_filters),
             nn.ReLU(),
-            nn.Conv3d(50, 50, 3, 2, padding=1, bias=False),
-            nn.BatchNorm3d(50),
+            nn.Conv3d(n_filters, n_filters, 3, 2, padding=1, bias=False),
+            nn.BatchNorm3d(n_filters),
             nn.ReLU(),
-            nn.Conv3d(50, 50, 3, 3, padding=1, bias=False),
-            nn.BatchNorm3d(50),
+            nn.Conv3d(n_filters, n_filters, 3, 3, padding=1, bias=False),
+            nn.BatchNorm3d(n_filters),
             nn.ReLU(),
             nn.Conv3d(
-                50, n_classes, 1, 1
+                n_filters, n_classes, 1, 1
             ),  # This is the equivalent of a fully connected layer since input has width/height/depth = 1
             nn.ReLU(),
         )

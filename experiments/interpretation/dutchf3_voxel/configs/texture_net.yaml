@@ -1,0 +1,41 @@
+# TextureNet configuration
+
+CUDNN:
+  BENCHMARK: true
+  DETERMINISTIC: false
+  ENABLED: true
+GPUS: (0,)
+OUTPUT_DIR: 'output' 
+LOG_DIR: 'log'
+WORKERS: 4
+PRINT_FREQ: 10
+LOG_CONFIG: /home/maxkaz/DeepSeismic/logging.conf
+SEED: 2019
+WINDOW_SIZE: 65
+
+DATASET:
+  NUM_CLASSES: 2
+  ROOT: /mnt/dutchf3
+  FILENAME: data.segy  
+
+MODEL:
+  NAME: texture_net
+  IN_CHANNELS: 1
+  NUM_FILTERS: 50
+
+TRAIN:
+  BATCH_SIZE_PER_GPU: 32  
+  END_EPOCH: 5000  
+  LR: 0.02
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.0001    
+  DEPTH: "voxel" # Options are No, Patch, Section and Voxel  
+  MODEL_DIR: "models"
+
+VALIDATION:
+  BATCH_SIZE_PER_GPU: 32
+
+TEST:
+  MODEL_PATH: ""  
+  SPLIT: 'Both' # Can be Both, Test1, Test2 
+

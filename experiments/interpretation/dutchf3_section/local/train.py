@@ -52,7 +52,7 @@ from toolz import compose
 from torch.utils import data
 
 
-def prepare_batch(batch, device=None, non_blocking=False):
+def prepare_batch(batch, device="cuda", non_blocking=False):
     x, y = batch
     return (
         convert_tensor(x, device=device, non_blocking=non_blocking),

@@ -65,7 +65,7 @@ if LOG_TENSORBOARD:
         )
 
 # Training loop
-for i in range(2000):
+for i in range(5000):
 
     # Get random training batch with augmentation
     # This is the bottle-neck for training and could be done more efficient on the GPU...

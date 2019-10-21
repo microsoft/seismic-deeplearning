@@ -30,6 +30,24 @@ conda env update --file environment/anaconda/local/environment.yml
 ```
 from the root of DeepSeismic repo.
 
+### Viewers
+
+#### segyviewer
+
+For seismic interpretation (segmentation), if you want to visualize cross-sections of a 3D volume (both the input velocity model and the segmented output) you can use
+[segyviewer](https://github.com/equinor/segyviewer), for example like so:
+```bash
+segyviewer /mnt/dutchf3/data.segy
+```
+
+To install [segyviewer](https://github.com/equinor/segyviewer) run
+```bash
+conda env -n segyviewer python=2.7
+conda activate segyviewer
+conda install -c anaconda pyqt=4.11.4
+pip install segyviewer
+```
+
 ## Benchmarks
 
 ### Dense Labels
