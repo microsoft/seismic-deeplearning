@@ -8,7 +8,7 @@ description: "Add 150 character max description"
 urlFragment: "update-this-to-unique-url-stub"
 ---
 
-[![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.DeepSeismic?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=108&branchName=master)
+[![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.DeepSeismic?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.DeepSeismic?branchName=master)
 
 # Official Microsoft Sample
 
