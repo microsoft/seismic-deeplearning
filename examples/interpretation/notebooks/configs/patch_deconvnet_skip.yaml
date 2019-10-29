@@ -23,7 +23,7 @@ MODEL:
 TRAIN:
   BATCH_SIZE_PER_GPU: 64
   BEGIN_EPOCH: 0
-  END_EPOCH: 10
+  END_EPOCH: 100
   MIN_LR: 0.001
   MAX_LR: 0.02
   MOMENTUM: 0.9
@@ -48,7 +48,7 @@ VALIDATION:
   BATCH_SIZE_PER_GPU: 512
 
 TEST: 
-  MODEL_PATH: '/data/home/vapaunic/repos/DeepSeismic/examples/interpretation/notebooks/output/models/model_patch_deconvnet_skip_8.pth'
+  MODEL_PATH: '/data/home/vapaunic/repos/DeepSeismic/examples/interpretation/notebooks/output/models/model_patch_deconvnet_skip_100.pth'
   TEST_STRIDE: 10
   SPLIT: 'test1' # Can be both, test1, test2
   INLINE: True
