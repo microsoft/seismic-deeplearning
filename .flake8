@@ -1,5 +1,17 @@
 [flake8]
-ignore = E203, E266, E501, W503
 max-line-length = 88
 max-complexity = 18
 select = B,C,E,F,W,T4,B9
+ignore =
+    # slice notation whitespace, invalid
+    E203
+    # too many leading ‘#’ for block comment
+    E266
+    # module level import not at top of file
+    E402
+    # do not use bare except, specify exception instead
+    E722
+    # line break before binary operator
+    W503
+    # blank line contains whitespace
+    W293
