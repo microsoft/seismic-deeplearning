@@ -1,9 +1,7 @@
 import torch
 import numpy as np
-import pytest
 from pytest import approx
 
-from ignite.engine import Engine
 from ignite.metrics import ConfusionMatrix, MetricsLambda
 
 from cv_lib.segmentation.dutchf3.metrics import (
