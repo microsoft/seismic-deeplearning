@@ -1,21 +1,14 @@
-import collections
 import itertools
-import json
-import logging
-import math
 import warnings
 import segyio
 from os import path
 import scipy
-
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from sklearn.model_selection import train_test_split
 from toolz import curry
 from torch.utils import data
 
-from interpretation.deepseismic_interpretation.dutchf3.utils.batch import (
+from deepseismic_interpretation.dutchf3.utils.batch import (
     interpolate_to_fit_data,
     parse_labels_in_image,
     get_coordinates_for_slice,
@@ -108,14 +101,7 @@ def read_labels(fname, data_info):
     # Alternative writings for slice-type
     inline_alias = ["inline", "in-line", "iline", "y"]
     crossline_alias = ["crossline", "cross-line", "xline", "x"]
-    timeslice_alias = [
-        "timeslice",
-        "time-slice",
-        "t",
-        "z",
-        "depthslice",
-        "depth",
-    ]
+    timeslice_alias = ["timeslice", "time-slice", "t", "z", "depthslice", "depth"]
 
     label_imgs = []
     label_coordinates = {}
@@ -157,9 +143,7 @@ def read_labels(fname, data_info):
             label_coordinates[str(cls)] = np.concatenate(
                 (label_coordinates[str(cls)], cords_with_cls), 1
             )
-            print(
-                " ", str(np.sum(inds_with_cls)), "labels for class", str(cls)
-            )
+            print(" ", str(np.sum(inds_with_cls)), "labels for class", str(cls))
     if len(np.unique(label_img)) == 1:
         print(" ", 0, "labels", str(cls))
 
@@ -201,7 +185,7 @@ def get_random_batch(
     """
 
     # always generate only one datapoint - batch_size controls class balance
-    num_batch_size=1
+    num_batch_size = 1
 
     # Make 3 im_size elements
     if isinstance(im_size, int):
@@ -216,11 +200,11 @@ def get_random_batch(
 
     # We seek to have a balanced batch with equally many samples from each class.
     # get total number of samples per class
-    samples_per_class = batch_size//n_classes
+    samples_per_class = batch_size // n_classes
     # figure out index relative to zero (not sequentially counting points)
-    index = index - batch_size*(index//batch_size)
+    index = index - batch_size * (index // batch_size)
     # figure out which class to sample for this datapoint
-    class_ind = index//samples_per_class
+    class_ind = index // samples_per_class
 
     # Start by getting a grid centered around (0,0,0)
     grid = get_grid(im_size)
@@ -239,7 +223,7 @@ def get_random_batch(
     if random_stretch:
         grid = augment_stretch(grid, random_stretch)
 
-    # Pick random location from the label_coordinates for this class:    
+    # Pick random location from the label_coordinates for this class:
     coords_for_class = label_coordinates[class_keys[class_ind]]
     random_index = rand_int(0, coords_for_class.shape[1])
     coord = coords_for_class[:, random_index : random_index + 1]
@@ -252,17 +236,13 @@ def get_random_batch(
 
     # Insert in output arrays
     ret_labels[0] = class_ind
-    batch[0, 0, :, :, :] = np.reshape(
-        sample, (im_size[0], im_size[1], im_size[2])
-    )
+    batch[0, 0, :, :, :] = np.reshape(sample, (im_size[0], im_size[1], im_size[2]))
 
     return batch, ret_labels
 
 
 class SectionLoader(data.Dataset):
-    def __init__(
-        self, data_dir, split="train", is_transform=True, augmentations=None
-    ):
+    def __init__(self, data_dir, split="train", is_transform=True, augmentations=None):
         self.split = split
         self.data_dir = data_dir
         self.is_transform = is_transform
@@ -313,7 +293,7 @@ class VoxelLoader(data.Dataset):
         split="train",
         n_classes=2,
         gen_coord_list=False,
-        len = None
+        len=None,
     ):
 
         assert split == "train" or split == "val"
@@ -378,9 +358,7 @@ class VoxelLoader(data.Dataset):
 
 
 class TrainSectionLoader(SectionLoader):
-    def __init__(
-        self, data_dir, split="train", is_transform=True, augmentations=None
-    ):
+    def __init__(self, data_dir, split="train", is_transform=True, augmentations=None):
         super(TrainSectionLoader, self).__init__(
             data_dir,
             split=split,
@@ -392,18 +370,14 @@ class TrainSectionLoader(SectionLoader):
         self.labels = np.load(_train_labels_for(self.data_dir))
 
         # reading the file names for split
-        txt_path = path.join(
-            self.data_dir, "splits", "section_" + split + ".txt"
-        )
+        txt_path = path.join(self.data_dir, "splits", "section_" + split + ".txt")
         file_list = tuple(open(txt_path, "r"))
         file_list = [id_.rstrip() for id_ in file_list]
         self.sections = file_list
 
 
 class TrainSectionLoaderWithDepth(TrainSectionLoader):
-    def __init__(
-        self, data_dir, split="train", is_transform=True, augmentations=None
-    ):
+    def __init__(self, data_dir, split="train", is_transform=True, augmentations=None):
         super(TrainSectionLoaderWithDepth, self).__init__(
             data_dir,
             split=split,
@@ -441,7 +415,15 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
 
 
 class TrainVoxelWaldelandLoader(VoxelLoader):
-    def __init__(self, root_path, filename, split="train", window_size=65, batch_size=None, len=None):
+    def __init__(
+        self,
+        root_path,
+        filename,
+        split="train",
+        window_size=65,
+        batch_size=None,
+        len=None,
+    ):
         super(TrainVoxelWaldelandLoader, self).__init__(
             root_path, filename, split=split, window_size=window_size, len=len
         )
@@ -454,9 +436,7 @@ class TrainVoxelWaldelandLoader(VoxelLoader):
         else:
             raise Exception("undefined split")
 
-        self.class_imgs, self.coordinates = read_labels(
-            label_fname, self.data_info
-        )        
+        self.class_imgs, self.coordinates = read_labels(label_fname, self.data_info)
 
         self.batch_size = batch_size if batch_size else 1
 
@@ -472,7 +452,7 @@ class TrainVoxelWaldelandLoader(VoxelLoader):
             random_stretch=0.2,
             random_rot_xy=180,
             random_rot_z=15,
-        )        
+        )
 
         return batch, labels
 
@@ -482,9 +462,7 @@ TrainVoxelLoaderWithDepth = TrainVoxelWaldelandLoader
 
 
 class TestSectionLoader(SectionLoader):
-    def __init__(
-        self, data_dir, split="test1", is_transform=True, augmentations=None
-    ):
+    def __init__(self, data_dir, split="test1", is_transform=True, augmentations=None):
         super(TestSectionLoader, self).__init__(
             data_dir,
             split=split,
@@ -501,18 +479,14 @@ class TestSectionLoader(SectionLoader):
 
         # We are in test mode. Only read the given split. The other one might not
         # be available.
-        txt_path = path.join(
-            self.data_dir, "splits", "section_" + split + ".txt"
-        )
+        txt_path = path.join(self.data_dir, "splits", "section_" + split + ".txt")
         file_list = tuple(open(txt_path, "r"))
         file_list = [id_.rstrip() for id_ in file_list]
         self.sections = file_list
 
 
 class TestSectionLoaderWithDepth(TestSectionLoader):
-    def __init__(
-        self, data_dir, split="test1", is_transform=True, augmentations=None
-    ):
+    def __init__(self, data_dir, split="test1", is_transform=True, augmentations=None):
         super(TestSectionLoaderWithDepth, self).__init__(
             data_dir,
             split=split,
@@ -569,12 +543,7 @@ class PatchLoader(data.Dataset):
     """
 
     def __init__(
-        self,
-        data_dir,
-        stride=30,
-        patch_size=99,
-        is_transform=True,
-        augmentations=None,
+        self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None
     ):
         self.data_dir = data_dir
         self.is_transform = is_transform
@@ -589,10 +558,7 @@ class PatchLoader(data.Dataset):
         Only used for train/val!! Not test.
         """
         return np.pad(
-            volume,
-            pad_width=self.patch_size,
-            mode="constant",
-            constant_values=255,
+            volume, pad_width=self.patch_size, mode="constant", constant_values=255
         )
 
     def __len__(self):
@@ -644,12 +610,7 @@ class PatchLoader(data.Dataset):
 
 class TestPatchLoader(PatchLoader):
     def __init__(
-        self,
-        data_dir,
-        stride=30,
-        patch_size=99,
-        is_transform=True,
-        augmentations=None,
+        self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None
     ):
         super(TestPatchLoader, self).__init__(
             data_dir,
@@ -666,9 +627,7 @@ class TestPatchLoader(PatchLoader):
         # We are in test mode. Only read the given split. The other one might not
         # be available.
         self.split = "test1"  # TODO: Fix this can also be test2
-        txt_path = path.join(
-            self.data_dir, "splits", "patch_" + self.split + ".txt"
-        )
+        txt_path = path.join(self.data_dir, "splits", "patch_" + self.split + ".txt")
         patch_list = tuple(open(txt_path, "r"))
         patch_list = [id_.rstrip() for id_ in patch_list]
         self.patches = patch_list
@@ -700,9 +659,7 @@ class TrainPatchLoader(PatchLoader):
         # so don't attempt to load them.
         self.split = split
         # reading the file names for split
-        txt_path = path.join(
-            self.data_dir, "splits", "patch_" + split + ".txt"
-        )
+        txt_path = path.join(self.data_dir, "splits", "patch_" + split + ".txt")
         patch_list = tuple(open(txt_path, "r"))
         patch_list = [id_.rstrip() for id_ in patch_list]
         self.patches = patch_list
@@ -806,20 +763,14 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
         if direction == "i":
             im = self.seismic[
-                idx,
-                :,
-                xdx : xdx + self.patch_size,
-                ddx : ddx + self.patch_size,
+                idx, :, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size
             ]
             lbl = self.labels[
                 idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size
             ]
         elif direction == "x":
             im = self.seismic[
-                idx : idx + self.patch_size,
-                :,
-                xdx,
-                ddx : ddx + self.patch_size,
+                idx : idx + self.patch_size, :, xdx, ddx : ddx + self.patch_size
             ]
             lbl = self.labels[
                 idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size
@@ -953,9 +904,7 @@ def decode_segmap(label_mask, n_classes=6, label_colours=get_seismic_labels()):
         r[label_mask == ll] = label_colours[ll, 0]
         g[label_mask == ll] = label_colours[ll, 1]
         b[label_mask == ll] = label_colours[ll, 2]
-    rgb = np.zeros(
-        (label_mask.shape[0], label_mask.shape[1], label_mask.shape[2], 3)
-    )
+    rgb = np.zeros((label_mask.shape[0], label_mask.shape[1], label_mask.shape[2], 3))
     rgb[:, :, :, 0] = r / 255.0
     rgb[:, :, :, 1] = g / 255.0
     rgb[:, :, :, 2] = b / 255.0

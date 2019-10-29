@@ -8,7 +8,9 @@ from ignite.utils import convert_tensor
 from toolz import compose, curry, itertoolz, pipe
 
 import matplotlib.pyplot as plt
-# plt.rcParams.update({"font.size": 16})
+import plotly.graph_objects as go
+from scipy.ndimage import zoom
+
 
 class runningScore(object):
     def __init__(self, n_classes):
@@ -40,9 +42,7 @@ class runningScore(object):
         acc = np.diag(hist).sum() / hist.sum()
         acc_cls = np.diag(hist) / hist.sum(axis=1)
         mean_acc_cls = np.nanmean(acc_cls)
-        iu = np.diag(hist) / (
-            hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist)
-        )
+        iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
         mean_iu = np.nanmean(iu)
         freq = (
             hist.sum(axis=1) / hist.sum()
@@ -72,7 +72,8 @@ def prepare_batch(batch, device=None, non_blocking=False):
         convert_tensor(x, device=device, non_blocking=non_blocking),
         convert_tensor(y, device=device, non_blocking=non_blocking),
     )
-        
+
+
 def _transform_CHW_to_HWC(numpy_array):
     return np.moveaxis(numpy_array, 0, -1)
 
@@ -132,14 +133,10 @@ def _expand_dims_if_necessary(torch_tensor):
 @curry
 def _extract_patch(hdx, wdx, ps, patch_size, img_p):
     if len(img_p.shape) == 2:  # 2D
-        return img_p[
-            hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size
-        ]
+        return img_p[hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size]
     else:  # 3D
         return img_p[
-            :,
-            hdx + ps : hdx + ps + patch_size,
-            wdx + ps : wdx + ps + patch_size,
+            :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size
         ]
 
 
@@ -159,13 +156,10 @@ def _compose_processing_pipeline(depth, aug=None):
 
 def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
     hdc_wdx_generator = itertools.product(
-        range(0, h - patch_size + ps, stride),
-        range(0, w - patch_size + ps, stride),
+        range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride)
     )
 
-    for batch_indexes in itertoolz.partition_all(
-        batch_size, hdc_wdx_generator
-    ):
+    for batch_indexes in itertoolz.partition_all(batch_size, hdc_wdx_generator):
         yield batch_indexes
 
 
@@ -173,16 +167,10 @@ def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
 def _output_processing_pipeline(config, output):
     output = output.unsqueeze(0)
     _, _, h, w = output.shape
-    if (
-        config.TEST.POST_PROCESSING.SIZE != h
-        or config.TEST.POST_PROCESSING.SIZE != w
-    ):
+    if config.TEST.POST_PROCESSING.SIZE != h or config.TEST.POST_PROCESSING.SIZE != w:
         output = F.interpolate(
             output,
-            size=(
-                config.TEST.POST_PROCESSING.SIZE,
-                config.TEST.POST_PROCESSING.SIZE,
-            ),
+            size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE),
             mode="bilinear",
         )
 
@@ -225,26 +213,17 @@ def _patch_label_2d(
     ):
         batch = torch.stack(
             [
-                pipe(
-                    img_p,
-                    _extract_patch(hdx, wdx, ps, patch_size),
-                    pre_processing,
-                )
+                pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing)
                 for hdx, wdx in batch_indexes
             ],
             dim=0,
         )
 
         model_output = model(batch.to(device))
-        for (hdx, wdx), output in zip(
-            batch_indexes, model_output.detach().cpu()
-        ):
+        for (hdx, wdx), output in zip(batch_indexes, model_output.detach().cpu()):
             output = output_processing(output)
             output_p[
-                :,
-                :,
-                hdx + ps : hdx + ps + patch_size,
-                wdx + ps : wdx + ps + patch_size,
+                :, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size
             ] += output
 
     # crop the output_p in the middle
@@ -262,13 +241,12 @@ def to_image(label_mask, n_classes=6):
         r[label_mask == ll] = label_colours[ll, 0]
         g[label_mask == ll] = label_colours[ll, 1]
         b[label_mask == ll] = label_colours[ll, 2]
-    rgb = np.zeros(
-        (label_mask.shape[0], label_mask.shape[1], label_mask.shape[2], 3)
-    )
+    rgb = np.zeros((label_mask.shape[0], label_mask.shape[1], label_mask.shape[2], 3))
     rgb[:, :, :, 0] = r
     rgb[:, :, :, 1] = g
     rgb[:, :, :, 2] = b
     return rgb
+
 
 def _write_section_file(labels, section_file, config):
     # define indices of the array
@@ -292,7 +270,7 @@ def _write_section_file(labels, section_file, config):
     file_object.write("\n".join(list_test))
     file_object.close()
 
-    
+
 def plot_aline(aline, labels, xlabel, ylabel="depth"):
     """Plot a section of the data."""
     plt.figure(figsize=(18, 6))
@@ -307,3 +285,40 @@ def plot_aline(aline, labels, xlabel, ylabel="depth"):
     plt.imshow(labels)
     plt.xlabel(xlabel)
     plt.title("Label")
+
+
+def plot_f3block_interactive(data, x_slice_locations=[0.25], y_slice_locations=[0.8]):
+    """Plot interactive graph of F3 block"""
+    values = zoom(data, 0.2)
+    values = values[:, :, ::-1]
+
+    x, y, z = values.shape
+    X, Y, Z = np.mgrid[0:x, 0:y, 0:z]
+
+    fig = go.Figure(
+        data=go.Volume(
+            x=X.flatten(),
+            y=Y.flatten(),
+            z=Z.flatten(),
+            value=values.flatten(),
+            slices_x=dict(show=True, locations=[i * x for i in x_slice_locations]),
+            slices_y=dict(show=True, locations=[i * y for i in y_slice_locations]),
+            opacity=0.5,  # needs to be small to see through all surfaces
+            showscale=False,
+            caps=dict(x_show=True, y_show=True, z_show=True),
+            colorscale="Viridis",
+        )
+    )
+
+    fig.update_layout(
+        scene_xaxis_showticklabels=False,
+        scene_yaxis_showticklabels=False,
+        scene_zaxis_showticklabels=False,
+        height=800,
+        width=1000,
+        title="F3 Block Netherlands",
+        scene=dict(
+            xaxis_title="Inlines", yaxis_title="Crosslines", zaxis_title="Depth"
+        ),
+    )
+    fig.show()
