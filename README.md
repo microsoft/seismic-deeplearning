@@ -30,6 +30,24 @@ conda env update --file environment/anaconda/local/environment.yml
 ```
 from the root of DeepSeismic repo.
 
+### Viewers
+
+#### segyviewer
+
+For seismic interpretation (segmentation), if you want to visualize cross-sections of a 3D volume (both the input velocity model and the segmented output) you can use
+[segyviewer](https://github.com/equinor/segyviewer), for example like so:
+```bash
+segyviewer /mnt/dutchf3/data.segy
+```
+
+To install [segyviewer](https://github.com/equinor/segyviewer) run
+```bash
+conda env -n segyviewer python=2.7
+conda activate segyviewer
+conda install -c anaconda pyqt=4.11.4
+pip install segyviewer
+```
+
 ## Benchmarks
 
 ### Dense Labels
@@ -37,6 +55,8 @@ from the root of DeepSeismic repo.
 This section contains benchmarks of different algorithms for seismic interpretation on 3D seismic datasets with densely-annotated data.
 
 Below are the results from the models contained in this repo. To run them check the instructions in <benchmarks> folder. Alternatively take a look in <examples> for how to run them on your own dataset
+
+### Netherlands F3
 
 |    Authorship    |    Experiment                     |    PA       |    FW IoU    |    MCA     |
 |------------------|-----------------------------------|-------------|--------------|------------|
@@ -47,6 +67,18 @@ Below are the results from the models contained in this repo. To run them check 
 |                  |    HRNet(patch)+patch_depth       |    .908     |    .843      |    .837    |
 |                  |    HRNet(patch)+section_depth     |    .928     |    .871      |    .871    |
 
+### Penobscot
+
+Trained and tested on full dataset. Inlines with artefacts were left in for training, validation and testing.
+The dataset was split 70% training, 10% validation and 20% test. The results below are from the test set
+
+|    Authorship    |    Experiment                       |    PA       |    IoU       |    MCA     |
+|------------------|-------------------------------------|-------------|--------------|------------|
+|    Ours          |    SEResNet UNet + section depth    |    1.0      |    .98        |    .99    |
+|                  |    HRNet(patch) + section depth     |    1.0      |    .97        |    .98    |
+
+![Best Penobscot SEResNet](images/penobscot_seresnet_best.png "Best performing inlines, Mask and Predictions from SEResNet")
+![Worst Penobscot SEResNet](images/penobscot_seresnet_worst.png "Worst performing inlines  Mask and Predictions from SEResNet")
 
 ### Sparse Labels
 
@@ -70,7 +102,19 @@ We present results of algorithms which are based on scribble-level annotations, 
 We present results of algorithms which are based on pixel-level annotations, where the annotator labels individual pixels and gaps are allowed between pixels; the annotator can also label a small neighborhood of pixels, e.g. large dot of ~100 pixels.
 
 ### Data
-The scripts expect the data to be contained in /mnt/dutchf3
+#### Netherlands F3
+
+
+#### Penobscot
+To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script
+
+
+
+### Scripts
+- [parallel_training.sh](scripts/parallel_training.sh): Script to launch multiple jobs in parallel. Used mainly for local hyperparameter tuning. Look at the script for further instructions
+
+- [kill_windows.sh](scripts/kill_windows.sh): Script to kill multiple tmux windows. Used to kill jobs that parallel_training.sh might have started.
+
 
 ## Contributing
 

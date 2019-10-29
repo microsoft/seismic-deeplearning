@@ -10,10 +10,7 @@ import fire
 import numpy as np
 import torch
 from albumentations import Compose, HorizontalFlip, Normalize
-from deepseismic_interpretation.dutchf3.data import (
-    decode_segmap,
-    get_section_loader,
-)
+from deepseismic_interpretation.dutchf3.data import decode_segmap, get_section_loader
 from cv_lib.event_handlers import (
     SnapshotHandler,
     logging_handlers,
@@ -53,8 +50,7 @@ from toolz import compose
 from torch.utils import data
 
 
-
-def prepare_batch(batch, device=None, non_blocking=False):
+def prepare_batch(batch, device="cuda", non_blocking=False):
     x, y = batch
     return (
         convert_tensor(x, device=device, non_blocking=non_blocking),
@@ -92,9 +88,7 @@ def run(*options, cfg=None):
     basic_aug = Compose(
         [
             Normalize(
-                mean=(config.TRAIN.MEAN,),
-                std=(config.TRAIN.STD,),
-                max_pixel_value=1,
+                mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1
             )
         ]
     )
@@ -127,9 +121,7 @@ def run(*options, cfg=None):
         def __iter__(self):
             char = ["i" if np.random.randint(2) == 1 else "x"]
             self.indices = [
-                idx
-                for (idx, name) in enumerate(self.data_source)
-                if char[0] in name
+                idx for (idx, name) in enumerate(self.data_source) if char[0] in name
             ]
             return (self.indices[i] for i in torch.randperm(len(self.indices)))
 
@@ -184,11 +176,7 @@ def run(*options, cfg=None):
 
     snapshot_duration = scheduler_step * len(train_loader)
     scheduler = CosineAnnealingScheduler(
-        optimizer,
-        "lr",
-        config.TRAIN.MAX_LR,
-        config.TRAIN.MIN_LR,
-        snapshot_duration,
+        optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration
     )
 
     # weights are inversely proportional to the frequency of the classes in the training set
@@ -211,9 +199,7 @@ def run(*options, cfg=None):
         logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
     )
 
-    trainer.add_event_handler(
-        Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer)
-    )
+    trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
 
     trainer.add_event_handler(
         Events.EPOCH_STARTED,
@@ -226,10 +212,7 @@ def run(*options, cfg=None):
     )
 
     def _select_pred_and_mask(model_out_dict):
-        return (
-            model_out_dict["y_pred"].squeeze(),
-            model_out_dict["mask"].squeeze(),
-        )
+        return (model_out_dict["y_pred"].squeeze(), model_out_dict["mask"].squeeze())
 
     evaluator = create_supervised_evaluator(
         model,
@@ -237,26 +220,18 @@ def run(*options, cfg=None):
         metrics={
             "pixacc": Accuracy(output_transform=_select_pred_and_mask),
             "nll": Loss(criterion, output_transform=_select_pred_and_mask),
-            "cacc": class_accuracy(
-                n_classes, output_transform=_select_pred_and_mask
-            ),
+            "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask),
             "mca": mean_class_accuracy(
                 n_classes, output_transform=_select_pred_and_mask
             ),
-            "ciou": class_iou(
-                n_classes, output_transform=_select_pred_and_mask
-            ),
-            "mIoU": mean_iou(
-                n_classes, output_transform=_select_pred_and_mask
-            ),
+            "ciou": class_iou(n_classes, output_transform=_select_pred_and_mask),
+            "mIoU": mean_iou(n_classes, output_transform=_select_pred_and_mask),
         },
         device=device,
     )
 
     # Set the validation run to start on the epoch completion of the training run
-    trainer.add_event_handler(
-        Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader)
-    )
+    trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
@@ -314,20 +289,14 @@ def run(*options, cfg=None):
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
         create_image_writer(
-            summary_writer,
-            "Validation/Mask",
-            "mask",
-            transform_func=transform_func,
+            summary_writer, "Validation/Mask", "mask", transform_func=transform_func
         ),
     )
 
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
         create_image_writer(
-            summary_writer,
-            "Validation/Pred",
-            "y_pred",
-            transform_func=transform_pred,
+            summary_writer, "Validation/Pred", "y_pred", transform_func=transform_pred
         ),
     )
 

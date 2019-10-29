@@ -31,7 +31,7 @@ def mean_class_accuracy(num_classes, output_transform=lambda x: x):
 
     Args:
         num_classes (int): number of classes
-        output_transform (callable, optional): a callable that is used to transform the 
+        output_transform (callable, optional): a callable that is used to transform the
             output into the form expected by the metric.
 
     Returns:

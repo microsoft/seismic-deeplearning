@@ -3,7 +3,7 @@
 Contributions are welcomed! Here's a few things to know:
 
 * [Steps to Contributing](#steps-to-contributing)
-* [Coding Guidelines](#TODO)
+* [Coding Guidelines](#coding-guidelines)
 * [Microsoft Contributor License Agreement](#microsoft-contributor-license-agreement)
 * [Code of Conduct](#code-of-conduct)
 
@@ -25,6 +25,18 @@ Once the features included in a [milestone](https://github.com/Microsoft/DeepSei
 ## Coding Guidelines
 
 We strive to maintain high quality code to make the utilities in the repository easy to understand, use, and extend. We also work hard to maintain a friendly and constructive environment. We've found that having clear expectations on the development process and consistent style helps to ensure everyone can contribute and collaborate effectively.
+
+### Code formatting and style checking
+We use `git-hooks` to automate the process of formatting and style checking the code. In particular, we use `black` as a code formatter, `flake8` for style checking, and the `pre-commit` Python framework, which ensures that both, code formatter and checker, are ran on the code during commit. If they are executed with no issues, then the commit is made, otherwise, the commit is denied until stylistic or formatting changes are made.
+
+Please follow these instructions to set up `pre-commit` in your environment.
+
+```
+pip install pre-commit
+pre-commit install
+```
+
+The above will install the pre-commit package, and install git hooks specified in `.pre-commit-config.yaml` into your `.git/` directory. 
 
 ## Microsoft Contributor License Agreement
 
