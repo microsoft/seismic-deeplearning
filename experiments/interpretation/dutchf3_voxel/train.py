@@ -19,6 +19,7 @@ from albumentations import (
 )
 from ignite.contrib.handlers import CosineAnnealingScheduler
 from ignite.engine import Events
+from ignite.handlers import ModelCheckpoint
 from ignite.metrics import Accuracy, Loss
 from ignite.utils import convert_tensor
 from toolz import compose
@@ -231,7 +232,14 @@ def run(*options, cfg=None):
 
         pbar.n = pbar.last_print_n = 0
 
-    trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH//config.TRAIN.BATCH_PER_EPOCH)
+    # add model checkpointing
+    output_dir = path.join(config.OUTPUT_DIR, config.TRAIN.MODEL_DIR)
+    checkpoint_handler = ModelCheckpoint(
+        output_dir, "model", save_interval=2, n_saved=3, create_dir=True, require_empty=False)
+    trainer.add_event_handler(
+        Events.EPOCH_COMPLETED, checkpoint_handler, {config.MODEL.NAME: model}
+    )
+    trainer.run(train_loader, max_epochs=2)#config.TRAIN.END_EPOCH//config.TRAIN.BATCH_PER_EPOCH)
     pbar.close()
 
 if __name__ == "__main__":
