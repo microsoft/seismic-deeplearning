@@ -39,6 +39,7 @@ from cv_lib.event_handlers.tensorboard_handlers import (
     create_image_writer,
     create_summary_writer,
 )
+from cv_lib.segmentation import models
 
 # from cv_lib.segmentation.dutchf3.engine import (
 #    create_supervised_evaluator,

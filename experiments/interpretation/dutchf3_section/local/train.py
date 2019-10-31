@@ -6,7 +6,6 @@ import logging
 import logging.config
 from os import path
 
-# import cv2
 import fire
 import numpy as np
 import torch
@@ -25,6 +24,7 @@ from cv_lib.event_handlers.tensorboard_handlers import (
     create_image_writer,
     create_summary_writer,
 )
+from cv_lib.segmentation import models
 from cv_lib.segmentation.dutchf3.engine import (
     create_supervised_evaluator,
     create_supervised_trainer,
@@ -50,6 +50,8 @@ from ignite.metrics import Loss
 from ignite.utils import convert_tensor
 from toolz import compose
 from torch.utils import data
+
+from cv_lib.segmentation import extract_metric_from
 
 
 def prepare_batch(batch, device="cuda", non_blocking=False):
@@ -327,6 +329,7 @@ def run(*options, cfg=None):
     checkpoint_handler = SnapshotHandler(
         path.join(output_dir, config.TRAIN.MODEL_DIR),
         config.MODEL.NAME,
+        extract_metric_from("fiou"),
         snapshot_function,
     )
 

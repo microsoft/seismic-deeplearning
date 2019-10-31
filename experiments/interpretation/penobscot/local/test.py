@@ -11,43 +11,28 @@ import cv2
 import fire
 import numpy as np
 import torch
-import torch.nn.functional as F
 import torchvision
 from albumentations import (
-    CenterCrop,
     Compose,
-    HorizontalFlip,
     Normalize,
     PadIfNeeded,
     Resize,
 )
-from ignite.contrib.handlers import CosineAnnealingScheduler
-from ignite.engine import Events
-from ignite.metrics import Loss, Metric
-from ignite.utils import convert_tensor
-from PIL import Image
-from toolz import compose, pipe, tail, take
-from toolz.sandbox.core import unzip
-from torch.utils import data
-
 from cv_lib.event_handlers import (
-    SnapshotHandler,
     logging_handlers,
     tensorboard_handlers,
 )
-from cv_lib.event_handlers.logging_handlers import Evaluator
 from cv_lib.event_handlers.tensorboard_handlers import (
     create_image_writer,
     create_summary_writer,
 )
+from cv_lib.segmentation import models
 from cv_lib.segmentation.dutchf3.metrics import (
     FrequencyWeightedIoU,
     MeanClassAccuracy,
     MeanIoU,
     PixelwiseAccuracy,
-    _torch_hist,
 )
-from deepseismic_interpretation.penobscot.metrics import InlineMeanIoU
 from cv_lib.segmentation.dutchf3.utils import (
     current_datetime,
     generate_path,
@@ -57,14 +42,20 @@ from cv_lib.segmentation.dutchf3.utils import (
 )
 from cv_lib.segmentation.penobscot.engine import (
     create_supervised_evaluator,
-    create_supervised_trainer,
 )
 from deepseismic_interpretation.dutchf3.data import decode_segmap
 from deepseismic_interpretation.penobscot.data import (
     get_patch_dataset,
 )
+from deepseismic_interpretation.penobscot.metrics import InlineMeanIoU
 from default import _C as config
 from default import update_config
+from ignite.engine import Events
+from ignite.metrics import Loss
+from ignite.utils import convert_tensor
+from toolz import compose, tail, take
+from toolz.sandbox.core import unzip
+from torch.utils import data
 
 
 def _prepare_batch(batch, device=None, non_blocking=False):
