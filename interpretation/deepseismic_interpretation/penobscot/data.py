@@ -438,9 +438,6 @@ class PenobscotInlinePatchSectionDepthDataset(PenobscotInlinePatchDataset):
             complete_patches_only=complete_patches_only,
         )
 
-    def _add_extra_channels(self, image):
-        return image
-
 
 class PenobscotInlinePatchDepthDataset(PenobscotInlinePatchDataset):
     """Dataset that returns patches from Penobscot dataset augmented with patch depth
