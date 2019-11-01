@@ -32,6 +32,7 @@ from cv_lib.event_handlers.tensorboard_handlers import (
     create_summary_writer,
 )
 from cv_lib.segmentation import models
+from cv_lib.segmentation import extract_metric_from
 from deepseismic_interpretation.dutchf3.data import (
     get_patch_loader,
     decode_segmap,
@@ -267,7 +268,7 @@ def run(*options, cfg=None, local_rank=0):
             "IoU": apex.MeanIoU(
                 n_classes, device, output_transform=_select_pred_and_mask
             ),
-            "nll": salt_metrics.LossMetric(
+            "nll": apex.LossMetric(
                 criterion,
                 world_size,
                 config.VALIDATION.BATCH_SIZE_PER_GPU,
@@ -390,6 +391,7 @@ def run(*options, cfg=None, local_rank=0):
         checkpoint_handler = SnapshotHandler(
             path.join(output_dir, config.TRAIN.MODEL_DIR),
             config.MODEL.NAME,
+            extract_metric_from("fiou"),
             snapshot_function,
         )
         evaluator.add_event_handler(
