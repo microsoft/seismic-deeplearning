@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 import numpy as np
 import torch
 import torch.distributed as dist
@@ -49,7 +52,8 @@ class AverageMetric(Metric):
     def compute(self):
         if self._num_examples == 0:
             raise NotComputableError(
-                f"{self._metric_name} must have at least one example before it can be computed."
+                f"{self._metric_name} must have at least one example before it can be \
+                     computed."
             )
         return self._sum / self._num_examples
 
@@ -103,7 +107,6 @@ class FrequencyWeightedIoU(ConfusionMatrix):
 class MeanClassAccuracy(ConfusionMatrix):
     def compute(self):
         hist = super(MeanClassAccuracy, self).compute()
-        acc = np.diag(hist).sum() / hist.sum()
         acc_cls = np.diag(hist) / hist.sum(axis=1)
         mean_acc_cls = np.nanmean(acc_cls)
         return mean_acc_cls
