@@ -6,23 +6,18 @@ import logging
 import logging.config
 from os import path
 
-import cv2
 import fire
 import numpy as np
 import torch
-from albumentations import (
-    Compose,
-    HorizontalFlip,
-    Normalize,
-    PadIfNeeded,
-    Resize,
-)
-from ignite.contrib.handlers import CosineAnnealingScheduler
-from ignite.engine import Events
-from ignite.metrics import Accuracy, Loss
-from ignite.utils import convert_tensor
-from toolz import compose
 from torch.utils import data
+from ignite.engine import Events
+from ignite.handlers import ModelCheckpoint
+from ignite.metrics import Accuracy, Loss
+# TODO: get mertircs from Ignite
+# from ignite.metrics import MIoU, MeanClassAccuracy, FrequencyWeightedIoU, PixelwiseAccuracy
+from ignite.utils import convert_tensor
+from ignite.engine.engine import Engine
+from toolz import compose, curry
 from tqdm import tqdm
 
 from deepseismic_interpretation.dutchf3.data import (
@@ -50,12 +45,15 @@ from ignite.engine import (
     create_supervised_trainer,
     create_supervised_evaluator,
 )
+
+# TODO: replace with Ignite metrics
 from cv_lib.segmentation.dutchf3.metrics import (
     FrequencyWeightedIoU,
     MeanClassAccuracy,
     MeanIoU,
     PixelwiseAccuracy,
 )
+
 from cv_lib.segmentation.dutchf3.utils import (
     current_datetime,
     generate_path,
@@ -72,7 +70,7 @@ from default import _C as config
 from default import update_config
 
 
-def prepare_batch(
+def _prepare_batch(
     batch, device=None, non_blocking=False, t_type=torch.FloatTensor
 ):
     x, y = batch
@@ -148,9 +146,7 @@ def run(*options, cfg=None):
         shuffle=False      
     )
 
-    # this is how we import model for CV - here we're importing a seismic segmentation model
-    # model = getattr(models, config.MODEL.NAME).get_seg_model(config)
-    # TODO: pass more model parameters into the mode from config
+    # this is how we import model for CV - here we're importing a seismic segmentation model    
     model = TextureNet(n_classes=config.DATASET.NUM_CLASSES)
 
     optimizer = torch.optim.Adam(
@@ -166,29 +162,13 @@ def run(*options, cfg=None):
         device = "cuda"
         model = model.cuda()
 
-    loss = torch.nn.CrossEntropyLoss()
-
-    def _select_pred_and_mask(model_out_dict):
-        return (
-            model_out_dict["y_pred"].squeeze(),
-            model_out_dict["mask"].squeeze(),
-        )
+    loss = torch.nn.CrossEntropyLoss()    
 
     trainer = create_supervised_trainer(
         model,
         optimizer,
         loss,
-        prepare_batch=prepare_batch,        
-        device=device,
-    )
-
-    evaluator = create_supervised_evaluator(
-        model,
-        prepare_batch=prepare_batch,
-        metrics={
-            "accuracy": Accuracy(),
-            "nll": Loss(loss),
-        },
+        prepare_batch=_prepare_batch,
         device=device,
     )
 
@@ -197,41 +177,104 @@ def run(*options, cfg=None):
         initial=0, leave=False, total=len(train_loader), desc=desc.format(0)
     )
 
-    @trainer.on(Events.ITERATION_COMPLETED)
-    def log_training_loss(engine):
-        iter = (engine.state.iteration - 1) % len(train_loader) + 1
+    # add model checkpointing
+    output_dir = path.join(config.OUTPUT_DIR, config.TRAIN.MODEL_DIR)
+    checkpoint_handler = ModelCheckpoint(
+        output_dir, "model", save_interval=1, n_saved=3, create_dir=True, require_empty=False)
 
-        if iter % log_interval == 0:
-            pbar.desc = desc.format(engine.state.output)
-            pbar.update(log_interval)
+    criterion = torch.nn.CrossEntropyLoss(reduction="mean")
+    
+    # save model at each epoch
+    trainer.add_event_handler(
+        Events.EPOCH_COMPLETED, checkpoint_handler, {config.MODEL.NAME: model}
+    )
+    
+    def _select_pred_and_mask(model_out):
+        # receive a tuple of (x, y_pred), y
+        # so actually in line 51 of cv_lib/cv_lib/segmentation/dutch_f3/metrics/__init__.py
+        # we do the following line, so here we just select the model        
+        #_, y_pred = torch.max(model_out[0].squeeze(), 1, keepdim=True)
+        y_pred = model_out[0].squeeze()
+        y = model_out[1].squeeze()
+        return (y_pred.squeeze(), y,)
+    
+    evaluator = create_supervised_evaluator(
+        model,        
+        metrics={
+            "IoU": MeanIoU(
+                n_classes, device, output_transform=_select_pred_and_mask
+            ),
+            "nll": Loss(criterion),
+            "mca": MeanClassAccuracy(
+                n_classes, device, output_transform=_select_pred_and_mask
+            ),
+            "fiou": FrequencyWeightedIoU(
+                n_classes, device, output_transform=_select_pred_and_mask
+            ),
+            "pixa": PixelwiseAccuracy(
+                n_classes, device, output_transform=_select_pred_and_mask
+            ),
+        },
+        device=device,
+        prepare_batch=_prepare_batch,
+    )    
 
-    @trainer.on(Events.EPOCH_COMPLETED)
-    def log_training_results(engine):
-        pbar.refresh()
-        evaluator.run(train_loader)
-        metrics = evaluator.state.metrics
-        avg_accuracy = metrics["accuracy"]
-        avg_loss = metrics["nll"]
-        tqdm.write(
-            "Training Results - Epoch: {}  Avg accuracy: {:.2f} Avg loss: {:.2f}".format(
-                engine.state.epoch, avg_accuracy, avg_loss
-            )
-        )
+    # Set the validation run to start on the epoch completion of the training run
+    trainer.add_event_handler(
+        Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader)
+    )
 
-    @trainer.on(Events.EPOCH_COMPLETED)
-    def log_validation_results(engine):
-        evaluator.run(val_loader)
-        metrics = evaluator.state.metrics
-        avg_accuracy = metrics["accuracy"]
-        avg_loss = metrics["nll"]
-        tqdm.write(
-            "Validation Results - Epoch: {}  Avg accuracy: {:.2f} Avg loss: {:.2f}".format(
-                engine.state.epoch, avg_accuracy, avg_loss
-            )
-        )
+    summary_writer = create_summary_writer(
+        log_dir=path.join(output_dir, config.LOG_DIR)
+    )
 
-        pbar.n = pbar.last_print_n = 0
+    evaluator.add_event_handler(
+        Events.EPOCH_COMPLETED,
+        logging_handlers.log_metrics(
+            "Validation results",
+            metrics_dict={
+                "IoU": "IoU :",
+                "nll": "Avg loss :",
+                "pixa": "Pixelwise Accuracy :",
+                "mca": "Mean Class Accuracy :",
+                "fiou": "Freq Weighted IoU :",
+            },
+        ),
+    )
+    evaluator.add_event_handler(
+        Events.EPOCH_COMPLETED,
+        tensorboard_handlers.log_metrics(
+            summary_writer,
+            trainer,
+            "epoch",
+            metrics_dict={
+                "IoU": "Validation/IoU",
+                "nll": "Validation/Loss",
+                "mca": "Validation/MCA",
+                "fiou": "Validation/FIoU",
+            },
+        ),
+    )
+    
+    summary_writer = create_summary_writer(
+        log_dir=path.join(output_dir, config.LOG_DIR)
+    )   
+    
 
+    snapshot_duration=1
+    def snapshot_function():
+        return (trainer.state.iteration % snapshot_duration) == 0
+
+    checkpoint_handler = SnapshotHandler(
+        path.join(output_dir, config.TRAIN.MODEL_DIR),
+        config.MODEL.NAME,
+        snapshot_function,
+    )
+    evaluator.add_event_handler(
+        Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model}
+    )
+
+    logger.info("Starting training")
     trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH//config.TRAIN.BATCH_PER_EPOCH)
     pbar.close()
 
