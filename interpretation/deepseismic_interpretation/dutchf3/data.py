@@ -3,6 +3,8 @@ import warnings
 import segyio
 from os import path
 import scipy
+# bugfix for scipy imports
+import scipy.misc
 import numpy as np
 import torch
 from toolz import curry
