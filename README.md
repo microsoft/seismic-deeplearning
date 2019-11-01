@@ -104,10 +104,37 @@ We present results of algorithms which are based on pixel-level annotations, whe
 ### Data
 #### Netherlands F3
 
+To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
+[this github repository](https://github.com/olivesgatech/facies_classification_benchmark).
+
+To prepare the data for the experiments (e.g. split into train/val/test), please run the following script:
+
+```
+# For section-based experiments
+python scripts/prepare_dutchf3.py split_train_val section --data-dir=/mnt/dutchf3
+
+
+# For patch-based experiments
+python scripts/prepare_dutchf3.py split_train_val patch --data-dir=/mnt/dutchf3 --stride=50 --patch=100
+
+```
+
+Refer to the script itself for more argument options.
 
 #### Penobscot
-To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script
+To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script, e.g.
 
+```
+./download_penobscot.sh /data/penobscot
+```
+
+Note that the specified download location (e.g `/data/penobscot`) should be created beforehand, and configured appropriate `write` pemissions.
+
+To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
+
+```
+python scripts/prepare_penobscot.py split_inline --data-dir=/mnt/penobscot --val-ratio=.1 --test-ratio=.2
+```
 
 
 ### Scripts

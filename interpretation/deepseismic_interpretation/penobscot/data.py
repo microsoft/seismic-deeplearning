@@ -28,18 +28,14 @@ def _pad_right_and_bottom(pad_size, numpy_array, pad_value=255):
         len(numpy_array.shape) == 2
     ), f"_pad_right_and_bottom only accepts 2D arrays. Input is {len(numpy_array.shape)}D"
     return np.pad(
-        numpy_array,
-        pad_width=[(0, pad_size), (0, pad_size)],
-        constant_values=pad_value,
+        numpy_array, pad_width=[(0, pad_size), (0, pad_size)], constant_values=pad_value
     )
 
 
 def _get_classes_and_counts(mask_list):
     class_counts_dict = defaultdict(int)
     for mask in mask_list:
-        for class_label, class_count in zip(
-            *np.unique(mask, return_counts=True)
-        ):
+        for class_label, class_count in zip(*np.unique(mask, return_counts=True)):
             class_counts_dict[class_label] += class_count
     return list(class_counts_dict.keys()), list(class_counts_dict.values())
 
@@ -66,9 +62,7 @@ def _combine_classes(mask_array_list):
 
 
 def _replicate_channels(image_array, n_channels):
-    new_image_array = np.zeros(
-        (n_channels, image_array.shape[0], image_array.shape[1])
-    )
+    new_image_array = np.zeros((n_channels, image_array.shape[0], image_array.shape[1]))
     for i in range(n_channels):
         new_image_array[i] = image_array
     return new_image_array
@@ -92,9 +86,7 @@ def _generate_images_and_masks(images_iter, mask_dir):
             )
 
 
-def _number_patches_in(
-    height_or_width, patch_size, stride, complete_patches_only=True
-):
+def _number_patches_in(height_or_width, patch_size, stride, complete_patches_only=True):
     strides_in_hw = (height_or_width - patch_size) / stride
     if complete_patches_only:
         return int(np.floor(strides_in_hw))
@@ -111,9 +103,7 @@ def _is_3D(numpy_array):
 
 
 @curry
-def _extract_patches(
-    patch_size, stride, complete_patches_only, img_array, mask_array
-):
+def _extract_patches(patch_size, stride, complete_patches_only, img_array, mask_array):
     height, width = img_array.shape[-2], img_array.shape[-1]
     num_h_patches = _number_patches_in(
         height, patch_size, stride, complete_patches_only=complete_patches_only
@@ -197,7 +187,7 @@ def _transform_HWC_to_CHW(numpy_array):
 
 
 def _rescale(numpy_array):
-    """ Rescale the numpy array by 10000. The maximum value achievable is 32737 
+    """ Rescale the numpy array by 10000. The maximum value achievable is 32737.
     This will bring the values between -n and n
     """
     return numpy_array / 10000
@@ -209,9 +199,6 @@ class PenobscotInlinePatchDataset(VisionDataset):
     Notes:
         Loads inlines only and splits into patches
     """
-
-    _open_image = compose(_rescale, _open_to_array)
-    _open_mask = _open_to_array
 
     def __init__(
         self,
@@ -239,9 +226,7 @@ class PenobscotInlinePatchDataset(VisionDataset):
            complete_patches_only (bool, optional): whether to load incomplete patches that are padded to patch_size. Defaults to True
         """
 
-        super(PenobscotInlinePatchDataset, self).__init__(
-            root, transforms=transforms
-        )
+        super(PenobscotInlinePatchDataset, self).__init__(root, transforms=transforms)
         self._image_dir = os.path.join(self.root, "inlines", split)
         self._mask_dir = os.path.join(self.root, "masks")
         self._split = split
@@ -257,16 +242,14 @@ class PenobscotInlinePatchDataset(VisionDataset):
         self._patch_locations = []
 
         valid_modes = ("train", "test", "val")
-        msg = (
-            "Unknown value '{}' for argument split. "
-            "Valid values are {{{}}}."
-        )
+        msg = "Unknown value '{}' for argument split. " "Valid values are {{{}}}."
         msg = msg.format(split, iterable_to_str(valid_modes))
         verify_str_arg(split, "split", valid_modes, msg)
 
         if not os.path.exists(self._image_dir):
             raise DataNotSplitException(
-                "The dataset has not been appropriately split into train, val and test"
+                f"Directory {self._image_dir} does not exist. The dataset has not been \
+                    appropriately split into train, val and test."
             )
 
         # Get the number of inlines that make up dataset
@@ -306,16 +289,18 @@ class PenobscotInlinePatchDataset(VisionDataset):
             len(self._patch_locations) % len(self._file_ids) == 0
         ), "Something is wrong with the patches"
 
-        self._patches_per_image = int(
-            len(self._patch_locations) / len(self._file_ids)
-        )
+        self._patches_per_image = int(len(self._patch_locations) / len(self._file_ids))
 
         # Combine classes 2 and 3
         self._mask_array = _combine_classes(self._mask_array)
 
-        self._classes, self._class_counts = _get_classes_and_counts(
-            self._mask_array
-        )
+        self._classes, self._class_counts = _get_classes_and_counts(self._mask_array)
+
+    def _open_image(self, image_path):
+        return pipe(image_path, _open_to_array, _rescale)
+
+    def _open_mask(self, mask_path):
+        return pipe(mask_path, _open_to_array)
 
     def __len__(self):
         return len(self._image_array)
@@ -327,9 +312,7 @@ class PenobscotInlinePatchDataset(VisionDataset):
     @property
     def class_proportions(self):
         total = np.sum(self._class_counts)
-        return [
-            (i, w / total) for i, w in zip(self._classes, self._class_counts)
-        ]
+        return [(i, w / total) for i, w in zip(self._classes, self._class_counts)]
 
     def _add_extra_channels(self, image):
         if self._n_channels > 1:
@@ -365,12 +348,9 @@ class PenobscotInlinePatchDataset(VisionDataset):
 
     @property
     def statistics(self):
-        flat_image_array = np.concatenate(
-            [i.flatten() for i in self._image_array]
-        )
+        flat_image_array = np.concatenate([i.flatten() for i in self._image_array])
         stats = {
-            stat: statfunc(flat_image_array)
-            for stat, statfunc in _STATS_FUNCS.items()
+            stat: statfunc(flat_image_array) for stat, statfunc in _STATS_FUNCS.items()
         }
         return "Mean: {mean} Std: {std} Max: {max}".format(**stats)
 
@@ -420,9 +400,6 @@ class PenobscotInlinePatchSectionDepthDataset(PenobscotInlinePatchDataset):
         The patches are augmented with section depth
     """
 
-    _open_image = compose(add_depth_channels, _rescale, _open_to_array)
-    _open_mask = _open_to_array
-
     def __init__(
         self,
         root,
@@ -464,8 +441,11 @@ class PenobscotInlinePatchSectionDepthDataset(PenobscotInlinePatchDataset):
             complete_patches_only=complete_patches_only,
         )
 
-    def _add_extra_channels(self, image):
-        return image
+        def _open_image(self, image_path):
+            return pipe(image_path, _open_to_array, _rescale, add_depth_channels)
+
+        def _add_extra_channels(self, image):
+            return image
 
 
 class PenobscotInlinePatchDepthDataset(PenobscotInlinePatchDataset):
@@ -475,9 +455,6 @@ class PenobscotInlinePatchDepthDataset(PenobscotInlinePatchDataset):
        Loads inlines only and splits into patches
        The patches are augmented with patch depth
    """
-
-    _open_image = compose(_rescale, _open_to_array)
-    _open_mask = _open_to_array
 
     def __init__(
         self,
@@ -519,6 +496,9 @@ class PenobscotInlinePatchDepthDataset(PenobscotInlinePatchDataset):
             complete_patches_only=complete_patches_only,
         )
 
+    def _open_image(self, image_path):
+        return pipe(image_path, _open_to_array, _rescale)
+
     def _add_extra_channels(self, image):
         return add_depth_channels(image)
 
@@ -544,13 +524,9 @@ def get_patch_dataset(cfg):
         "none",
     ], f"Depth {cfg.TRAIN.DEPTH} not supported for patch data. \
             Valid values: section, patch, none."
-    return _TRAIN_PATCH_DATASETS.get(
-        cfg.TRAIN.DEPTH, PenobscotInlinePatchDataset
-    )
+    return _TRAIN_PATCH_DATASETS.get(cfg.TRAIN.DEPTH, PenobscotInlinePatchDataset)
 
 
 if __name__ == "__main__":
-    dataset = PenobscotInlinePatchDataset(
-        "/mnt/penobscot", 100, 50, split="train"
-    )
+    dataset = PenobscotInlinePatchDataset("/mnt/penobscot", 100, 50, split="train")
     print(len(dataset))
