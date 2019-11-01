@@ -8,12 +8,7 @@ import itertools
 import logging
 import logging.config
 import math
-import warnings
-from os import path
-
 import fire
-import numpy as np
-from sklearn.model_selection import train_test_split
 import os
 import shutil
 from toolz import partition_all
@@ -32,9 +27,10 @@ def _create_directory(dir_path, overwrite=False):
         return dir_path
     except FileExistsError as e:
         logger.warn(
-            f"Can't write to {dir_path} as it already exists. Please specify overwrite=true or delete folder"
+            f"Can't write to {dir_path} as it already exists. Please specify \
+                overwrite=true or delete folder"
         )
-        raise
+        raise e
 
 
 def _copy_files(files_iter, new_dir):
@@ -52,38 +48,34 @@ def _split_train_val_test(partition, val_ratio, test_ratio):
     train_list = partition[:train_samples]
     val_list = partition[train_samples : train_samples + val_samples]
     test_list = partition[
-        train_samples
-        + val_samples : train_samples
-        + val_samples
-        + test_samples
+        train_samples + val_samples : train_samples + val_samples + test_samples
     ]
     return train_list, val_list, test_list
 
 
 def split_inline(data_dir, val_ratio, test_ratio, overwrite=False, exclude_files=None):
-    """Splits the inline data into train, val and test
-    
+    """Splits the inline data into train, val and test.
+
     Args:
         data_dir (str): path to directory that holds the data
-        val_ratio (float): the ratio of the partition that they should use for validation
+        val_ratio (float): the ratio of the partition that will be used for validation
         test_ratio (float): the ratio of the partition that they should use for testing
-        exclude_files (list[str]): filenames to exclude from dataset, such as ones that contain artifacts. Example:['image1.tiff']
+        exclude_files (list[str]): filenames to exclude from dataset, such as ones that contain
+            artifacts. Example:['image1.tiff']
     """
     num_partitions = 5
     image_dir = os.path.join(data_dir, "inlines")
-    dir_paths = (
-        os.path.join(image_dir, ddir) for ddir in ("train", "val", "test")
-    )
+    dir_paths = (os.path.join(image_dir, ddir) for ddir in ("train", "val", "test"))
     locations_list = [
         _create_directory(d, overwrite=overwrite) for d in dir_paths
     ]  # train, val, test
 
     images_iter = glob.iglob(os.path.join(image_dir, "*.tiff"))
-    
+
     if exclude_files is not None:
-        images_list = list(filterfalse(
-            lambda x: x in exclude_files, images_iter
-        ))
+        images_list = list(
+            itertools.filterfalse(lambda x: x in exclude_files, images_iter)
+        )
     else:
         images_list = list(images_iter)
 
@@ -92,8 +84,7 @@ def split_inline(data_dir, val_ratio, test_ratio, overwrite=False, exclude_files
         num_elements, images_list
     ):  # Partition files into N partitions
         for files_list, dest_dir in zip(
-            _split_train_val_test(partition, val_ratio, test_ratio),
-            locations_list,
+            _split_train_val_test(partition, val_ratio, test_ratio), locations_list
         ):
             _copy_files(files_list, dest_dir)
 

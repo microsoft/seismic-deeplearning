@@ -7,13 +7,13 @@ OUTPUT_DIR: 'output'
 LOG_DIR: 'log'
 WORKERS: 4
 PRINT_FREQ: 10
-LOG_CONFIG: /home/mat/repos/DeepSeismic/logging.conf
+LOG_CONFIG: /home/vapaunic/repos/DeepSeismic/logging.conf
 SEED: 2019
 
 
 DATASET:
   NUM_CLASSES: 7
-  ROOT: /data/penobscot
+  ROOT: /mnt/penobscot
   CLASS_WEIGHTS: [0.02630481, 0.05448931, 0.0811898 , 0.01866496, 0.15868563, 0.0875993 , 0.5730662]
   INLINE_HEIGHT: 1501
   INLINE_WIDTH: 481
@@ -75,7 +75,7 @@ TRAIN:
   WEIGHT_DECAY: 0.0001
   SNAPSHOTS: 5
   AUGMENTATION: True
-  DEPTH: "none" #"patch" # Options are none, patch and section
+  DEPTH: "patch" # Options are none, patch and section
   STRIDE: 64
   PATCH_SIZE: 128
   AUGMENTATIONS:
