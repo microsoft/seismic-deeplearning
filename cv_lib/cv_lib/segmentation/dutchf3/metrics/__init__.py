@@ -1,4 +1,3 @@
-from toolz import curry
 import torch
 import ignite
 
@@ -77,10 +76,3 @@ def mean_iou(num_classes, output_transform=lambda x: x, ignore_index=None):
         num_classes=num_classes, output_transform=output_transform
     )
     return ignite.metrics.mIoU(cm, ignore_index=ignore_index)
-
-
-@curry
-def extract_metric_from(metric, engine):
-    """Return a specific metric from ignite engine"""
-    metrics = engine.state.metrics
-    return metrics[metric]
