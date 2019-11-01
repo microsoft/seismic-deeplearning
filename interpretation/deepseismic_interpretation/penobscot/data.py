@@ -252,9 +252,6 @@ class PenobscotInlinePatchDataset(VisionDataset):
                     appropriately split into train, val and test."
             )
 
-        _open_image = compose(_rescale, _open_to_array)
-        _open_mask = _open_to_array
-
         # Get the number of inlines that make up dataset
         images_iter, self._max_inlines = pipe(
             os.path.join(self._image_dir, "*.tiff"),
@@ -272,8 +269,8 @@ class PenobscotInlinePatchDataset(VisionDataset):
         for image_path, mask_path in _generate_images_and_masks(
             images_iter, self._mask_dir
         ):
-            img_array = _open_image(image_path)
-            mask_array = _open_mask(mask_path)
+            img_array = self._open_image(image_path)
+            mask_array = self._open_mask(mask_path)
             self._file_ids.append(_extract_filename(image_path))
             image_generator, mask_generator, patch_locations = _extract_patches_from(
                 img_array, mask_array
@@ -298,6 +295,12 @@ class PenobscotInlinePatchDataset(VisionDataset):
         self._mask_array = _combine_classes(self._mask_array)
 
         self._classes, self._class_counts = _get_classes_and_counts(self._mask_array)
+
+    def _open_image(self, image_path):
+        return pipe(image_path, _open_to_array, _rescale)
+
+    def _open_mask(self, mask_path):
+        return pipe(mask_path, _open_to_array)
 
     def __len__(self):
         return len(self._image_array)
@@ -438,6 +441,15 @@ class PenobscotInlinePatchSectionDepthDataset(PenobscotInlinePatchDataset):
             complete_patches_only=complete_patches_only,
         )
 
+        def _open_image(self, image_path):
+            return pipe(image_path, _open_to_array, _rescale, add_depth_channels)
+
+        def _open_mask(self, mask_path):
+            return pipe(mask_path, _open_to_array)
+
+        def _add_extra_channels(self, image):
+            return image
+
 
 class PenobscotInlinePatchDepthDataset(PenobscotInlinePatchDataset):
     """Dataset that returns patches from Penobscot dataset augmented with patch depth
@@ -486,6 +498,12 @@ class PenobscotInlinePatchDepthDataset(PenobscotInlinePatchDataset):
             n_channels=n_channels,
             complete_patches_only=complete_patches_only,
         )
+
+    def _open_image(self, image_path):
+        return pipe(image_path, _open_to_array, _rescale)
+
+    def _open_mask(self, mask_path):
+        return pipe(mask_path, _open_to_array)
 
     def _add_extra_channels(self, image):
         return add_depth_channels(image)
