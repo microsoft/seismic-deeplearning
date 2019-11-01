@@ -444,9 +444,6 @@ class PenobscotInlinePatchSectionDepthDataset(PenobscotInlinePatchDataset):
         def _open_image(self, image_path):
             return pipe(image_path, _open_to_array, _rescale, add_depth_channels)
 
-        def _open_mask(self, mask_path):
-            return pipe(mask_path, _open_to_array)
-
         def _add_extra_channels(self, image):
             return image
 
@@ -501,9 +498,6 @@ class PenobscotInlinePatchDepthDataset(PenobscotInlinePatchDataset):
 
     def _open_image(self, image_path):
         return pipe(image_path, _open_to_array, _rescale)
-
-    def _open_mask(self, mask_path):
-        return pipe(mask_path, _open_to_array)
 
     def _add_extra_channels(self, image):
         return add_depth_channels(image)
