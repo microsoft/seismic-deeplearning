@@ -62,12 +62,13 @@ def run(*options, cfg=None):
 
     Notes:
         Options can be passed in via the options argument and loaded from the cfg file
-        Options loaded from default.py will be overridden by options loaded from cfg file
-        Options passed in through options argument will override option loaded from cfg file
+        Options from default.py will be overridden by options loaded from cfg file
+        Options passed in via options argument will override option loaded from cfg file
 
     Args:
-        *options (str,int ,optional): Options used to overide what is loaded from the config.
-                                      To see what options are available consult default.py
+        *options (str,int ,optional): Options used to overide what is loaded from the
+                                      config. To see what options are available consult
+                                      default.py
         cfg (str, optional): Location of config file to load. Defaults to None.
     """
 
@@ -178,7 +179,8 @@ def run(*options, cfg=None):
         optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration
     )
 
-    # weights are inversely proportional to the frequency of the classes in the training set
+    # weights are inversely proportional to the frequency of the classes in
+    # the training set
     class_weights = torch.tensor(
         config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False
     )
@@ -217,14 +219,22 @@ def run(*options, cfg=None):
         model,
         prepare_batch,
         metrics={
-            "pixacc": Accuracy(output_transform=_select_pred_and_mask),
-            "nll": Loss(criterion, output_transform=_select_pred_and_mask),
-            "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask),
-            "mca": mean_class_accuracy(
-                n_classes, output_transform=_select_pred_and_mask
+            "pixacc": Accuracy(output_transform=_select_pred_and_mask, device=device),
+            "nll": Loss(
+                criterion, output_transform=_select_pred_and_mask, device=device
             ),
-            "ciou": class_iou(n_classes, output_transform=_select_pred_and_mask),
-            "mIoU": mean_iou(n_classes, output_transform=_select_pred_and_mask),
+            "cacc": class_accuracy(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
+            "mca": mean_class_accuracy(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
+            "ciou": class_iou(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
+            "mIoU": mean_iou(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
         },
         device=device,
     )
