@@ -13,7 +13,7 @@ import torch
 from albumentations import Compose, HorizontalFlip, Normalize, PadIfNeeded, Resize
 from ignite.contrib.handlers import CosineAnnealingScheduler
 from ignite.engine import Events
-from ignite.metrics import Loss, Accuracy
+from ignite.metrics import Loss
 from ignite.utils import convert_tensor
 from toolz import compose
 from torch.utils import data
@@ -35,7 +35,8 @@ from cv_lib.segmentation.penobscot.engine import (
     create_supervised_evaluator,
     create_supervised_trainer,
 )
-from cv_lib.segmentation.dutchf3.metrics import (
+from cv_lib.segmentation.metrics import (
+    pixelwise_accuracy,
     class_accuracy,
     mean_class_accuracy,
     class_iou,
@@ -245,7 +246,9 @@ def run(*options, cfg=None):
         model,
         _prepare_batch,
         metrics={
-            "pixacc": Accuracy(output_transform=_select_pred_and_mask),
+            "pixacc": pixelwise_accuracy(
+                n_classes, output_transform=_select_pred_and_mask
+            ),
             "nll": Loss(criterion, output_transform=_select_pred_and_mask),
             "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask),
             "mca": mean_class_accuracy(
