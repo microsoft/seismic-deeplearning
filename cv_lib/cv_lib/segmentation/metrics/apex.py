@@ -4,9 +4,56 @@
 import numpy as np
 import torch
 import torch.distributed as dist
-from cv_lib.segmentation.dutchf3 import metrics
+
+# from cv_lib.segmentation.dutchf3 import metrics
 from ignite.exceptions import NotComputableError
 from ignite.metrics.metric import Metric
+
+
+def _torch_hist(label_true, label_pred, n_class):
+    """Calculates the confusion matrix for the labels
+    
+    Args:
+        label_true ([type]): [description]
+        label_pred ([type]): [description]
+        n_class ([type]): [description]
+    
+    Returns:
+        [type]: [description]
+    """
+    # TODO Add exceptions
+    assert len(label_true.shape) == 1, "Labels need to be 1D"
+    assert len(label_pred.shape) == 1, "Predictions need to be 1D"
+    mask = (label_true >= 0) & (label_true < n_class)
+    hist = torch.bincount(
+        n_class * label_true[mask] + label_pred[mask], minlength=n_class ** 2
+    ).reshape(n_class, n_class)
+    return hist
+
+
+class OldConfusionMatrix(Metric):
+    def __init__(self, num_classes, device, output_transform=lambda x: x):
+        self._num_classes = num_classes
+        self._device = device
+        super(OldConfusionMatrix, self).__init__(output_transform=output_transform)
+
+    def reset(self):
+        self._confusion_matrix = torch.zeros(
+            (self._num_classes, self._num_classes), dtype=torch.long
+        ).to(self._device)
+
+    def update(self, output):
+        y_pred, y = output
+        # TODO: Make assertion exception
+        assert y.shape == y_pred.max(1)[1].squeeze().shape, "Shape not the same"
+        self._confusion_matrix += _torch_hist(
+            torch.flatten(y),
+            torch.flatten(y_pred.max(1)[1].squeeze()),  # Get the maximum index
+            self._num_classes,
+        )
+
+    def compute(self):
+        return self._confusion_matrix.cpu().numpy()
 
 
 @torch.no_grad()
@@ -72,7 +119,7 @@ class LossMetric(AverageMetric):
         super().update(loss)
 
 
-class ConfusionMatrix(metrics.ConfusionMatrix):
+class ConfusionMatrix(OldConfusionMatrix):
     def compute(self):
         reduced_metric = sum_reduce_tensor(self._confusion_matrix)
         return reduced_metric.cpu().numpy()
