@@ -36,7 +36,6 @@ from cv_lib.segmentation.dutchf3.engine import (
     create_supervised_trainer,
 )
 
-from cv_lib.segmentation.dutchf3.metrics import apex
 from ignite.metrics import Loss
 from cv_lib.segmentation.metrics import (
     pixelwise_accuracy,
@@ -255,37 +254,22 @@ def run(*options, cfg=None, local_rank=0):
         model,
         prepare_batch,
         metrics={
-            "IoU": apex.MeanIoU(
-                n_classes, device, output_transform=_select_pred_and_mask
-            ),
-            "nll": apex.LossMetric(
-                criterion,
-                world_size,
-                config.VALIDATION.BATCH_SIZE_PER_GPU,
-                output_transform=_select_pred_and_mask,
-            ),
-            "mca": apex.MeanClassAccuracy(
-                n_classes, device, output_transform=_select_pred_and_mask
-            ),
-            "pixa": apex.PixelwiseAccuracy(
-                n_classes, device, output_transform=_select_pred_and_mask
-            ),
-            "newpixacc": pixelwise_accuracy(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "newnll": Loss(
+            "nll": Loss(
                 criterion, output_transform=_select_pred_and_mask, device=device
             ),
-            "newcacc": class_accuracy(
+            "pixa": pixelwise_accuracy(
                 n_classes, output_transform=_select_pred_and_mask, device=device
             ),
-            "newmca": mean_class_accuracy(
+            "cacc": class_accuracy(
                 n_classes, output_transform=_select_pred_and_mask, device=device
             ),
-            "newciou": class_iou(
+            "mca": mean_class_accuracy(
                 n_classes, output_transform=_select_pred_and_mask, device=device
             ),
-            "newmIoU": mean_iou(
+            "ciou": class_iou(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
+            "mIoU": mean_iou(
                 n_classes, output_transform=_select_pred_and_mask, device=device
             ),
         },
@@ -329,14 +313,10 @@ def run(*options, cfg=None, local_rank=0):
             logging_handlers.log_metrics(
                 "Validation results",
                 metrics_dict={
-                    "IoU": "IoU :",
-                    "newmIoU": "New mIoU",
                     "nll": "Avg loss :",
-                    "newnll": "New loss",
+                    "mIoU": " Avg IoU :",
                     "pixa": "Pixelwise Accuracy :",
-                    "newpixacc": "New PA :",
                     "mca": "Mean Class Accuracy :",
-                    "newmca": "New MCA :",
                 },
             ),
         )
@@ -347,7 +327,7 @@ def run(*options, cfg=None, local_rank=0):
                 trainer,
                 "epoch",
                 metrics_dict={
-                    "IoU": "Validation/IoU",
+                    "mIoU": "Validation/IoU",
                     "nll": "Validation/Loss",
                     "mca": "Validation/MCA",
                 },
@@ -392,7 +372,7 @@ def run(*options, cfg=None, local_rank=0):
         checkpoint_handler = SnapshotHandler(
             path.join(output_dir, config.TRAIN.MODEL_DIR),
             config.MODEL.NAME,
-            extract_metric_from("IoU"),
+            extract_metric_from("mIoU"),
             snapshot_function,
         )
         evaluator.add_event_handler(
