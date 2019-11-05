@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 """Train models on Dutch F3 salt dataset
 
 Trains models using PyTorch DistributedDataParallel
@@ -35,12 +38,12 @@ from cv_lib.segmentation.dutchf3.engine import (
 
 from cv_lib.segmentation.dutchf3.metrics import apex
 from ignite.metrics import Loss
-from cv_lib.segmentation.dutchf3.metrics import (
+from cv_lib.segmentation.metrics import (
+    pixelwise_accuracy,
     class_accuracy,
     mean_class_accuracy,
     class_iou,
     mean_iou,
-    pixelwise_accuracy,
 )
 
 from cv_lib.segmentation.dutchf3.utils import (

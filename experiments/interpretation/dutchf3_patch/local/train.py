@@ -13,7 +13,7 @@ import torch
 from albumentations import Compose, HorizontalFlip, Normalize, PadIfNeeded, Resize
 from ignite.contrib.handlers import CosineAnnealingScheduler
 from ignite.engine import Events
-from ignite.metrics import Loss, Accuracy
+from ignite.metrics import Loss
 from ignite.utils import convert_tensor
 from toolz import compose
 from torch.utils import data
@@ -34,12 +34,15 @@ from cv_lib.segmentation.dutchf3.engine import (
     create_supervised_evaluator,
     create_supervised_trainer,
 )
-from cv_lib.segmentation.dutchf3.metrics import (
+
+from cv_lib.segmentation.metrics import (
+    pixelwise_accuracy,
     class_accuracy,
     mean_class_accuracy,
     class_iou,
     mean_iou,
 )
+
 from cv_lib.segmentation.dutchf3.utils import (
     current_datetime,
     generate_path,
@@ -65,12 +68,13 @@ def run(*options, cfg=None):
 
     Notes:
         Options can be passed in via the options argument and loaded from the cfg file
-        Options loaded from default.py will be overridden by options loaded from cfg file
-        Options passed in through options argument will override option loaded from cfg file
+        Options from default.py will be overridden by options loaded from cfg file
+        Options passed in via options argument will override option loaded from cfg file
     
     Args:
-        *options (str,int ,optional): Options used to overide what is loaded from the config. 
-                                      To see what options are available consult default.py
+        *options (str,int ,optional): Options used to overide what is loaded from the
+                                      config. To see what options are available consult
+                                      default.py
         cfg (str, optional): Location of config file to load. Defaults to None.
     """
 
@@ -177,7 +181,8 @@ def run(*options, cfg=None):
         optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration
     )
 
-    # weights are inversely proportional to the frequency of the classes in the training set
+    # weights are inversely proportional to the frequency of the classes in the
+    # training set
     class_weights = torch.tensor(
         config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False
     )
@@ -213,8 +218,10 @@ def run(*options, cfg=None):
         model,
         prepare_batch,
         metrics={
-            "pixacc": Accuracy(output_transform=_select_pred_and_mask),
             "nll": Loss(criterion, output_transform=_select_pred_and_mask),
+            "pixacc": pixelwise_accuracy(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
             "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask),
             "mca": mean_class_accuracy(
                 n_classes, output_transform=_select_pred_and_mask

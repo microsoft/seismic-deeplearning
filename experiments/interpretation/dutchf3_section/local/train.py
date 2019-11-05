@@ -26,7 +26,8 @@ from cv_lib.segmentation.dutchf3.engine import (
     create_supervised_evaluator,
     create_supervised_trainer,
 )
-from cv_lib.segmentation.dutchf3.metrics import (
+from cv_lib.segmentation.metrics import (
+    pixelwise_accuracy,
     class_accuracy,
     mean_class_accuracy,
     class_iou,
@@ -44,7 +45,7 @@ from default import update_config
 from ignite.contrib.handlers import CosineAnnealingScheduler
 from ignite.engine import Events
 from ignite.utils import convert_tensor
-from ignite.metrics import Loss, Accuracy
+from ignite.metrics import Loss
 from toolz import compose
 from torch.utils import data
 
@@ -219,9 +220,11 @@ def run(*options, cfg=None):
         model,
         prepare_batch,
         metrics={
-            "pixacc": Accuracy(output_transform=_select_pred_and_mask, device=device),
             "nll": Loss(
                 criterion, output_transform=_select_pred_and_mask, device=device
+            ),
+            "pixacc": pixelwise_accuracy(
+                n_classes, output_transform=_select_pred_and_mask, device=device
             ),
             "cacc": class_accuracy(
                 n_classes, output_transform=_select_pred_and_mask, device=device
