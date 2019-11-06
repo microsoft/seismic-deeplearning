@@ -129,7 +129,6 @@ def run(*options, cfg=None):
     logging.config.fileConfig(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
-
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
     torch.manual_seed(config.SEED)
