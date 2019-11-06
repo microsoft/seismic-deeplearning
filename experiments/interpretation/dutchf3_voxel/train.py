@@ -268,7 +268,6 @@ def run(*options, cfg=None):
     checkpoint_handler = SnapshotHandler(
         path.join(output_dir, config.TRAIN.MODEL_DIR),
         config.MODEL.NAME,
-        tgs_salt.extract_metric_from("IoU"),
         snapshot_function,
     )
     evaluator.add_event_handler(
