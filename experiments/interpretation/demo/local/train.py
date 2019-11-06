@@ -17,7 +17,7 @@ from cv_lib.event_handlers import (SnapshotHandler, logging_handlers,
 from cv_lib.event_handlers.logging_handlers import Evaluator
 from cv_lib.event_handlers.tensorboard_handlers import (create_image_writer,
                                                         create_summary_writer)
-from cv_lib.segmentation import models
+from cv_lib.segmentation import models, extract_metric_from
 from cv_lib.segmentation.dutchf3.metrics import (FrequencyWeightedIoU,
                                                  MeanClassAccuracy, MeanIoU,
                                                  PixelwiseAccuracy)
@@ -49,8 +49,8 @@ _SEG_COLOURS = np.asarray(
 def _prepare_batch(batch, device=None, non_blocking=False):
     x, y, ids, patch_locations = batch
     return (
-        convert_tensor(x, device=device, non_blocking=non_blocking),
-        convert_tensor(y, device=device, non_blocking=non_blocking),
+        convert_tensor(x, device=device, non_blocking=non_blocking).float(),
+        convert_tensor(y, device=device, non_blocking=non_blocking).float(),
         ids,
         patch_locations,
     )
@@ -204,8 +204,9 @@ def run(*options, cfg=None):
         snapshot_duration,
     )
 
-    criterion = torch.nn.CrossEntropyLoss(
-        ignore_index=mask_value, reduction="mean"
+    #TODO: Add removal of mask
+    criterion = torch.nn.BCEWithLogitsLoss(
+        reduction="mean"
     )
 
     trainer = create_supervised_trainer(
@@ -333,7 +334,7 @@ def run(*options, cfg=None):
     checkpoint_handler = SnapshotHandler(
         path.join(output_dir, config.TRAIN.MODEL_DIR),
         config.MODEL.NAME,
-        tgs_salt.extract_metric_from("IoU"),
+        extract_metric_from("IoU"),
         snapshot_function,
     )
     evaluator.add_event_handler(

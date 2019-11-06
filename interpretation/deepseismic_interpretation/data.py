@@ -277,6 +277,8 @@ class InlinePatchDataset(Dataset):
         self._ids = []
         self._patch_locations = []
 
+        self.transforms = transforms
+
         valid_modes = ("train", "test", "val")
         msg = (
             "Unknown value '{}' for argument split. "
