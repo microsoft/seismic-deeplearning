@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 from typing import Optional, Tuple, Union
 
 import numpy as np
@@ -37,9 +40,7 @@ class Model(object):
         subdomains = tuple(subdomains) + (PhysicalDomain(n_pml),)
         shape_pml = tuple(x + 2 * n_pml for x in shape)
         extent_pml = tuple(s * (d - 1) for s, d in zip(spacing, shape_pml))
-        origin_pml = tuple(
-            dtype(o - s * n_pml) for o, s in zip(origin, spacing)
-        )
+        origin_pml = tuple(dtype(o - s * n_pml) for o, s in zip(origin, spacing))
         self.grid = Grid(
             shape=shape_pml,
             extent=extent_pml,
@@ -62,14 +63,10 @@ class Model(object):
                 idx = [slice(0, x) for x in pml_data.shape]
                 idx[d] = slice(i, i + 1)
                 pml_data[tuple(idx)] += val / self.grid.spacing[d]
-                idx[d] = slice(
-                    pml_data.shape[d] - i, pml_data.shape[d] - i + 1
-                )
+                idx[d] = slice(pml_data.shape[d] - i, pml_data.shape[d] - i + 1)
                 pml_data[tuple(idx)] += val / self.grid.spacing[d]
         pml_data = np.pad(
-            pml_data,
-            [(i.left, i.right) for i in self.pml._size_halo],
-            mode="edge",
+            pml_data, [(i.left, i.right) for i in self.pml._size_halo], mode="edge",
         )
         self.pml.data_with_halo[:] = pml_data
         self.shape = shape
@@ -110,9 +107,7 @@ class VelocityModel(Model):
         super().__init__(shape, origin, spacing, n_pml, dtype, subdomains)
         if isinstance(vp, np.ndarray):
             assert space_order is not None
-            self.m = Function(
-                name="m", grid=self.grid, space_order=int(space_order)
-            )
+            self.m = Function(name="m", grid=self.grid, space_order=int(space_order))
         else:
             self.m = Constant(name="m", value=1.0 / float(vp) ** 2.0)
         self.vp = vp
@@ -126,8 +121,7 @@ class VelocityModel(Model):
         self._vp = vp
         if isinstance(vp, np.ndarray):
             pad_widths = [
-                (self.n_pml + i.left, self.n_pml + i.right)
-                for i in self.m._size_halo
+                (self.n_pml + i.left, self.n_pml + i.right) for i in self.m._size_halo
             ]
             self.m.data_with_halo[:] = np.pad(
                 1.0 / self.vp ** 2.0, pad_widths, mode="edge"
@@ -150,9 +144,7 @@ class VelocityModel(Model):
         H = u.laplace
         if kernel is Kernel.OT4:
             H += self.time_spacing ** 2 / 12 * u.laplace2(1 / self.m)
-        eq = Eq(
-            u.forward, solve(self.m * u.dt2 - H + self.pml * u.dt, u.forward)
-        )
+        eq = Eq(u.forward, solve(self.m * u.dt2 - H + self.pml * u.dt, u.forward))
         src_term = source.inject(
             field=u.forward, expr=source * self.time_spacing ** 2 / self.m
         )

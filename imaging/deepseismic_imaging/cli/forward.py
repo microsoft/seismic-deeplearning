@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 from functools import partial
 
 import click
@@ -13,16 +16,10 @@ click.option = partial(click.option, show_default=True)
 @click.argument("input", type=click.Path())
 @click.argument("output", type=click.Path())
 @click.option(
-    "-d",
-    "--duration",
-    default=1000.0,
-    type=float,
-    help="Simulation duration (in ms)",
+    "-d", "--duration", default=1000.0, type=float, help="Simulation duration (in ms)",
 )
 @click.option("-dt", default=2.0, type=float, help="Time increment (in ms)")
-@click.option(
-    "--n-pml", default=10, type=int, help="PML size (in grid points)"
-)
+@click.option("--n-pml", default=10, type=int, help="PML size (in grid points)")
 @click.option(
     "--n-receivers",
     default=11,
@@ -30,9 +27,7 @@ click.option = partial(click.option, show_default=True)
     help="Number of receivers per horizontal dimension",
 )
 @click.option("--space-order", default=2, type=int, help="Space order")
-@click.option(
-    "--spacing", default=10.0, type=float, help="Spacing between grid points"
-)
+@click.option("--spacing", default=10.0, type=float, help="Spacing between grid points")
 @click.pass_context
 def fwd(
     ctx,
@@ -58,9 +53,7 @@ def fwd(
 
 
 @fwd.command()
-@click.option(
-    "-f0", default=0.01, type=float, help="Source peak frequency (in kHz)"
-)
+@click.option("-f0", default=0.01, type=float, help="Source peak frequency (in kHz)")
 @click.pass_context
 def ricker(ctx, f0: float):
     """Ricker source"""
@@ -84,11 +77,7 @@ def ricker(ctx, f0: float):
                 start=0.0, stop=ctx.obj["duration"], step=ctx.obj["dt"]
             )
             source = RickerSource(
-                name="source",
-                grid=model.grid,
-                f0=f0,
-                npoint=1,
-                time_range=time_range,
+                name="source", grid=model.grid, f0=f0, npoint=1, time_range=time_range,
             )
             source.coordinates.data[0, :] = np.array(model.domain_size) * 0.5
             source.coordinates.data[0, -1] = 0.0
@@ -107,9 +96,7 @@ def ricker(ctx, f0: float):
                 )
             )
             for d in range(len(receivers_coords)):
-                receivers.coordinates.data[:, d] = receivers_coords[
-                    d
-                ].flatten()
+                receivers.coordinates.data[:, d] = receivers_coords[d].flatten()
             receivers.coordinates.data[:, -1] = 0.0
             output_group = output_file.create_group(input_group_name)
             for input_dataset_name, vp in input_group.items():
@@ -117,7 +104,5 @@ def ricker(ctx, f0: float):
                 seismograms = model.solve(
                     source=source, receivers=receivers, time_range=time_range
                 )
-                output_group.create_dataset(
-                    input_dataset_name, data=seismograms
-                )
+                output_group.create_dataset(input_dataset_name, data=seismograms)
                 bar.update(1)
