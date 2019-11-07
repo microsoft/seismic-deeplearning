@@ -1,10 +1,19 @@
-# Starter pipeline
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Starter pipeline for legal clearance
 # Start with a minimal pipeline that you can customize to build and deploy your code.
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
+# Pull request against these branches will trigger this build
+pr:
+- master
+- staging
+
 trigger:
 - master
+- staging
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -15,4 +24,3 @@ steps:
     scanType: 'Register'
     verbosity: 'Verbose'
     alertWarningLevel: 'High'
-
