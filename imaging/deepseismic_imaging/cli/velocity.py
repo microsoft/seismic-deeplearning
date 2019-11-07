@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 from functools import partial
 from itertools import islice
 from typing import Tuple
@@ -13,9 +16,7 @@ click.option = partial(click.option, show_default=True)
 @click.group()
 @click.argument("output", type=click.Path())
 @click.option(
-    "--append/--no-append",
-    default=False,
-    help="Whether to append to output file",
+    "--append/--no-append", default=False, help="Whether to append to output file",
 )
 @click.option("-n", default=1, type=int, help="Number of simulations")
 @click.option(
@@ -30,20 +31,11 @@ click.option = partial(click.option, show_default=True)
     type=int,
     help="Number of grid points along the second dimension",
 )
-@click.option(
-    "-nz", type=int, help="Number of grid points along the third dimension"
-)
+@click.option("-nz", type=int, help="Number of grid points along the third dimension")
 @click.option("-s", "--seed", default=42, type=int, help="Random seed")
 @click.pass_context
 def vp(
-    ctx,
-    append: bool,
-    n: int,
-    nx: int,
-    ny: int,
-    nz: int,
-    output: str,
-    seed: int,
+    ctx, append: bool, n: int, nx: int, ny: int, nz: int, output: str, seed: int,
 ):
     """Vp simulation"""
     shape = (nx, ny)

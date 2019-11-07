@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
 
 import cv_lib.segmentation.models.seg_hrnet
 import cv_lib.segmentation.models.resnet_unet

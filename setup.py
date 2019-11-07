@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 import setuptools
 
 with open("README.md", "r") as f:
@@ -34,9 +37,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     name="deepseismic",
-    packages=setuptools.find_packages(
-        include=["deepseismic", "deepseismic.*"]
-    ),
+    packages=setuptools.find_packages(include=["deepseismic", "deepseismic.*"]),
     platforms="any",
     python_requires=">= 3.5",
     scripts=["bin/ds"],

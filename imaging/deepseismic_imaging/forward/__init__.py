@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 from .models import Model, VelocityModel
 from .sources import Receiver, RickerSource, WaveletSource
 from .time import TimeAxis

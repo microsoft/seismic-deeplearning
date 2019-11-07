@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 import numpy as np
 import warnings
 
@@ -43,15 +46,17 @@ class ConfusionMatrix(Metric):
         super(ConfusionMatrix, self).__init__(output_transform=output_transform)
 
     def reset(self):
-        self._confusion_matrix = torch.zeros((self._num_classes, self._num_classes),dtype=torch.long).to(self._device)
+        self._confusion_matrix = torch.zeros(
+            (self._num_classes, self._num_classes), dtype=torch.long
+        ).to(self._device)
 
     def update(self, output):
         y_pred, y = output
-        #TODO: Make assertion exception
-        assert y.shape==y_pred.max(1)[1].squeeze().shape, "Shape not the same"
+        # TODO: Make assertion exception
+        assert y.shape == y_pred.max(1)[1].squeeze().shape, "Shape not the same"
         self._confusion_matrix += _torch_hist(
             torch.flatten(y),
-            torch.flatten(y_pred.max(1)[1].squeeze()), # Get the maximum index
+            torch.flatten(y_pred.max(1)[1].squeeze()),  # Get the maximum index
             self._num_classes,
         )
 
@@ -62,9 +67,7 @@ class ConfusionMatrix(Metric):
 class MeanIoU(ConfusionMatrix):
     def compute(self):
         hist = self._confusion_matrix.cpu().numpy()
-        iu = np.diag(hist) / (
-            hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist)
-        )
+        iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
         mean_iu = np.nanmean(iu)
         return mean_iu
 
@@ -75,13 +78,14 @@ class PixelwiseAccuracy(ConfusionMatrix):
         acc = np.diag(hist).sum() / hist.sum()
         return acc
 
+
 class FrequencyWeightedIoU(ConfusionMatrix):
     def compute(self):
         hist = self._confusion_matrix.cpu().numpy()
-        iu = np.diag(hist) / (
-            hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist)
-        )
-        freq = hist.sum(axis=1) / hist.sum() # fraction of the pixels that come from each class
+        iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
+        freq = (
+            hist.sum(axis=1) / hist.sum()
+        )  # fraction of the pixels that come from each class
         fwiou = (freq[freq > 0] * iu[freq > 0]).sum()
         return fwiou
 

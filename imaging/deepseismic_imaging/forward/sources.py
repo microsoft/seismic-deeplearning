@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 from typing import Optional
 
 import numpy as np
@@ -22,9 +25,7 @@ class PointSource(SparseTimeFunction):
         time_order = kwargs.pop("time_order", 2)
         p_dim = kwargs.pop("dimension", Dimension(name="p_%s" % name))
         npoint = kwargs.pop("npoint", None)
-        coordinates = kwargs.pop(
-            "coordinates", kwargs.pop("coordinates_data", None)
-        )
+        coordinates = kwargs.pop("coordinates", kwargs.pop("coordinates_data", None))
         if npoint is None:
             assert (
                 coordinates is not None
@@ -76,16 +77,12 @@ class PointSource(SparseTimeFunction):
         if np.isclose(dt0, dt, rtol=rtol):
             return self
         n_traces = self.data.shape[1]
-        new_traces = np.zeros(
-            (new_time_range.num, n_traces), dtype=self.data.dtype
-        )
+        new_traces = np.zeros((new_time_range.num, n_traces), dtype=self.data.dtype)
         for j in range(n_traces):
             tck = interpolate.splrep(
                 self._time_range.time_values, self.data[:, j], k=order
             )
-            new_traces[:, j] = interpolate.splev(
-                new_time_range.time_values, tck
-            )
+            new_traces[:, j] = interpolate.splev(new_time_range.time_values, tck)
         return PointSource(
             name=self.name,
             grid=self.grid,
@@ -129,4 +126,4 @@ class WaveletSource(PointSource):
 class RickerSource(WaveletSource):
     def wavelet(self, f0: float, t: np.ndarray) -> np.ndarray:
         r = np.pi * f0 * (t - 1.0 / f0)
-        return (1.0 - 2.0 * r ** 2.0) * np.exp(-r ** 2.0)
+        return (1.0 - 2.0 * r ** 2.0) * np.exp(-(r ** 2.0))

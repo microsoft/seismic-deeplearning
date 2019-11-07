@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 import torch
 
 from ignite.engine.engine import Engine, State, Events
@@ -7,13 +10,15 @@ from toolz import curry
 from torch.nn import functional as F
 import numpy as np
 
+
 def _upscale_model_output(y_pred, y):
     ph, pw = y_pred.size(2), y_pred.size(3)
     h, w = y.size(2), y.size(3)
     if ph != h or pw != w:
-        y_pred = F.upsample(input=y_pred, size=(h, w), mode='bilinear')
+        y_pred = F.upsample(input=y_pred, size=(h, w), mode="bilinear")
     return y_pred
- 
+
+
 def create_supervised_trainer(
     model,
     optimizer,
@@ -42,7 +47,7 @@ def create_supervised_trainer(
 
 @curry
 def val_transform(x, y, y_pred):
-    return {"image":x, "y_pred": y_pred.detach(), "mask":y.detach()}
+    return {"image": x, "y_pred": y_pred.detach(), "mask": y.detach()}
 
 
 def create_supervised_evaluator(

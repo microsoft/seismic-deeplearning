@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 from toolz import curry
 import torchvision
 import logging
@@ -17,7 +20,9 @@ def create_summary_writer(log_dir):
 
 
 def _log_model_output(log_label, summary_writer, engine):
-    summary_writer.add_scalar(log_label, engine.state.output["loss"], engine.state.iteration)
+    summary_writer.add_scalar(
+        log_label, engine.state.output["loss"], engine.state.iteration
+    )
 
 
 @curry
@@ -43,17 +48,26 @@ def log_lr(summary_writer, optimizer, log_interval, engine):
     lr = [param_group["lr"] for param_group in optimizer.param_groups]
     summary_writer.add_scalar("lr", lr[0], getattr(engine.state, log_interval))
 
+
 _DEFAULT_METRICS = {"accuracy": "Avg accuracy :", "nll": "Avg loss :"}
 
+
 @curry
-def log_metrics(summary_writer, train_engine, log_interval, engine, metrics_dict=_DEFAULT_METRICS):
+def log_metrics(
+    summary_writer, train_engine, log_interval, engine, metrics_dict=_DEFAULT_METRICS
+):
     metrics = engine.state.metrics
     for m in metrics_dict:
-        summary_writer.add_scalar(metrics_dict[m], metrics[m], getattr(train_engine.state, log_interval))
+        summary_writer.add_scalar(
+            metrics_dict[m], metrics[m], getattr(train_engine.state, log_interval)
+        )
 
 
-def create_image_writer(summary_writer, label, output_variable, normalize=False, transform_func=lambda x: x):
+def create_image_writer(
+    summary_writer, label, output_variable, normalize=False, transform_func=lambda x: x
+):
     logger = logging.getLogger(__name__)
+
     def write_to(engine):
         try:
             data_tensor = transform_func(engine.state.output[output_variable])
@@ -62,6 +76,8 @@ def create_image_writer(summary_writer, label, output_variable, normalize=False,
             )
             summary_writer.add_image(label, image_grid, engine.state.epoch)
         except KeyError:
-            logger.warning("Predictions and or ground truth labels not available to report")
-    
+            logger.warning(
+                "Predictions and or ground truth labels not available to report"
+            )
+
     return write_to
