@@ -4,13 +4,11 @@ from pytest import approx
 
 from ignite.metrics import ConfusionMatrix, MetricsLambda
 
-from cv_lib.segmentation.dutchf3.metrics import (
-    class_accuracy,
-    mean_class_accuracy,
-)
+from cv_lib.segmentation.metrics import class_accuracy, mean_class_accuracy
 
 
-# repo: https://github.com/pytorch/ignite/blob/master/tests/ignite/metrics/test_confusion_matrix.py
+# source repo:
+# https://github.com/pytorch/ignite/blob/master/tests/ignite/metrics/test_confusion_matrix.py
 def _get_y_true_y_pred():
     # Generate an image with labels 0 (background), 1, 2
     # 3 classes:
@@ -24,7 +22,8 @@ def _get_y_true_y_pred():
     return y_true, y_pred
 
 
-# repo: https://github.com/pytorch/ignite/blob/master/tests/ignite/metrics/test_confusion_matrix.py
+# source repo:
+# https://github.com/pytorch/ignite/blob/master/tests/ignite/metrics/test_confusion_matrix.py
 def _compute_th_y_true_y_logits(y_true, y_pred):
     # Create torch.tensor from numpy
     th_y_true = torch.from_numpy(y_true).unsqueeze(0)
