@@ -3,7 +3,6 @@
 
 import numpy as np
 import torch
-import torchvision.utils as vutils
 from git import Repo
 from datetime import datetime
 import os
@@ -23,7 +22,6 @@ def np_to_tb(array):
         array = np.expand_dims(array, axis=0)
 
     array = torch.from_numpy(array)
-    # array = vutils.make_grid(array, normalize=True, scale_each=True)
     return array
 
 

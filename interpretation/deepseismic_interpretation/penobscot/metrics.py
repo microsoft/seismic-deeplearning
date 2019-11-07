@@ -2,10 +2,30 @@
 # Licensed under the MIT License.
 
 from collections import defaultdict
-from cv_lib.segmentation.dutchf3.metrics import _torch_hist
 from ignite.metrics import Metric
 import torch
 import numpy as np
+
+
+def _torch_hist(label_true, label_pred, n_class):
+    """Calculates the confusion matrix for the labels
+    
+    Args:
+        label_true ([type]): [description]
+        label_pred ([type]): [description]
+        n_class ([type]): [description]
+    
+    Returns:
+        [type]: [description]
+    """
+    # TODO Add exceptions
+    assert len(label_true.shape) == 1, "Labels need to be 1D"
+    assert len(label_pred.shape) == 1, "Predictions need to be 1D"
+    mask = (label_true >= 0) & (label_true < n_class)
+    hist = torch.bincount(
+        n_class * label_true[mask] + label_pred[mask], minlength=n_class ** 2
+    ).reshape(n_class, n_class)
+    return hist
 
 
 def _default_tensor(image_height, image_width, pad_value=255):
@@ -18,8 +38,8 @@ class InlineMeanIoU(Metric):
     """Compute Mean IoU for Inline
 
     Notes:
-        This metric collects all the patches and recomposes the predictions and masks into inlines
-        These are then used to calculate the mean IoU
+        This metric collects all the patches and recomposes the predictions and masks
+        into inlines. These are then used to calculate the mean IoU.
     """
 
     def __init__(
@@ -40,11 +60,16 @@ class InlineMeanIoU(Metric):
             image_width (int): width of inline
             patch_size (int): patch size
             num_classes (int): number of classes in dataset
-            padding (int, optional): the amount of padding to height and width, e.g 200 padded to 256 - padding=56. Defaults to 0
-            scale (int, optional): the scale factor applied to the patch, e.g 100 scaled to 200 - scale=2. Defaults to 1
+            padding (int, optional): the amount of padding to height and width,
+                e.g 200 padded to 256 - padding=56. Defaults to 0
+            scale (int, optional): the scale factor applied to the patch,
+                e.g 100 scaled to 200 - scale=2. Defaults to 1
             pad_value (int):  the constant value used for padding Defaults to 255
-            output_transform (callable, optional): a callable that is used to transform the ignite.engine.Engine's `process_function`'s output into the
-                form expected by the metric. This can be useful if, for example, you have a multi-output model and you want to compute the metric with respect to one of the outputs.
+            output_transform (callable, optional): a callable that is used to transform
+                the ignite.engine.Engine's `process_function`'s output into the form
+                expected by the metric. This can be useful if, for example, if you have
+                a multi-output model and you want to compute the metric with respect to
+                one of the outputs.
         """
         self._image_height = image_height
         self._image_width = image_width
@@ -78,7 +103,8 @@ class InlineMeanIoU(Metric):
         assert y.shape == max_prediction.shape, "Shape not the same"
 
         for pred, mask, id, patch_loc in zip(max_prediction, y, ids, patch_locations):
-            # ! With overlapping patches this does not aggregate the results it simply overwrites them
+            # ! With overlapping patches this does not aggregate the results,
+            # ! it simply overwrites them
             # If patch is padded ingore padding
             pad = int(self._padding // 2)
             pred = pred[pad : pred.shape[0] - pad, pad : pred.shape[1] - pad]

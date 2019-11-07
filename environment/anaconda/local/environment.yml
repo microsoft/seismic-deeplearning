@@ -16,7 +16,7 @@ dependencies:
   - tqdm
   - pip:
     - segyio
-    - pytorch-ignite
+    - pytorch-ignite==0.3.0.dev20191105 # pre-release until stable available
     - fire
     - toolz
     - tabulate==0.8.2

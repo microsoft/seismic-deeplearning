@@ -54,11 +54,11 @@ VALIDATION:
 
 TEST:
   COMPLETE_PATCHES_ONLY: False
-  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/experiments/segmentation/penobscot/local/output/penobscot/437970c875226e7e39c8109c0de8d21c5e5d6e3b/seg_hrnet/Sep25_144942/models/seg_hrnet_running_model_28.pth"
+  MODEL_PATH: "/data/home/vapaunic/repos/DeepSeismic/experiments/interpretation/penobscot/local/output/vapaunic/metrics/4120aa99152b6e4f92f8134b783ac63c8131e1ed/resnet_unet/Nov05_105704/models/resnet_unet_running_model_1.pth"
   AUGMENTATIONS:
     RESIZE:
-      HEIGHT: 200
-      WIDTH: 200
+      HEIGHT: 256
+      WIDTH: 256
     PAD:
       HEIGHT: 256
       WIDTH: 256

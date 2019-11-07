@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-# /* spell-checker: disable */
+
 """Train models on Dutch F3 salt dataset
 
 Trains models using PyTorch DistributedDataParallel
@@ -16,13 +16,7 @@ import cv2
 import fire
 import numpy as np
 import torch
-from albumentations import (
-    Compose,
-    HorizontalFlip,
-    Normalize,
-    Resize,
-    PadIfNeeded,
-)
+from albumentations import Compose, HorizontalFlip, Normalize, Resize, PadIfNeeded
 from cv_lib.event_handlers import (
     SnapshotHandler,
     logging_handlers,
@@ -35,15 +29,21 @@ from cv_lib.event_handlers.tensorboard_handlers import (
 )
 from cv_lib.segmentation import models
 from cv_lib.segmentation import extract_metric_from
-from deepseismic_interpretation.dutchf3.data import (
-    get_patch_loader,
-    decode_segmap,
-)
+from deepseismic_interpretation.dutchf3.data import get_patch_loader, decode_segmap
 from cv_lib.segmentation.dutchf3.engine import (
     create_supervised_evaluator,
     create_supervised_trainer,
 )
-from cv_lib.segmentation.dutchf3.metrics import apex
+
+from ignite.metrics import Loss
+from cv_lib.segmentation.metrics import (
+    pixelwise_accuracy,
+    class_accuracy,
+    mean_class_accuracy,
+    class_iou,
+    mean_iou,
+)
+
 from cv_lib.segmentation.dutchf3.utils import (
     current_datetime,
     generate_path,
@@ -82,12 +82,13 @@ def run(*options, cfg=None, local_rank=0):
 
     Notes:
         Options can be passed in via the options argument and loaded from the cfg file
-        Options loaded from default.py will be overridden by options loaded from cfg file
-        Options passed in through options argument will override option loaded from cfg file
-    
+        Options from default.py will be overridden by options loaded from cfg file
+        Options passed in via options argument will override option loaded from cfg file
+
     Args:
-        *options (str,int ,optional): Options used to overide what is loaded from the config. 
-                                      To see what options are available consult default.py
+        *options (str,int ,optional): Options used to overide what is loaded from the
+                                      config. To see what options are available consult
+                                      default.py
         cfg (str, optional): Location of config file to load. Defaults to None.
     """
     update_config(config, options=options, config_file=cfg)
@@ -99,11 +100,11 @@ def run(*options, cfg=None, local_rank=0):
     distributed = world_size > 1
 
     if distributed:
-        # FOR DISTRIBUTED:  Set the device according to local_rank.
+        # FOR DISTRIBUTED: Set the device according to local_rank.
         torch.cuda.set_device(local_rank)
 
-        # FOR DISTRIBUTED:  Initialize the backend.  torch.distributed.launch will provide
-        # environment variables, and requires that you use init_method=`env://`.
+        # FOR DISTRIBUTED: Initialize the backend. torch.distributed.launch will
+        # provide environment variables, and requires that you use init_method=`env://`.
         torch.distributed.init_process_group(backend="nccl", init_method="env://")
 
     scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
@@ -117,7 +118,7 @@ def run(*options, cfg=None, local_rank=0):
     basic_aug = Compose(
         [
             Normalize(
-                mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,
+                mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1
             ),
             Resize(
                 config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
@@ -134,7 +135,7 @@ def run(*options, cfg=None, local_rank=0):
         ]
     )
     if config.TRAIN.AUGMENTATION:
-        train_aug = Compose([basic_aug, HorizontalFlip(p=0.5),])
+        train_aug = Compose([basic_aug, HorizontalFlip(p=0.5)])
         val_aug = basic_aug
     else:
         train_aug = val_aug = basic_aug
@@ -198,7 +199,8 @@ def run(*options, cfg=None, local_rank=0):
         weight_decay=config.TRAIN.WEIGHT_DECAY,
     )
 
-    # weights are inversely proportional to the frequency of the classes in the training set
+    # weights are inversely proportional to the frequency of the classes in
+    # the training set
     class_weights = torch.tensor(
         config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False
     )
@@ -229,7 +231,7 @@ def run(*options, cfg=None, local_rank=0):
     )
 
     scheduler = ConcatScheduler(
-        schedulers=[warmup_scheduler, cosine_scheduler], durations=[warmup_duration],
+        schedulers=[warmup_scheduler, cosine_scheduler], durations=[warmup_duration]
     )
 
     trainer = create_supervised_trainer(
@@ -237,39 +239,37 @@ def run(*options, cfg=None, local_rank=0):
     )
 
     trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
-    # Set to update the epoch parameter of our distributed data sampler so that we get different shuffles
+    # Set to update the epoch parameter of our distributed data sampler so that we get
+    # different shuffles
     trainer.add_event_handler(Events.EPOCH_STARTED, update_sampler_epoch(train_loader))
 
     if silence_other_ranks & local_rank != 0:
         logging.getLogger("ignite.engine.engine.Engine").setLevel(logging.WARNING)
 
     def _select_pred_and_mask(model_out_dict):
-        return (
-            model_out_dict["y_pred"].squeeze(),
-            model_out_dict["mask"].squeeze(),
-        )
+        return (model_out_dict["y_pred"].squeeze(), model_out_dict["mask"].squeeze())
 
     evaluator = create_supervised_evaluator(
         model,
         prepare_batch,
         metrics={
-            "IoU": apex.MeanIoU(
-                n_classes, device, output_transform=_select_pred_and_mask
+            "nll": Loss(
+                criterion, output_transform=_select_pred_and_mask, device=device
             ),
-            "nll": apex.LossMetric(
-                criterion,
-                world_size,
-                config.VALIDATION.BATCH_SIZE_PER_GPU,
-                output_transform=_select_pred_and_mask,
+            "pixa": pixelwise_accuracy(
+                n_classes, output_transform=_select_pred_and_mask, device=device
             ),
-            "mca": apex.MeanClassAccuracy(
-                n_classes, device, output_transform=_select_pred_and_mask
+            "cacc": class_accuracy(
+                n_classes, output_transform=_select_pred_and_mask, device=device
             ),
-            "fiou": apex.FrequencyWeightedIoU(
-                n_classes, device, output_transform=_select_pred_and_mask
+            "mca": mean_class_accuracy(
+                n_classes, output_transform=_select_pred_and_mask, device=device
             ),
-            "pixa": apex.PixelwiseAccuracy(
-                n_classes, device, output_transform=_select_pred_and_mask
+            "ciou": class_iou(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
+            "mIoU": mean_iou(
+                n_classes, output_transform=_select_pred_and_mask, device=device
             ),
         },
         device=device,
@@ -312,11 +312,10 @@ def run(*options, cfg=None, local_rank=0):
             logging_handlers.log_metrics(
                 "Validation results",
                 metrics_dict={
-                    "IoU": "IoU :",
                     "nll": "Avg loss :",
+                    "mIoU": " Avg IoU :",
                     "pixa": "Pixelwise Accuracy :",
                     "mca": "Mean Class Accuracy :",
-                    "fiou": "Freq Weighted IoU :",
                 },
             ),
         )
@@ -327,10 +326,9 @@ def run(*options, cfg=None, local_rank=0):
                 trainer,
                 "epoch",
                 metrics_dict={
-                    "IoU": "Validation/IoU",
+                    "mIoU": "Validation/IoU",
                     "nll": "Validation/Loss",
                     "mca": "Validation/MCA",
-                    "fiou": "Validation/FIoU",
                 },
             ),
         )
@@ -354,10 +352,7 @@ def run(*options, cfg=None, local_rank=0):
         evaluator.add_event_handler(
             Events.EPOCH_COMPLETED,
             create_image_writer(
-                summary_writer,
-                "Validation/Mask",
-                "mask",
-                transform_func=transform_func,
+                summary_writer, "Validation/Mask", "mask", transform_func=transform_func
             ),
         )
         evaluator.add_event_handler(
@@ -376,7 +371,7 @@ def run(*options, cfg=None, local_rank=0):
         checkpoint_handler = SnapshotHandler(
             path.join(output_dir, config.TRAIN.MODEL_DIR),
             config.MODEL.NAME,
-            extract_metric_from("fiou"),
+            extract_metric_from("mIoU"),
             snapshot_function,
         )
         evaluator.add_event_handler(

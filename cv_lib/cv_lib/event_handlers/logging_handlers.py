@@ -5,6 +5,8 @@ import logging
 import logging.config
 from toolz import curry
 
+import numpy as np
+np.set_printoptions(precision=3)
 
 @curry
 def log_training_output(engine, log_interval=100):
@@ -23,7 +25,7 @@ def log_lr(optimizer, engine):
     logger.info(f"lr - {lr}")
 
 
-_DEFAULT_METRICS = {"accuracy": "Avg accuracy :", "nll": "Avg loss :"}
+_DEFAULT_METRICS = {"pixacc": "Avg accuracy :", "nll": "Avg loss :"}
 
 
 @curry
@@ -35,6 +37,16 @@ def log_metrics(log_msg, engine, metrics_dict=_DEFAULT_METRICS):
     )
     logger.info(
         f"{log_msg} - Epoch {engine.state.epoch} [{engine.state.max_epochs}] "
+        + metrics_msg
+    )
+
+@curry
+def log_class_metrics(log_msg, engine, metrics_dict):
+    logger = logging.getLogger(__name__)
+    metrics = engine.state.metrics
+    metrics_msg = "\n".join(f"{metrics_dict[k]} {metrics[k].numpy()}" for k in metrics_dict)
+    logger.info(
+        f"{log_msg} - Epoch {engine.state.epoch} [{engine.state.max_epochs}]\n"
         + metrics_msg
     )
 
