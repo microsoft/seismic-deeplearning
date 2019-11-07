@@ -13,7 +13,7 @@ trigger:
 
 jobs:
 
-- job: unit test job
+- job: uni_test_job
   timeoutInMinutes: 10 # how long to run the job before automatically cancelling
   pool:
     name: deepseismicagentpool
@@ -25,7 +25,7 @@ jobs:
       echo "Dummy unit test job passed"
     displayName: Unit Test Job
 
-- job: integration test job
+- job: integration_test_job
   timeoutInMinutes: 10 # how long to run the job before automatically cancelling
   pool:
     name: deepseismicagentpool
