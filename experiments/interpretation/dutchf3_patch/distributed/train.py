@@ -6,7 +6,6 @@
 Trains models using PyTorch DistributedDataParallel
 Uses a warmup schedule that then goes into a cyclic learning rate
 """
-# /* spell-checker: disable */
 
 import logging
 import logging.config

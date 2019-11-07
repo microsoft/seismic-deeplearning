@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -7,31 +10,49 @@ import torchvision
 class FPAv2(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(FPAv2, self).__init__()
-        self.glob = nn.Sequential(nn.AdaptiveAvgPool2d(1),
-                                  nn.Conv2d(input_dim, output_dim, kernel_size=1, bias=False))
+        self.glob = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(input_dim, output_dim, kernel_size=1, bias=False),
+        )
 
-        self.down2_1 = nn.Sequential(nn.Conv2d(input_dim, input_dim, kernel_size=5, stride=2, padding=2, bias=False),
-                                     nn.BatchNorm2d(input_dim),
-                                     nn.ELU(True))
-        self.down2_2 = nn.Sequential(nn.Conv2d(input_dim, output_dim, kernel_size=5, padding=2, bias=False),
-                                     nn.BatchNorm2d(output_dim),
-                                     nn.ELU(True))
+        self.down2_1 = nn.Sequential(
+            nn.Conv2d(
+                input_dim, input_dim, kernel_size=5, stride=2, padding=2, bias=False
+            ),
+            nn.BatchNorm2d(input_dim),
+            nn.ELU(True),
+        )
+        self.down2_2 = nn.Sequential(
+            nn.Conv2d(input_dim, output_dim, kernel_size=5, padding=2, bias=False),
+            nn.BatchNorm2d(output_dim),
+            nn.ELU(True),
+        )
 
-        self.down3_1 = nn.Sequential(nn.Conv2d(input_dim, input_dim, kernel_size=3, stride=2, padding=1, bias=False),
-                                     nn.BatchNorm2d(input_dim),
-                                     nn.ELU(True))
-        self.down3_2 = nn.Sequential(nn.Conv2d(input_dim, output_dim, kernel_size=3, padding=1, bias=False),
-                                     nn.BatchNorm2d(output_dim),
-                                     nn.ELU(True))
+        self.down3_1 = nn.Sequential(
+            nn.Conv2d(
+                input_dim, input_dim, kernel_size=3, stride=2, padding=1, bias=False
+            ),
+            nn.BatchNorm2d(input_dim),
+            nn.ELU(True),
+        )
+        self.down3_2 = nn.Sequential(
+            nn.Conv2d(input_dim, output_dim, kernel_size=3, padding=1, bias=False),
+            nn.BatchNorm2d(output_dim),
+            nn.ELU(True),
+        )
 
-        self.conv1 = nn.Sequential(nn.Conv2d(input_dim, output_dim, kernel_size=1, bias=False),
-                                   nn.BatchNorm2d(output_dim),
-                                   nn.ELU(True))
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(input_dim, output_dim, kernel_size=1, bias=False),
+            nn.BatchNorm2d(output_dim),
+            nn.ELU(True),
+        )
 
     def forward(self, x):
         # x shape: 512, 16, 16
         x_glob = self.glob(x)  # 256, 1, 1
-        x_glob = F.upsample(x_glob, scale_factor=16, mode='bilinear', align_corners=True)  # 256, 16, 16
+        x_glob = F.upsample(
+            x_glob, scale_factor=16, mode="bilinear", align_corners=True
+        )  # 256, 16, 16
 
         d2 = self.down2_1(x)  # 512, 8, 8
         d3 = self.down3_1(d2)  # 512, 4, 4
@@ -39,10 +60,14 @@ class FPAv2(nn.Module):
         d2 = self.down2_2(d2)  # 256, 8, 8
         d3 = self.down3_2(d3)  # 256, 4, 4
 
-        d3 = F.upsample(d3, scale_factor=2, mode='bilinear', align_corners=True)  # 256, 8, 8
+        d3 = F.upsample(
+            d3, scale_factor=2, mode="bilinear", align_corners=True
+        )  # 256, 8, 8
         d2 = d2 + d3
 
-        d2 = F.upsample(d2, scale_factor=2, mode='bilinear', align_corners=True)  # 256, 16, 16
+        d2 = F.upsample(
+            d2, scale_factor=2, mode="bilinear", align_corners=True
+        )  # 256, 16, 16
         x = self.conv1(x)  # 256, 16, 16
         x = x * d2
 
@@ -52,9 +77,18 @@ class FPAv2(nn.Module):
 
 
 def conv3x3(input_dim, output_dim, rate=1):
-    return nn.Sequential(nn.Conv2d(input_dim, output_dim, kernel_size=3, dilation=rate, padding=rate, bias=False),
-                         nn.BatchNorm2d(output_dim),
-                         nn.ELU(True))
+    return nn.Sequential(
+        nn.Conv2d(
+            input_dim,
+            output_dim,
+            kernel_size=3,
+            dilation=rate,
+            padding=rate,
+            bias=False,
+        ),
+        nn.BatchNorm2d(output_dim),
+        nn.ELU(True),
+    )
 
 
 class SpatialAttention2d(nn.Module):
@@ -73,8 +107,12 @@ class GAB(nn.Module):
     def __init__(self, input_dim, reduction=4):
         super(GAB, self).__init__()
         self.global_avgpool = nn.AdaptiveAvgPool2d(1)
-        self.conv1 = nn.Conv2d(input_dim, input_dim // reduction, kernel_size=1, stride=1)
-        self.conv2 = nn.Conv2d(input_dim // reduction, input_dim, kernel_size=1, stride=1)
+        self.conv1 = nn.Conv2d(
+            input_dim, input_dim // reduction, kernel_size=1, stride=1
+        )
+        self.conv2 = nn.Conv2d(
+            input_dim // reduction, input_dim, kernel_size=1, stride=1
+        )
         self.relu = nn.ReLU(inplace=True)
         self.sigmoid = nn.Sigmoid()
 
@@ -94,7 +132,7 @@ class Decoder(nn.Module):
         self.c_att = GAB(out_channels, 16)
 
     def forward(self, x, e=None):
-        x = F.upsample(input=x, scale_factor=2, mode='bilinear', align_corners=True)
+        x = F.upsample(input=x, scale_factor=2, mode="bilinear", align_corners=True)
         if e is not None:
             x = torch.cat([x, e], 1)
         x = self.conv1(x)
@@ -143,22 +181,14 @@ class Res34Unetv4(nn.Module):
         super(Res34Unetv4, self).__init__()
         self.resnet = torchvision.models.resnet34(True)
 
-        self.conv1 = nn.Sequential(
-            self.resnet.conv1,
-            self.resnet.bn1,
-            self.resnet.relu)
+        self.conv1 = nn.Sequential(self.resnet.conv1, self.resnet.bn1, self.resnet.relu)
 
-        self.encode2 = nn.Sequential(self.resnet.layer1,
-                                     SCse(64))
-        self.encode3 = nn.Sequential(self.resnet.layer2,
-                                     SCse(128))
-        self.encode4 = nn.Sequential(self.resnet.layer3,
-                                     SCse(256))
-        self.encode5 = nn.Sequential(self.resnet.layer4,
-                                     SCse(512))
+        self.encode2 = nn.Sequential(self.resnet.layer1, SCse(64))
+        self.encode3 = nn.Sequential(self.resnet.layer2, SCse(128))
+        self.encode4 = nn.Sequential(self.resnet.layer3, SCse(256))
+        self.encode5 = nn.Sequential(self.resnet.layer4, SCse(512))
 
-        self.center = nn.Sequential(FPAv2(512, 256),
-                                    nn.MaxPool2d(2, 2))
+        self.center = nn.Sequential(FPAv2(512, 256), nn.MaxPool2d(2, 2))
 
         self.decode5 = Decoderv2(256, 512, 64)
         self.decode4 = Decoderv2(64, 256, 64)
@@ -166,9 +196,11 @@ class Res34Unetv4(nn.Module):
         self.decode2 = Decoderv2(64, 64, 64)
         self.decode1 = Decoder(64, 32, 64)
 
-        self.logit = nn.Sequential(nn.Conv2d(320, 64, kernel_size=3, padding=1),
-                                   nn.ELU(True),
-                                   nn.Conv2d(64, n_classes, kernel_size=1, bias=False))
+        self.logit = nn.Sequential(
+            nn.Conv2d(320, 64, kernel_size=3, padding=1),
+            nn.ELU(True),
+            nn.Conv2d(64, n_classes, kernel_size=1, bias=False),
+        )
 
     def forward(self, x):
         # x: (batch_size, 3, 256, 256)
@@ -187,11 +219,16 @@ class Res34Unetv4(nn.Module):
         d2 = self.decode2(d3, e2)  # 64, 128, 128
         d1 = self.decode1(d2)  # 64, 256, 256
 
-        f = torch.cat((d1,
-                       F.upsample(d2, scale_factor=2, mode='bilinear', align_corners=True),
-                       F.upsample(d3, scale_factor=4, mode='bilinear', align_corners=True),
-                       F.upsample(d4, scale_factor=8, mode='bilinear', align_corners=True),
-                       F.upsample(d5, scale_factor=16, mode='bilinear', align_corners=True)), 1)  # 320, 256, 256
+        f = torch.cat(
+            (
+                d1,
+                F.upsample(d2, scale_factor=2, mode="bilinear", align_corners=True),
+                F.upsample(d3, scale_factor=4, mode="bilinear", align_corners=True),
+                F.upsample(d4, scale_factor=8, mode="bilinear", align_corners=True),
+                F.upsample(d5, scale_factor=16, mode="bilinear", align_corners=True),
+            ),
+            1,
+        )  # 320, 256, 256
 
         logit = self.logit(f)  # 1, 256, 256
 
@@ -204,22 +241,14 @@ class Res34Unetv3(nn.Module):
         super(Res34Unetv3, self).__init__()
         self.resnet = torchvision.models.resnet34(True)
 
-        self.conv1 = nn.Sequential(
-            self.resnet.conv1,
-            self.resnet.bn1,
-            self.resnet.relu)
+        self.conv1 = nn.Sequential(self.resnet.conv1, self.resnet.bn1, self.resnet.relu)
 
-        self.encode2 = nn.Sequential(self.resnet.layer1,
-                                     SCse(64))
-        self.encode3 = nn.Sequential(self.resnet.layer2,
-                                     SCse(128))
-        self.encode4 = nn.Sequential(self.resnet.layer3,
-                                     SCse(256))
-        self.encode5 = nn.Sequential(self.resnet.layer4,
-                                     SCse(512))
+        self.encode2 = nn.Sequential(self.resnet.layer1, SCse(64))
+        self.encode3 = nn.Sequential(self.resnet.layer2, SCse(128))
+        self.encode4 = nn.Sequential(self.resnet.layer3, SCse(256))
+        self.encode5 = nn.Sequential(self.resnet.layer4, SCse(512))
 
-        self.center = nn.Sequential(FPAv2(512, 256),
-                                    nn.MaxPool2d(2, 2))
+        self.center = nn.Sequential(FPAv2(512, 256), nn.MaxPool2d(2, 2))
 
         self.decode5 = Decoderv2(256, 512, 64)
         self.decode4 = Decoderv2(64, 256, 64)
@@ -233,13 +262,13 @@ class Res34Unetv3(nn.Module):
         self.fuse_pixel = conv3x3(320, 64)
         self.logit_pixel = nn.Conv2d(64, 1, kernel_size=1, bias=False)
 
-        self.fuse_image = nn.Sequential(nn.Linear(512, 64),
-                                        nn.ELU(True))
-        self.logit_image = nn.Sequential(nn.Linear(64, 1),
-                                         nn.Sigmoid())
-        self.logit = nn.Sequential(nn.Conv2d(128, 64, kernel_size=3, padding=1, bias=False),
-                                   nn.ELU(True),
-                                   nn.Conv2d(64, 1, kernel_size=1, bias=False))
+        self.fuse_image = nn.Sequential(nn.Linear(512, 64), nn.ELU(True))
+        self.logit_image = nn.Sequential(nn.Linear(64, 1), nn.Sigmoid())
+        self.logit = nn.Sequential(
+            nn.Conv2d(128, 64, kernel_size=3, padding=1, bias=False),
+            nn.ELU(True),
+            nn.Conv2d(64, 1, kernel_size=1, bias=False),
+        )
 
     def forward(self, x):
         # x: (batch_size, 3, 256, 256)
@@ -262,11 +291,16 @@ class Res34Unetv3(nn.Module):
         d2 = self.decode2(d3, e2)  # 64, 128, 128
         d1 = self.decode1(d2)  # 64, 256, 256
 
-        f = torch.cat((d1,
-                       F.upsample(d2, scale_factor=2, mode='bilinear', align_corners=True),
-                       F.upsample(d3, scale_factor=4, mode='bilinear', align_corners=True),
-                       F.upsample(d4, scale_factor=8, mode='bilinear', align_corners=True),
-                       F.upsample(d5, scale_factor=16, mode='bilinear', align_corners=True)), 1)  # 320, 256, 256
+        f = torch.cat(
+            (
+                d1,
+                F.upsample(d2, scale_factor=2, mode="bilinear", align_corners=True),
+                F.upsample(d3, scale_factor=4, mode="bilinear", align_corners=True),
+                F.upsample(d4, scale_factor=8, mode="bilinear", align_corners=True),
+                F.upsample(d5, scale_factor=16, mode="bilinear", align_corners=True),
+            ),
+            1,
+        )  # 320, 256, 256
         f = self.dropout2d(f)
 
         # segmentation process
@@ -278,9 +312,18 @@ class Res34Unetv3(nn.Module):
         logit_image = self.logit_image(fuse_image)  # 1
 
         # combine segmentation and classification
-        fuse = torch.cat([fuse_pixel,
-                          F.upsample(fuse_image.view(batch_size, -1, 1, 1), scale_factor=256, mode='bilinear',
-                                     align_corners=True)], 1)  # 128, 256, 256
+        fuse = torch.cat(
+            [
+                fuse_pixel,
+                F.upsample(
+                    fuse_image.view(batch_size, -1, 1, 1),
+                    scale_factor=256,
+                    mode="bilinear",
+                    align_corners=True,
+                ),
+            ],
+            1,
+        )  # 128, 256, 256
         logit = self.logit(fuse)  # 1, 256, 256
 
         return logit, logit_pixel, logit_image.view(-1)
@@ -295,28 +338,26 @@ class Res34Unetv5(nn.Module):
         self.conv1 = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=3, padding=1, bias=False),
             self.resnet.bn1,
-            self.resnet.relu)
+            self.resnet.relu,
+        )
 
-        self.encode2 = nn.Sequential(self.resnet.layer1,
-                                     SCse(64))
-        self.encode3 = nn.Sequential(self.resnet.layer2,
-                                     SCse(128))
-        self.encode4 = nn.Sequential(self.resnet.layer3,
-                                     SCse(256))
-        self.encode5 = nn.Sequential(self.resnet.layer4,
-                                     SCse(512))
+        self.encode2 = nn.Sequential(self.resnet.layer1, SCse(64))
+        self.encode3 = nn.Sequential(self.resnet.layer2, SCse(128))
+        self.encode4 = nn.Sequential(self.resnet.layer3, SCse(256))
+        self.encode5 = nn.Sequential(self.resnet.layer4, SCse(512))
 
-        self.center = nn.Sequential(FPAv2(512, 256),
-                                    nn.MaxPool2d(2, 2))
+        self.center = nn.Sequential(FPAv2(512, 256), nn.MaxPool2d(2, 2))
 
         self.decode5 = Decoderv2(256, 512, 64)
         self.decode4 = Decoderv2(64, 256, 64)
         self.decode3 = Decoderv2(64, 128, 64)
         self.decode2 = Decoderv2(64, 64, 64)
 
-        self.logit = nn.Sequential(nn.Conv2d(256, 32, kernel_size=3, padding=1),
-                                   nn.ELU(True),
-                                   nn.Conv2d(32, 1, kernel_size=1, bias=False))
+        self.logit = nn.Sequential(
+            nn.Conv2d(256, 32, kernel_size=3, padding=1),
+            nn.ELU(True),
+            nn.Conv2d(32, 1, kernel_size=1, bias=False),
+        )
 
     def forward(self, x):
         # x: batch_size, 3, 128, 128
@@ -333,10 +374,15 @@ class Res34Unetv5(nn.Module):
         d3 = self.decode3(d4, e3)  # 64, 64, 64
         d2 = self.decode2(d3, e2)  # 64, 128, 128
 
-        f = torch.cat((d2,
-                       F.upsample(d3, scale_factor=2, mode='bilinear', align_corners=True),
-                       F.upsample(d4, scale_factor=4, mode='bilinear', align_corners=True),
-                       F.upsample(d5, scale_factor=8, mode='bilinear', align_corners=True)), 1)  # 256, 128, 128
+        f = torch.cat(
+            (
+                d2,
+                F.upsample(d3, scale_factor=2, mode="bilinear", align_corners=True),
+                F.upsample(d4, scale_factor=4, mode="bilinear", align_corners=True),
+                F.upsample(d5, scale_factor=8, mode="bilinear", align_corners=True),
+            ),
+            1,
+        )  # 256, 128, 128
 
         f = F.dropout2d(f, p=0.4)
         logit = self.logit(f)  # 1, 128, 128
@@ -345,6 +391,8 @@ class Res34Unetv5(nn.Module):
 
 
 def get_seg_model(cfg, **kwargs):
-    assert cfg.MODEL.IN_CHANNELS==3, f"SEResnet Unet deconvnet is not implemented to accept {cfg.MODEL.IN_CHANNELS} channels. Please only pass 3 for cfg.MODEL.IN_CHANNELS"
+    assert (
+        cfg.MODEL.IN_CHANNELS == 3
+    ), f"SEResnet Unet deconvnet is not implemented to accept {cfg.MODEL.IN_CHANNELS} channels. Please only pass 3 for cfg.MODEL.IN_CHANNELS"
     model = Res34Unetv4(n_classes=cfg.DATASET.NUM_CLASSES)
     return model
