@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 import logging
 import logging.config
 from toolz import curry
@@ -8,7 +11,9 @@ def log_training_output(engine, log_interval=100):
     logger = logging.getLogger(__name__)
 
     if engine.state.iteration % log_interval == 0:
-        logger.info(f"Epoch: {engine.state.epoch} Iter: {engine.state.iteration} loss {engine.state.output['loss']}")
+        logger.info(
+            f"Epoch: {engine.state.epoch} Iter: {engine.state.iteration} loss {engine.state.output['loss']}"
+        )
 
 
 @curry
@@ -25,7 +30,9 @@ _DEFAULT_METRICS = {"accuracy": "Avg accuracy :", "nll": "Avg loss :"}
 def log_metrics(log_msg, engine, metrics_dict=_DEFAULT_METRICS):
     logger = logging.getLogger(__name__)
     metrics = engine.state.metrics
-    metrics_msg = " ".join([f"{metrics_dict[k]} {metrics[k]:.2f}" for k in metrics_dict])
+    metrics_msg = " ".join(
+        [f"{metrics_dict[k]} {metrics[k]:.2f}" for k in metrics_dict]
+    )
     logger.info(
         f"{log_msg} - Epoch {engine.state.epoch} [{engine.state.max_epochs}] "
         + metrics_msg

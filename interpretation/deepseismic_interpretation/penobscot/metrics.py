@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 from collections import defaultdict
 from cv_lib.segmentation.dutchf3.metrics import _torch_hist
 from ignite.metrics import Metric
@@ -74,9 +77,7 @@ class InlineMeanIoU(Metric):
         max_prediction = y_pred.max(1)[1].squeeze()
         assert y.shape == max_prediction.shape, "Shape not the same"
 
-        for pred, mask, id, patch_loc in zip(
-            max_prediction, y, ids, patch_locations
-        ):
+        for pred, mask, id, patch_loc in zip(max_prediction, y, ids, patch_locations):
             # ! With overlapping patches this does not aggregate the results it simply overwrites them
             # If patch is padded ingore padding
             pad = int(self._padding // 2)
@@ -111,9 +112,7 @@ class InlineMeanIoU(Metric):
                 self._num_classes,
             )
             hist = confusion_matrix.cpu().numpy()
-            iu = np.diag(hist) / (
-                hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist)
-            )
+            iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
             iou_per_inline[id] = np.nanmean(iu)
         return iou_per_inline
 

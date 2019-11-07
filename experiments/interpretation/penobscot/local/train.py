@@ -38,6 +38,7 @@ from cv_lib.event_handlers.tensorboard_handlers import (
     create_image_writer,
     create_summary_writer,
 )
+from cv_lib.segmentation import models
 from cv_lib.segmentation.penobscot.engine import (
     create_supervised_evaluator,
     create_supervised_trainer,
@@ -59,6 +60,7 @@ from cv_lib.segmentation.dutchf3.utils import (
 from default import _C as config
 from default import update_config
 
+from cv_lib.segmentation import extract_metric_from
 
 mask_value = 255
 _SEG_COLOURS = np.asarray(
@@ -352,6 +354,7 @@ def run(*options, cfg=None):
     checkpoint_handler = SnapshotHandler(
         path.join(output_dir, config.TRAIN.MODEL_DIR),
         config.MODEL.NAME,
+        extract_metric_from("IoU"),
         snapshot_function,
     )
     evaluator.add_event_handler(

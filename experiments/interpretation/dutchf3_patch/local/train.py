@@ -25,6 +25,7 @@ from cv_lib.event_handlers import (SnapshotHandler, logging_handlers,
 from cv_lib.event_handlers.logging_handlers import Evaluator
 from cv_lib.event_handlers.tensorboard_handlers import (create_image_writer,
                                                         create_summary_writer)
+from cv_lib.segmentation import models
 from cv_lib.segmentation.dutchf3.engine import (create_supervised_evaluator,
                                                 create_supervised_trainer)
 from cv_lib.segmentation.dutchf3.metrics import (FrequencyWeightedIoU,
@@ -35,6 +36,8 @@ from cv_lib.segmentation.dutchf3.utils import (current_datetime, generate_path,
 
 from default import _C as config
 from default import update_config
+
+from cv_lib.segmentation import extract_metric_from
 
 
 def prepare_batch(batch, device=None, non_blocking=False):
@@ -304,6 +307,7 @@ def run(*options, cfg=None):
     checkpoint_handler = SnapshotHandler(
         path.join(output_dir, config.TRAIN.MODEL_DIR),
         config.MODEL.NAME,
+        extract_metric_from("fiou"),
         snapshot_function,
     )
     evaluator.add_event_handler(
