@@ -39,19 +39,17 @@ from cv_lib.segmentation.penobscot.engine import (
     create_supervised_evaluator,
     create_supervised_trainer,
 )
-from ignite.contrib.handlers import CosineAnnealingScheduler
-from ignite.engine import Events
-from ignite.metrics import Loss
-from ignite.utils import convert_tensor
-from toolz import compose, partition_all
-from toolz.itertoolz import partition_all
-from torch.utils import data
-
 from deepseismic_interpretation.data import InlinePatchDataset
 from deepseismic_interpretation.dutchf3.data import decode_segmap
 from default import _C as config
 from default import update_config
+from ignite.contrib.handlers import CosineAnnealingScheduler
+from ignite.engine import Events
+from ignite.metrics import Loss
+from ignite.utils import convert_tensor
+from toolz import compose
 from torch.nn import functional as F
+from torch.utils import data
 
 mask_value = 255
 _SEG_COLOURS = np.asarray(
@@ -67,7 +65,6 @@ _SEG_COLOURS = np.asarray(
 )
 
 
-
 def _prepare_batch(batch, device=None, non_blocking=False):
     x, y, ids, patch_locations = batch
     return (
@@ -76,23 +73,6 @@ def _prepare_batch(batch, device=None, non_blocking=False):
         ids,
         patch_locations,
     )
-
-
-class CustomBCEWithLogitsLoss(torch.nn.BCEWithLogitsLoss):
-    def __init__(
-        self, ignore_index=-100, weight=None, size_average=None, reduce=None, reduction="mean"
-    ):
-        super(CustomBCEWithLogitsLoss, self).__init__(
-            weight=weight, size_average=size_average, reduce=reduce, reduction=reduction
-        )
-        self.ignore_index = ignore_index
-
-    def forward(self, input, target):
-        # input = input[target != self.ignore_index]
-        # target = target[target != self.ignore_index]
-        return F.binary_cross_entropy_with_logits(
-            input, target.float(), weight=self.weight, reduction=self.reduction
-        )
 
 
 def run(*options, cfg=None):
@@ -165,7 +145,10 @@ def run(*options, cfg=None):
     img_name = "rtm3d.bin"
     seam_image_name = path.join(config.DATASET.ROOT, img_name)
     # load RTM image, note it is type np.float32
-    img = np.fromfile(seam_image_name, dtype=np.float32).reshape(ny, nx, nz)/71892250000.0
+    img = (
+        np.fromfile(seam_image_name, dtype=np.float32).reshape(ny, nx, nz)
+        / 71892250000.0
+    )
 
     salt_name = "salt_mask.bin"
     salt_mask_name = path.join(config.DATASET.ROOT, salt_name)
@@ -239,9 +222,7 @@ def run(*options, cfg=None):
         optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration
     )
 
-    criterion = torch.nn.CrossEntropyLoss(
-        ignore_index=mask_value, reduction="mean"
-    )
+    criterion = torch.nn.CrossEntropyLoss(ignore_index=mask_value, reduction="mean")
 
     trainer = create_supervised_trainer(
         model, optimizer, criterion, _prepare_batch, device=device
@@ -264,16 +245,15 @@ def run(*options, cfg=None):
     )
 
     def _select_pred_and_mask(model_out_dict):
-        return (
-            model_out_dict["y_pred"].squeeze(),
-            model_out_dict["mask"].squeeze(),
-        )
+        return (model_out_dict["y_pred"].squeeze(), model_out_dict["mask"].squeeze())
 
     evaluator = create_supervised_evaluator(
         model,
         _prepare_batch,
         metrics={
-            "IoU": MeanIoU(n_classes, device=device, output_transform=_select_pred_and_mask),
+            "IoU": MeanIoU(
+                n_classes, device=device, output_transform=_select_pred_and_mask
+            ),
             "nll": Loss(criterion, output_transform=_select_pred_and_mask),
             "mca": MeanClassAccuracy(
                 n_classes, device=device, output_transform=_select_pred_and_mask
@@ -362,7 +342,7 @@ def run(*options, cfg=None):
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model}
     )
-    
+
     logger.info("Starting training")
     trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
 

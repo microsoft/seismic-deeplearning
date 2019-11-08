@@ -1,38 +1,20 @@
-import glob
 import itertools
-import os
-import random
-import warnings
-from builtins import FileNotFoundError
+import math
 from collections import defaultdict
-from itertools import filterfalse
 
 import numpy as np
 import torch
 from PIL import Image
-from toolz import compose, take, curry
-from toolz import pipe
-from torchvision.datasets.utils import iterable_to_str, verify_str_arg
-from torch.utils.data import Dataset
-import math
-
+from toolz import compose, curry
 from toolz import partition_all
+from torch.utils.data import Dataset
+from torchvision.datasets.utils import iterable_to_str, verify_str_arg
 
 _open_to_array = compose(np.array, Image.open)
 
 
 class DataNotSplitException(Exception):
     pass
-
-
-@curry
-def _pad_right_and_bottom(pad_size, numpy_array, pad_value=255):
-    assert (
-        len(numpy_array.shape) == 2
-    ), f"_pad_right_and_bottom only accepts 2D arrays. Input is {len(numpy_array.shape)}D"
-    return np.pad(
-        numpy_array, pad_width=[(0, pad_size), (0, pad_size)], constant_values=pad_value
-    )
 
 
 def _get_classes_and_counts(mask_list):
@@ -375,4 +357,3 @@ def get_patch_dataset(cfg):
     ], f"Depth {cfg.TRAIN.DEPTH} not supported for patch data. \
             Valid values: section, patch, none."
     return _TRAIN_PATCH_DATASETS.get(cfg.TRAIN.DEPTH, InlinePatchDataset)
-
