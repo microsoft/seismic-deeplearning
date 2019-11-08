@@ -49,6 +49,8 @@ from ignite.metrics import Loss
 from toolz import compose
 from torch.utils import data
 
+from deepseismic_interpretation import DEEPSEISMIC_REPO_PATH
+
 
 def prepare_batch(batch, device="cuda", non_blocking=False):
     x, y = batch
@@ -74,7 +76,9 @@ def run(*options, cfg=None):
     """
 
     update_config(config, options=options, config_file=cfg)
-    logging.config.fileConfig(config.LOG_CONFIG)
+
+    logger_file = path.join(DEEPSEISMIC_REPO_PATH, config.LOG_CONFIG)
+    logging.config.fileConfig(logger_file)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
     scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
