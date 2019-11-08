@@ -31,18 +31,14 @@ def _pad_right_and_bottom(pad_size, numpy_array, pad_value=255):
         len(numpy_array.shape) == 2
     ), f"_pad_right_and_bottom only accepts 2D arrays. Input is {len(numpy_array.shape)}D"
     return np.pad(
-        numpy_array,
-        pad_width=[(0, pad_size), (0, pad_size)],
-        constant_values=pad_value,
+        numpy_array, pad_width=[(0, pad_size), (0, pad_size)], constant_values=pad_value
     )
 
 
 def _get_classes_and_counts(mask_list):
     class_counts_dict = defaultdict(int)
     for mask in mask_list:
-        for class_label, class_count in zip(
-            *np.unique(mask, return_counts=True)
-        ):
+        for class_label, class_count in zip(*np.unique(mask, return_counts=True)):
             class_counts_dict[class_label] += class_count
     return list(class_counts_dict.keys()), list(class_counts_dict.values())
 
@@ -69,37 +65,13 @@ def _combine_classes(mask_array_list):
 
 
 def _replicate_channels(image_array, n_channels):
-    new_image_array = np.zeros(
-        (n_channels, image_array.shape[0], image_array.shape[1])
-    )
+    new_image_array = np.zeros((n_channels, image_array.shape[0], image_array.shape[1]))
     for i in range(n_channels):
         new_image_array[i] = image_array
     return new_image_array
 
 
-def _extract_filename(filepath):
-    return os.path.splitext(os.path.split(filepath)[-1].strip())[
-        0
-    ]  # extract filename without extension
-
-
-def _generate_inlines(data_array, mask_array):
-    indexes = data_array.shape[0]
-    for loc in indexes:
-        data_array[loc]
-        file_part = _extract_filename(image_file)
-        mask_file = os.path.join(mask_dir, file_part + "_mask.png")
-        if os.path.exists(mask_file):
-            yield image_file, mask_file
-        else:
-            raise FileNotFoundError(
-                f"Could not find mask {mask_file} corresponding to {image_file}"
-            )
-
-
-def _number_patches_in(
-    height_or_width, patch_size, stride, complete_patches_only=True
-):
+def _number_patches_in(height_or_width, patch_size, stride, complete_patches_only=True):
     strides_in_hw = (height_or_width - patch_size) / stride
     if complete_patches_only:
         return int(np.floor(strides_in_hw))
@@ -116,9 +88,7 @@ def _is_3D(numpy_array):
 
 
 @curry
-def _extract_patches(
-    patch_size, stride, complete_patches_only, img_array, mask_array
-):
+def _extract_patches(patch_size, stride, complete_patches_only, img_array, mask_array):
     height, width = img_array.shape[-2], img_array.shape[-1]
     num_h_patches = _number_patches_in(
         height, patch_size, stride, complete_patches_only=complete_patches_only
@@ -163,33 +133,6 @@ def _generate_patches_from_3D(numpy_array, patch_locations, patch_size):
     )
 
 
-@curry
-def _filter_files(exclude_files, images_iter):
-    if exclude_files is not None:
-        images_iter = filterfalse(lambda x: x in exclude_files, images_iter)
-
-    return images_iter
-
-
-@curry
-def _limit_inlines(max_inlines, images_iter):
-    if max_inlines is not None:
-        images_list = list(images_iter)
-        if max_inlines > len(images_list):
-            warn_msg = (
-                f"The number of max inlines {max_inlines} is greater"
-                f"than the number of inlines found {len(images_list)}."
-                f"Setting max inlines to {len(images_list)}"
-            )
-            warnings.warning(warn_msg)
-            max_inlines = len(images_list)
-            images_iter = images_list
-        else:
-            shuffled_list = random.shuffle(images_list)
-            images_iter = take(max_inlines, shuffled_list)
-    return images_iter, max_inlines
-
-
 _STATS_FUNCS = {"mean": np.mean, "std": np.std, "max": np.max}
 
 
@@ -208,7 +151,6 @@ def _rescale(numpy_array):
     return numpy_array / 10000
 
 
-
 def _split_train_val_test(partition, val_ratio, test_ratio):
     total_samples = len(partition)
     val_samples = math.floor(val_ratio * total_samples)
@@ -217,14 +159,9 @@ def _split_train_val_test(partition, val_ratio, test_ratio):
     train_list = partition[:train_samples]
     val_list = partition[train_samples : train_samples + val_samples]
     test_list = partition[
-        train_samples
-        + val_samples : train_samples
-        + val_samples
-        + test_samples
+        train_samples + val_samples : train_samples + val_samples + test_samples
     ]
     return train_list, val_list, test_list
-
-
 
 
 class InlinePatchDataset(Dataset):
@@ -233,8 +170,9 @@ class InlinePatchDataset(Dataset):
     Notes:
         Loads inlines only and splits into patches
     """
+
     _repr_indent = 4
-    
+
     def __init__(
         self,
         data_array,
@@ -246,8 +184,8 @@ class InlinePatchDataset(Dataset):
         max_inlines=None,
         n_channels=1,
         complete_patches_only=True,
-        val_ratio=0.1, 
-        test_ratio=0.2
+        val_ratio=0.1,
+        test_ratio=0.2,
     ):
         """Initialise Penobscot Dataset
 
@@ -280,10 +218,7 @@ class InlinePatchDataset(Dataset):
         self.transforms = transforms
 
         valid_modes = ("train", "test", "val")
-        msg = (
-            "Unknown value '{}' for argument split. "
-            "Valid values are {{{}}}."
-        )
+        msg = "Unknown value '{}' for argument split. " "Valid values are {{{}}}."
         msg = msg.format(split, iterable_to_str(valid_modes))
         verify_str_arg(split, "split", valid_modes, msg)
 
@@ -298,22 +233,22 @@ class InlinePatchDataset(Dataset):
         test_indexes_list = []
         val_indexes_list = []
 
-        for partition in partition_all(num_elements, range(indexes)):  # Partition files into N partitions
-            train_indexes, val_indexes, test_indexes = _split_train_val_test(partition, val_ratio, test_ratio)
+        for partition in partition_all(
+            num_elements, range(indexes)
+        ):  # Partition files into N partitions
+            train_indexes, val_indexes, test_indexes = _split_train_val_test(
+                partition, val_ratio, test_ratio
+            )
             train_indexes_list.extend(train_indexes)
             test_indexes_list.extend(test_indexes)
             val_indexes_list.extend(val_indexes)
-        
-        # train_indexes = np.concatenate(train_indexes_list)
-        # test_indexes = np.concatenate(test_indexes_list)
-        # val_indexes = np.concatenate(val_indexes_list)
 
-        if split=="train":
-            indexes=train_indexes_list
-        elif split=="val":
-            indexes=val_indexes_list
-        elif split=="test":
-            indexes=test_indexes_list
+        if split == "train":
+            indexes = train_indexes_list
+        elif split == "val":
+            indexes = val_indexes_list
+        elif split == "test":
+            indexes = test_indexes_list
 
         # Extract patches
         for index in indexes:
@@ -337,13 +272,9 @@ class InlinePatchDataset(Dataset):
             len(self._patch_locations) % len(self._ids) == 0
         ), "Something is wrong with the patches"
 
-        self._patches_per_image = int(
-            len(self._patch_locations) / len(self._ids)
-        )
+        self._patches_per_image = int(len(self._patch_locations) / len(self._ids))
 
-        self._classes, self._class_counts = _get_classes_and_counts(
-            self._mask_array
-        )
+        self._classes, self._class_counts = _get_classes_and_counts(self._mask_array)
 
     def __len__(self):
         return len(self._image_array)
@@ -355,9 +286,7 @@ class InlinePatchDataset(Dataset):
     @property
     def class_proportions(self):
         total = np.sum(self._class_counts)
-        return [
-            (i, w / total) for i, w in zip(self._classes, self._class_counts)
-        ]
+        return [(i, w / total) for i, w in zip(self._classes, self._class_counts)]
 
     def _add_extra_channels(self, image):
         if self._n_channels > 1:
@@ -393,12 +322,9 @@ class InlinePatchDataset(Dataset):
 
     @property
     def statistics(self):
-        flat_image_array = np.concatenate(
-            [i.flatten() for i in self._image_array]
-        )
+        flat_image_array = np.concatenate([i.flatten() for i in self._image_array])
         stats = {
-            stat: statfunc(flat_image_array)
-            for stat, statfunc in _STATS_FUNCS.items()
+            stat: statfunc(flat_image_array) for stat, statfunc in _STATS_FUNCS.items()
         }
         return "Mean: {mean} Std: {std} Max: {max}".format(**stats)
 
@@ -409,12 +335,13 @@ class InlinePatchDataset(Dataset):
         if hasattr(self, "transforms") and self.transforms is not None:
             body += [repr(self.transforms)]
         lines = [head] + [" " * self._repr_indent + line for line in body]
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def _format_transform_repr(self, transform, head):
         lines = transform.__repr__().splitlines()
-        return (["{}{}".format(head, lines[0])] +
-                ["{}{}".format(" " * len(head), line) for line in lines[1:]])
+        return ["{}{}".format(head, lines[0])] + [
+            "{}{}".format(" " * len(head), line) for line in lines[1:]
+        ]
 
     def extra_repr(self):
         lines = [
@@ -431,24 +358,7 @@ class InlinePatchDataset(Dataset):
         return "\n".join(lines).format(**self.__dict__)
 
 
-def add_depth_channels(image_array):
-    """Add 2 extra channels to a 1 channel numpy array
-    One channel is a linear sequence from 0 to 1 starting from the top of the image to the bottom
-    The second channel is the product of the input channel and the 'depth' channel
-
-    Args:
-        image_array (numpy.Array): 2D Numpy array
-
-    Returns:
-        [np.array]: 3D numpy array
-    """
-    h, w = image_array.shape
-    image = np.zeros([3, h, w])
-    image[0] = image_array
-    for row, const in enumerate(np.linspace(0, 1, h)):
-        image[1, row, :] = const
-    image[2] = image[0] * image[1]
-    return image
+_TRAIN_PATCH_DATASETS = {"none": InlinePatchDataset}
 
 
 def get_patch_dataset(cfg):
@@ -461,18 +371,8 @@ def get_patch_dataset(cfg):
         PenobscotInlinePatchDataset
     """
     assert str(cfg.TRAIN.DEPTH).lower() in [
-        "section",
-        "patch",
-        "none",
+        "none"
     ], f"Depth {cfg.TRAIN.DEPTH} not supported for patch data. \
             Valid values: section, patch, none."
-    return _TRAIN_PATCH_DATASETS.get(
-        cfg.TRAIN.DEPTH, PenobscotInlinePatchDataset
-    )
+    return _TRAIN_PATCH_DATASETS.get(cfg.TRAIN.DEPTH, InlinePatchDataset)
 
-
-if __name__ == "__main__":
-    dataset = PenobscotInlinePatchDataset(
-        "/mnt/penobscot", 100, 50, split="train"
-    )
-    print(len(dataset))

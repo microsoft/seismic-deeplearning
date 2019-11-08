@@ -10,21 +10,35 @@ import cv2
 import fire
 import numpy as np
 import torch
-from albumentations import (Compose, HorizontalFlip, Normalize, PadIfNeeded,
-                            Resize)
-from cv_lib.event_handlers import (SnapshotHandler, logging_handlers,
-                                   tensorboard_handlers)
+from albumentations import Compose, HorizontalFlip, Normalize, PadIfNeeded, Resize
+from cv_lib.event_handlers import (
+    SnapshotHandler,
+    logging_handlers,
+    tensorboard_handlers,
+)
 from cv_lib.event_handlers.logging_handlers import Evaluator
-from cv_lib.event_handlers.tensorboard_handlers import (create_image_writer,
-                                                        create_summary_writer)
+from cv_lib.event_handlers.tensorboard_handlers import (
+    create_image_writer,
+    create_summary_writer,
+)
 from cv_lib.segmentation import models, extract_metric_from
-from cv_lib.segmentation.dutchf3.metrics import (FrequencyWeightedIoU,
-                                                 MeanClassAccuracy, MeanIoU,
-                                                 PixelwiseAccuracy)
-from cv_lib.segmentation.dutchf3.utils import (current_datetime, generate_path,
-                                               git_branch, git_hash, np_to_tb)
-from cv_lib.segmentation.penobscot.engine import (create_supervised_evaluator,
-                                                  create_supervised_trainer)
+from cv_lib.segmentation.dutchf3.metrics import (
+    FrequencyWeightedIoU,
+    MeanClassAccuracy,
+    MeanIoU,
+    PixelwiseAccuracy,
+)
+from cv_lib.segmentation.dutchf3.utils import (
+    current_datetime,
+    generate_path,
+    git_branch,
+    git_hash,
+    np_to_tb,
+)
+from cv_lib.segmentation.penobscot.engine import (
+    create_supervised_evaluator,
+    create_supervised_trainer,
+)
 from ignite.contrib.handlers import CosineAnnealingScheduler
 from ignite.engine import Events
 from ignite.metrics import Loss
@@ -37,23 +51,48 @@ from deepseismic_interpretation.data import InlinePatchDataset
 from deepseismic_interpretation.dutchf3.data import decode_segmap
 from default import _C as config
 from default import update_config
+from torch.nn import functional as F
 
 mask_value = 255
 _SEG_COLOURS = np.asarray(
     [
         [241, 238, 246],
+        [208, 209, 230],
+        [166, 189, 219],
+        [116, 169, 207],
+        [54, 144, 192],
+        [5, 112, 176],
+        [3, 78, 123],
     ]
 )
+
 
 
 def _prepare_batch(batch, device=None, non_blocking=False):
     x, y, ids, patch_locations = batch
     return (
-        convert_tensor(x, device=device, non_blocking=non_blocking).float(),
-        convert_tensor(y, device=device, non_blocking=non_blocking).float(),
+        convert_tensor(x, device=device, non_blocking=non_blocking),
+        convert_tensor(y, device=device, non_blocking=non_blocking),
         ids,
         patch_locations,
     )
+
+
+class CustomBCEWithLogitsLoss(torch.nn.BCEWithLogitsLoss):
+    def __init__(
+        self, ignore_index=-100, weight=None, size_average=None, reduce=None, reduction="mean"
+    ):
+        super(CustomBCEWithLogitsLoss, self).__init__(
+            weight=weight, size_average=size_average, reduce=reduce, reduction=reduction
+        )
+        self.ignore_index = ignore_index
+
+    def forward(self, input, target):
+        # input = input[target != self.ignore_index]
+        # target = target[target != self.ignore_index]
+        return F.binary_cross_entropy_with_logits(
+            input, target.float(), weight=self.weight, reduction=self.reduction
+        )
 
 
 def run(*options, cfg=None):
@@ -119,16 +158,16 @@ def run(*options, cfg=None):
     else:
         train_aug = val_aug = basic_aug
 
-    ny = 1001 
-    nx = 876 
+    ny = 1001
+    nx = 876
     nz = 751
 
-    img_name = 'rtm3d.bin'
+    img_name = "rtm3d.bin"
     seam_image_name = path.join(config.DATASET.ROOT, img_name)
     # load RTM image, note it is type np.float32
-    img = np.fromfile(seam_image_name, dtype=np.float32).reshape(ny, nx, nz)
+    img = np.fromfile(seam_image_name, dtype=np.float32).reshape(ny, nx, nz)/71892250000.0
 
-    salt_name = 'salt_mask.bin'
+    salt_name = "salt_mask.bin"
     salt_mask_name = path.join(config.DATASET.ROOT, salt_name)
     # load salt mask, note it is type np.int16
     mask = np.fromfile(salt_mask_name, dtype=np.int16).reshape(ny, nx, nz)
@@ -197,16 +236,11 @@ def run(*options, cfg=None):
     )
     snapshot_duration = scheduler_step * len(train_loader)
     scheduler = CosineAnnealingScheduler(
-        optimizer,
-        "lr",
-        config.TRAIN.MAX_LR,
-        config.TRAIN.MIN_LR,
-        snapshot_duration,
+        optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration
     )
 
-    #TODO: Add removal of mask
-    criterion = torch.nn.BCEWithLogitsLoss(
-        reduction="mean"
+    criterion = torch.nn.CrossEntropyLoss(
+        ignore_index=mask_value, reduction="mean"
     )
 
     trainer = create_supervised_trainer(
@@ -219,9 +253,7 @@ def run(*options, cfg=None):
         Events.ITERATION_COMPLETED,
         logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
     )
-    trainer.add_event_handler(
-        Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer)
-    )
+    trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
     trainer.add_event_handler(
         Events.EPOCH_STARTED,
         tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"),
@@ -241,27 +273,23 @@ def run(*options, cfg=None):
         model,
         _prepare_batch,
         metrics={
-            "IoU": MeanIoU(
-                n_classes, device, output_transform=_select_pred_and_mask
-            ),
+            "IoU": MeanIoU(n_classes, device=device, output_transform=_select_pred_and_mask),
             "nll": Loss(criterion, output_transform=_select_pred_and_mask),
             "mca": MeanClassAccuracy(
-                n_classes, device, output_transform=_select_pred_and_mask
+                n_classes, device=device, output_transform=_select_pred_and_mask
             ),
             "fiou": FrequencyWeightedIoU(
-                n_classes, device, output_transform=_select_pred_and_mask
+                n_classes, device=device, output_transform=_select_pred_and_mask
             ),
             "pixa": PixelwiseAccuracy(
-                n_classes, device, output_transform=_select_pred_and_mask
+                n_classes, device=device, output_transform=_select_pred_and_mask
             ),
         },
         device=device,
     )
 
     # Set the validation run to start on the epoch completion of the training run
-    trainer.add_event_handler(
-        Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader)
-    )
+    trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
@@ -312,19 +340,13 @@ def run(*options, cfg=None):
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
         create_image_writer(
-            summary_writer,
-            "Validation/Mask",
-            "mask",
-            transform_func=transform_func,
+            summary_writer, "Validation/Mask", "mask", transform_func=transform_func
         ),
     )
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
         create_image_writer(
-            summary_writer,
-            "Validation/Pred",
-            "y_pred",
-            transform_func=transform_pred,
+            summary_writer, "Validation/Pred", "y_pred", transform_func=transform_pred
         ),
     )
 
@@ -340,7 +362,7 @@ def run(*options, cfg=None):
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model}
     )
-
+    
     logger.info("Starting training")
     trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
 

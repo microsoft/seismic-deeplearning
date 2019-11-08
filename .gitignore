@@ -114,3 +114,5 @@ interpretation/environment/anaconda/local/src/cv-lib
 
 # Rope project settings
 .ropeproject
+
+*.pth
