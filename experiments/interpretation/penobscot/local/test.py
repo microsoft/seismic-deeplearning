@@ -12,26 +12,19 @@ import fire
 import numpy as np
 import torch
 import torchvision
-from albumentations import (
-    Compose,
-    Normalize,
-    PadIfNeeded,
-    Resize,
-)
-from cv_lib.event_handlers import (
-    logging_handlers,
-    tensorboard_handlers,
-)
+from albumentations import Compose, Normalize, PadIfNeeded, Resize
+from cv_lib.event_handlers import logging_handlers, tensorboard_handlers
 from cv_lib.event_handlers.tensorboard_handlers import (
     create_image_writer,
     create_summary_writer,
 )
 from cv_lib.segmentation import models
-from cv_lib.segmentation.dutchf3.metrics import (
-    FrequencyWeightedIoU,
-    MeanClassAccuracy,
-    MeanIoU,
-    PixelwiseAccuracy,
+from cv_lib.segmentation.metrics import (
+    pixelwise_accuracy,
+    class_accuracy,
+    mean_class_accuracy,
+    class_iou,
+    mean_iou,
 )
 from cv_lib.segmentation.dutchf3.utils import (
     current_datetime,
@@ -40,13 +33,9 @@ from cv_lib.segmentation.dutchf3.utils import (
     git_hash,
     np_to_tb,
 )
-from cv_lib.segmentation.penobscot.engine import (
-    create_supervised_evaluator,
-)
+from cv_lib.segmentation.penobscot.engine import create_supervised_evaluator
 from deepseismic_interpretation.dutchf3.data import decode_segmap
-from deepseismic_interpretation.penobscot.data import (
-    get_patch_dataset,
-)
+from deepseismic_interpretation.penobscot.data import get_patch_dataset
 from deepseismic_interpretation.penobscot.metrics import InlineMeanIoU
 from default import _C as config
 from default import update_config
@@ -70,12 +59,10 @@ def _prepare_batch(batch, device=None, non_blocking=False):
 
 def _padding_from(config):
     padding_height = (
-        config.TEST.AUGMENTATIONS.PAD.HEIGHT
-        - config.TEST.AUGMENTATIONS.RESIZE.HEIGHT
+        config.TEST.AUGMENTATIONS.PAD.HEIGHT - config.TEST.AUGMENTATIONS.RESIZE.HEIGHT
     )
     padding_width = (
-        config.TEST.AUGMENTATIONS.PAD.WIDTH
-        - config.TEST.AUGMENTATIONS.RESIZE.WIDTH
+        config.TEST.AUGMENTATIONS.PAD.WIDTH - config.TEST.AUGMENTATIONS.RESIZE.WIDTH
     )
     assert (
         padding_height == padding_width
@@ -84,19 +71,17 @@ def _padding_from(config):
 
 
 def _scale_from(config):
-    scale_height = (
-        config.TEST.AUGMENTATIONS.PAD.HEIGHT / config.TRAIN.PATCH_SIZE
-    )
+    scale_height = config.TEST.AUGMENTATIONS.PAD.HEIGHT / config.TRAIN.PATCH_SIZE
     scale_width = config.TEST.AUGMENTATIONS.PAD.WIDTH / config.TRAIN.PATCH_SIZE
     assert (
-        config.TEST.AUGMENTATIONS.PAD.HEIGHT % config.TRAIN.PATCH_SIZE != 0
-    ), "The scaling between the patch height and resized height needs to be whole number"
+        config.TEST.AUGMENTATIONS.PAD.HEIGHT % config.TRAIN.PATCH_SIZE == 0
+    ), "The scaling between the patch height and resized height must be whole number"
     assert (
-        config.TEST.AUGMENTATIONS.PAD.WIDTH % config.TRAIN.PATCH_SIZE != 0
-    ), "The scaling between the patch width and resized height needs to be whole number"
+        config.TEST.AUGMENTATIONS.PAD.WIDTH % config.TRAIN.PATCH_SIZE == 0
+    ), "The scaling between the patch width and resized height must be whole number"
     assert (
         scale_height == scale_width
-    ), "The scaling for the height and width need to be the same"
+    ), "The scaling for the height and width must be the same"
     return int(scale_height)
 
 
@@ -113,9 +98,7 @@ _SEG_COLOURS = np.asarray(
 )
 
 
-def _log_tensor_to_tensorboard(
-    images_tensor, identifier, summary_writer, evaluator
-):
+def _log_tensor_to_tensorboard(images_tensor, identifier, summary_writer, evaluator):
     image_grid = torchvision.utils.make_grid(
         images_tensor, normalize=False, scale_each=False, nrow=2
     )
@@ -132,12 +115,13 @@ def run(*options, cfg=None):
 
     Notes:
         Options can be passed in via the options argument and loaded from the cfg file
-        Options loaded from default.py will be overridden by options loaded from cfg file
-        Options passed in through options argument will override option loaded from cfg file
+        Options from default.py will be overridden by options loaded from cfg file
+        Options passed in via options argument will override option loaded from cfg file
     
     Args:
-        *options (str,int ,optional): Options used to overide what is loaded from the config. 
-                                      To see what options are available consult default.py
+        *options (str,int ,optional): Options used to overide what is loaded from the
+                                      config. To see what options are available consult
+                                      default.py
         cfg (str, optional): Location of config file to load. Defaults to None.
     """
 
@@ -145,7 +129,6 @@ def run(*options, cfg=None):
     logging.config.fileConfig(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
-    scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
     torch.manual_seed(config.SEED)
@@ -226,7 +209,8 @@ def run(*options, cfg=None):
         log_dir=path.join(output_dir, config.LOG_DIR)
     )
 
-    # weights are inversely proportional to the frequency of the classes in the training set
+    # weights are inversely proportional to the frequency of the classes in
+    # the training set
     class_weights = torch.tensor(
         config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False
     )
@@ -236,10 +220,7 @@ def run(*options, cfg=None):
     )
 
     def _select_pred_and_mask(model_out_dict):
-        return (
-            model_out_dict["y_pred"].squeeze(),
-            model_out_dict["mask"].squeeze(),
-        )
+        return (model_out_dict["y_pred"].squeeze(), model_out_dict["mask"].squeeze())
 
     def _select_all(model_out_dict):
         return (
@@ -263,20 +244,25 @@ def run(*options, cfg=None):
         model,
         _prepare_batch,
         metrics={
-            "IoU": MeanIoU(
-                n_classes, device, output_transform=_select_pred_and_mask
-            ),
-            "nll": Loss(criterion, output_transform=_select_pred_and_mask),
-            "mca": MeanClassAccuracy(
-                n_classes, device, output_transform=_select_pred_and_mask
-            ),
-            "fiou": FrequencyWeightedIoU(
-                n_classes, device, output_transform=_select_pred_and_mask
-            ),
-            "pixa": PixelwiseAccuracy(
-                n_classes, device, output_transform=_select_pred_and_mask
+            "nll": Loss(
+                criterion, output_transform=_select_pred_and_mask, device=device
             ),
             "inIoU": inline_mean_iou,
+            "pixa": pixelwise_accuracy(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
+            "cacc": class_accuracy(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
+            "mca": mean_class_accuracy(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
+            "ciou": class_iou(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
+            "mIoU": mean_iou(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
         },
         device=device,
     )
@@ -286,11 +272,10 @@ def run(*options, cfg=None):
         logging_handlers.log_metrics(
             "Test results",
             metrics_dict={
-                "IoU": "IoU :",
                 "nll": "Avg loss :",
+                "mIoU": "Avg IoU :",
                 "pixa": "Pixelwise Accuracy :",
                 "mca": "Mean Class Accuracy :",
-                "fiou": "Freq Weighted IoU :",
                 "inIoU": "Mean Inline IoU :",
             },
         ),
@@ -302,10 +287,9 @@ def run(*options, cfg=None):
             evaluator,
             "epoch",
             metrics_dict={
-                "IoU": "Test/IoU",
+                "mIoU": "Test/IoU",
                 "nll": "Test/Loss",
                 "mca": "Test/MCA",
-                "fiou": "Test/FIoU",
                 "inIoU": "Test/MeanInlineIoU",
             },
         ),
@@ -338,15 +322,12 @@ def run(*options, cfg=None):
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
         create_image_writer(
-            summary_writer,
-            "Test/Pred",
-            "y_pred",
-            transform_func=transform_pred,
+            summary_writer, "Test/Pred", "y_pred", transform_func=transform_pred
         ),
     )
 
     logger.info("Starting training")
-    evaluator.run(take(10, test_loader), max_epochs=1)
+    evaluator.run(test_loader, max_epochs=1)
 
     # Log top N and bottom N inlines in terms of IoU to tensorboard
     inline_ious = inline_mean_iou.iou_per_inline()

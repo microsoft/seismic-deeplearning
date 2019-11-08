@@ -10,13 +10,7 @@ import cv2
 import fire
 import numpy as np
 import torch
-from albumentations import (
-    Compose,
-    HorizontalFlip,
-    Normalize,
-    PadIfNeeded,
-    Resize,
-)
+from albumentations import Compose, HorizontalFlip, Normalize, PadIfNeeded, Resize
 from ignite.contrib.handlers import CosineAnnealingScheduler
 from ignite.engine import Events
 from ignite.metrics import Loss
@@ -25,9 +19,7 @@ from toolz import compose
 from torch.utils import data
 
 from deepseismic_interpretation.dutchf3.data import decode_segmap
-from deepseismic_interpretation.penobscot.data import (
-    get_patch_dataset,
-)
+from deepseismic_interpretation.penobscot.data import get_patch_dataset
 from cv_lib.event_handlers import (
     SnapshotHandler,
     logging_handlers,
@@ -38,16 +30,17 @@ from cv_lib.event_handlers.tensorboard_handlers import (
     create_image_writer,
     create_summary_writer,
 )
-from cv_lib.segmentation import models
+from cv_lib.segmentation import models, extract_metric_from
 from cv_lib.segmentation.penobscot.engine import (
     create_supervised_evaluator,
     create_supervised_trainer,
 )
-from cv_lib.segmentation.dutchf3.metrics import (
-    FrequencyWeightedIoU,
-    MeanClassAccuracy,
-    MeanIoU,
-    PixelwiseAccuracy,
+from cv_lib.segmentation.metrics import (
+    pixelwise_accuracy,
+    class_accuracy,
+    mean_class_accuracy,
+    class_iou,
+    mean_iou,
 )
 from cv_lib.segmentation.dutchf3.utils import (
     current_datetime,
@@ -59,8 +52,6 @@ from cv_lib.segmentation.dutchf3.utils import (
 
 from default import _C as config
 from default import update_config
-
-from cv_lib.segmentation import extract_metric_from
 
 mask_value = 255
 _SEG_COLOURS = np.asarray(
@@ -91,12 +82,13 @@ def run(*options, cfg=None):
 
     Notes:
         Options can be passed in via the options argument and loaded from the cfg file
-        Options loaded from default.py will be overridden by options loaded from cfg file
-        Options passed in through options argument will override option loaded from cfg file
+        Options loaded from default.py will be overridden by those loaded from cfg file
+        Options passed in via options argument will override those loaded from cfg file
     
     Args:
-        *options (str,int ,optional): Options used to overide what is loaded from the config. 
-                                      To see what options are available consult default.py
+        *options (str, int, optional): Options used to overide what is loaded from the
+                                    config. To see what options are available consult
+                                    default.py
         cfg (str, optional): Location of config file to load. Defaults to None.
     """
 
@@ -111,6 +103,10 @@ def run(*options, cfg=None):
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(config.SEED)
     np.random.seed(seed=config.SEED)
+
+    device = "cpu"
+    if torch.cuda.is_available():
+        device = "cuda"
 
     # Setup Augmentations
     basic_aug = Compose(
@@ -189,9 +185,6 @@ def run(*options, cfg=None):
 
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
 
-    device = "cpu"
-    if torch.cuda.is_available():
-        device = "cuda"
     model = model.to(device)  # Send to GPU
 
     optimizer = torch.optim.SGD(
@@ -213,14 +206,11 @@ def run(*options, cfg=None):
     )
     snapshot_duration = scheduler_step * len(train_loader)
     scheduler = CosineAnnealingScheduler(
-        optimizer,
-        "lr",
-        config.TRAIN.MAX_LR,
-        config.TRAIN.MIN_LR,
-        snapshot_duration,
+        optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration
     )
 
-    # weights are inversely proportional to the frequency of the classes in the training set
+    # weights are inversely proportional to the frequency of the classes in
+    # the training set
     class_weights = torch.tensor(
         config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False
     )
@@ -239,9 +229,7 @@ def run(*options, cfg=None):
         Events.ITERATION_COMPLETED,
         logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
     )
-    trainer.add_event_handler(
-        Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer)
-    )
+    trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
     trainer.add_event_handler(
         Events.EPOCH_STARTED,
         tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"),
@@ -252,47 +240,38 @@ def run(*options, cfg=None):
     )
 
     def _select_pred_and_mask(model_out_dict):
-        return (
-            model_out_dict["y_pred"].squeeze(),
-            model_out_dict["mask"].squeeze(),
-        )
+        return (model_out_dict["y_pred"].squeeze(), model_out_dict["mask"].squeeze())
 
     evaluator = create_supervised_evaluator(
         model,
         _prepare_batch,
         metrics={
-            "IoU": MeanIoU(
-                n_classes, device, output_transform=_select_pred_and_mask
+            "pixacc": pixelwise_accuracy(
+                n_classes, output_transform=_select_pred_and_mask
             ),
             "nll": Loss(criterion, output_transform=_select_pred_and_mask),
-            "mca": MeanClassAccuracy(
-                n_classes, device, output_transform=_select_pred_and_mask
+            "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask),
+            "mca": mean_class_accuracy(
+                n_classes, output_transform=_select_pred_and_mask
             ),
-            "fiou": FrequencyWeightedIoU(
-                n_classes, device, output_transform=_select_pred_and_mask
-            ),
-            "pixa": PixelwiseAccuracy(
-                n_classes, device, output_transform=_select_pred_and_mask
-            ),
+            "ciou": class_iou(n_classes, output_transform=_select_pred_and_mask),
+            "mIoU": mean_iou(n_classes, output_transform=_select_pred_and_mask),
         },
         device=device,
     )
 
     # Set the validation run to start on the epoch completion of the training run
-    trainer.add_event_handler(
-        Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader)
-    )
+    trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
         logging_handlers.log_metrics(
             "Validation results",
             metrics_dict={
-                "IoU": "IoU :",
                 "nll": "Avg loss :",
-                "pixa": "Pixelwise Accuracy :",
-                "mca": "Mean Class Accuracy :",
-                "fiou": "Freq Weighted IoU :",
+                "pixacc": "Pixelwise Accuracy :",
+                "mca": "Avg Class Accuracy :",
+                "mIoU": "Avg Class IoU :",
             },
         ),
     )
@@ -303,10 +282,10 @@ def run(*options, cfg=None):
             trainer,
             "epoch",
             metrics_dict={
-                "IoU": "Validation/IoU",
+                "mIoU": "Validation/mIoU",
                 "nll": "Validation/Loss",
                 "mca": "Validation/MCA",
-                "fiou": "Validation/FIoU",
+                "pixacc": "Validation/Pixel_Acc",
             },
         ),
     )
@@ -332,19 +311,13 @@ def run(*options, cfg=None):
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
         create_image_writer(
-            summary_writer,
-            "Validation/Mask",
-            "mask",
-            transform_func=transform_func,
+            summary_writer, "Validation/Mask", "mask", transform_func=transform_func
         ),
     )
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
         create_image_writer(
-            summary_writer,
-            "Validation/Pred",
-            "y_pred",
-            transform_func=transform_pred,
+            summary_writer, "Validation/Pred", "y_pred", transform_func=transform_pred
         ),
     )
 
@@ -354,7 +327,7 @@ def run(*options, cfg=None):
     checkpoint_handler = SnapshotHandler(
         path.join(output_dir, config.TRAIN.MODEL_DIR),
         config.MODEL.NAME,
-        extract_metric_from("IoU"),
+        extract_metric_from("mIoU"),
         snapshot_function,
     )
     evaluator.add_event_handler(
