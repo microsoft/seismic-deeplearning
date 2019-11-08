@@ -28,7 +28,6 @@ from cv_lib.event_handlers import (
 from cv_lib.event_handlers.logging_handlers import Evaluator
 from cv_lib.event_handlers.tensorboard_handlers import create_summary_writer
 
-# TODO: replace with Ignite metrics
 from cv_lib.segmentation.metrics import (
     pixelwise_accuracy,
     class_accuracy,
