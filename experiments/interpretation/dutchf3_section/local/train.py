@@ -10,7 +10,9 @@ import fire
 import numpy as np
 import torch
 from albumentations import Compose, HorizontalFlip, Normalize
+
 from deepseismic_interpretation.dutchf3.data import decode_segmap, get_section_loader
+from cv_lib.utils import load_log_configuration
 from cv_lib.event_handlers import (
     SnapshotHandler,
     logging_handlers,
@@ -49,8 +51,6 @@ from ignite.metrics import Loss
 from toolz import compose
 from torch.utils import data
 
-from deepseismic_interpretation import DEEPSEISMIC_REPO_PATH
-
 
 def prepare_batch(batch, device="cuda", non_blocking=False):
     x, y = batch
@@ -77,8 +77,8 @@ def run(*options, cfg=None):
 
     update_config(config, options=options, config_file=cfg)
 
-    logger_file = path.join(DEEPSEISMIC_REPO_PATH, config.LOG_CONFIG)
-    logging.config.fileConfig(logger_file)
+    # Start logging
+    load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
     scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
