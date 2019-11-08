@@ -11,6 +11,7 @@ import fire
 import numpy as np
 import torch
 from albumentations import Compose, HorizontalFlip, Normalize, PadIfNeeded, Resize
+from cv_lib.utils import load_log_configuration
 from cv_lib.event_handlers import (
     SnapshotHandler,
     logging_handlers,
@@ -91,7 +92,9 @@ def run(*options, cfg=None):
     """
 
     update_config(config, options=options, config_file=cfg)
-    logging.config.fileConfig(config.LOG_CONFIG)
+
+    # Start logging
+    load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
     scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
