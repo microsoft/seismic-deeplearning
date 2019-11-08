@@ -22,11 +22,12 @@ from cv_lib.event_handlers.tensorboard_handlers import (
     create_summary_writer,
 )
 from cv_lib.segmentation import models, extract_metric_from
-from cv_lib.segmentation.dutchf3.metrics import (
-    FrequencyWeightedIoU,
-    MeanClassAccuracy,
-    MeanIoU,
-    PixelwiseAccuracy,
+from cv_lib.segmentation.metrics import (
+    pixelwise_accuracy,
+    class_accuracy,
+    mean_class_accuracy,
+    class_iou,
+    mean_iou,
 )
 from cv_lib.segmentation.dutchf3.utils import (
     current_datetime,
@@ -251,19 +252,16 @@ def run(*options, cfg=None):
         model,
         _prepare_batch,
         metrics={
-            "IoU": MeanIoU(
-                n_classes, device=device, output_transform=_select_pred_and_mask
+            "pixacc": pixelwise_accuracy(
+                n_classes, output_transform=_select_pred_and_mask
             ),
             "nll": Loss(criterion, output_transform=_select_pred_and_mask),
-            "mca": MeanClassAccuracy(
-                n_classes, device=device, output_transform=_select_pred_and_mask
+            "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask),
+            "mca": mean_class_accuracy(
+                n_classes, output_transform=_select_pred_and_mask
             ),
-            "fiou": FrequencyWeightedIoU(
-                n_classes, device=device, output_transform=_select_pred_and_mask
-            ),
-            "pixa": PixelwiseAccuracy(
-                n_classes, device=device, output_transform=_select_pred_and_mask
-            ),
+            "ciou": class_iou(n_classes, output_transform=_select_pred_and_mask),
+            "mIoU": mean_iou(n_classes, output_transform=_select_pred_and_mask),
         },
         device=device,
     )
@@ -276,11 +274,10 @@ def run(*options, cfg=None):
         logging_handlers.log_metrics(
             "Validation results",
             metrics_dict={
-                "IoU": "IoU :",
                 "nll": "Avg loss :",
-                "pixa": "Pixelwise Accuracy :",
-                "mca": "Mean Class Accuracy :",
-                "fiou": "Freq Weighted IoU :",
+                "pixacc": "Pixelwise Accuracy :",
+                "mca": "Avg Class Accuracy :",
+                "mIoU": "Avg Class IoU :",
             },
         ),
     )
@@ -291,10 +288,10 @@ def run(*options, cfg=None):
             trainer,
             "epoch",
             metrics_dict={
-                "IoU": "Validation/IoU",
+                "mIoU": "Validation/mIoU",
                 "nll": "Validation/Loss",
                 "mca": "Validation/MCA",
-                "fiou": "Validation/FIoU",
+                "pixacc": "Validation/Pixel_Acc",
             },
         ),
     )
@@ -336,7 +333,7 @@ def run(*options, cfg=None):
     checkpoint_handler = SnapshotHandler(
         path.join(output_dir, config.TRAIN.MODEL_DIR),
         config.MODEL.NAME,
-        extract_metric_from("IoU"),
+        extract_metric_from("mIoU"),
         snapshot_function,
     )
     evaluator.add_event_handler(
