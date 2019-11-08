@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 import itertools
 import math
 from collections import defaultdict
@@ -147,7 +150,7 @@ def _split_train_val_test(partition, val_ratio, test_ratio):
 
 
 class InlinePatchDataset(Dataset):
-    """Dataset that returns patches from Penobscot dataset
+    """Dataset that returns patches from the numpy dataset
 
     Notes:
         Loads inlines only and splits into patches
@@ -169,10 +172,11 @@ class InlinePatchDataset(Dataset):
         val_ratio=0.1,
         test_ratio=0.2,
     ):
-        """Initialise Penobscot Dataset
+        """Initialise Numpy Dataset
 
         Args:
-           root (str): root directory to load data from
+           data_array (numpy.Array): a 3D numpy array that contain the seismic info
+           mask_array (numpy.Array): a 3D numpy array that contains the labels
            patch_size (int): the size of the patch in pixels
            stride (int): the stride applied when extracting patches
            split (str, optional): what split to load, (train, val, test). Defaults to `train`
@@ -181,6 +185,8 @@ class InlinePatchDataset(Dataset):
            max_inlines (int, optional): maximum number of inlines to load. Defaults to None
            n_channels (int, optional): number of channels that the output should contain. Defaults to 3
            complete_patches_only (bool, optional): whether to load incomplete patches that are padded to patch_size. Defaults to True
+           val_ratio (float): ratio to use for validation. Defaults to 0.1
+           test_ratio (float): ratio to use for test. Defaults to 0.2
         """
 
         super(InlinePatchDataset, self).__init__()
@@ -344,13 +350,13 @@ _TRAIN_PATCH_DATASETS = {"none": InlinePatchDataset}
 
 
 def get_patch_dataset(cfg):
-    """ Return the Dataset class for Penobscot
+    """ Return the Dataset class for Numpy Array
 
     Args:
         cfg: yacs config
 
     Returns:
-        PenobscotInlinePatchDataset
+        InlinePatchDataset
     """
     assert str(cfg.TRAIN.DEPTH).lower() in [
         "none"
