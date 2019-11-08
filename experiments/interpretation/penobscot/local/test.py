@@ -13,6 +13,7 @@ import numpy as np
 import torch
 import torchvision
 from albumentations import Compose, Normalize, PadIfNeeded, Resize
+from cv_lib.utils import load_log_configuration
 from cv_lib.event_handlers import logging_handlers, tensorboard_handlers
 from cv_lib.event_handlers.tensorboard_handlers import (
     create_image_writer,
@@ -126,7 +127,9 @@ def run(*options, cfg=None):
     """
 
     update_config(config, options=options, config_file=cfg)
-    logging.config.fileConfig(config.LOG_CONFIG)
+
+    # Start logging
+    load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
