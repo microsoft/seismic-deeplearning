@@ -7,3 +7,10 @@ repos:
     rev: v1.2.3
     hooks:
     - id: flake8
+-   repo: local
+    hooks:
+    - id: jupytext
+      name: jupytext
+      entry: jupytext --sync --pipe black --check flake8 --pre-commit
+      pass_filenames: false
+      language: python
