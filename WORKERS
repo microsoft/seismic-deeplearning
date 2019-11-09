@@ -8,7 +8,7 @@ DATASET:
   NUM_CLASSES: 6
   ROOT: 
 GPUS: (0,)
-LOG_CONFIG: /data/home/mat/repos/DeepSeismic/logging.conf
+LOG_CONFIG: logging.conf
 LOG_DIR: 
 MODEL:
   IN_CHANNELS: 1

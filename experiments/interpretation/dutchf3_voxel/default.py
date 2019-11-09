@@ -19,13 +19,12 @@ _C.CUDNN.ENABLED = True
 
 _C.GPUS = (0,)
 _C.OUTPUT_DIR = (
-    "output"
-)  # This will be the base directory for all output, such as logs and saved models
+    "output"  # The base directory for all output, such as logs and saved models
+)
 _C.LOG_DIR = ""  # This will be a subdirectory inside OUTPUT_DIR
 _C.WORKERS = 4
 _C.PRINT_FREQ = 20
-# TODO: this should be loaded by automatically figuring out the file path location
-_C.LOG_CONFIG = "/home/maxkaz/repos/DeepSeismic/logging.conf"
+_C.LOG_CONFIG = "logging.conf"
 _C.SEED = 42
 # size of voxel cube: WINDOW_SIZE x WINDOW_SIZE x WINDOW_SIZE; used for 3D models only
 _C.WINDOW_SIZE = 65

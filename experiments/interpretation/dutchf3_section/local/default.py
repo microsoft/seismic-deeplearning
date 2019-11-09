@@ -11,14 +11,14 @@ from yacs.config import CfgNode as CN
 
 _C = CN()
 
-_C.OUTPUT_DIR = "output" # This will be the base directory for all output, such as logs and saved models
+_C.OUTPUT_DIR = "output"  # Base directory for all output (logs, models, etc)
 _C.LOG_DIR = ""  # This will be a subdirectory inside OUTPUT_DIR
 _C.GPUS = (0,)
 _C.WORKERS = 4
 _C.PRINT_FREQ = 20
 _C.AUTO_RESUME = False
 _C.PIN_MEMORY = True
-_C.LOG_CONFIG = "/data/home/vapaunic/repos/DeepSeismic/logging.conf"
+_C.LOG_CONFIG = "./logging.conf"  # Logging config file relative to the experiment
 _C.SEED = 42
 
 # Cudnn related params
@@ -50,11 +50,11 @@ _C.TRAIN.END_EPOCH = 100
 _C.TRAIN.BATCH_SIZE_PER_GPU = 16
 _C.TRAIN.WEIGHT_DECAY = 0.0001
 _C.TRAIN.SNAPSHOTS = 5
-_C.TRAIN.MODEL_DIR = "models" # This will be a subdirectory inside OUTPUT_DIR
+_C.TRAIN.MODEL_DIR = "models"  # This will be a subdirectory inside OUTPUT_DIR
 _C.TRAIN.AUGMENTATION = True
-_C.TRAIN.MEAN = 0.0009997 # 0.0009996710808862074
-_C.TRAIN.STD = 0.20977 # 0.20976548783479299 
-_C.TRAIN.DEPTH = 'none' # Options are 'none', 'patch' and 'section'
+_C.TRAIN.MEAN = 0.0009997  # 0.0009996710808862074
+_C.TRAIN.STD = 0.20977  # 0.20976548783479299
+_C.TRAIN.DEPTH = "none"  # Options are 'none', 'patch' and 'section'
 # None adds no depth information and the num of channels remains at 1
 # Patch adds depth per patch so is simply the height of that patch from 0 to 1, channels=3
 # Section adds depth per section so contains depth information for the whole section, channels=3
@@ -67,9 +67,10 @@ _C.VALIDATION.BATCH_SIZE_PER_GPU = 16
 _C.TEST = CN()
 _C.TEST.MODEL_PATH = ""
 _C.TEST.TEST_STRIDE = 10
-_C.TEST.SPLIT = 'Both' # Can be Both, Test1, Test2
+_C.TEST.SPLIT = "Both"  # Can be Both, Test1, Test2
 _C.TEST.INLINE = True
 _C.TEST.CROSSLINE = True
+
 
 def update_config(cfg, options=None, config_file=None):
     cfg.defrost()
