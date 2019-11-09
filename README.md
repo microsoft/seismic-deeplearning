@@ -1,4 +1,5 @@
 # DeepSeismic
+![DeepSeismic](./DeepSeismicLogo.jpeg )
 
 This repository shows you how to perform seismic imaging and interpretation on Azure. It empowers geophysicists and data scientists to run seismic experiments using state-of-art DSL-based PDE solvers and segmentation algorithms on Azure.  The repository provides sample notebooks, data loaders for seismic data, utility codes, and out-of-the box ML pipelines
 
