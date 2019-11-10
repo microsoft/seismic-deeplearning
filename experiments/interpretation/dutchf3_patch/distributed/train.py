@@ -17,6 +17,7 @@ import fire
 import numpy as np
 import torch
 from albumentations import Compose, HorizontalFlip, Normalize, Resize, PadIfNeeded
+from cv_lib.utils import load_log_configuration
 from cv_lib.event_handlers import (
     SnapshotHandler,
     logging_handlers,
@@ -92,7 +93,9 @@ def run(*options, cfg=None, local_rank=0):
         cfg (str, optional): Location of config file to load. Defaults to None.
     """
     update_config(config, options=options, config_file=cfg)
-    logging.config.fileConfig(config.LOG_CONFIG)
+
+    # Start logging
+    load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
     silence_other_ranks = True

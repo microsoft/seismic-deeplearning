@@ -11,15 +11,14 @@ from yacs.config import CfgNode as CN
 
 _C = CN()
 
-_C.OUTPUT_DIR = "output" # This will be the base directory for all output, such as logs and saved models
+_C.OUTPUT_DIR = "output"  # This will be the base directory for all output, such as logs and saved models
 _C.LOG_DIR = ""  # This will be a subdirectory inside OUTPUT_DIR
 _C.GPUS = (0,)
 _C.WORKERS = 4
 _C.PRINT_FREQ = 20
 _C.AUTO_RESUME = False
 _C.PIN_MEMORY = True
-# TODO: this should be loaded by automatically figuring out the file path location
-_C.LOG_CONFIG = "/home/maxkaz/repos/DeepSeismic/logging.conf"
+_C.LOG_CONFIG = "logging.conf"
 _C.SEED = 42
 
 # size of voxel cube: WINDOW_SIZE x WINDOW_SIZE x WINDOW_SIZE; used for 3D models only
@@ -35,7 +34,15 @@ _C.CUDNN.ENABLED = True
 _C.DATASET = CN()
 _C.DATASET.ROOT = ""
 _C.DATASET.NUM_CLASSES = 7
-_C.DATASET.CLASS_WEIGHTS = [0.02630481, 0.05448931, 0.0811898 , 0.01866496, 0.15868563, 0.0875993 , 0.5730662]
+_C.DATASET.CLASS_WEIGHTS = [
+    0.02630481,
+    0.05448931,
+    0.0811898,
+    0.01866496,
+    0.15868563,
+    0.0875993,
+    0.5730662,
+]
 _C.DATASET.INLINE_HEIGHT = 1501
 _C.DATASET.INLINE_WIDTH = 481
 
@@ -58,14 +65,14 @@ _C.TRAIN.END_EPOCH = 484
 _C.TRAIN.BATCH_SIZE_PER_GPU = 32
 _C.TRAIN.WEIGHT_DECAY = 0.0001
 _C.TRAIN.SNAPSHOTS = 5
-_C.TRAIN.MODEL_DIR = "models" # This will be a subdirectory inside OUTPUT_DIR
+_C.TRAIN.MODEL_DIR = "models"  # This will be a subdirectory inside OUTPUT_DIR
 _C.TRAIN.AUGMENTATION = True
 _C.TRAIN.STRIDE = 50
 _C.TRAIN.PATCH_SIZE = 99
-_C.TRAIN.MEAN = [0.0009997] # 0.0009996710808862074
-_C.TRAIN.STD = [0.20977] # 0.20976548783479299  
-_C.TRAIN.MAX = 255   
-_C.TRAIN.DEPTH = 'no' # Options are None, Patch and Section
+_C.TRAIN.MEAN = [0.0009997]  # 0.0009996710808862074
+_C.TRAIN.STD = [0.20977]  # 0.20976548783479299
+_C.TRAIN.MAX = 255
+_C.TRAIN.DEPTH = "no"  # Options are None, Patch and Section
 # None adds no depth information and the num of channels remains at 1
 # Patch adds depth per patch so is simply the height of that patch from 0 to 1, channels=3
 # Section adds depth per section so contains depth information for the whole section, channels=3

@@ -20,6 +20,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from albumentations import Compose, Normalize, PadIfNeeded, Resize
+from cv_lib.utils import load_log_configuration
 from cv_lib.segmentation import models
 from deepseismic_interpretation.dutchf3.data import (
     add_patch_depth_channels,
@@ -71,9 +72,7 @@ class runningScore(object):
         acc = np.diag(hist).sum() / hist.sum()
         acc_cls = np.diag(hist) / hist.sum(axis=1)
         mean_acc_cls = np.nanmean(acc_cls)
-        iu = np.diag(hist) / (
-            hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist)
-        )
+        iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
         mean_iu = np.nanmean(iu)
         freq = (
             hist.sum(axis=1) / hist.sum()
@@ -156,14 +155,10 @@ def _expand_dims_if_necessary(torch_tensor):
 @curry
 def _extract_patch(hdx, wdx, ps, patch_size, img_p):
     if len(img_p.shape) == 2:  # 2D
-        return img_p[
-            hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size
-        ]
+        return img_p[hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size]
     else:  # 3D
         return img_p[
-            :,
-            hdx + ps : hdx + ps + patch_size,
-            wdx + ps : wdx + ps + patch_size,
+            :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size,
         ]
 
 
@@ -183,13 +178,10 @@ def _compose_processing_pipeline(depth, aug=None):
 
 def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
     hdc_wdx_generator = itertools.product(
-        range(0, h - patch_size + ps, stride),
-        range(0, w - patch_size + ps, stride),
+        range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride),
     )
 
-    for batch_indexes in itertoolz.partition_all(
-        batch_size, hdc_wdx_generator
-    ):
+    for batch_indexes in itertoolz.partition_all(batch_size, hdc_wdx_generator):
         yield batch_indexes
 
 
@@ -197,16 +189,10 @@ def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
 def _output_processing_pipeline(config, output):
     output = output.unsqueeze(0)
     _, _, h, w = output.shape
-    if (
-        config.TEST.POST_PROCESSING.SIZE != h
-        or config.TEST.POST_PROCESSING.SIZE != w
-    ):
+    if config.TEST.POST_PROCESSING.SIZE != h or config.TEST.POST_PROCESSING.SIZE != w:
         output = F.interpolate(
             output,
-            size=(
-                config.TEST.POST_PROCESSING.SIZE,
-                config.TEST.POST_PROCESSING.SIZE,
-            ),
+            size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE,),
             mode="bilinear",
         )
 
@@ -250,20 +236,14 @@ def _patch_label_2d(
     ):
         batch = torch.stack(
             [
-                pipe(
-                    img_p,
-                    _extract_patch(hdx, wdx, ps, patch_size),
-                    pre_processing,
-                )
+                pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing,)
                 for hdx, wdx in batch_indexes
             ],
             dim=0,
         )
 
         model_output = model(batch.to(device))
-        for (hdx, wdx), output in zip(
-            batch_indexes, model_output.detach().cpu()
-        ):
+        for (hdx, wdx), output in zip(batch_indexes, model_output.detach().cpu()):
             output = output_processing(output)
             output_p[
                 :,
@@ -287,9 +267,7 @@ def to_image(label_mask, n_classes=6):
         r[label_mask == ll] = label_colours[ll, 0]
         g[label_mask == ll] = label_colours[ll, 1]
         b[label_mask == ll] = label_colours[ll, 2]
-    rgb = np.zeros(
-        (label_mask.shape[0], label_mask.shape[1], label_mask.shape[2], 3)
-    )
+    rgb = np.zeros((label_mask.shape[0], label_mask.shape[1], label_mask.shape[2], 3))
     rgb[:, :, :, 0] = r
     rgb[:, :, :, 1] = g
     rgb[:, :, :, 2] = b
@@ -310,10 +288,7 @@ def _evaluate_split(
 
     TestSectionLoader = get_test_loader(config)
     test_set = TestSectionLoader(
-        config.DATASET.ROOT,
-        split=split,
-        is_transform=True,
-        augmentations=section_aug,
+        config.DATASET.ROOT, split=split, is_transform=True, augmentations=section_aug,
     )
 
     n_classes = test_set.n_classes
@@ -354,9 +329,7 @@ def _evaluate_split(
     # Log split results
     logger.info(f'Pixel Acc: {score["Pixel Acc: "]:.3f}')
     for cdx, class_name in enumerate(_CLASS_NAMES):
-        logger.info(
-            f'  {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}'
-        )
+        logger.info(f'  {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
 
     logger.info(f'Mean Class Acc: {score["Mean Class Acc: "]:.3f}')
     logger.info(f'Freq Weighted IoU: {score["Freq Weighted IoU: "]:.3f}')
@@ -390,7 +363,9 @@ def _write_section_file(labels, section_file):
 def test(*options, cfg=None):
     update_config(config, options=options, config_file=cfg)
     n_classes = config.DATASET.NUM_CLASSES
-    logging.config.fileConfig(config.LOG_CONFIG)
+
+    # Start logging
+    load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log_dir, model_name = os.path.split(config.TEST.MODEL_PATH)
@@ -406,9 +381,7 @@ def test(*options, cfg=None):
     section_aug = Compose(
         [
             Normalize(
-                mean=(config.TRAIN.MEAN,),
-                std=(config.TRAIN.STD,),
-                max_pixel_value=1,
+                mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,
             )
         ]
     )
@@ -430,16 +403,10 @@ def test(*options, cfg=None):
         ]
     )
 
-    pre_processing = _compose_processing_pipeline(
-        config.TRAIN.DEPTH, aug=patch_aug
-    )
+    pre_processing = _compose_processing_pipeline(config.TRAIN.DEPTH, aug=patch_aug)
     output_processing = _output_processing_pipeline(config)
 
-    splits = (
-        ["test1", "test2"]
-        if "Both" in config.TEST.SPLIT
-        else [config.TEST.SPLIT]
-    )
+    splits = ["test1", "test2"] if "Both" in config.TEST.SPLIT else [config.TEST.SPLIT]
     for sdx, split in enumerate(splits):
         labels = np.load(
             path.join(config.DATASEST.ROOT, "test_once", split + "_labels.npy")
@@ -465,9 +432,7 @@ def test(*options, cfg=None):
     logger.info("--------------- FINAL RESULTS -----------------")
     logger.info(f'Pixel Acc: {score["Pixel Acc: "]:.3f}')
     for cdx, class_name in enumerate(_CLASS_NAMES):
-        logger.info(
-            f'     {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}'
-        )
+        logger.info(f'     {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
     logger.info(f'Mean Class Acc: {score["Mean Class Acc: "]:.3f}')
     logger.info(f'Freq Weighted IoU: {score["Freq Weighted IoU: "]:.3f}')
     logger.info(f'Mean IoU: {score["Mean IoU: "]:0.3f}')

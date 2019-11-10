@@ -19,6 +19,7 @@ from tqdm import tqdm
 from deepseismic_interpretation.dutchf3.data import get_voxel_loader
 from deepseismic_interpretation.models.texture_net import TextureNet
 
+from cv_lib.utils import load_log_configuration
 from cv_lib.event_handlers import (
     SnapshotHandler,
     logging_handlers,
@@ -27,7 +28,6 @@ from cv_lib.event_handlers import (
 from cv_lib.event_handlers.logging_handlers import Evaluator
 from cv_lib.event_handlers.tensorboard_handlers import create_summary_writer
 
-# TODO: replace with Ignite metrics
 from cv_lib.segmentation.metrics import (
     pixelwise_accuracy,
     class_accuracy,
@@ -81,7 +81,9 @@ def run(*options, cfg=None):
     """
 
     update_config(config, options=options, config_file=cfg)
-    logging.config.fileConfig(config.LOG_CONFIG)
+
+    # Start logging
+    load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
