@@ -1,7 +1,13 @@
 # DeepSeismic
+![DeepSeismic](./DeepSeismicLogo.jpg )
+
+This repository shows you how to perform seismic imaging and interpretation on Azure. It empowers geophysicists and data scientists to run seismic experiments using state-of-art DSL-based PDE solvers and segmentation algorithms on Azure.  The repository provides sample notebooks, data loaders for seismic data, utility codes, and out-of-the box ML pipelines
+
+For seismic imaging, the repository shows how you can leverage open-source PDE solvers (e.g. Devito), and perform Full-Waveform Inversion (FWI) at scale on Azure, using Azure Machine Learning (Azure ML), and Azure Batch. It demonnstrates examples on how to run Devito easily on a single machine, as well as multiple machines using Azure ML managed compute. 
+
+For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation, and also benchmarking results from running these algorithms using various seismic datasets (Dutch F3, and Penobscot).
 
 ## Interpretation
-
 ### Setting up Environment
 Navigate to the folder where you pulled the DeepSeismic repo to
 
@@ -58,11 +64,11 @@ Below are the results from the models contained in this repo. To run them check 
 
 ### Netherlands F3
 
-|    Authorship    |    Experiment                     |    PA       |    FW IoU    |    MCA     |
+|    Source        |    Experiment                     |    PA       |    FW IoU    |    MCA     |
 |------------------|-----------------------------------|-------------|--------------|------------|
-|    Alaudah       |    Section-based                  |    0.905    |    0.817     |    .832    |
+|    Alaudah et al.|    Section-based                  |    0.905    |    0.817     |    .832    |
 |                  |    Patch-based                    |    0.852    |    0.743     |    .689    |
-|    Ours          |    Patch-based+fixed              |    .869     |    .761      |    .775    |
+|    DeepSeismic   |    Patch-based+fixed              |    .869     |    .761      |    .775    |
 |                  |    SEResNet UNet+section depth    |    .917     |    .849      |    .834    |
 |                  |    HRNet(patch)+patch_depth       |    .908     |    .843      |    .837    |
 |                  |    HRNet(patch)+section_depth     |    .928     |    .871      |    .871    |
@@ -72,38 +78,18 @@ Below are the results from the models contained in this repo. To run them check 
 Trained and tested on full dataset. Inlines with artefacts were left in for training, validation and testing.
 The dataset was split 70% training, 10% validation and 20% test. The results below are from the test set
 
-|    Authorship    |    Experiment                       |    PA       |    IoU       |    MCA     |
+|    Source        |    Experiment                       |    PA       |    IoU       |    MCA     |
 |------------------|-------------------------------------|-------------|--------------|------------|
-|    Ours          |    SEResNet UNet + section depth    |    1.0      |    .98        |    .99    |
+|    DeepSeismic   |    SEResNet UNet + section depth    |    1.0      |    .98        |    .99    |
 |                  |    HRNet(patch) + section depth     |    1.0      |    .97        |    .98    |
 
 ![Best Penobscot SEResNet](images/penobscot_seresnet_best.png "Best performing inlines, Mask and Predictions from SEResNet")
 ![Worst Penobscot SEResNet](images/penobscot_seresnet_worst.png "Worst performing inlines  Mask and Predictions from SEResNet")
 
-### Sparse Labels
 
-This section contains benchmarks of different algorithms for seismic interpretation on 3D seismic datasets with sparsely-annotated data and is organized by the levels of sparsity.
-
-| Model \ Dataset | Dutch F3 (Alaudah) | Penobscot |
-| :---:           |    :---:           |     :---: |
-Alaudah base slice | Pixel Acc,  IoU <br> train time (s), score time (s)| |
-Alaudah base patch | Pixel Acc,  IoU <br> train time (s), score time (s)| |
-HRNet slice | | |
-DeepLab V3 slice | | |
-| TODO: add all models | | |
-
-
-#### Scribble-Level Labels
-
-We present results of algorithms which are based on scribble-level annotations, where the annotator labels a large collection of consecutive pixels with no gaps, e.g. brushstroke label.
-
-#### Pixel-Level Labels
-
-We present results of algorithms which are based on pixel-level annotations, where the annotator labels individual pixels and gaps are allowed between pixels; the annotator can also label a small neighborhood of pixels, e.g. large dot of ~100 pixels.
 
 ### Data
 #### Netherlands F3
-
 To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
 [this github repository](https://github.com/olivesgatech/facies_classification_benchmark).
 
