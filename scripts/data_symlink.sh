@@ -3,6 +3,7 @@
 # Azure VMs lose mounts after restart - this symlinks the data folder from user's
 # home directory after VM restart
 
-sudo chown -R maxkaz /mnt
-sudo chgrp -R maxkaz /mnt
+user=$(whoami)
+sudo chown -R $user /mnt
+sudo chgrp -R $user /mnt
 ln -s ~/dutchf3 /mnt
