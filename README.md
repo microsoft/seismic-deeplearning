@@ -1,6 +1,21 @@
 # DeepSeismic
 
+## Imaging
+For seismic imaging, the repository shows how you can leverage open-source PDE solvers (e.g. [Devito](https://www.devitoproject.org/)), and perform Full-Waveform Inversion (FWI) at scale on Azure, using Azure Machine Learning (Azure ML), and Azure Batch. The repository provides a collection of sample notebooks that shows:  
+ - How you can create customized Docker fils and images with Devito and use this on Azure  
+ - How you can create Azure ML [estimators](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-train-ml-models) for performing FWI using Devito powered by elastic computing resources allocation in Azure.  
+ 
+This shows how [Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/service/overview-what-is-azure-ml) provides a powerful and flexible platform that enables transparent scaling up of complex finite difference kernels like Devito for use seismic inversion problems.  Devito code can easily run on a single machine, as well as multiple machines using Azure ML managed compute [targets](https://docs.microsoft.com/en-us/azure/machine-learning/service/concept-compute-target).   
+  
+Find out more on how you can do seismic imaging on Azure [here](https://github.com/microsoft/DeepSeismic/tree/staging/examples/imaging/azureml_devito/notebooks):   https://github.com/microsoft/DeepSeismic/tree/staging/examples/imaging/azureml_devito/notebooks   
+   
+   
 ## Interpretation
+For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation, and also benchmarking results from running these algorithms using various seismic datasets (Netherlands F3, and Penobscot). The repository contains:  
+ - Example notebook showing how you can leverage DeepSeismic for seismic interpretation  
+ - ML Pipelines for running experiments using the Netherlands F3 and Penobscot datasets  
+  
+  
 
 ### Setting up Environment
 Navigate to the folder where you pulled the DeepSeismic repo to

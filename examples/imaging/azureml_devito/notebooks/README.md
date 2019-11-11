@@ -6,7 +6,7 @@ This tutorial shows how to run devito tutorial notebooks in Azure. For best expe
  
 ### Setting up Environment
 
-The conda .yml file should be used to create the conda environment, before starting Jupyter:
+This conda .yml file should be used to create the conda environment, before starting Jupyter:
 
 ```
 channels:
