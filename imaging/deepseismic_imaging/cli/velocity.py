@@ -20,16 +20,10 @@ click.option = partial(click.option, show_default=True)
 )
 @click.option("-n", default=1, type=int, help="Number of simulations")
 @click.option(
-    "-nx",
-    default=100,
-    type=int,
-    help="Number of grid points along the first dimension",
+    "-nx", default=100, type=int, help="Number of grid points along the first dimension",
 )
 @click.option(
-    "-ny",
-    default=100,
-    type=int,
-    help="Number of grid points along the second dimension",
+    "-ny", default=100, type=int, help="Number of grid points along the second dimension",
 )
 @click.option("-nz", type=int, help="Number of grid points along the third dimension")
 @click.option("-s", "--seed", default=42, type=int, help="Random seed")
@@ -42,9 +36,7 @@ def vp(
     if nz is not None:
         shape += (nz,)
     output_file = h5py.File(output, mode=("a" if append else "w"))
-    output_group = output_file.create_group(
-        str(max((int(x) for x in output_file.keys()), default=-1) + 1)
-    )
+    output_group = output_file.create_group(str(max((int(x) for x in output_file.keys()), default=-1) + 1))
     ctx.obj["n"] = n
     ctx.obj["output_file"] = output_file
     ctx.obj["output_group"] = output_group
@@ -55,23 +47,14 @@ def vp(
 @vp.command()
 @click.option("--n-layers", default=8, type=int, help="Number of layers")
 @click.option(
-    "--initial-vp",
-    default=(1350.0, 1650.0),
-    type=(float, float),
-    help="Initial Vp (in km/s)",
+    "--initial-vp", default=(1350.0, 1650.0), type=(float, float), help="Initial Vp (in km/s)",
 )
 @click.option(
-    "--vp-perturbation",
-    default=(-190.0, 570.0),
-    type=(float, float),
-    help="Per-layer Vp perturbation (in km/s)",
+    "--vp-perturbation", default=(-190.0, 570.0), type=(float, float), help="Per-layer Vp perturbation (in km/s)",
 )
 @click.pass_context
 def rt(
-    ctx,
-    initial_vp: Tuple[float, float],
-    n_layers: int,
-    vp_perturbation: Tuple[float, float],
+    ctx, initial_vp: Tuple[float, float], n_layers: int, vp_perturbation: Tuple[float, float],
 ):
     """Röth-Tarantola model"""
     model = RoethTarantolaGenerator(

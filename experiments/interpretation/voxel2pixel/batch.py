@@ -81,9 +81,7 @@ def get_random_batch(
 
         # Insert in output arrays
         ret_labels[i] = class_ind
-        batch[i, 0, :, :, :] = np.reshape(
-            sample, (im_size[0], im_size[1], im_size[2])
-        )
+        batch[i, 0, :, :, :] = np.reshape(sample, (im_size[0], im_size[1], im_size[2]))
 
         # We seek to have a balanced batch with equally many samples from each class.
         n_for_class += 1

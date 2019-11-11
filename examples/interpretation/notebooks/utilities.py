@@ -2,17 +2,14 @@
 # Licensed under the MIT License.
 
 import itertools
+
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn.functional as F
-
 from ignite.utils import convert_tensor
-
-from toolz import compose, curry, itertoolz, pipe
-
-import matplotlib.pyplot as plt
-import plotly.graph_objects as go
 from scipy.ndimage import zoom
+from toolz import compose, curry, itertoolz, pipe
 
 
 class runningScore(object):
@@ -22,17 +19,14 @@ class runningScore(object):
 
     def _fast_hist(self, label_true, label_pred, n_class):
         mask = (label_true >= 0) & (label_true < n_class)
-        hist = np.bincount(
-            n_class * label_true[mask].astype(int) + label_pred[mask],
-            minlength=n_class ** 2,
-        ).reshape(n_class, n_class)
+        hist = np.bincount(n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,).reshape(
+            n_class, n_class
+        )
         return hist
 
     def update(self, label_trues, label_preds):
         for lt, lp in zip(label_trues, label_preds):
-            self.confusion_matrix += self._fast_hist(
-                lt.flatten(), lp.flatten(), self.n_classes
-            )
+            self.confusion_matrix += self._fast_hist(lt.flatten(), lp.flatten(), self.n_classes)
 
     def get_scores(self):
         """Returns accuracy score evaluation result.
@@ -47,9 +41,7 @@ class runningScore(object):
         mean_acc_cls = np.nanmean(acc_cls)
         iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
         mean_iu = np.nanmean(iu)
-        freq = (
-            hist.sum(axis=1) / hist.sum()
-        )  # fraction of the pixels that come from each class
+        freq = hist.sum(axis=1) / hist.sum()  # fraction of the pixels that come from each class
         fwavacc = (freq[freq > 0] * iu[freq > 0]).sum()
         cls_iu = dict(zip(range(self.n_classes), iu))
 
@@ -138,12 +130,10 @@ def _extract_patch(hdx, wdx, ps, patch_size, img_p):
     if len(img_p.shape) == 2:  # 2D
         return img_p[hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size]
     else:  # 3D
-        return img_p[
-            :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size
-        ]
+        return img_p[:, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size]
 
 
-def _compose_processing_pipeline(depth, aug=None):
+def compose_processing_pipeline(depth, aug=None):
     steps = []
     if aug is not None:
         steps.append(_apply_augmentation(aug))
@@ -158,23 +148,19 @@ def _compose_processing_pipeline(depth, aug=None):
 
 
 def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
-    hdc_wdx_generator = itertools.product(
-        range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride)
-    )
+    hdc_wdx_generator = itertools.product(range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride))
 
     for batch_indexes in itertoolz.partition_all(batch_size, hdc_wdx_generator):
         yield batch_indexes
 
 
 @curry
-def _output_processing_pipeline(config, output):
+def output_processing_pipeline(config, output):
     output = output.unsqueeze(0)
     _, _, h, w = output.shape
     if config.TEST.POST_PROCESSING.SIZE != h or config.TEST.POST_PROCESSING.SIZE != w:
         output = F.interpolate(
-            output,
-            size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE),
-            mode="bilinear",
+            output, size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE), mode="bilinear",
         )
 
     if config.TEST.POST_PROCESSING.CROP_PIXELS > 0:
@@ -182,24 +168,14 @@ def _output_processing_pipeline(config, output):
         output = output[
             :,
             :,
-            config.TEST.POST_PROCESSING.CROP_PIXELS : h
-            - config.TEST.POST_PROCESSING.CROP_PIXELS,
-            config.TEST.POST_PROCESSING.CROP_PIXELS : w
-            - config.TEST.POST_PROCESSING.CROP_PIXELS,
+            config.TEST.POST_PROCESSING.CROP_PIXELS : h - config.TEST.POST_PROCESSING.CROP_PIXELS,
+            config.TEST.POST_PROCESSING.CROP_PIXELS : w - config.TEST.POST_PROCESSING.CROP_PIXELS,
         ]
     return output.squeeze()
 
 
-def _patch_label_2d(
-    model,
-    img,
-    pre_processing,
-    output_processing,
-    patch_size,
-    stride,
-    batch_size,
-    device,
-    num_classes,
+def patch_label_2d(
+    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes,
 ):
     """Processes a whole section"""
     img = torch.squeeze(img)
@@ -211,47 +187,23 @@ def _patch_label_2d(
     output_p = torch.zeros([1, num_classes, h + 2 * ps, w + 2 * ps])
 
     # generate output:
-    for batch_indexes in _generate_batches(
-        h, w, ps, patch_size, stride, batch_size=batch_size
-    ):
+    for batch_indexes in _generate_batches(h, w, ps, patch_size, stride, batch_size=batch_size):
         batch = torch.stack(
-            [
-                pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing)
-                for hdx, wdx in batch_indexes
-            ],
+            [pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing) for hdx, wdx in batch_indexes],
             dim=0,
         )
 
         model_output = model(batch.to(device))
         for (hdx, wdx), output in zip(batch_indexes, model_output.detach().cpu()):
             output = output_processing(output)
-            output_p[
-                :, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size
-            ] += output
+            output_p[:, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size] += output
 
     # crop the output_p in the middle
     output = output_p[:, :, ps:-ps, ps:-ps]
     return output
 
 
-@curry
-def to_image(label_mask, n_classes=6):
-    label_colours = get_seismic_labels()
-    r = label_mask.copy()
-    g = label_mask.copy()
-    b = label_mask.copy()
-    for ll in range(0, n_classes):
-        r[label_mask == ll] = label_colours[ll, 0]
-        g[label_mask == ll] = label_colours[ll, 1]
-        b[label_mask == ll] = label_colours[ll, 2]
-    rgb = np.zeros((label_mask.shape[0], label_mask.shape[1], label_mask.shape[2], 3))
-    rgb[:, :, :, 0] = r
-    rgb[:, :, :, 1] = g
-    rgb[:, :, :, 2] = b
-    return rgb
-
-
-def _write_section_file(labels, section_file, config):
+def write_section_file(labels, section_file, config):
     # define indices of the array
     irange, xrange, depth = labels.shape
 
@@ -288,40 +240,3 @@ def plot_aline(aline, labels, xlabel, ylabel="depth"):
     plt.imshow(labels)
     plt.xlabel(xlabel)
     plt.title("Label")
-
-
-def plot_f3block_interactive(data, x_slice_locations=[0.25], y_slice_locations=[0.8]):
-    """Plot interactive graph of F3 block"""
-    values = zoom(data, 0.2)
-    values = values[:, :, ::-1]
-
-    x, y, z = values.shape
-    X, Y, Z = np.mgrid[0:x, 0:y, 0:z]
-
-    fig = go.Figure(
-        data=go.Volume(
-            x=X.flatten(),
-            y=Y.flatten(),
-            z=Z.flatten(),
-            value=values.flatten(),
-            slices_x=dict(show=True, locations=[i * x for i in x_slice_locations]),
-            slices_y=dict(show=True, locations=[i * y for i in y_slice_locations]),
-            opacity=0.5,  # needs to be small to see through all surfaces
-            showscale=False,
-            caps=dict(x_show=True, y_show=True, z_show=True),
-            colorscale="Viridis",
-        )
-    )
-
-    fig.update_layout(
-        scene_xaxis_showticklabels=False,
-        scene_yaxis_showticklabels=False,
-        scene_zaxis_showticklabels=False,
-        height=800,
-        width=1000,
-        title="F3 Block Netherlands",
-        scene=dict(
-            xaxis_title="Inlines", yaxis_title="Crosslines", zaxis_title="Depth"
-        ),
-    )
-    fig.show()

@@ -50,12 +50,8 @@ from default import update_config
 
 def _prepare_batch(batch, device=None, non_blocking=False, t_type=torch.FloatTensor):
     x, y = batch
-    new_x = convert_tensor(
-        torch.squeeze(x, 1), device=device, non_blocking=non_blocking
-    )
-    new_y = convert_tensor(
-        torch.unsqueeze(y, 2), device=device, non_blocking=non_blocking
-    )
+    new_x = convert_tensor(torch.squeeze(x, 1), device=device, non_blocking=non_blocking)
+    new_y = convert_tensor(torch.unsqueeze(y, 2), device=device, non_blocking=non_blocking)
     if device == "cuda":
         return (
             new_x.type(t_type).cuda(),
@@ -118,16 +114,10 @@ def run(*options, cfg=None):
     # set dataset length to batch size to be consistent with 5000 iterations
     # each of size 32 in the original Waldeland implementation
     train_loader = data.DataLoader(
-        train_set,
-        batch_size=config.TRAIN.BATCH_SIZE_PER_GPU,
-        num_workers=config.WORKERS,
-        shuffle=False,
+        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=False,
     )
     val_loader = data.DataLoader(
-        val_set,
-        batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU,
-        num_workers=config.WORKERS,
-        shuffle=False,
+        val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=False,
     )
 
     # this is how we import model for CV - here we're importing a seismic
@@ -149,9 +139,7 @@ def run(*options, cfg=None):
 
     loss = torch.nn.CrossEntropyLoss()
 
-    trainer = create_supervised_trainer(
-        model, optimizer, loss, prepare_batch=_prepare_batch, device=device
-    )
+    trainer = create_supervised_trainer(model, optimizer, loss, prepare_batch=_prepare_batch, device=device)
 
     desc = "ITERATION - loss: {:.2f}"
     pbar = tqdm(initial=0, leave=False, total=len(train_loader), desc=desc.format(0))
@@ -159,20 +147,13 @@ def run(*options, cfg=None):
     # add model checkpointing
     output_dir = path.join(config.OUTPUT_DIR, config.TRAIN.MODEL_DIR)
     checkpoint_handler = ModelCheckpoint(
-        output_dir,
-        "model",
-        save_interval=1,
-        n_saved=3,
-        create_dir=True,
-        require_empty=False,
+        output_dir, "model", save_interval=1, n_saved=3, create_dir=True, require_empty=False,
     )
 
     criterion = torch.nn.CrossEntropyLoss(reduction="mean")
 
     # save model at each epoch
-    trainer.add_event_handler(
-        Events.EPOCH_COMPLETED, checkpoint_handler, {config.MODEL.NAME: model}
-    )
+    trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {config.MODEL.NAME: model})
 
     def _select_pred_and_mask(model_out):
         # receive a tuple of (x, y_pred), y
@@ -188,21 +169,11 @@ def run(*options, cfg=None):
         model,
         metrics={
             "nll": Loss(criterion, device=device),
-            "pixa": pixelwise_accuracy(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "cacc": class_accuracy(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "mca": mean_class_accuracy(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "ciou": class_iou(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "mIoU": mean_iou(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
+            "pixa": pixelwise_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "mca": mean_class_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "ciou": class_iou(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "mIoU": mean_iou(n_classes, output_transform=_select_pred_and_mask, device=device),
         },
         device=device,
         prepare_batch=_prepare_batch,
@@ -211,9 +182,7 @@ def run(*options, cfg=None):
     # Set the validation run to start on the epoch completion of the training run
     trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
-    summary_writer = create_summary_writer(
-        log_dir=path.join(output_dir, config.LOG_DIR)
-    )
+    summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
 
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
@@ -233,17 +202,11 @@ def run(*options, cfg=None):
             summary_writer,
             trainer,
             "epoch",
-            metrics_dict={
-                "mIoU": "Validation/IoU",
-                "nll": "Validation/Loss",
-                "mca": "Validation/MCA",
-            },
+            metrics_dict={"mIoU": "Validation/IoU", "nll": "Validation/Loss", "mca": "Validation/MCA",},
         ),
     )
 
-    summary_writer = create_summary_writer(
-        log_dir=path.join(output_dir, config.LOG_DIR)
-    )
+    summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
 
     snapshot_duration = 1
 
@@ -256,14 +219,10 @@ def run(*options, cfg=None):
         extract_metric_from("mIoU"),
         snapshot_function,
     )
-    evaluator.add_event_handler(
-        Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model}
-    )
+    evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
     logger.info("Starting training")
-    trainer.run(
-        train_loader, max_epochs=config.TRAIN.END_EPOCH // config.TRAIN.BATCH_PER_EPOCH
-    )
+    trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH // config.TRAIN.BATCH_PER_EPOCH)
     pbar.close()
 
 

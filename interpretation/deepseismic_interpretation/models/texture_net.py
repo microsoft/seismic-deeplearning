@@ -14,9 +14,7 @@ class TextureNet(nn.Module):
         # Network definition
         # Parameters  #in_channels, #out_channels, filter_size, stride (downsampling factor)
         self.net = nn.Sequential(
-            nn.Conv3d(
-                1, 50, 5, 4, padding=2
-            ),
+            nn.Conv3d(1, 50, 5, 4, padding=2),
             nn.BatchNorm3d(50),
             # nn.Dropout3d() #Droput can be added like this ...
             nn.ReLU(),
@@ -156,6 +154,5 @@ class TextureNet(nn.Module):
 
 
 def get_seg_model(cfg, **kwargs):
-    model = TextureNet(n_classes = cfg.DATASET.NUM_CLASSES)
+    model = TextureNet(n_classes=cfg.DATASET.NUM_CLASSES)
     return model
-

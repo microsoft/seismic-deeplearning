@@ -30,9 +30,7 @@ def _pad_right_and_bottom(pad_size, numpy_array, pad_value=255):
     assert (
         len(numpy_array.shape) == 2
     ), f"_pad_right_and_bottom only accepts 2D arrays. Input is {len(numpy_array.shape)}D"
-    return np.pad(
-        numpy_array, pad_width=[(0, pad_size), (0, pad_size)], constant_values=pad_value
-    )
+    return np.pad(numpy_array, pad_width=[(0, pad_size), (0, pad_size)], constant_values=pad_value)
 
 
 def _get_classes_and_counts(mask_list):
@@ -55,7 +53,7 @@ def _combine(mask_array):
 def _combine_classes(mask_array_list):
     """Combine classes
 
-    Segmentation implementations using this dataset seem to combine 
+    Segmentation implementations using this dataset seem to combine
     classes 2 and 3 so we are doing the same here and then relabeling the rest
 
     Args:
@@ -72,9 +70,7 @@ def _replicate_channels(image_array, n_channels):
 
 
 def _extract_filename(filepath):
-    return os.path.splitext(os.path.split(filepath)[-1].strip())[
-        0
-    ]  # extract filename without extension
+    return os.path.splitext(os.path.split(filepath)[-1].strip())[0]  # extract filename without extension
 
 
 def _generate_images_and_masks(images_iter, mask_dir):
@@ -84,9 +80,7 @@ def _generate_images_and_masks(images_iter, mask_dir):
         if os.path.exists(mask_file):
             yield image_file, mask_file
         else:
-            raise FileNotFoundError(
-                f"Could not find mask {mask_file} corresponding to {image_file}"
-            )
+            raise FileNotFoundError(f"Could not find mask {mask_file} corresponding to {image_file}")
 
 
 def _number_patches_in(height_or_width, patch_size, stride, complete_patches_only=True):
@@ -108,22 +102,14 @@ def _is_3D(numpy_array):
 @curry
 def _extract_patches(patch_size, stride, complete_patches_only, img_array, mask_array):
     height, width = img_array.shape[-2], img_array.shape[-1]
-    num_h_patches = _number_patches_in(
-        height, patch_size, stride, complete_patches_only=complete_patches_only
-    )
-    num_w_patches = _number_patches_in(
-        width, patch_size, stride, complete_patches_only=complete_patches_only
-    )
+    num_h_patches = _number_patches_in(height, patch_size, stride, complete_patches_only=complete_patches_only)
+    num_w_patches = _number_patches_in(width, patch_size, stride, complete_patches_only=complete_patches_only)
     height_iter = range(0, stride * (num_h_patches + 1), stride)
     width_iter = range(0, stride * (num_w_patches + 1), stride)
     patch_locations = list(itertools.product(height_iter, width_iter))
 
-    image_patch_generator = _generate_patches_for(
-        img_array, patch_locations, patch_size
-    )
-    mask_patch_generator = _generate_patches_for(
-        mask_array, patch_locations, patch_size
-    )
+    image_patch_generator = _generate_patches_for(img_array, patch_locations, patch_size)
+    mask_patch_generator = _generate_patches_for(mask_array, patch_locations, patch_size)
     return image_patch_generator, mask_patch_generator, patch_locations
 
 
@@ -138,17 +124,11 @@ def _generate_patches_for(numpy_array, patch_locations, patch_size):
 
 
 def _generate_patches_from_2D(numpy_array, patch_locations, patch_size):
-    return (
-        numpy_array[h : h + patch_size, w : w + patch_size].copy()
-        for h, w in patch_locations
-    )
+    return (numpy_array[h : h + patch_size, w : w + patch_size].copy() for h, w in patch_locations)
 
 
 def _generate_patches_from_3D(numpy_array, patch_locations, patch_size):
-    return (
-        numpy_array[:, h : h + patch_size, w : w + patch_size].copy()
-        for h, w in patch_locations
-    )
+    return (numpy_array[:, h : h + patch_size, w : w + patch_size].copy() for h, w in patch_locations)
 
 
 @curry
@@ -264,33 +244,23 @@ class PenobscotInlinePatchDataset(VisionDataset):
         )
 
         # Set the patch and stride for the patch extractor
-        _extract_patches_from = _extract_patches(
-            patch_size, stride, self._complete_patches_only
-        )
+        _extract_patches_from = _extract_patches(patch_size, stride, self._complete_patches_only)
 
         # Extract patches
-        for image_path, mask_path in _generate_images_and_masks(
-            images_iter, self._mask_dir
-        ):
+        for image_path, mask_path in _generate_images_and_masks(images_iter, self._mask_dir):
             img_array = self._open_image(image_path)
             mask_array = self._open_mask(mask_path)
             self._file_ids.append(_extract_filename(image_path))
-            image_generator, mask_generator, patch_locations = _extract_patches_from(
-                img_array, mask_array
-            )
+            image_generator, mask_generator, patch_locations = _extract_patches_from(img_array, mask_array)
             self._patch_locations.extend(patch_locations)
 
             self._image_array.extend(image_generator)
 
             self._mask_array.extend(mask_generator)
 
-        assert len(self._image_array) == len(
-            self._patch_locations
-        ), "The shape is not the same"
+        assert len(self._image_array) == len(self._patch_locations), "The shape is not the same"
 
-        assert (
-            len(self._patch_locations) % len(self._file_ids) == 0
-        ), "Something is wrong with the patches"
+        assert len(self._patch_locations) % len(self._file_ids) == 0, "Something is wrong with the patches"
 
         self._patches_per_image = int(len(self._patch_locations) / len(self._file_ids))
 
@@ -352,9 +322,7 @@ class PenobscotInlinePatchDataset(VisionDataset):
     @property
     def statistics(self):
         flat_image_array = np.concatenate([i.flatten() for i in self._image_array])
-        stats = {
-            stat: statfunc(flat_image_array) for stat, statfunc in _STATS_FUNCS.items()
-        }
+        stats = {stat: statfunc(flat_image_array) for stat, statfunc in _STATS_FUNCS.items()}
         return "Mean: {mean} Std: {std} Max: {max}".format(**stats)
 
     def extra_repr(self):
@@ -422,16 +390,20 @@ class PenobscotInlinePatchSectionDepthDataset(PenobscotInlinePatchDataset):
            patch_size (int): the size of the patch in pixels
            stride (int): the stride applied when extracting patches
            split (str, optional): what split to load, (train, val, test). Defaults to `train`
-           transforms (albumentations.augmentations.transforms, optional): albumentation transforms to apply to patches. Defaults to None
+           transforms (albumentations.augmentations.transforms, optional): albumentation transforms
+                                                                           to apply to patches.
+                                                                           Defaults to None
            exclude_files (list[str], optional): list of files to exclude. Defaults to None
            max_inlines (int, optional): maximum number of inlines to load. Defaults to None
            n_channels (int, optional): number of channels that the output should contain. Defaults to 3
-           complete_patches_only (bool, optional): whether to load incomplete patches that are padded to patch_size. Defaults to True
+           complete_patches_only (bool, optional): whether to load incomplete patches
+                                                   that are padded to patch_size. Defaults to True
         """
 
-        assert (
-            n_channels == 3
-        ), f"For the Section Depth based dataset the number of channels can only be 3. Currently n_channels={n_channels}"
+        assert n_channels == 3, (
+            f"For the Section Depth based dataset the number of channels can only be 3."
+            f"Currently n_channels={n_channels}"
+        )
         super(PenobscotInlinePatchSectionDepthDataset, self).__init__(
             root,
             patch_size,
@@ -478,11 +450,14 @@ class PenobscotInlinePatchDepthDataset(PenobscotInlinePatchDataset):
            patch_size (int): the size of the patch in pixels
            stride (int): the stride applied when extracting patches
            split (str, optional): what split to load, (train, val, test). Defaults to `train`
-           transforms (albumentations.augmentations.transforms, optional): albumentation transforms to apply to patches. Defaults to None
+           transforms (albumentations.augmentations.transforms, optional): albumentation transforms
+                                                                           to apply to patches.
+                                                                           Defaults to None
            exclude_files (list[str], optional): list of files to exclude. Defaults to None
            max_inlines (int, optional): maximum number of inlines to load. Defaults to None
            n_channels (int, optional): number of channels that the output should contain. Defaults to 3
-           complete_patches_only (bool, optional): whether to load incomplete patches that are padded to patch_size. Defaults to True
+           complete_patches_only (bool, optional): whether to load incomplete patches that are
+                                                   padded to patch_size. Defaults to True
         """
         assert (
             n_channels == 3

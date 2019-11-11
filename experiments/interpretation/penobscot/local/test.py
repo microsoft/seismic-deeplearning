@@ -59,15 +59,9 @@ def _prepare_batch(batch, device=None, non_blocking=False):
 
 
 def _padding_from(config):
-    padding_height = (
-        config.TEST.AUGMENTATIONS.PAD.HEIGHT - config.TEST.AUGMENTATIONS.RESIZE.HEIGHT
-    )
-    padding_width = (
-        config.TEST.AUGMENTATIONS.PAD.WIDTH - config.TEST.AUGMENTATIONS.RESIZE.WIDTH
-    )
-    assert (
-        padding_height == padding_width
-    ), "The padding for the height and width need to be the same"
+    padding_height = config.TEST.AUGMENTATIONS.PAD.HEIGHT - config.TEST.AUGMENTATIONS.RESIZE.HEIGHT
+    padding_width = config.TEST.AUGMENTATIONS.PAD.WIDTH - config.TEST.AUGMENTATIONS.RESIZE.WIDTH
+    assert padding_height == padding_width, "The padding for the height and width need to be the same"
     return int(padding_height)
 
 
@@ -80,29 +74,17 @@ def _scale_from(config):
     assert (
         config.TEST.AUGMENTATIONS.PAD.WIDTH % config.TRAIN.PATCH_SIZE == 0
     ), "The scaling between the patch width and resized height must be whole number"
-    assert (
-        scale_height == scale_width
-    ), "The scaling for the height and width must be the same"
+    assert scale_height == scale_width, "The scaling for the height and width must be the same"
     return int(scale_height)
 
 
 _SEG_COLOURS = np.asarray(
-    [
-        [241, 238, 246],
-        [208, 209, 230],
-        [166, 189, 219],
-        [116, 169, 207],
-        [54, 144, 192],
-        [5, 112, 176],
-        [3, 78, 123],
-    ]
+    [[241, 238, 246], [208, 209, 230], [166, 189, 219], [116, 169, 207], [54, 144, 192], [5, 112, 176], [3, 78, 123],]
 )
 
 
 def _log_tensor_to_tensorboard(images_tensor, identifier, summary_writer, evaluator):
-    image_grid = torchvision.utils.make_grid(
-        images_tensor, normalize=False, scale_each=False, nrow=2
-    )
+    image_grid = torchvision.utils.make_grid(images_tensor, normalize=False, scale_each=False, nrow=2)
     summary_writer.add_image(identifier, image_grid, evaluator.state.epoch)
 
 
@@ -142,11 +124,7 @@ def run(*options, cfg=None):
     # Setup Augmentations
     test_aug = Compose(
         [
-            Normalize(
-                mean=(config.TRAIN.MEAN,),
-                std=(config.TRAIN.STD,),
-                max_pixel_value=config.TRAIN.MAX,
-            ),
+            Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=config.TRAIN.MAX,),
             PadIfNeeded(
                 min_height=config.TRAIN.PATCH_SIZE,
                 min_width=config.TRAIN.PATCH_SIZE,
@@ -156,9 +134,7 @@ def run(*options, cfg=None):
                 value=0,
             ),
             Resize(
-                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-                always_apply=True,
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
             ),
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
@@ -187,9 +163,7 @@ def run(*options, cfg=None):
     n_classes = test_set.n_classes
 
     test_loader = data.DataLoader(
-        test_set,
-        batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU,
-        num_workers=config.WORKERS,
+        test_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,
     )
 
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
@@ -201,26 +175,14 @@ def run(*options, cfg=None):
         device = "cuda"
     model = model.to(device)  # Send to GPU
 
-    output_dir = generate_path(
-        config.OUTPUT_DIR,
-        git_branch(),
-        git_hash(),
-        config.MODEL.NAME,
-        current_datetime(),
-    )
-    summary_writer = create_summary_writer(
-        log_dir=path.join(output_dir, config.LOG_DIR)
-    )
+    output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),)
+    summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
 
     # weights are inversely proportional to the frequency of the classes in
     # the training set
-    class_weights = torch.tensor(
-        config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False
-    )
+    class_weights = torch.tensor(config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False)
 
-    criterion = torch.nn.CrossEntropyLoss(
-        weight=class_weights, ignore_index=mask_value, reduction="mean"
-    )
+    criterion = torch.nn.CrossEntropyLoss(weight=class_weights, ignore_index=mask_value, reduction="mean")
 
     def _select_pred_and_mask(model_out_dict):
         return (model_out_dict["y_pred"].squeeze(), model_out_dict["mask"].squeeze())
@@ -247,25 +209,13 @@ def run(*options, cfg=None):
         model,
         _prepare_batch,
         metrics={
-            "nll": Loss(
-                criterion, output_transform=_select_pred_and_mask, device=device
-            ),
+            "nll": Loss(criterion, output_transform=_select_pred_and_mask, device=device),
             "inIoU": inline_mean_iou,
-            "pixa": pixelwise_accuracy(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "cacc": class_accuracy(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "mca": mean_class_accuracy(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "ciou": class_iou(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "mIoU": mean_iou(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
+            "pixa": pixelwise_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "mca": mean_class_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "ciou": class_iou(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "mIoU": mean_iou(n_classes, output_transform=_select_pred_and_mask, device=device),
         },
         device=device,
     )
@@ -289,12 +239,7 @@ def run(*options, cfg=None):
             summary_writer,
             evaluator,
             "epoch",
-            metrics_dict={
-                "mIoU": "Test/IoU",
-                "nll": "Test/Loss",
-                "mca": "Test/MCA",
-                "inIoU": "Test/MeanInlineIoU",
-            },
+            metrics_dict={"mIoU": "Test/IoU", "nll": "Test/Loss", "mca": "Test/MCA", "inIoU": "Test/MeanInlineIoU",},
         ),
     )
 
@@ -305,28 +250,20 @@ def run(*options, cfg=None):
         return pred_tensor.squeeze().cpu().numpy()
 
     transform_func = compose(
-        np_to_tb,
-        decode_segmap(n_classes=n_classes, label_colours=_SEG_COLOURS),
-        _tensor_to_numpy,
+        np_to_tb, decode_segmap(n_classes=n_classes, label_colours=_SEG_COLOURS), _tensor_to_numpy,
     )
 
     transform_pred = compose(transform_func, _select_max)
 
     evaluator.add_event_handler(
-        Events.EPOCH_COMPLETED,
-        create_image_writer(summary_writer, "Test/Image", "image"),
+        Events.EPOCH_COMPLETED, create_image_writer(summary_writer, "Test/Image", "image"),
+    )
+    evaluator.add_event_handler(
+        Events.EPOCH_COMPLETED, create_image_writer(summary_writer, "Test/Mask", "mask", transform_func=transform_func),
     )
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
-        create_image_writer(
-            summary_writer, "Test/Mask", "mask", transform_func=transform_func
-        ),
-    )
-    evaluator.add_event_handler(
-        Events.EPOCH_COMPLETED,
-        create_image_writer(
-            summary_writer, "Test/Pred", "y_pred", transform_func=transform_pred
-        ),
+        create_image_writer(summary_writer, "Test/Pred", "y_pred", transform_func=transform_pred),
     )
 
     logger.info("Starting training")
@@ -335,24 +272,16 @@ def run(*options, cfg=None):
     # Log top N and bottom N inlines in terms of IoU to tensorboard
     inline_ious = inline_mean_iou.iou_per_inline()
     sorted_ious = sorted(inline_ious.items(), key=lambda x: x[1], reverse=True)
-    topk = (
-        (inline_mean_iou.predictions[key], inline_mean_iou.masks[key])
-        for key, iou in take(_TOP_K, sorted_ious)
-    )
+    topk = ((inline_mean_iou.predictions[key], inline_mean_iou.masks[key]) for key, iou in take(_TOP_K, sorted_ious))
     bottomk = (
-        (inline_mean_iou.predictions[key], inline_mean_iou.masks[key])
-        for key, iou in tail(_BOTTOM_K, sorted_ious)
+        (inline_mean_iou.predictions[key], inline_mean_iou.masks[key]) for key, iou in tail(_BOTTOM_K, sorted_ious)
     )
     stack_and_decode = compose(transform_func, torch.stack)
     predictions, masks = unzip(chain(topk, bottomk))
     predictions_tensor = stack_and_decode(list(predictions))
     masks_tensor = stack_and_decode(list(masks))
-    _log_tensor_to_tensorboard(
-        predictions_tensor, "Test/InlinePredictions", summary_writer, evaluator
-    )
-    _log_tensor_to_tensorboard(
-        masks_tensor, "Test/InlineMasks", summary_writer, evaluator
-    )
+    _log_tensor_to_tensorboard(predictions_tensor, "Test/InlinePredictions", summary_writer, evaluator)
+    _log_tensor_to_tensorboard(masks_tensor, "Test/InlineMasks", summary_writer, evaluator)
 
     summary_writer.close()
 

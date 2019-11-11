@@ -52,9 +52,7 @@ def create_supervised_trainer(
     def _update(engine, batch):
         model.train()
         optimizer.zero_grad()
-        x, y, ids, patch_locations = prepare_batch(
-            batch, device=device, non_blocking=non_blocking
-        )
+        x, y, ids, patch_locations = prepare_batch(batch, device=device, non_blocking=non_blocking)
         y_pred = model(x)
         y_pred = _upscale_model_output(y_pred, y)
         loss = loss_fn(y_pred.squeeze(1), y.squeeze(1))
@@ -77,12 +75,7 @@ def val_transform(x, y, y_pred, ids, patch_locations):
 
 
 def create_supervised_evaluator(
-    model,
-    prepare_batch,
-    metrics=None,
-    device=None,
-    non_blocking=False,
-    output_transform=val_transform,
+    model, prepare_batch, metrics=None, device=None, non_blocking=False, output_transform=val_transform,
 ):
     """Factory function for creating an evaluator for supervised segmentation models.
 
@@ -113,9 +106,7 @@ def create_supervised_evaluator(
     def _inference(engine, batch):
         model.eval()
         with torch.no_grad():
-            x, y, ids, patch_locations = prepare_batch(
-                batch, device=device, non_blocking=non_blocking
-            )
+            x, y, ids, patch_locations = prepare_batch(batch, device=device, non_blocking=non_blocking)
             y_pred = model(x)
             y_pred = _upscale_model_output(y_pred, x)
             return output_transform(x, y, y_pred, ids, patch_locations)
