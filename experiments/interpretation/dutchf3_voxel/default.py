@@ -18,9 +18,7 @@ _C.CUDNN.DETERMINISTIC = False
 _C.CUDNN.ENABLED = True
 
 _C.GPUS = (0,)
-_C.OUTPUT_DIR = (
-    "output"  # The base directory for all output, such as logs and saved models
-)
+_C.OUTPUT_DIR = "output"  # This will be the base directory for all output, such as logs and saved models
 _C.LOG_DIR = ""  # This will be a subdirectory inside OUTPUT_DIR
 _C.WORKERS = 4
 _C.PRINT_FREQ = 20

@@ -13,7 +13,5 @@ def extract_metric_from(metric, engine):
 
 @curry
 def padded_val_transform(pad_left, fine_size, x, y, y_pred):
-    y_pred = y_pred[
-        :, :, pad_left : pad_left + fine_size, pad_left : pad_left + fine_size
-    ].contiguous()
+    y_pred = y_pred[:, :, pad_left : pad_left + fine_size, pad_left : pad_left + fine_size].contiguous()
     return {"image": x, "y_pred": F.sigmoid(y_pred).detach(), "mask": y.detach()}

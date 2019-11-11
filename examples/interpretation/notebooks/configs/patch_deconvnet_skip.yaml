@@ -12,7 +12,7 @@ SEED: 2019
 
 DATASET:
   NUM_CLASSES: 6
-  ROOT: /mnt/dutchf3
+  ROOT: /data/dutchf3
   CLASS_WEIGHTS: [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 MODEL:
@@ -48,7 +48,7 @@ VALIDATION:
   BATCH_SIZE_PER_GPU: 512
 
 TEST: 
-  MODEL_PATH: '/data/home/vapaunic/repos/DeepSeismic/examples/interpretation/notebooks/output/models/model_patch_deconvnet_skip_100.pth'
+  MODEL_PATH: '/data/home/mat/repos/DeepSeismic/examples/interpretation/notebooks/output/models/model_patch_deconvnet_skip_2.pth'
   TEST_STRIDE: 10
   SPLIT: 'test1' # Can be both, test1, test2
   INLINE: True

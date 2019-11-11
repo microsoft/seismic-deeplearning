@@ -28,9 +28,7 @@ class RoethTarantolaGenerator(Generator):
     def generate(self) -> np.ndarray:
         vp = np.zeros(self.shape, dtype=self.dtype)
         dim = self.depth_dim
-        layer_idx = np.round(np.linspace(0, self.shape[dim], self.n_layers + 1)).astype(
-            np.int
-        )
+        layer_idx = np.round(np.linspace(0, self.shape[dim], self.n_layers + 1)).astype(np.int)
         vp_idx = [slice(0, x) for x in vp.shape]
         layer_vp = None
         for i in range(self.n_layers):

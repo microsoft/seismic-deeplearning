@@ -6,7 +6,7 @@ import numbers
 import random
 import numpy as np
 
-from PIL import Image, ImageOps, ImageChops
+from PIL import Image, ImageOps
 
 
 class Compose(object):
@@ -181,8 +181,8 @@ class RandomRotate(object):
 
     def __call__(self, img, mask):
         """
-        PIL automatically adds zeros to the borders of images that rotated. To fix this 
-        issue, the code in the botton sets anywhere in the labels (mask) that is zero to 
+        PIL automatically adds zeros to the borders of images that rotated. To fix this
+        issue, the code in the botton sets anywhere in the labels (mask) that is zero to
         255 (the value used for ignore_index).
         """
         rotate_degree = random.random() * 2 * self.degree - self.degree

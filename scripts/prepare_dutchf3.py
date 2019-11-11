@@ -39,9 +39,7 @@ def _write_split_files(splits_path, train_list, test_list, loader_type):
 def _get_aline_range(aline, per_val):
     # Inline sections
     test_aline = math.floor(aline * per_val / 2)
-    test_aline_range = itertools.chain(
-        range(0, test_aline), range(aline - test_aline, aline)
-    )
+    test_aline_range = itertools.chain(range(0, test_aline), range(aline - test_aline, aline))
     train_aline_range = range(test_aline, aline - test_aline)
 
     return train_aline_range, test_aline_range
@@ -133,12 +131,8 @@ def split_patch_train_val(data_dir, stride, patch, per_val=0.2, log_config=None)
             for j, k in locations:
                 yield "i_" + str(i) + "_" + str(j) + "_" + str(k)
 
-    test_i_list = list(
-        _i_extract_patches(test_iline_range, horz_locations, vert_locations)
-    )
-    train_i_list = list(
-        _i_extract_patches(train_iline_range, horz_locations, vert_locations)
-    )
+    test_i_list = list(_i_extract_patches(test_iline_range, horz_locations, vert_locations))
+    train_i_list = list(_i_extract_patches(train_iline_range, horz_locations, vert_locations))
 
     # Process crosslines
     horz_locations = range(0, iline - patch, stride)
@@ -150,12 +144,8 @@ def split_patch_train_val(data_dir, stride, patch, per_val=0.2, log_config=None)
             for i, k in locations:
                 yield "x_" + str(i) + "_" + str(j) + "_" + str(k)
 
-    test_x_list = list(
-        _x_extract_patches(test_xline_range, horz_locations, vert_locations)
-    )
-    train_x_list = list(
-        _x_extract_patches(train_xline_range, horz_locations, vert_locations)
-    )
+    test_x_list = list(_x_extract_patches(test_xline_range, horz_locations, vert_locations))
+    train_x_list = list(_x_extract_patches(train_xline_range, horz_locations, vert_locations))
 
     train_list = train_x_list + train_i_list
     test_list = test_x_list + test_i_list
@@ -178,9 +168,7 @@ def run_split_func(loader_type, *args, **kwargs):
     split_func(*args, **kwargs)
 
 
-def split_alaudah_et_al_19(
-    data_dir, stride, fraction_validation=0.2, loader_type="patch", log_config=None
-):
+def split_alaudah_et_al_19(data_dir, stride, fraction_validation=0.2, loader_type="patch", log_config=None):
     """Generate train and validation files (with overlap) for Netherlands F3 dataset.
     The original split method from https://github.com/olivesgatech/facies_classification_benchmark
     DON'T USE, SEE NOTES BELOW
@@ -235,9 +223,7 @@ def split_alaudah_et_al_19(
             # for every inline:
             # images are references by top-left corner:
             locations = [[j, k] for j in horz_locations for k in vert_locations]
-            patches_list = [
-                "i_" + str(i) + "_" + str(j) + "_" + str(k) for j, k in locations
-            ]
+            patches_list = ["i_" + str(i) + "_" + str(j) + "_" + str(k) for j, k in locations]
             i_list.append(patches_list)
 
         # flatten the list
@@ -250,9 +236,7 @@ def split_alaudah_et_al_19(
             # for every xline:
             # images are references by top-left corner:
             locations = [[i, k] for i in horz_locations for k in vert_locations]
-            patches_list = [
-                "x_" + str(i) + "_" + str(j) + "_" + str(k) for i, k in locations
-            ]
+            patches_list = ["x_" + str(i) + "_" + str(j) + "_" + str(k) for i, k in locations]
             x_list.append(patches_list)
 
         # flatten the list
@@ -261,9 +245,7 @@ def split_alaudah_et_al_19(
     list_train_val = i_list + x_list
 
     # create train and test splits:
-    train_list, test_list = train_test_split(
-        list_train_val, test_size=fraction_validation, shuffle=True
-    )
+    train_list, test_list = train_test_split(list_train_val, test_size=fraction_validation, shuffle=True)
 
     # write to files to disk:
     splits_path = _get_splits_path(data_dir)
@@ -294,9 +276,7 @@ class SplitTrainValCLI(object):
                 Defaults to 0.2.
             log_config (str): path to log configurations
         """
-        return split_patch_train_val(
-            data_dir, stride, patch, per_val=per_val, log_config=log_config
-        )
+        return split_patch_train_val(data_dir, stride, patch, per_val=per_val, log_config=log_config)
 
 
 if __name__ == "__main__":
@@ -307,8 +287,5 @@ if __name__ == "__main__":
 
     """
     fire.Fire(
-        {
-            "split_train_val": SplitTrainValCLI,
-            "split_alaudah_et_al_19": split_alaudah_et_al_19,
-        }
+        {"split_train_val": SplitTrainValCLI, "split_alaudah_et_al_19": split_alaudah_et_al_19,}
     )

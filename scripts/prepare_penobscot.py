@@ -47,9 +47,7 @@ def _split_train_val_test(partition, val_ratio, test_ratio):
     train_samples = total_samples - (val_samples + test_samples)
     train_list = partition[:train_samples]
     val_list = partition[train_samples : train_samples + val_samples]
-    test_list = partition[
-        train_samples + val_samples : train_samples + val_samples + test_samples
-    ]
+    test_list = partition[train_samples + val_samples : train_samples + val_samples + test_samples]
     return train_list, val_list, test_list
 
 
@@ -66,26 +64,18 @@ def split_inline(data_dir, val_ratio, test_ratio, overwrite=False, exclude_files
     num_partitions = 5
     image_dir = os.path.join(data_dir, "inlines")
     dir_paths = (os.path.join(image_dir, ddir) for ddir in ("train", "val", "test"))
-    locations_list = [
-        _create_directory(d, overwrite=overwrite) for d in dir_paths
-    ]  # train, val, test
+    locations_list = [_create_directory(d, overwrite=overwrite) for d in dir_paths]  # train, val, test
 
     images_iter = glob.iglob(os.path.join(image_dir, "*.tiff"))
 
     if exclude_files is not None:
-        images_list = list(
-            itertools.filterfalse(lambda x: x in exclude_files, images_iter)
-        )
+        images_list = list(itertools.filterfalse(lambda x: x in exclude_files, images_iter))
     else:
         images_list = list(images_iter)
 
     num_elements = math.ceil(len(images_list) / num_partitions)
-    for partition in partition_all(
-        num_elements, images_list
-    ):  # Partition files into N partitions
-        for files_list, dest_dir in zip(
-            _split_train_val_test(partition, val_ratio, test_ratio), locations_list
-        ):
+    for partition in partition_all(num_elements, images_list):  # Partition files into N partitions
+        for files_list, dest_dir in zip(_split_train_val_test(partition, val_ratio, test_ratio), locations_list):
             _copy_files(files_list, dest_dir)
 
 

@@ -46,22 +46,17 @@ if USE_GPU and torch.cuda.is_available():
 
 # Load the data cube and labels
 data, data_info = read_segy(join(ROOT_PATH, INPUT_VOXEL))
-train_class_imgs, train_coordinates = read_labels(
-    join(ROOT_PATH, TRAIN_MASK), data_info
-)
+train_class_imgs, train_coordinates = read_labels(join(ROOT_PATH, TRAIN_MASK), data_info)
 val_class_imgs, _ = read_labels(join(ROOT_PATH, VAL_MASK), data_info)
 
 # Plot training/validation data with labels
 if LOG_TENSORBOARD:
     for class_img in train_class_imgs + val_class_imgs:
         logger.log_images(
-            class_img[1] + "_" + str(class_img[2]),
-            get_slice(data, data_info, class_img[1], class_img[2]),
-            cm="gray",
+            class_img[1] + "_" + str(class_img[2]), get_slice(data, data_info, class_img[1], class_img[2]), cm="gray",
         )
         logger.log_images(
-            class_img[1] + "_" + str(class_img[2]) + "_true_class",
-            class_img[0],
+            class_img[1] + "_" + str(class_img[2]) + "_true_class", class_img[0],
         )
 
 # Training loop
@@ -112,9 +107,7 @@ for i in range(5000):
         print("Iteration:", i, "Training loss:", utils.var_to_np(loss))
         if LOG_TENSORBOARD:
             logger.log_scalar("training_loss", utils.var_to_np(loss), i)
-        for k, v in utils.compute_accuracy(
-            torch.argmax(output, 1), labels
-        ).items():
+        for k, v in utils.compute_accuracy(torch.argmax(output, 1), labels).items():
             if LOG_TENSORBOARD:
                 logger.log_scalar("training_" + k, v, i)
             print(" -", k, v, "%")
@@ -130,34 +123,14 @@ for i in range(5000):
             slice_no = class_img[2]
 
             class_img = utils.interpret(
-                network.classify,
-                data,
-                data_info,
-                slice,
-                slice_no,
-                IM_SIZE,
-                16,
-                return_full_size=True,
-                use_gpu=USE_GPU,
+                network.classify, data, data_info, slice, slice_no, IM_SIZE, 16, return_full_size=True, use_gpu=USE_GPU,
             )
-            logger.log_images(
-                slice + "_" + str(slice_no) + "_pred_class", class_img[0], step=i
-            )
+            logger.log_images(slice + "_" + str(slice_no) + "_pred_class", class_img[0], step=i)
 
             class_img = utils.interpret(
-                network,
-                data,
-                data_info,
-                slice,
-                slice_no,
-                IM_SIZE,
-                16,
-                return_full_size=True,
-                use_gpu=USE_GPU,
+                network, data, data_info, slice, slice_no, IM_SIZE, 16, return_full_size=True, use_gpu=USE_GPU,
             )
-            logger.log_images(
-                slice + "_" + str(slice_no) + "_pred_prob", class_img[0], i
-            )
+            logger.log_images(slice + "_" + str(slice_no) + "_pred_prob", class_img[0], i)
 
         # Store trained network
         torch.save(network.state_dict(), join(ROOT_PATH, "saved_model.pt"))

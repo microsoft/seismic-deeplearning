@@ -4,12 +4,9 @@
 """ Taken from https://github.com/milesial/Pytorch-UNet
 
 """
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
-from torch.nn import init
 
 
 class double_conv(nn.Module):
@@ -117,4 +114,3 @@ class UNet(nn.Module):
 def get_seg_model(cfg, **kwargs):
     model = UNet(cfg.MODEL.IN_CHANNELS, cfg.DATASET.NUM_CLASSES)
     return model
-

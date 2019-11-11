@@ -63,18 +63,13 @@ def test_class_accuracy():
     metric_cm = _get_cm(acc_metric)
     # assert confusion matrix exists and is all zeroes
     assert metric_cm is not None
-    assert (
-        torch.min(metric_cm.confusion_matrix) == 0.0
-        and torch.max(metric_cm.confusion_matrix) == 0.0
-    )
+    assert torch.min(metric_cm.confusion_matrix) == 0.0 and torch.max(metric_cm.confusion_matrix) == 0.0
     metric_cm.update(output)
 
     # Expected result
     true_res = [1.0, 1.0, 1.0]
     res = acc_metric.compute().numpy()
-    assert np.all(res == true_res), "Result {} vs. expected values {}".format(
-        res, true_res
-    )
+    assert np.all(res == true_res), "Result {} vs. expected values {}".format(res, true_res)
 
     ## Imperfect prediction
     th_y_true, th_y_logits = _compute_th_y_true_y_logits(y_true, y_pred)
@@ -86,18 +81,13 @@ def test_class_accuracy():
     # Retrieve and update confusion matrix
     metric_cm = _get_cm(acc_metric)
     assert metric_cm is not None
-    assert (
-        torch.min(metric_cm.confusion_matrix) == 0.0
-        and torch.max(metric_cm.confusion_matrix) == 0.0
-    )
+    assert torch.min(metric_cm.confusion_matrix) == 0.0 and torch.max(metric_cm.confusion_matrix) == 0.0
     metric_cm.update(output)
 
     # Expected result
     true_res = [0.75, 0.0, 0.25]
     res = acc_metric.compute().numpy()
-    assert np.all(res == true_res), "Result {} vs. expected values {}".format(
-        res, true_res
-    )
+    assert np.all(res == true_res), "Result {} vs. expected values {}".format(res, true_res)
 
 
 def test_mean_class_accuracy():
@@ -117,9 +107,7 @@ def test_mean_class_accuracy():
     # Expected result
     true_res = 1.0
     res = acc_metric.compute().numpy()
-    assert res == approx(true_res), "Result {} vs. expected value {}".format(
-        res, true_res
-    )
+    assert res == approx(true_res), "Result {} vs. expected value {}".format(res, true_res)
 
     ## Imperfect prediction
     th_y_true, th_y_logits = _compute_th_y_true_y_logits(y_true, y_pred)
@@ -135,6 +123,4 @@ def test_mean_class_accuracy():
     # Expected result
     true_res = 1 / 3
     res = acc_metric.compute().numpy()
-    assert res == approx(true_res), "Result {} vs. expected value {}".format(
-        res, true_res
-    )
+    assert res == approx(true_res), "Result {} vs. expected value {}".format(res, true_res)

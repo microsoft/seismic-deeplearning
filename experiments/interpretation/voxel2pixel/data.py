@@ -152,9 +152,7 @@ def read_labels(fname, data_info):
                 label_coordinates[str(cls)] = np.array(np.zeros([3, 0]))
             inds_with_cls = label_img == cls
             cords_with_cls = coords[:, inds_with_cls.ravel()]
-            label_coordinates[str(cls)] = np.concatenate(
-                (label_coordinates[str(cls)], cords_with_cls), 1
-            )
+            label_coordinates[str(cls)] = np.concatenate((label_coordinates[str(cls)], cords_with_cls), 1)
             print(
                 " ", str(np.sum(inds_with_cls)), "labels for class", str(cls),
             )
@@ -208,9 +206,7 @@ def parse_labels_in_image(img):
     for color in class_color_coding:
         # Find pixels with these labels
         inds = (
-            (np.abs(r - color[0]) < tolerance)
-            & (np.abs(g - color[1]) < tolerance)
-            & (np.abs(b - color[2]) < tolerance)
+            (np.abs(r - color[0]) < tolerance) & (np.abs(g - color[1]) < tolerance) & (np.abs(b - color[2]) < tolerance)
         )
         label_img[inds] = cls
         cls += 1

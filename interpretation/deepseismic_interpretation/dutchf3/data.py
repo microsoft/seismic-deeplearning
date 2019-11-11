@@ -6,6 +6,7 @@ import warnings
 import segyio
 from os import path
 import scipy
+
 # bugfix for scipy imports
 import scipy.misc
 import numpy as np
@@ -145,9 +146,7 @@ def read_labels(fname, data_info):
                 label_coordinates[str(cls)] = np.array(np.zeros([3, 0]))
             inds_with_cls = label_img == cls
             cords_with_cls = coords[:, inds_with_cls.ravel()]
-            label_coordinates[str(cls)] = np.concatenate(
-                (label_coordinates[str(cls)], cords_with_cls), 1
-            )
+            label_coordinates[str(cls)] = np.concatenate((label_coordinates[str(cls)], cords_with_cls), 1)
             print(" ", str(np.sum(inds_with_cls)), "labels for class", str(cls))
     if len(np.unique(label_img)) == 1:
         print(" ", 0, "labels", str(cls))
@@ -291,14 +290,7 @@ class SectionLoader(data.Dataset):
 
 class VoxelLoader(data.Dataset):
     def __init__(
-        self,
-        root_path,
-        filename,
-        window_size=65,
-        split="train",
-        n_classes=2,
-        gen_coord_list=False,
-        len=None,
+        self, root_path, filename, window_size=65, split="train", n_classes=2, gen_coord_list=False, len=None,
     ):
 
         assert split == "train" or split == "val"
@@ -365,10 +357,7 @@ class VoxelLoader(data.Dataset):
 class TrainSectionLoader(SectionLoader):
     def __init__(self, data_dir, split="train", is_transform=True, augmentations=None):
         super(TrainSectionLoader, self).__init__(
-            data_dir,
-            split=split,
-            is_transform=is_transform,
-            augmentations=augmentations,
+            data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
         )
 
         self.seismic = np.load(_train_data_for(self.data_dir))
@@ -384,10 +373,7 @@ class TrainSectionLoader(SectionLoader):
 class TrainSectionLoaderWithDepth(TrainSectionLoader):
     def __init__(self, data_dir, split="train", is_transform=True, augmentations=None):
         super(TrainSectionLoaderWithDepth, self).__init__(
-            data_dir,
-            split=split,
-            is_transform=is_transform,
-            augmentations=augmentations,
+            data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
         )
         self.seismic = add_section_depth_channels(self.seismic)  # NCWH
 
@@ -421,13 +407,7 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
 
 class TrainVoxelWaldelandLoader(VoxelLoader):
     def __init__(
-        self,
-        root_path,
-        filename,
-        split="train",
-        window_size=65,
-        batch_size=None,
-        len=None,
+        self, root_path, filename, split="train", window_size=65, batch_size=None, len=None,
     ):
         super(TrainVoxelWaldelandLoader, self).__init__(
             root_path, filename, split=split, window_size=window_size, len=len
@@ -469,10 +449,7 @@ TrainVoxelLoaderWithDepth = TrainVoxelWaldelandLoader
 class TestSectionLoader(SectionLoader):
     def __init__(self, data_dir, split="test1", is_transform=True, augmentations=None):
         super(TestSectionLoader, self).__init__(
-            data_dir,
-            split=split,
-            is_transform=is_transform,
-            augmentations=augmentations,
+            data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
         )
 
         if "test1" in self.split:
@@ -493,10 +470,7 @@ class TestSectionLoader(SectionLoader):
 class TestSectionLoaderWithDepth(TestSectionLoader):
     def __init__(self, data_dir, split="test1", is_transform=True, augmentations=None):
         super(TestSectionLoaderWithDepth, self).__init__(
-            data_dir,
-            split=split,
-            is_transform=is_transform,
-            augmentations=augmentations,
+            data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
         )
         self.seismic = add_section_depth_channels(self.seismic)  # NCWH
 
@@ -547,9 +521,7 @@ class PatchLoader(data.Dataset):
         Data loader for the patch-based deconvnet
     """
 
-    def __init__(
-        self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None
-    ):
+    def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None):
         self.data_dir = data_dir
         self.is_transform = is_transform
         self.augmentations = augmentations
@@ -562,9 +534,7 @@ class PatchLoader(data.Dataset):
         """
         Only used for train/val!! Not test.
         """
-        return np.pad(
-            volume, pad_width=self.patch_size, mode="constant", constant_values=255
-        )
+        return np.pad(volume, pad_width=self.patch_size, mode="constant", constant_values=255)
 
     def __len__(self):
         return len(self.patches)
@@ -581,19 +551,11 @@ class PatchLoader(data.Dataset):
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
 
         if direction == "i":
-            im = self.seismic[
-                idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size
-            ]
-            lbl = self.labels[
-                idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size
-            ]
+            im = self.seismic[idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size]
+            lbl = self.labels[idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size]
         elif direction == "x":
-            im = self.seismic[
-                idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size
-            ]
-            lbl = self.labels[
-                idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size
-            ]
+            im = self.seismic[idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size]
+            lbl = self.labels[idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size]
 
         im, lbl = _transform_WH_to_HW(im), _transform_WH_to_HW(lbl)
 
@@ -614,15 +576,9 @@ class PatchLoader(data.Dataset):
 
 
 class TestPatchLoader(PatchLoader):
-    def __init__(
-        self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None
-    ):
+    def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None):
         super(TestPatchLoader, self).__init__(
-            data_dir,
-            stride=stride,
-            patch_size=patch_size,
-            is_transform=is_transform,
-            augmentations=augmentations,
+            data_dir, stride=stride, patch_size=patch_size, is_transform=is_transform, augmentations=augmentations,
         )
         ## Warning: this is not used or tested
         raise NotImplementedError("This class is not correctly implemented.")
@@ -640,20 +596,10 @@ class TestPatchLoader(PatchLoader):
 
 class TrainPatchLoader(PatchLoader):
     def __init__(
-        self,
-        data_dir,
-        split="train",
-        stride=30,
-        patch_size=99,
-        is_transform=True,
-        augmentations=None,
+        self, data_dir, split="train", stride=30, patch_size=99, is_transform=True, augmentations=None,
     ):
         super(TrainPatchLoader, self).__init__(
-            data_dir,
-            stride=stride,
-            patch_size=patch_size,
-            is_transform=is_transform,
-            augmentations=augmentations,
+            data_dir, stride=stride, patch_size=patch_size, is_transform=is_transform, augmentations=augmentations,
         )
         # self.seismic = self.pad_volume(np.load(seismic_path))
         # self.labels = self.pad_volume(np.load(labels_path))
@@ -672,20 +618,10 @@ class TrainPatchLoader(PatchLoader):
 
 class TrainPatchLoaderWithDepth(TrainPatchLoader):
     def __init__(
-        self,
-        data_dir,
-        split="train",
-        stride=30,
-        patch_size=99,
-        is_transform=True,
-        augmentations=None,
+        self, data_dir, split="train", stride=30, patch_size=99, is_transform=True, augmentations=None,
     ):
         super(TrainPatchLoaderWithDepth, self).__init__(
-            data_dir,
-            stride=stride,
-            patch_size=patch_size,
-            is_transform=is_transform,
-            augmentations=augmentations,
+            data_dir, stride=stride, patch_size=patch_size, is_transform=is_transform, augmentations=augmentations,
         )
 
     def __getitem__(self, index):
@@ -700,19 +636,11 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
 
         if direction == "i":
-            im = self.seismic[
-                idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size
-            ]
-            lbl = self.labels[
-                idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size
-            ]
+            im = self.seismic[idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size]
+            lbl = self.labels[idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size]
         elif direction == "x":
-            im = self.seismic[
-                idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size
-            ]
-            lbl = self.labels[
-                idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size
-            ]
+            im = self.seismic[idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size]
+            lbl = self.labels[idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size]
 
         im, lbl = _transform_WH_to_HW(im), _transform_WH_to_HW(lbl)
 
@@ -738,13 +666,7 @@ def _transform_HWC_to_CHW(numpy_array):
 
 class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
     def __init__(
-        self,
-        data_dir,
-        split="train",
-        stride=30,
-        patch_size=99,
-        is_transform=True,
-        augmentations=None,
+        self, data_dir, split="train", stride=30, patch_size=99, is_transform=True, augmentations=None,
     ):
         super(TrainPatchLoaderWithSectionDepth, self).__init__(
             data_dir,
@@ -767,19 +689,11 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
         if direction == "i":
-            im = self.seismic[
-                idx, :, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size
-            ]
-            lbl = self.labels[
-                idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size
-            ]
+            im = self.seismic[idx, :, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size]
+            lbl = self.labels[idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size]
         elif direction == "x":
-            im = self.seismic[
-                idx : idx + self.patch_size, :, xdx, ddx : ddx + self.patch_size
-            ]
-            lbl = self.labels[
-                idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size
-            ]
+            im = self.seismic[idx : idx + self.patch_size, :, xdx, ddx : ddx + self.patch_size]
+            lbl = self.labels[idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size]
             im = np.swapaxes(im, 0, 1)  # From WCH to CWH
 
         im, lbl = _transform_WH_to_HW(im), _transform_WH_to_HW(lbl)
@@ -882,14 +796,7 @@ def add_section_depth_channels(sections_numpy):
 
 def get_seismic_labels():
     return np.asarray(
-        [
-            [69, 117, 180],
-            [145, 191, 219],
-            [224, 243, 248],
-            [254, 224, 144],
-            [252, 141, 89],
-            [215, 48, 39],
-        ]
+        [[69, 117, 180], [145, 191, 219], [224, 243, 248], [254, 224, 144], [252, 141, 89], [215, 48, 39]]
     )
 
 

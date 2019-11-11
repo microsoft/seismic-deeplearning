@@ -75,22 +75,14 @@ def _is_3D(numpy_array):
 @curry
 def _extract_patches(patch_size, stride, complete_patches_only, img_array, mask_array):
     height, width = img_array.shape[-2], img_array.shape[-1]
-    num_h_patches = _number_patches_in(
-        height, patch_size, stride, complete_patches_only=complete_patches_only
-    )
-    num_w_patches = _number_patches_in(
-        width, patch_size, stride, complete_patches_only=complete_patches_only
-    )
+    num_h_patches = _number_patches_in(height, patch_size, stride, complete_patches_only=complete_patches_only)
+    num_w_patches = _number_patches_in(width, patch_size, stride, complete_patches_only=complete_patches_only)
     height_iter = range(0, stride * (num_h_patches + 1), stride)
     width_iter = range(0, stride * (num_w_patches + 1), stride)
     patch_locations = list(itertools.product(height_iter, width_iter))
 
-    image_patch_generator = _generate_patches_for(
-        img_array, patch_locations, patch_size
-    )
-    mask_patch_generator = _generate_patches_for(
-        mask_array, patch_locations, patch_size
-    )
+    image_patch_generator = _generate_patches_for(img_array, patch_locations, patch_size)
+    mask_patch_generator = _generate_patches_for(mask_array, patch_locations, patch_size)
     return image_patch_generator, mask_patch_generator, patch_locations
 
 
@@ -105,17 +97,11 @@ def _generate_patches_for(numpy_array, patch_locations, patch_size):
 
 
 def _generate_patches_from_2D(numpy_array, patch_locations, patch_size):
-    return (
-        numpy_array[h : h + patch_size, w : w + patch_size].copy()
-        for h, w in patch_locations
-    )
+    return (numpy_array[h : h + patch_size, w : w + patch_size].copy() for h, w in patch_locations)
 
 
 def _generate_patches_from_3D(numpy_array, patch_locations, patch_size):
-    return (
-        numpy_array[:, h : h + patch_size, w : w + patch_size].copy()
-        for h, w in patch_locations
-    )
+    return (numpy_array[:, h : h + patch_size, w : w + patch_size].copy() for h, w in patch_locations)
 
 
 _STATS_FUNCS = {"mean": np.mean, "std": np.std, "max": np.max}
@@ -143,9 +129,7 @@ def _split_train_val_test(partition, val_ratio, test_ratio):
     train_samples = total_samples - (val_samples + test_samples)
     train_list = partition[:train_samples]
     val_list = partition[train_samples : train_samples + val_samples]
-    test_list = partition[
-        train_samples + val_samples : train_samples + val_samples + test_samples
-    ]
+    test_list = partition[train_samples + val_samples : train_samples + val_samples + test_samples]
     return train_list, val_list, test_list
 
 
@@ -211,9 +195,7 @@ class InlinePatchDataset(Dataset):
         verify_str_arg(split, "split", valid_modes, msg)
 
         # Set the patch and stride for the patch extractor
-        _extract_patches_from = _extract_patches(
-            patch_size, stride, self._complete_patches_only
-        )
+        _extract_patches_from = _extract_patches(patch_size, stride, self._complete_patches_only)
         num_partitions = 5
         indexes = self._data_array.shape[0]
         num_elements = math.ceil(indexes / num_partitions)
@@ -221,12 +203,8 @@ class InlinePatchDataset(Dataset):
         test_indexes_list = []
         val_indexes_list = []
 
-        for partition in partition_all(
-            num_elements, range(indexes)
-        ):  # Partition files into N partitions
-            train_indexes, val_indexes, test_indexes = _split_train_val_test(
-                partition, val_ratio, test_ratio
-            )
+        for partition in partition_all(num_elements, range(indexes)):  # Partition files into N partitions
+            train_indexes, val_indexes, test_indexes = _split_train_val_test(partition, val_ratio, test_ratio)
             train_indexes_list.extend(train_indexes)
             test_indexes_list.extend(test_indexes)
             val_indexes_list.extend(val_indexes)
@@ -243,22 +221,16 @@ class InlinePatchDataset(Dataset):
             img_array = self._data_array[index]
             mask_array = self._slice_mask_array[index]
             self._ids.append(index)
-            image_generator, mask_generator, patch_locations = _extract_patches_from(
-                img_array, mask_array
-            )
+            image_generator, mask_generator, patch_locations = _extract_patches_from(img_array, mask_array)
             self._patch_locations.extend(patch_locations)
 
             self._image_array.extend(image_generator)
 
             self._mask_array.extend(mask_generator)
 
-        assert len(self._image_array) == len(
-            self._patch_locations
-        ), "The shape is not the same"
+        assert len(self._image_array) == len(self._patch_locations), "The shape is not the same"
 
-        assert (
-            len(self._patch_locations) % len(self._ids) == 0
-        ), "Something is wrong with the patches"
+        assert len(self._patch_locations) % len(self._ids) == 0, "Something is wrong with the patches"
 
         self._patches_per_image = int(len(self._patch_locations) / len(self._ids))
 
@@ -311,9 +283,7 @@ class InlinePatchDataset(Dataset):
     @property
     def statistics(self):
         flat_image_array = np.concatenate([i.flatten() for i in self._image_array])
-        stats = {
-            stat: statfunc(flat_image_array) for stat, statfunc in _STATS_FUNCS.items()
-        }
+        stats = {stat: statfunc(flat_image_array) for stat, statfunc in _STATS_FUNCS.items()}
         return "Mean: {mean} Std: {std} Max: {max}".format(**stats)
 
     def __repr__(self):
@@ -327,9 +297,7 @@ class InlinePatchDataset(Dataset):
 
     def _format_transform_repr(self, transform, head):
         lines = transform.__repr__().splitlines()
-        return ["{}{}".format(head, lines[0])] + [
-            "{}{}".format(" " * len(head), line) for line in lines[1:]
-        ]
+        return ["{}{}".format(head, lines[0])] + ["{}{}".format(" " * len(head), line) for line in lines[1:]]
 
     def extra_repr(self):
         lines = [

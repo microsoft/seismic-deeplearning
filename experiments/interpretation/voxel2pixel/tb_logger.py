@@ -10,9 +10,7 @@ from os.path import join
 try:
     import tensorflow as tf
 except:
-    print(
-        "Tensorflow could not be imported, therefore tensorboard cannot be used."
-    )
+    print("Tensorflow could not be imported, therefore tensorboard cannot be used.")
 
 from io import BytesIO
 import matplotlib.pyplot as plt
@@ -28,12 +26,7 @@ class TBLogger(object):
 
     def __init__(self, log_dir, folder_name=""):
 
-        self.log_dir = join(
-            log_dir,
-            folder_name
-            + " "
-            + datetime.datetime.now().strftime("%I%M%p, %B %d, %Y"),
-        )
+        self.log_dir = join(log_dir, folder_name + " " + datetime.datetime.now().strftime("%I%M%p, %B %d, %Y"),)
         self.log_dir = self.log_dir.replace("//", "/")
         self.writer = tf.summary.FileWriter(self.log_dir)
 
@@ -47,9 +40,7 @@ class TBLogger(object):
             step: step
 
         """
-        summary = tf.Summary(
-            value=[tf.Summary.Value(tag=tag, simple_value=value)]
-        )
+        summary = tf.Summary(value=[tf.Summary.Value(tag=tag, simple_value=value)])
         self.writer.add_summary(summary, step)
 
     # TODO: this should probably be a static method - take care of this when re-writing the whole thing
@@ -104,16 +95,10 @@ class TBLogger(object):
 
         # If 3D we make one list for each slice-type
         if dim == 3:
-            new_images_ts, new_images_il, new_images_cl = self.get_slices_from_3d(
-                images
-            )
-            self.log_images(
-                tag + "_timeslice", new_images_ts, step, 2, max_imgs
-            )
+            new_images_ts, new_images_il, new_images_cl = self.get_slices_from_3d(images)
+            self.log_images(tag + "_timeslice", new_images_ts, step, 2, max_imgs)
             self.log_images(tag + "_inline", new_images_il, step, 2, max_imgs)
-            self.log_images(
-                tag + "_crossline", new_images_cl, step, 2, max_imgs
-            )
+            self.log_images(tag + "_crossline", new_images_cl, step, 2, max_imgs)
             return
 
         im_summaries = []
@@ -134,15 +119,9 @@ class TBLogger(object):
             plt.imsave(s, img, format="png")
 
             # Create an Image object
-            img_sum = tf.Summary.Image(
-                encoded_image_string=s.getvalue(),
-                height=img.shape[0],
-                width=img.shape[1],
-            )
+            img_sum = tf.Summary.Image(encoded_image_string=s.getvalue(), height=img.shape[0], width=img.shape[1],)
             # Create a Summary value
-            im_summaries.append(
-                tf.Summary.Value(tag="%s/%d" % (tag, nr), image=img_sum)
-            )
+            im_summaries.append(tf.Summary.Value(tag="%s/%d" % (tag, nr), image=img_sum))
 
             # if nr == max_imgs-1:
             #    break
@@ -172,27 +151,15 @@ class TBLogger(object):
 
         elif len(img.shape) == 4:
             for i in range(img.shape[0]):
-                new_images_ts.append(
-                    np.squeeze(img[i, img.shape[1] / 2, :, :])
-                )
-                new_images_il.append(
-                    np.squeeze(img[i, :, img.shape[2] / 2, :])
-                )
-                new_images_cl.append(
-                    np.squeeze(img[i, :, :, img.shape[3] / 2])
-                )
+                new_images_ts.append(np.squeeze(img[i, img.shape[1] / 2, :, :]))
+                new_images_il.append(np.squeeze(img[i, :, img.shape[2] / 2, :]))
+                new_images_cl.append(np.squeeze(img[i, :, :, img.shape[3] / 2]))
 
         elif len(img.shape) == 5:
             for i in range(img.shape[0]):
-                new_images_ts.append(
-                    np.squeeze(img[i, 0, img.shape[2] / 2, :, :])
-                )
-                new_images_il.append(
-                    np.squeeze(img[i, 0, :, img.shape[3] / 2, :])
-                )
-                new_images_cl.append(
-                    np.squeeze(img[i, 0, :, :, img.shape[4] / 2])
-                )
+                new_images_ts.append(np.squeeze(img[i, 0, img.shape[2] / 2, :, :]))
+                new_images_il.append(np.squeeze(img[i, 0, :, img.shape[3] / 2, :]))
+                new_images_cl.append(np.squeeze(img[i, 0, :, :, img.shape[4] / 2]))
 
         return new_images_ts, new_images_il, new_images_cl
 

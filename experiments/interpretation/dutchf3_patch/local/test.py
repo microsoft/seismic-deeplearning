@@ -49,17 +49,14 @@ class runningScore(object):
 
     def _fast_hist(self, label_true, label_pred, n_class):
         mask = (label_true >= 0) & (label_true < n_class)
-        hist = np.bincount(
-            n_class * label_true[mask].astype(int) + label_pred[mask],
-            minlength=n_class ** 2,
-        ).reshape(n_class, n_class)
+        hist = np.bincount(n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,).reshape(
+            n_class, n_class
+        )
         return hist
 
     def update(self, label_trues, label_preds):
         for lt, lp in zip(label_trues, label_preds):
-            self.confusion_matrix += self._fast_hist(
-                lt.flatten(), lp.flatten(), self.n_classes
-            )
+            self.confusion_matrix += self._fast_hist(lt.flatten(), lp.flatten(), self.n_classes)
 
     def get_scores(self):
         """Returns accuracy score evaluation result.
@@ -74,9 +71,7 @@ class runningScore(object):
         mean_acc_cls = np.nanmean(acc_cls)
         iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
         mean_iu = np.nanmean(iu)
-        freq = (
-            hist.sum(axis=1) / hist.sum()
-        )  # fraction of the pixels that come from each class
+        freq = hist.sum(axis=1) / hist.sum()  # fraction of the pixels that come from each class
         fwavacc = (freq[freq > 0] * iu[freq > 0]).sum()
         cls_iu = dict(zip(range(self.n_classes), iu))
 
@@ -177,10 +172,7 @@ def _compose_processing_pipeline(depth, aug=None):
 
 
 def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
-    hdc_wdx_generator = itertools.product(
-        range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride),
-    )
-
+    hdc_wdx_generator = itertools.product(range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride),)
     for batch_indexes in itertoolz.partition_all(batch_size, hdc_wdx_generator):
         yield batch_indexes
 
@@ -191,9 +183,7 @@ def _output_processing_pipeline(config, output):
     _, _, h, w = output.shape
     if config.TEST.POST_PROCESSING.SIZE != h or config.TEST.POST_PROCESSING.SIZE != w:
         output = F.interpolate(
-            output,
-            size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE,),
-            mode="bilinear",
+            output, size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE,), mode="bilinear",
         )
 
     if config.TEST.POST_PROCESSING.CROP_PIXELS > 0:
@@ -201,24 +191,14 @@ def _output_processing_pipeline(config, output):
         output = output[
             :,
             :,
-            config.TEST.POST_PROCESSING.CROP_PIXELS : h
-            - config.TEST.POST_PROCESSING.CROP_PIXELS,
-            config.TEST.POST_PROCESSING.CROP_PIXELS : w
-            - config.TEST.POST_PROCESSING.CROP_PIXELS,
+            config.TEST.POST_PROCESSING.CROP_PIXELS : h - config.TEST.POST_PROCESSING.CROP_PIXELS,
+            config.TEST.POST_PROCESSING.CROP_PIXELS : w - config.TEST.POST_PROCESSING.CROP_PIXELS,
         ]
     return output.squeeze()
 
 
 def _patch_label_2d(
-    model,
-    img,
-    pre_processing,
-    output_processing,
-    patch_size,
-    stride,
-    batch_size,
-    device,
-    num_classes,
+    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes,
 ):
     """Processes a whole section
     """
@@ -231,26 +211,16 @@ def _patch_label_2d(
     output_p = torch.zeros([1, num_classes, h + 2 * ps, w + 2 * ps])
 
     # generate output:
-    for batch_indexes in _generate_batches(
-        h, w, ps, patch_size, stride, batch_size=batch_size
-    ):
+    for batch_indexes in _generate_batches(h, w, ps, patch_size, stride, batch_size=batch_size):
         batch = torch.stack(
-            [
-                pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing,)
-                for hdx, wdx in batch_indexes
-            ],
+            [pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing,) for hdx, wdx in batch_indexes],
             dim=0,
         )
 
         model_output = model(batch.to(device))
         for (hdx, wdx), output in zip(batch_indexes, model_output.detach().cpu()):
             output = output_processing(output)
-            output_p[
-                :,
-                :,
-                hdx + ps : hdx + ps + patch_size,
-                wdx + ps : wdx + ps + patch_size,
-            ] += output
+            output_p[:, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size,] += output
 
     # crop the output_p in the middle
     output = output_p[:, :, ps:-ps, ps:-ps]
@@ -275,27 +245,16 @@ def to_image(label_mask, n_classes=6):
 
 
 def _evaluate_split(
-    split,
-    section_aug,
-    model,
-    pre_processing,
-    output_processing,
-    device,
-    running_metrics_overall,
-    config,
+    split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config,
 ):
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
-    test_set = TestSectionLoader(
-        config.DATASET.ROOT, split=split, is_transform=True, augmentations=section_aug,
-    )
+    test_set = TestSectionLoader(config.DATASET.ROOT, split=split, is_transform=True, augmentations=section_aug,)
 
     n_classes = test_set.n_classes
 
-    test_loader = data.DataLoader(
-        test_set, batch_size=1, num_workers=config.WORKERS, shuffle=False
-    )
+    test_loader = data.DataLoader(test_set, batch_size=1, num_workers=config.WORKERS, shuffle=False)
     running_metrics_split = runningScore(n_classes)
 
     # testing mode:
@@ -378,20 +337,12 @@ def test(*options, cfg=None):
     running_metrics_overall = runningScore(n_classes)
 
     # Augmentation
-    section_aug = Compose(
-        [
-            Normalize(
-                mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,
-            )
-        ]
-    )
+    section_aug = Compose([Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,)])
 
     patch_aug = Compose(
         [
             Resize(
-                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-                always_apply=True,
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
             ),
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
@@ -408,22 +359,11 @@ def test(*options, cfg=None):
 
     splits = ["test1", "test2"] if "Both" in config.TEST.SPLIT else [config.TEST.SPLIT]
     for sdx, split in enumerate(splits):
-        labels = np.load(
-            path.join(config.DATASEST.ROOT, "test_once", split + "_labels.npy")
-        )
-        section_file = path.join(
-            config.DATASEST.ROOT, "splits", "section_" + split + ".txt"
-        )
+        labels = np.load(path.join(config.DATASEST.ROOT, "test_once", split + "_labels.npy"))
+        section_file = path.join(config.DATASEST.ROOT, "splits", "section_" + split + ".txt")
         _write_section_file(labels, section_file)
         _evaluate_split(
-            split,
-            section_aug,
-            model,
-            pre_processing,
-            output_processing,
-            device,
-            running_metrics_overall,
-            config,
+            split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config,
         )
 
     # FINAL TEST RESULTS:

@@ -30,9 +30,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     name="deepseismic_interpretation",
-    packages=setuptools.find_packages(
-        include=["deepseismic_interpretation", "deepseismic_interpretation.*"]
-    ),
+    packages=setuptools.find_packages(include=["deepseismic_interpretation", "deepseismic_interpretation.*"]),
     platforms="any",
     python_requires=">=3.6",
     setup_requires=["pytest-runner"],

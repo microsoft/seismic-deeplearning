@@ -16,9 +16,7 @@ class TextureNet(nn.Module):
         # Network definition
         # Parameters  #in_channels, #out_channels, filter_size, stride (downsampling factor)
         self.net = nn.Sequential(
-            nn.Conv3d(
-                1, n_filters, 5, 4, padding=2
-            ),
+            nn.Conv3d(1, n_filters, 5, 4, padding=2),
             nn.BatchNorm3d(n_filters),
             # nn.Dropout3d() #Droput can be added like this ...
             nn.ReLU(),

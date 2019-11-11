@@ -11,9 +11,8 @@ from yacs.config import CfgNode as CN
 
 _C = CN()
 
-_C.OUTPUT_DIR = (
-    "output"  # The base directory for all output, such as logs and saved models
-)
+_C.OUTPUT_DIR = "output"  # This will be the base directory for all output, such as logs and saved models
+
 _C.LOG_DIR = ""  # This will be a subdirectory inside OUTPUT_DIR
 _C.GPUS = (0,)
 _C.WORKERS = 4
@@ -118,4 +117,3 @@ if __name__ == "__main__":
 
     with open(sys.argv[1], "w") as f:
         print(_C, file=f)
-

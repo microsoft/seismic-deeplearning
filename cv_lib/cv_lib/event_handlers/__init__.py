@@ -31,21 +31,12 @@ class SnapshotHandler:
     def __call__(self, engine, to_save):
         self._checkpoint_handler(engine, to_save)
         if self._snapshot_function():
-            files = glob.glob(
-                os.path.join(
-                    self._model_save_location, self._running_model_prefix + "*"
-                )
-            )
+            files = glob.glob(os.path.join(self._model_save_location, self._running_model_prefix + "*"))
             print(files)
             name_postfix = os.path.basename(files[0]).lstrip(self._running_model_prefix)
             copyfile(
                 files[0],
-                os.path.join(
-                    self._model_save_location,
-                    f"{self._snapshot_prefix}{self._snapshot_num}{name_postfix}",
-                ),
+                os.path.join(self._model_save_location, f"{self._snapshot_prefix}{self._snapshot_num}{name_postfix}",),
             )
-            self._checkpoint_handler = (
-                self._create_checkpoint_handler()
-            )  # Reset the checkpoint handler
+            self._checkpoint_handler = self._create_checkpoint_handler()  # Reset the checkpoint handler
             self._snapshot_num += 1

@@ -99,9 +99,7 @@ def parse_labels_in_image(img):
     for color in class_color_coding:
         # Find pixels with these labels
         inds = (
-            (np.abs(r - color[0]) < tolerance)
-            & (np.abs(g - color[1]) < tolerance)
-            & (np.abs(b - color[2]) < tolerance)
+            (np.abs(r - color[0]) < tolerance) & (np.abs(g - color[1]) < tolerance) & (np.abs(b - color[2]) < tolerance)
         )
         label_img[inds] = cls
         cls += 1

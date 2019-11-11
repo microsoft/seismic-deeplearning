@@ -27,9 +27,7 @@ class PointSource(SparseTimeFunction):
         npoint = kwargs.pop("npoint", None)
         coordinates = kwargs.pop("coordinates", kwargs.pop("coordinates_data", None))
         if npoint is None:
-            assert (
-                coordinates is not None
-            ), "Either `npoint` or `coordinates` must be provided"
+            assert coordinates is not None, "Either `npoint` or `coordinates` must be provided"
             npoint = coordinates.shape[0]
         obj = SparseTimeFunction.__new__(
             cls,
@@ -63,9 +61,7 @@ class PointSource(SparseTimeFunction):
         rtol: Optional[float] = 1.0e-5,
         order: Optional[int] = 3,
     ):
-        assert (dt is not None) ^ (
-            num is not None
-        ), "Exactly one of `dt` or `num` must be provided"
+        assert (dt is not None) ^ (num is not None), "Exactly one of `dt` or `num` must be provided"
         start = self._time_range.start
         stop = self._time_range.stop
         dt0 = self._time_range.step
@@ -79,9 +75,7 @@ class PointSource(SparseTimeFunction):
         n_traces = self.data.shape[1]
         new_traces = np.zeros((new_time_range.num, n_traces), dtype=self.data.dtype)
         for j in range(n_traces):
-            tck = interpolate.splrep(
-                self._time_range.time_values, self.data[:, j], k=order
-            )
+            tck = interpolate.splrep(self._time_range.time_values, self.data[:, j], k=order)
             new_traces[:, j] = interpolate.splev(new_time_range.time_values, tck)
         return PointSource(
             name=self.name,

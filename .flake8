@@ -1,5 +1,5 @@
 [flake8]
-max-line-length = 88
+max-line-length = 120
 max-complexity = 18
 select = B,C,E,F,W,T4,B9
 ignore =
@@ -9,9 +9,9 @@ ignore =
     E266
     # module level import not at top of file
     E402
-    # do not use bare except, specify exception instead
-    E722
     # line break before binary operator
     W503
     # blank line contains whitespace
     W293
+    # line too long 
+    E501

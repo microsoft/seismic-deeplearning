@@ -90,13 +90,7 @@ def run(*options, cfg=None):
     np.random.seed(seed=config.SEED)
 
     # Setup Augmentations
-    basic_aug = Compose(
-        [
-            Normalize(
-                mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1
-            )
-        ]
-    )
+    basic_aug = Compose([Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1)])
     if config.TRAIN.AUGMENTATION:
         train_aug = Compose([basic_aug, HorizontalFlip(p=0.5)])
         val_aug = basic_aug
@@ -105,19 +99,9 @@ def run(*options, cfg=None):
 
     TrainLoader = get_section_loader(config)
 
-    train_set = TrainLoader(
-        data_dir=config.DATASET.ROOT,
-        split="train",
-        is_transform=True,
-        augmentations=train_aug,
-    )
+    train_set = TrainLoader(data_dir=config.DATASET.ROOT, split="train", is_transform=True, augmentations=train_aug,)
 
-    val_set = TrainLoader(
-        data_dir=config.DATASET.ROOT,
-        split="val",
-        is_transform=True,
-        augmentations=val_aug,
-    )
+    val_set = TrainLoader(data_dir=config.DATASET.ROOT, split="val", is_transform=True, augmentations=val_aug,)
 
     class CustomSampler(torch.utils.data.Sampler):
         def __init__(self, data_source):
@@ -125,9 +109,7 @@ def run(*options, cfg=None):
 
         def __iter__(self):
             char = ["i" if np.random.randint(2) == 1 else "x"]
-            self.indices = [
-                idx for (idx, name) in enumerate(self.data_source) if char[0] in name
-            ]
+            self.indices = [idx for (idx, name) in enumerate(self.data_source) if char[0] in name]
             return (self.indices[i] for i in torch.randperm(len(self.indices)))
 
         def __len__(self):
@@ -167,54 +149,35 @@ def run(*options, cfg=None):
         weight_decay=config.TRAIN.WEIGHT_DECAY,
     )
 
-    output_dir = generate_path(
-        config.OUTPUT_DIR,
-        git_branch(),
-        git_hash(),
-        config.MODEL.NAME,
-        current_datetime(),
-    )
+    output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),)
 
-    summary_writer = create_summary_writer(
-        log_dir=path.join(output_dir, config.LOG_DIR)
-    )
+    summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
 
     snapshot_duration = scheduler_step * len(train_loader)
-    scheduler = CosineAnnealingScheduler(
-        optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration
-    )
+    scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration)
 
     # weights are inversely proportional to the frequency of the classes in
     # the training set
-    class_weights = torch.tensor(
-        config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False
-    )
+    class_weights = torch.tensor(config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False)
 
-    criterion = torch.nn.CrossEntropyLoss(
-        weight=class_weights, ignore_index=255, reduction="mean"
-    )
+    criterion = torch.nn.CrossEntropyLoss(weight=class_weights, ignore_index=255, reduction="mean")
 
-    trainer = create_supervised_trainer(
-        model, optimizer, criterion, prepare_batch, device=device
-    )
+    trainer = create_supervised_trainer(model, optimizer, criterion, prepare_batch, device=device)
 
     trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
 
     trainer.add_event_handler(
-        Events.ITERATION_COMPLETED,
-        logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
+        Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
     )
 
     trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
 
     trainer.add_event_handler(
-        Events.EPOCH_STARTED,
-        tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"),
+        Events.EPOCH_STARTED, tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"),
     )
 
     trainer.add_event_handler(
-        Events.ITERATION_COMPLETED,
-        tensorboard_handlers.log_training_output(summary_writer),
+        Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer),
     )
 
     def _select_pred_and_mask(model_out_dict):
@@ -224,24 +187,12 @@ def run(*options, cfg=None):
         model,
         prepare_batch,
         metrics={
-            "nll": Loss(
-                criterion, output_transform=_select_pred_and_mask, device=device
-            ),
-            "pixacc": pixelwise_accuracy(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "cacc": class_accuracy(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "mca": mean_class_accuracy(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "ciou": class_iou(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "mIoU": mean_iou(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
+            "nll": Loss(criterion, output_transform=_select_pred_and_mask, device=device),
+            "pixacc": pixelwise_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "mca": mean_class_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "ciou": class_iou(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "mIoU": mean_iou(n_classes, output_transform=_select_pred_and_mask, device=device),
         },
         device=device,
     )
@@ -265,8 +216,7 @@ def run(*options, cfg=None):
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
         logging_handlers.log_class_metrics(
-            "Per class validation results",
-            metrics_dict={"ciou": "Class IoU :", "cacc": "Class Accuracy :"},
+            "Per class validation results", metrics_dict={"ciou": "Class IoU :", "cacc": "Class Accuracy :"},
         ),
     )
 
@@ -291,29 +241,22 @@ def run(*options, cfg=None):
     def _tensor_to_numpy(pred_tensor):
         return pred_tensor.squeeze().cpu().numpy()
 
-    transform_func = compose(
-        np_to_tb, decode_segmap(n_classes=n_classes), _tensor_to_numpy
-    )
+    transform_func = compose(np_to_tb, decode_segmap(n_classes=n_classes), _tensor_to_numpy)
 
     transform_pred = compose(transform_func, _select_max)
 
     evaluator.add_event_handler(
-        Events.EPOCH_COMPLETED,
-        create_image_writer(summary_writer, "Validation/Image", "image"),
+        Events.EPOCH_COMPLETED, create_image_writer(summary_writer, "Validation/Image", "image"),
     )
 
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
-        create_image_writer(
-            summary_writer, "Validation/Mask", "mask", transform_func=transform_func
-        ),
+        create_image_writer(summary_writer, "Validation/Mask", "mask", transform_func=transform_func),
     )
 
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
-        create_image_writer(
-            summary_writer, "Validation/Pred", "y_pred", transform_func=transform_pred
-        ),
+        create_image_writer(summary_writer, "Validation/Pred", "y_pred", transform_func=transform_pred),
     )
 
     def snapshot_function():
@@ -326,9 +269,7 @@ def run(*options, cfg=None):
         snapshot_function,
     )
 
-    evaluator.add_event_handler(
-        Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model}
-    )
+    evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
     logger.info("Starting training")
     trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
