@@ -12,6 +12,7 @@ dependencies:
   - pandas
   - opencv
   - scikit-learn
+  - tensorflow==2.0
   - tqdm
   - itkwidgets
   - pip:
