@@ -1,7 +1,13 @@
 # DeepSeismic
+![DeepSeismic](./DeepSeismicLogo.jpg )
+
+This repository shows you how to perform seismic imaging and interpretation on Azure. It empowers geophysicists and data scientists to run seismic experiments using state-of-art DSL-based PDE solvers and segmentation algorithms on Azure.  The repository provides sample notebooks, data loaders for seismic data, utility codes, and out-of-the box ML pipelines
+
+For seismic imaging, the repository shows how you can leverage open-source PDE solvers (e.g. Devito), and perform Full-Waveform Inversion (FWI) at scale on Azure, using Azure Machine Learning (Azure ML), and Azure Batch. It demonnstrates examples on how to run Devito easily on a single machine, as well as multiple machines using Azure ML managed compute. 
+
+For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation, and also benchmarking results from running these algorithms using various seismic datasets (Dutch F3, and Penobscot).
 
 ## Interpretation
-
 ### Setting up Environment
 Navigate to the folder where you pulled the DeepSeismic repo to
 
@@ -58,11 +64,11 @@ Below are the results from the models contained in this repo. To run them check 
 
 ### Netherlands F3
 
-|    Authorship    |    Experiment                     |    PA       |    FW IoU    |    MCA     |
+|    Source        |    Experiment                     |    PA       |    FW IoU    |    MCA     |
 |------------------|-----------------------------------|-------------|--------------|------------|
-|    Alaudah       |    Section-based                  |    0.905    |    0.817     |    .832    |
+|    Alaudah et al.|    Section-based                  |    0.905    |    0.817     |    .832    |
 |                  |    Patch-based                    |    0.852    |    0.743     |    .689    |
-|    Ours          |    Patch-based+fixed              |    .869     |    .761      |    .775    |
+|    DeepSeismic   |    Patch-based+fixed              |    .869     |    .761      |    .775    |
 |                  |    SEResNet UNet+section depth    |    .917     |    .849      |    .834    |
 |                  |    HRNet(patch)+patch_depth       |    .908     |    .843      |    .837    |
 |                  |    HRNet(patch)+section_depth     |    .928     |    .871      |    .871    |
@@ -72,38 +78,18 @@ Below are the results from the models contained in this repo. To run them check 
 Trained and tested on full dataset. Inlines with artefacts were left in for training, validation and testing.
 The dataset was split 70% training, 10% validation and 20% test. The results below are from the test set
 
-|    Authorship    |    Experiment                       |    PA       |    IoU       |    MCA     |
+|    Source        |    Experiment                       |    PA       |    IoU       |    MCA     |
 |------------------|-------------------------------------|-------------|--------------|------------|
-|    Ours          |    SEResNet UNet + section depth    |    1.0      |    .98        |    .99    |
+|    DeepSeismic   |    SEResNet UNet + section depth    |    1.0      |    .98        |    .99    |
 |                  |    HRNet(patch) + section depth     |    1.0      |    .97        |    .98    |
 
 ![Best Penobscot SEResNet](images/penobscot_seresnet_best.png "Best performing inlines, Mask and Predictions from SEResNet")
 ![Worst Penobscot SEResNet](images/penobscot_seresnet_worst.png "Worst performing inlines  Mask and Predictions from SEResNet")
 
-### Sparse Labels
 
-This section contains benchmarks of different algorithms for seismic interpretation on 3D seismic datasets with sparsely-annotated data and is organized by the levels of sparsity.
-
-| Model \ Dataset | Dutch F3 (Alaudah) | Penobscot |
-| :---:           |    :---:           |     :---: |
-Alaudah base slice | Pixel Acc,  IoU <br> train time (s), score time (s)| |
-Alaudah base patch | Pixel Acc,  IoU <br> train time (s), score time (s)| |
-HRNet slice | | |
-DeepLab V3 slice | | |
-| TODO: add all models | | |
-
-
-#### Scribble-Level Labels
-
-We present results of algorithms which are based on scribble-level annotations, where the annotator labels a large collection of consecutive pixels with no gaps, e.g. brushstroke label.
-
-#### Pixel-Level Labels
-
-We present results of algorithms which are based on pixel-level annotations, where the annotator labels individual pixels and gaps are allowed between pixels; the annotator can also label a small neighborhood of pixels, e.g. large dot of ~100 pixels.
 
 ### Data
 #### Netherlands F3
-
 To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
 [this github repository](https://github.com/olivesgatech/facies_classification_benchmark).
 
@@ -147,6 +133,10 @@ python scripts/prepare_penobscot.py split_inline --data-dir=/mnt/penobscot --val
 
 This project welcomes contributions and suggestions. Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
 
+### Submitting a Pull Request
+
+We try to keep the repo in a clean state, which means that we only enable read access to the repo - read access still enables one to submit a PR or an issue. To do so, fork the repo, and submit a PR from a branch in your forked repo into our staging branch.
+
 When you submit a pull request, a CLA bot will automatically determine whether you need to provide a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions provided by the bot. You will only need to do this once across all repos using our CLA.
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
@@ -154,8 +144,8 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 ## Build Status
 | Build | Branch | Status |
 | --- | --- | --- |
-| **Legal Compliance** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.DeepSeismic?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=110&branchName=staging) |
-| **Legal Compliance** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.DeepSeismic?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=110&branchName=master) |
-| **Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.DeepSeismic%20(1)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=111&branchName=staging) |
-| **Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.DeepSeismic%20(1)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=111&branchName=master) |
+| **Legal Compliance** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=110&branchName=staging) |
+| **Legal Compliance** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=110&branchName=master) |
+| **Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=111&branchName=staging) |
+| **Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=111&branchName=master) |
 
