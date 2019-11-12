@@ -17,9 +17,7 @@ def pixelwise_accuracy(num_classes, output_transform=lambda x: x, device=None):
         MetricsLambda
 
     """
-    cm = ignite.metrics.ConfusionMatrix(
-        num_classes=num_classes, output_transform=output_transform, device=device
-    )
+    cm = ignite.metrics.ConfusionMatrix(num_classes=num_classes, output_transform=output_transform, device=device)
     # Increase floating point precision and pass to CPU
     cm = cm.type(torch.DoubleTensor)
 
@@ -40,9 +38,7 @@ def class_accuracy(num_classes, output_transform=lambda x: x, device=None):
         MetricsLambda
 
     """
-    cm = ignite.metrics.ConfusionMatrix(
-        num_classes=num_classes, output_transform=output_transform, device=device
-    )
+    cm = ignite.metrics.ConfusionMatrix(num_classes=num_classes, output_transform=output_transform, device=device)
     # Increase floating point precision and pass to CPU
     cm = cm.type(torch.DoubleTensor)
 
@@ -63,14 +59,10 @@ def mean_class_accuracy(num_classes, output_transform=lambda x: x, device=None):
         MetricsLambda
 
     """
-    return class_accuracy(
-        num_classes=num_classes, output_transform=output_transform, device=device
-    ).mean()
+    return class_accuracy(num_classes=num_classes, output_transform=output_transform, device=device).mean()
 
 
-def class_iou(
-    num_classes, output_transform=lambda x: x, device=None, ignore_index=None
-):
+def class_iou(num_classes, output_transform=lambda x: x, device=None, ignore_index=None):
     """Calculates per-class intersection-over-union
 
     Args:
@@ -82,9 +74,7 @@ def class_iou(
         MetricsLambda
 
     """
-    cm = ignite.metrics.ConfusionMatrix(
-        num_classes=num_classes, output_transform=output_transform, device=device
-    )
+    cm = ignite.metrics.ConfusionMatrix(num_classes=num_classes, output_transform=output_transform, device=device)
     return ignite.metrics.IoU(cm, ignore_index=ignore_index)
 
 
@@ -100,7 +90,5 @@ def mean_iou(num_classes, output_transform=lambda x: x, device=None, ignore_inde
         MetricsLambda
 
     """
-    cm = ignite.metrics.ConfusionMatrix(
-        num_classes=num_classes, output_transform=output_transform, device=device
-    )
+    cm = ignite.metrics.ConfusionMatrix(num_classes=num_classes, output_transform=output_transform, device=device)
     return ignite.metrics.mIoU(cm, ignore_index=ignore_index)

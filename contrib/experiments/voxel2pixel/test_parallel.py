@@ -77,9 +77,9 @@ class MyDataset(Dataset):
         x, y, z = pixel
         # TODO: current bottleneck - can we slice out voxels any faster
         small_cube = self.data[
-            x - self.window: x + self.window + 1,
-            y - self.window: y + self.window + 1,
-            z - self.window: z + self.window + 1,
+            x - self.window : x + self.window + 1,
+            y - self.window : y + self.window + 1,
+            z - self.window : z + self.window + 1,
         ]
 
         return small_cube[np.newaxis, :, :, :], pixel
@@ -108,18 +108,10 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # initialize the distributed process and join the group
     print(
-        "setting rank",
-        args.rank,
-        "world size",
-        args.world_size,
-        args.dist_backend,
-        args.dist_url,
+        "setting rank", args.rank, "world size", args.world_size, args.dist_backend, args.dist_url,
     )
     dist.init_process_group(
-        backend=args.dist_backend,
-        init_method=args.dist_url,
-        world_size=args.world_size,
-        rank=args.rank,
+        backend=args.dist_backend, init_method=args.dist_url, world_size=args.world_size, rank=args.rank,
     )
 
     # set default GPU device for this worker
@@ -129,9 +121,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # Load trained model (run train.py to create trained
     network = TextureNet(n_classes=N_CLASSES)
-    model_state_dict = torch.load(
-        join(args.data, "saved_model.pt"), map_location=local_device
-    )
+    model_state_dict = torch.load(join(args.data, "saved_model.pt"), map_location=local_device)
     network.load_state_dict(model_state_dict)
     network.eval()
     network.cuda(args.gpu)
@@ -165,7 +155,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # reduce data size for debugging
     if args.debug:
-        data = data[0: 3 * window]
+        data = data[0 : 3 * window]
 
     # generate full list of coordinates
     # memory footprint of this isn't large yet, so not need to wrap as a generator
@@ -180,14 +170,12 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # we need to map the data manually to each rank - DistributedDataParallel doesn't do this at score time
     print("take a subset of coord_list by chunk")
-    coord_list = list(
-        np.array_split(np.array(coord_list), args.world_size)[args.rank]
-    )
+    coord_list = list(np.array_split(np.array(coord_list), args.world_size)[args.rank])
     coord_list = [tuple(x) for x in coord_list]
 
     # we only score first batch in debug mode
     if args.debug:
-        coord_list = coord_list[0: args.batch_size]
+        coord_list = coord_list[0 : args.batch_size]
 
     # prepare the data
     print("setup dataset")
@@ -257,9 +245,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
 
 parser = argparse.ArgumentParser(description="Seismic Distributed Scoring")
-parser.add_argument(
-    "-d", "--data", default="/mnt/dutchf3", type=str, help="default dataset folder name"
-)
+parser.add_argument("-d", "--data", default="/mnt/dutchf3", type=str, help="default dataset folder name")
 parser.add_argument(
     "-s",
     "--slice",
@@ -269,42 +255,21 @@ parser.add_argument(
     help="slice type which we want to score on",
 )
 parser.add_argument(
-    "-n",
-    "--slice-num",
-    default=339,
-    type=int,
-    help="slice number which we want to score",
+    "-n", "--slice-num", default=339, type=int, help="slice number which we want to score",
 )
 parser.add_argument(
-    "-b",
-    "--batch-size",
-    default=2 ** 11,
-    type=int,
-    help="batch size which we use for scoring",
+    "-b", "--batch-size", default=2 ** 11, type=int, help="batch size which we use for scoring",
 )
 parser.add_argument(
-    "-p",
-    "--n-proc-per-gpu",
-    default=1,
-    type=int,
-    help="number of multiple processes to run per each GPU",
+    "-p", "--n-proc-per-gpu", default=1, type=int, help="number of multiple processes to run per each GPU",
 )
 parser.add_argument(
-    "--dist-url",
-    default="tcp://127.0.0.1:12345",
-    type=str,
-    help="url used to set up distributed training",
+    "--dist-url", default="tcp://127.0.0.1:12345", type=str, help="url used to set up distributed training",
 )
+parser.add_argument("--dist-backend", default="nccl", type=str, help="distributed backend")
+parser.add_argument("--seed", default=0, type=int, help="default random number seed")
 parser.add_argument(
-    "--dist-backend", default="nccl", type=str, help="distributed backend"
-)
-parser.add_argument(
-    "--seed", default=0, type=int, help="default random number seed"
-)
-parser.add_argument(
-    "--debug",
-    action="store_true",
-    help="debug flag - if on we will only process one batch",
+    "--debug", action="store_true", help="debug flag - if on we will only process one batch",
 )
 
 
@@ -377,9 +342,7 @@ def main():
     processes = []
     for i in range(args.world_size):
         # error_queue = mp.SimpleQueue()
-        process = mp.Process(
-            target=main_worker, args=(i, ngpus_per_node, args), daemon=False
-        )
+        process = mp.Process(target=main_worker, args=(i, ngpus_per_node, args), daemon=False)
         process.start()
         # error_queues.append(error_queue)
         processes.append(process)
@@ -396,9 +359,7 @@ def main():
     # Log to tensorboard - input slice
     logger = tb_logger.TBLogger("log", "Test")
     logger.log_images(
-        args.slice + "_" + str(args.slice_num),
-        get_slice(data, data_info, args.slice, args.slice_num),
-        cm="gray",
+        args.slice + "_" + str(args.slice_num), get_slice(data, data_info, args.slice, args.slice_num), cm="gray",
     )
 
     x_coords = []
@@ -438,7 +399,7 @@ def main():
         delayed(worker)(classified_cube, coord) for coord in tqdm(pixels)
     )
     
-    We do this:    
+    We do this:
     """
 
     # placeholder for results

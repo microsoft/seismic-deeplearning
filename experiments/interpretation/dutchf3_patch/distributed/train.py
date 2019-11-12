@@ -120,13 +120,9 @@ def run(*options, cfg=None, local_rank=0):
     # Setup Augmentations
     basic_aug = Compose(
         [
-            Normalize(
-                mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1
-            ),
+            Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1),
             Resize(
-                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-                always_apply=True,
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
             ),
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
@@ -166,26 +162,16 @@ def run(*options, cfg=None, local_rank=0):
     logger.info(f"Validation examples {len(val_set)}")
     n_classes = train_set.n_classes
 
-    train_sampler = torch.utils.data.distributed.DistributedSampler(
-        train_set, num_replicas=world_size, rank=local_rank
-    )
+    train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
 
     train_loader = data.DataLoader(
-        train_set,
-        batch_size=config.TRAIN.BATCH_SIZE_PER_GPU,
-        num_workers=config.WORKERS,
-        sampler=train_sampler,
+        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, sampler=train_sampler,
     )
 
-    val_sampler = torch.utils.data.distributed.DistributedSampler(
-        val_set, num_replicas=world_size, rank=local_rank
-    )
+    val_sampler = torch.utils.data.distributed.DistributedSampler(val_set, num_replicas=world_size, rank=local_rank)
 
     val_loader = data.DataLoader(
-        val_set,
-        batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU,
-        num_workers=config.WORKERS,
-        sampler=val_sampler,
+        val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, sampler=val_sampler,
     )
 
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
@@ -204,17 +190,11 @@ def run(*options, cfg=None, local_rank=0):
 
     # weights are inversely proportional to the frequency of the classes in
     # the training set
-    class_weights = torch.tensor(
-        config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False
-    )
+    class_weights = torch.tensor(config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False)
 
-    criterion = torch.nn.CrossEntropyLoss(
-        weight=class_weights, ignore_index=255, reduction="mean"
-    )
+    criterion = torch.nn.CrossEntropyLoss(weight=class_weights, ignore_index=255, reduction="mean")
 
-    model = torch.nn.parallel.DistributedDataParallel(
-        model, device_ids=[device], find_unused_parameters=True
-    )
+    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[device], find_unused_parameters=True)
 
     snapshot_duration = scheduler_step * len(train_loader)
     warmup_duration = 5 * len(train_loader)
@@ -226,20 +206,12 @@ def run(*options, cfg=None, local_rank=0):
         cycle_size=10 * len(train_loader),
     )
     cosine_scheduler = CosineAnnealingScheduler(
-        optimizer,
-        "lr",
-        config.TRAIN.MAX_LR * world_size,
-        config.TRAIN.MIN_LR * world_size,
-        snapshot_duration,
+        optimizer, "lr", config.TRAIN.MAX_LR * world_size, config.TRAIN.MIN_LR * world_size, snapshot_duration,
     )
 
-    scheduler = ConcatScheduler(
-        schedulers=[warmup_scheduler, cosine_scheduler], durations=[warmup_duration]
-    )
+    scheduler = ConcatScheduler(schedulers=[warmup_scheduler, cosine_scheduler], durations=[warmup_duration])
 
-    trainer = create_supervised_trainer(
-        model, optimizer, criterion, prepare_batch, device=device
-    )
+    trainer = create_supervised_trainer(model, optimizer, criterion, prepare_batch, device=device)
 
     trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
     # Set to update the epoch parameter of our distributed data sampler so that we get
@@ -256,24 +228,12 @@ def run(*options, cfg=None, local_rank=0):
         model,
         prepare_batch,
         metrics={
-            "nll": Loss(
-                criterion, output_transform=_select_pred_and_mask, device=device
-            ),
-            "pixa": pixelwise_accuracy(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "cacc": class_accuracy(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "mca": mean_class_accuracy(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "ciou": class_iou(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
-            "mIoU": mean_iou(
-                n_classes, output_transform=_select_pred_and_mask, device=device
-            ),
+            "nll": Loss(criterion, output_transform=_select_pred_and_mask, device=device),
+            "pixa": pixelwise_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "mca": mean_class_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "ciou": class_iou(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "mIoU": mean_iou(n_classes, output_transform=_select_pred_and_mask, device=device),
         },
         device=device,
     )
@@ -284,31 +244,18 @@ def run(*options, cfg=None, local_rank=0):
     if local_rank == 0:  # Run only on master process
 
         trainer.add_event_handler(
-            Events.ITERATION_COMPLETED,
-            logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
+            Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
         )
-        trainer.add_event_handler(
-            Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer)
-        )
+        trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
 
-        output_dir = generate_path(
-            config.OUTPUT_DIR,
-            git_branch(),
-            git_hash(),
-            config.MODEL.NAME,
-            current_datetime(),
-        )
-        summary_writer = create_summary_writer(
-            log_dir=path.join(output_dir, config.LOG_DIR)
-        )
+        output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),)
+        summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
         logger.info(f"Logging Tensorboard to {path.join(output_dir, config.LOG_DIR)}")
         trainer.add_event_handler(
-            Events.EPOCH_STARTED,
-            tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"),
+            Events.EPOCH_STARTED, tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"),
         )
         trainer.add_event_handler(
-            Events.ITERATION_COMPLETED,
-            tensorboard_handlers.log_training_output(summary_writer),
+            Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer),
         )
         evaluator.add_event_handler(
             Events.EPOCH_COMPLETED,
@@ -328,11 +275,7 @@ def run(*options, cfg=None, local_rank=0):
                 summary_writer,
                 trainer,
                 "epoch",
-                metrics_dict={
-                    "mIoU": "Validation/IoU",
-                    "nll": "Validation/Loss",
-                    "mca": "Validation/MCA",
-                },
+                metrics_dict={"mIoU": "Validation/IoU", "nll": "Validation/Loss", "mca": "Validation/MCA",},
             ),
         )
 
@@ -342,30 +285,20 @@ def run(*options, cfg=None, local_rank=0):
         def _tensor_to_numpy(pred_tensor):
             return pred_tensor.squeeze().cpu().numpy()
 
-        transform_func = compose(
-            np_to_tb, decode_segmap(n_classes=n_classes), _tensor_to_numpy
-        )
+        transform_func = compose(np_to_tb, decode_segmap(n_classes=n_classes), _tensor_to_numpy)
 
         transform_pred = compose(transform_func, _select_max)
 
         evaluator.add_event_handler(
-            Events.EPOCH_COMPLETED,
-            create_image_writer(summary_writer, "Validation/Image", "image"),
+            Events.EPOCH_COMPLETED, create_image_writer(summary_writer, "Validation/Image", "image"),
         )
         evaluator.add_event_handler(
             Events.EPOCH_COMPLETED,
-            create_image_writer(
-                summary_writer, "Validation/Mask", "mask", transform_func=transform_func
-            ),
+            create_image_writer(summary_writer, "Validation/Mask", "mask", transform_func=transform_func),
         )
         evaluator.add_event_handler(
             Events.EPOCH_COMPLETED,
-            create_image_writer(
-                summary_writer,
-                "Validation/Pred",
-                "y_pred",
-                transform_func=transform_pred,
-            ),
+            create_image_writer(summary_writer, "Validation/Pred", "y_pred", transform_func=transform_pred,),
         )
 
         def snapshot_function():
@@ -377,9 +310,7 @@ def run(*options, cfg=None, local_rank=0):
             extract_metric_from("mIoU"),
             snapshot_function,
         )
-        evaluator.add_event_handler(
-            Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model}
-        )
+        evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
         logger.info("Starting training")
 

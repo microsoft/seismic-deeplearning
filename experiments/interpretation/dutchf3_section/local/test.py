@@ -20,6 +20,7 @@ import torch
 from albumentations import Compose, Normalize
 from cv_lib.utils import load_log_configuration
 from cv_lib.segmentation import models
+
 from deepseismic_interpretation.dutchf3.data import get_test_loader
 from default import _C as config
 from default import update_config
@@ -44,17 +45,14 @@ class runningScore(object):
 
     def _fast_hist(self, label_true, label_pred, n_class):
         mask = (label_true >= 0) & (label_true < n_class)
-        hist = np.bincount(
-            n_class * label_true[mask].astype(int) + label_pred[mask],
-            minlength=n_class ** 2,
-        ).reshape(n_class, n_class)
+        hist = np.bincount(n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,).reshape(
+            n_class, n_class
+        )
         return hist
 
     def update(self, label_trues, label_preds):
         for lt, lp in zip(label_trues, label_preds):
-            self.confusion_matrix += self._fast_hist(
-                lt.flatten(), lp.flatten(), self.n_classes
-            )
+            self.confusion_matrix += self._fast_hist(lt.flatten(), lp.flatten(), self.n_classes)
 
     def get_scores(self):
         """Returns accuracy score evaluation result.
@@ -69,9 +67,7 @@ class runningScore(object):
         mean_acc_cls = np.nanmean(acc_cls)
         iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
         mean_iu = np.nanmean(iu)
-        freq = (
-            hist.sum(axis=1) / hist.sum()
-        )  # fraction of the pixels that come from each class
+        freq = hist.sum(axis=1) / hist.sum()  # fraction of the pixels that come from each class
         fwavacc = (freq[freq > 0] * iu[freq > 0]).sum()
         cls_iu = dict(zip(range(self.n_classes), iu))
 
@@ -97,15 +93,11 @@ def _evaluate_split(
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
-    test_set = TestSectionLoader(
-        data_dir=DATA_ROOT, split=split, is_transform=True, augmentations=section_aug,
-    )
+    test_set = TestSectionLoader(data_dir=DATA_ROOT, split=split, is_transform=True, augmentations=section_aug,)
 
     n_classes = test_set.n_classes
 
-    test_loader = data.DataLoader(
-        test_set, batch_size=1, num_workers=config.WORKERS, shuffle=False
-    )
+    test_loader = data.DataLoader(test_set, batch_size=1, num_workers=config.WORKERS, shuffle=False)
     running_metrics_split = runningScore(n_classes)
 
     # testing mode:
@@ -178,13 +170,7 @@ def test(*options, cfg=None):
     running_metrics_overall = runningScore(n_classes)
 
     # Augmentation
-    section_aug = Compose(
-        [
-            Normalize(
-                mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,
-            )
-        ]
-    )
+    section_aug = Compose([Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,)])
 
     splits = ["test1", "test2"] if "Both" in config.TEST.SPLIT else [config.TEST.SPLIT]
 
@@ -192,9 +178,7 @@ def test(*options, cfg=None):
         labels = np.load(path.join(DATA_ROOT, "test_once", split + "_labels.npy"))
         section_file = path.join(DATA_ROOT, "splits", "section_" + split + ".txt")
         _write_section_file(labels, section_file)
-        _evaluate_split(
-            split, section_aug, model, device, running_metrics_overall, config
-        )
+        _evaluate_split(split, section_aug, model, device, running_metrics_overall, config)
 
     # FINAL TEST RESULTS:
     score, class_iou = running_metrics_overall.get_scores()

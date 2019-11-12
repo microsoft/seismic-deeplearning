@@ -24,18 +24,14 @@ setuptools.setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Software Development",
     ],
-    dependency_links=[
-        "https://github.com/opesci/devito/archive/v3.5.tar.gz#egg=devito-3.5"
-    ],
+    dependency_links=["https://github.com/opesci/devito/archive/v3.5.tar.gz#egg=devito-3.5"],
     description="DeepSeismic",
     install_requires=requirements,
     license="MIT",
     long_description=long_description,
     long_description_content_type="text/markdown",
     name="deepseismic_imaging",
-    packages=setuptools.find_packages(
-        include=["deepseismic_imaging", "deepseismic_imaging.*"]
-    ),
+    packages=setuptools.find_packages(include=["deepseismic_imaging", "deepseismic_imaging.*"]),
     platforms="any",
     python_requires=">= 3.6",
     scripts=["bin/ds"],

@@ -119,4 +119,3 @@ if __name__ == "__main__":
 
     with open(sys.argv[1], "w") as f:
         print(_C, file=f)
-

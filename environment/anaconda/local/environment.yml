@@ -12,8 +12,9 @@ dependencies:
   - pandas
   - opencv
   - scikit-learn
-  - tensorflow-gpu=1.14
+  - tensorflow==2.0
   - tqdm
+  - itkwidgets
   - pip:
     - segyio
     - pytorch-ignite==0.3.0.dev20191105 # pre-release until stable available
@@ -31,4 +32,5 @@ dependencies:
     - black
     - pylint
     - scipy==1.1.0
+    - jupytext
         

@@ -51,12 +51,7 @@ def val_transform(x, y, y_pred):
 
 
 def create_supervised_evaluator(
-    model,
-    prepare_batch,
-    metrics=None,
-    device=None,
-    non_blocking=False,
-    output_transform=val_transform,
+    model, prepare_batch, metrics=None, device=None, non_blocking=False, output_transform=val_transform,
 ):
     metrics = metrics or {}
 
@@ -133,4 +128,3 @@ def create_supervised_trainer_apex(
 #         metric.attach(engine, name)
 
 #     return engine
-

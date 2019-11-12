@@ -11,9 +11,7 @@ from yacs.config import CfgNode as CN
 
 _C = CN()
 
-_C.OUTPUT_DIR = (
-    "output"  # The base directory for all output, such as logs and saved models
-)
+_C.OUTPUT_DIR = "output"  # This will be the base directory for all output, such as logs and saved models
 _C.LOG_DIR = ""  # This will be a subdirectory inside OUTPUT_DIR
 _C.GPUS = (0,)
 _C.WORKERS = 4
@@ -85,9 +83,7 @@ _C.TEST.INLINE = True
 _C.TEST.CROSSLINE = True
 _C.TEST.POST_PROCESSING = CN()  # Model output postprocessing
 _C.TEST.POST_PROCESSING.SIZE = 128  # Size to interpolate to in pixels
-_C.TEST.POST_PROCESSING.CROP_PIXELS = (
-    14  # Number of pixels to crop top, bottom, left and right
-)
+_C.TEST.POST_PROCESSING.CROP_PIXELS = 14  # Number of pixels to crop top, bottom, left and right
 
 
 def update_config(cfg, options=None, config_file=None):
@@ -107,4 +103,3 @@ if __name__ == "__main__":
 
     with open(sys.argv[1], "w") as f:
         print(_C, file=f)
-
