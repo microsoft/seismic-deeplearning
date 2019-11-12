@@ -134,6 +134,7 @@ python scripts/prepare_penobscot.py split_inline --data-dir=/mnt/penobscot --val
 For seismic imaging, the repository shows how you can leverage open-source PDE solvers (e.g. Devito), and perform Full-Waveform Inversion (FWI) at scale on Azure, using Azure Machine Learning (Azure ML), and Azure Batch. The repository provides a collection of sample notebooks that shows 
 
 * How you can create customized Docker containers with Devito and use this on Azure
+
 • How you can create Azure ML estimators for performing FWI using Devito. This enable the Devito code to easily run on a single machine, as well as multiple machines using Azure ML managed computes.
 
 
