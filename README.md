@@ -1,13 +1,14 @@
 # DeepSeismic
 ![DeepSeismic](./DeepSeismicLogo.jpg )
 
-This repository shows you how to perform seismic imaging and interpretation on Azure. It empowers geophysicists and data scientists to run seismic experiments using state-of-art DSL-based PDE solvers and segmentation algorithms on Azure.  The repository provides sample notebooks, data loaders for seismic data, utility codes, and out-of-the box ML pipelines
+This repository shows you how to perform seismic imaging and interpretation on Azure. It empowers geophysicists and data scientists to run seismic experiments using state-of-art DSL-based PDE solvers and segmentation algorithms on Azure.  
 
-For seismic imaging, the repository shows how you can leverage open-source PDE solvers (e.g. Devito), and perform Full-Waveform Inversion (FWI) at scale on Azure, using Azure Machine Learning (Azure ML), and Azure Batch. It demonnstrates examples on how to run Devito easily on a single machine, as well as multiple machines using Azure ML managed compute. 
+The repository provides sample notebooks, data loaders for seismic data, utility codes, and out-of-the box ML pipelines.
 
-For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation, and also benchmarking results from running these algorithms using various seismic datasets (Dutch F3, and Penobscot).
 
 ## Interpretation
+For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation, and also benchmarking results from running these algorithms using various seismic datasets (Dutch F3, and Penobscot).
+
 ### Setting up Environment
 Navigate to the folder where you pulled the DeepSeismic repo to
 
@@ -54,15 +55,15 @@ conda install -c anaconda pyqt=4.11.4
 pip install segyviewer
 ```
 
-## Benchmarks
+### Benchmarks
 
-### Dense Labels
+#### Dense Labels
 
 This section contains benchmarks of different algorithms for seismic interpretation on 3D seismic datasets with densely-annotated data.
 
 Below are the results from the models contained in this repo. To run them check the instructions in <benchmarks> folder. Alternatively take a look in <examples> for how to run them on your own dataset
 
-### Netherlands F3
+#### Netherlands F3
 
 |    Source        |    Experiment                     |    PA       |    FW IoU    |    MCA     |
 |------------------|-----------------------------------|-------------|--------------|------------|
@@ -73,7 +74,7 @@ Below are the results from the models contained in this repo. To run them check 
 |                  |    HRNet(patch)+patch_depth       |    .908     |    .843      |    .837    |
 |                  |    HRNet(patch)+section_depth     |    .928     |    .871      |    .871    |
 
-### Penobscot
+#### Penobscot
 
 Trained and tested on full dataset. Inlines with artefacts were left in for training, validation and testing.
 The dataset was split 70% training, 10% validation and 20% test. The results below are from the test set
@@ -88,8 +89,8 @@ The dataset was split 70% training, 10% validation and 20% test. The results bel
 
 
 
-### Data
-#### Netherlands F3
+#### Data
+##### Netherlands F3
 To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
 [this github repository](https://github.com/olivesgatech/facies_classification_benchmark).
 
@@ -107,7 +108,7 @@ python scripts/prepare_dutchf3.py split_train_val patch --data-dir=/mnt/dutchf3 
 
 Refer to the script itself for more argument options.
 
-#### Penobscot
+##### Penobscot
 To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script, e.g.
 
 ```
@@ -123,10 +124,18 @@ python scripts/prepare_penobscot.py split_inline --data-dir=/mnt/penobscot --val
 ```
 
 
-### Scripts
+#### Scripts
 - [parallel_training.sh](scripts/parallel_training.sh): Script to launch multiple jobs in parallel. Used mainly for local hyperparameter tuning. Look at the script for further instructions
 
 - [kill_windows.sh](scripts/kill_windows.sh): Script to kill multiple tmux windows. Used to kill jobs that parallel_training.sh might have started.
+
+
+## Seismic Imaging
+For seismic imaging, the repository shows how you can leverage open-source PDE solvers (e.g. Devito), and perform Full-Waveform Inversion (FWI) at scale on Azure, using Azure Machine Learning (Azure ML), and Azure Batch. The repository provides a collection of sample notebooks that shows 
+
+* How you can create customized Docker containers with Devito and use this on Azure
+* How you can create Azure ML estimators for performing FWI using Devito. 
+This enable the Devito code to easily run on a single machine, as well as multiple machines using Azure ML managed computes.
 
 
 ## Contributing
