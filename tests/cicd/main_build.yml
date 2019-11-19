@@ -20,9 +20,10 @@ jobs:
 
   steps:
   - bash: |
-      echo "First step"
-      echo "Replace this with command"
-      echo "Dummy unit test job passed"
+      echo "Starting unit tests"
+      conda activate seismic-interpretation
+      pytest --durations=0 cv_lib/tests/
+      echo "Unit test job passed"
     displayName: Unit Test Job
 
 - job: integration_test_job
