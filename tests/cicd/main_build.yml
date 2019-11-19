@@ -35,4 +35,8 @@ jobs:
   - bash: |
       echo "First step"
       echo "Dummy integration test job passed"
+      pwd
+      ls
+      git branch
+      uname -ra
     displayName: Integration Test Job
