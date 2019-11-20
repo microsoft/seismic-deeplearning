@@ -1,5 +1,5 @@
 # DeepSeismic
-![DeepSeismic](./DeepSeismicLogo.jpg )
+![DeepSeismic](./assets/DeepSeismicLogo.jpg )
 
 This repository shows you how to perform seismic imaging and interpretation on Azure. It empowers geophysicists and data scientists to run seismic experiments using state-of-art DSL-based PDE solvers and segmentation algorithms on Azure.  
 
@@ -84,8 +84,8 @@ The dataset was split 70% training, 10% validation and 20% test. The results bel
 |    DeepSeismic   |    SEResNet UNet + section depth    |    1.0      |    .98        |    .99    |
 |                  |    HRNet(patch) + section depth     |    1.0      |    .97        |    .98    |
 
-![Best Penobscot SEResNet](images/penobscot_seresnet_best.png "Best performing inlines, Mask and Predictions from SEResNet")
-![Worst Penobscot SEResNet](images/penobscot_seresnet_worst.png "Worst performing inlines  Mask and Predictions from SEResNet")
+![Best Penobscot SEResNet](assets/penobscot_seresnet_best.png "Best performing inlines, Mask and Predictions from SEResNet")
+![Worst Penobscot SEResNet](assets/penobscot_seresnet_worst.png "Worst performing inlines  Mask and Predictions from SEResNet")
 
 
 
@@ -112,7 +112,9 @@ Refer to the script itself for more argument options.
 To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script, e.g.
 
 ```
-./download_penobscot.sh /data/penobscot
+data_dir='/data/penobscot'
+mkdir "$data_dir"
+./scripts/download_penobscot.sh "$data_dir"
 ```
 
 Note that the specified download location (e.g `/data/penobscot`) should be created beforehand, and configured appropriate `write` pemissions.
@@ -120,7 +122,7 @@ Note that the specified download location (e.g `/data/penobscot`) should be crea
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
 
 ```
-python scripts/prepare_penobscot.py split_inline --data-dir=/mnt/penobscot --val-ratio=.1 --test-ratio=.2
+python scripts/prepare_penobscot.py split_inline --data-dir=/data/penobscot --val-ratio=.1 --test-ratio=.2
 ```
 
 
