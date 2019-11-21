@@ -33,10 +33,23 @@ jobs:
 
   steps:
   - bash: |
-      echo "First step"
-      echo "Dummy integration test job passed"
+      echo "Experiment Integration Tests"
+
       pwd
       ls
       git branch
       uname -ra
+
+      # copy your model files like so - using dummy file to illustrate
+      azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
+
+      # run the tests
+      echo "running section_deconvnet_skip"
+      cd experiments/interpretation/dutchf3_section/local
+      python train.py --cfg=configs/section_deconvnet_skip.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
+      # find the latest model which we just trained
+      model=$(ls -td */*/*/section_deconvnet_skip/* | head -1)
+      # try running the test script
+      python test.py --cfg=configs/section_deconvnet_skip.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/section_deconvnet_skip_running_model_1.pth
+
     displayName: Integration Test Job
