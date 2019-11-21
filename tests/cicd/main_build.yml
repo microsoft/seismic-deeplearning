@@ -14,7 +14,7 @@ trigger:
 jobs:
 
 - job: setup
-  timeoutInMinutes: 10 # how long to run the job before automatically cancelling
+  timeoutInMinutes: 20 # how long to run the job before automatically cancelling
   pool:
     name: deepseismicagentpool
 
@@ -37,7 +37,7 @@ jobs:
     displayName: Setup
 
 - job: uni_test_job
-  timeoutInMinutes: 10 # how long to run the job before automatically cancelling
+  timeoutInMinutes: 20 # how long to run the job before automatically cancelling
   pool:
     name: deepseismicagentpool
 
@@ -50,7 +50,7 @@ jobs:
     displayName: Unit Test Job
 
 - job: integration_test_job
-  timeoutInMinutes: 10 # how long to run the job before automatically cancelling
+  timeoutInMinutes: 20 # how long to run the job before automatically cancelling
   pool:
     name: deepseismicagentpool
 
