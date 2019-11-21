@@ -13,6 +13,23 @@ trigger:
 
 jobs:
 
+- job: setup
+  timeoutInMinutes: 10 # how long to run the job before automatically cancelling
+  pool:
+    name: deepseismicagentpool
+
+  steps:
+  - bash: |
+      echo "Running setup..."
+      # make sure we have the latest and greatest
+      conda env update -f environment/anaconda/local/environment.yml
+      conda activate seismic-interpretation
+      pip install -e interpretation
+      pip install -e cv_lib
+      # add this if pytorch stops detecting GPU
+      conda install pytorch torchvision cudatoolkit=9.2 -c pytorch
+    displayName: Setup
+
 - job: uni_test_job
   timeoutInMinutes: 10 # how long to run the job before automatically cancelling
   pool:
@@ -42,6 +59,8 @@ jobs:
 
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
+
+      conda activate seismic-interpretation
 
       # run the tests
       echo "running section_deconvnet_skip"
