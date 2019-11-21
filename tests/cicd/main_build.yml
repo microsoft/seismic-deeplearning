@@ -21,8 +21,14 @@ jobs:
   steps:
   - bash: |
       echo "Running setup..."
+
+      pwd
+      ls
+      git branch
+      uname -ra
+
       # make sure we have the latest and greatest
-      conda env update -f environment/anaconda/local/environment.yml
+      yes | conda env update -f environment/anaconda/local/environment.yml
       conda activate seismic-interpretation
       pip install -e interpretation
       pip install -e cv_lib
