@@ -125,6 +125,9 @@ To prepare the data for the experiments (e.g. split into train/val/test), please
 python scripts/prepare_penobscot.py split_inline --data-dir=/data/penobscot --val-ratio=.1 --test-ratio=.2
 ```
 
+### Pretrained Models
+#### HRNet
+To achieve the same results as the benchmarks above you will need to download the HRNet model pretrained on Imagenet. This can be found [here](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk). Download this to your local drive and make sure you add the path to the Yacs configuration script.
 
 #### Scripts
 - [parallel_training.sh](scripts/parallel_training.sh): Script to launch multiple jobs in parallel. Used mainly for local hyperparameter tuning. Look at the script for further instructions
