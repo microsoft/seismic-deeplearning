@@ -12,7 +12,7 @@ trigger:
 - staging
 
 variables:
-  Agent: $(Agent)
+  Agent: $(AgentName)
 
 jobs:
 # partially disable setup for now - done manually on build VM
