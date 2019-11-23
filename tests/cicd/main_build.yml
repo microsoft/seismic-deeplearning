@@ -17,7 +17,7 @@ variables:
 jobs:
 # partially disable setup for now - done manually on build VM
 - job: setup
-  timeoutInMinutes: 5
+
   displayName: Setup
   pool:
     name: $(Agent)
@@ -42,11 +42,6 @@ jobs:
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination ./models/your_model_name
 
-- job: unit_tests_job
-  timeoutInMinutes: 20
-  pool:
-    name: $(Agent)
-  steps:
   - bash: |
       echo "Starting unit tests"
       conda activate seismic-interpretation
@@ -58,12 +53,6 @@ jobs:
 # LOCAL PATCH JOBS
 ###################################################################################################
 
-- job: hrnet_patch
-  timeoutInMinutes: 5
-  displayName: hrnet patch
-  pool:
-    name: $(Agent)
-  steps:
   - bash: |
       conda activate seismic-interpretation
       # run the tests      
@@ -73,13 +62,8 @@ jobs:
       model=$(ls -td */*/*/hrnet/* | head -1)
       # try running the test script
       python test.py --cfg=configs/hrnet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/hrnet_running_model_1.pth
+    displayName: hrnet patch
 
-- job: unet_patch
-  timeoutInMinutes: 5
-  displayName: unet patch
-  pool:
-    name: $(Agent)
-  steps:
   - bash: |
       conda activate seismic-interpretation
       # run the tests      
@@ -89,13 +73,8 @@ jobs:
       model=$(ls -td */*/*/unet/* | head -1)
       # try running the test script
       python test.py --cfg=configs/unet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/unet_running_model_1.pth
+    displayName: unet patch
 
-- job: seresnet_unet_patch
-  timeoutInMinutes: 5
-  displayName: seresnet unet patch
-  pool:
-    name: $(Agent)
-  steps:
   - bash: |
       conda activate seismic-interpretation
       # run the tests      
@@ -105,13 +84,8 @@ jobs:
       model=$(ls -td */*/*/seresnet_unet/* | head -1)
       # try running the test script
       python test.py --cfg=configs/seresnet_unet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/seresnet_unet_running_model_1.pth
+    displayName: seresnet unet patch
 
-- job: patch_deconvnet
-  timeoutInMinutes: 5
-  displayName: patch deconvnet
-  pool:
-    name: $(Agent)
-  steps:
   - bash: |
       conda activate seismic-interpretation
       # run the tests      
@@ -121,13 +95,8 @@ jobs:
       model=$(ls -td */*/*/patch_deconvnet/* | head -1)
       # try running the test script
       python test.py --cfg=configs/patch_deconvnet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/patch_deconvnet_running_model_1.pth
+    displayName: patch deconvnet
 
-- job: patch_deconvnet_skip_local
-  timeoutInMinutes: 5
-  displayName: patch deconvnet skip
-  pool:
-    name: $(Agent)
-  steps:
   - bash: |
       conda activate seismic-interpretation
       # run the tests      
@@ -137,15 +106,9 @@ jobs:
       model=$(ls -td */*/*/patch_deconvnet_skip/* | head -1)
       # try running the test script
       python test.py --cfg=configs/patch_deconvnet_skip.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/patch_deconvnet_skip_running_model_1.pth
+    displayName: patch deconvnet skip
 
 # Penobscot dataset
-
-- job: seresnet_unet
-  timeoutInMinutes: 5
-  displayName: seresnet unet
-  pool:
-    name: $(Agent)
-  steps:
   - bash: |
       conda activate seismic-interpretation
       # run the tests      
@@ -155,13 +118,8 @@ jobs:
       model=$(ls -td */*/*/seresnet_unet/* | head -1)
       # try running the test script
       python test.py --cfg=configs/seresnet_unet.yaml 'DATASET.ROOT' './data/penobscot' 'TEST.MODEL_PATH' ${model}/models/seresnet_unet_running_model_1.pth
+    displayName: seresnet unet
 
-- job: hrnet_penobscot
-  timeoutInMinutes: 5
-  displayName: hrnet penobscot
-  pool:
-    name: $(Agent)
-  steps:
   - bash: |
       conda activate seismic-interpretation
       # run the tests      
@@ -171,87 +129,55 @@ jobs:
       model=$(ls -td */*/*/hrnet/* | head -1)
       # try running the test script
       python test.py --cfg=configs/hrnet.yaml 'DATASET.ROOT' './data/penobscot' 'TEST.MODEL_PATH' ${model}/models/hrnet_running_model_1.pth
-
+    displayName: hrnet penobscot
 ###################################################################################################
 # DISTRIBUTED PATCH JOBS
 ###################################################################################################
 
-- job: hrnet_patch_2
-  timeoutInMinutes: 5
-  displayName: hrnet patch
-  pool:
-    name: $(Agent)
-  steps:
   - bash: |
       conda activate seismic-interpretation
       export PYTHONPATH="$PWD/interpretation:$PYTHONPATH"
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/hrnet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
+    displayName: hrnet patch
 
-- job: unet_patch_2
-  timeoutInMinutes: 5
-  displayName: unet patch
-  pool:
-    name: $(Agent)
-  steps:
   - bash: |
       conda activate seismic-interpretation
       export PYTHONPATH="$PWD/interpretation:$PYTHONPATH"
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/unet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1      
+    displayName: unet patch
 
-- job: seresnet_unet_patch_2
-  timeoutInMinutes: 5
-  displayName: seresnet unet patch
-  pool:
-    name: $(Agent)
-  steps:
   - bash: |
       conda activate seismic-interpretation
       export PYTHONPATH="$PWD/interpretation:$PYTHONPATH"
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/seresnet_unet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
-      
-- job: patch_deconvnet_2
-  timeoutInMinutes: 5
-  displayName: patch deconvnet
-  pool:
-    name: $(Agent)
-  steps:
+    displayName: seresnet unet patch
+
   - bash: |
       conda activate seismic-interpretation
       export PYTHONPATH="$PWD/interpretation:$PYTHONPATH"
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/patch_deconvnet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1  
+    displayName: patch deconvnet
 
-- job: patch_deconvnet_skip_2
-  timeoutInMinutes: 5
-  displayName: patch deconvnet skip
-  pool:
-    name: $(Agent)
-  steps:
   - bash: |
       conda activate seismic-interpretation
       export PYTHONPATH="$PWD/interpretation:$PYTHONPATH"
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/patch_deconvnet_skip.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
-
+    displayName: patch deconvnet skip
 
 ###################################################################################################
 # LOCAL SECTION JOBS
 ###################################################################################################
 
-- job: section_deconvnet_skip
-  timeoutInMinutes: 5
-  displayName: section deconvnet skip
-  pool:
-    name: $(Agent)
-  steps:
   - bash: |
       conda activate seismic-interpretation
       # run the tests      
@@ -261,3 +187,4 @@ jobs:
       model=$(ls -td */*/*/section_deconvnet_skip/* | head -1)
       # try running the test script
       python test.py --cfg=configs/section_deconvnet_skip.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/section_deconvnet_skip_running_model_1.pth
+    displayName: section deconvnet skip
