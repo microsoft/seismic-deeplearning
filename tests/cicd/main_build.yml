@@ -12,7 +12,7 @@ trigger:
 - staging
 
 variables:
-  Agent: deepseismicagentpool
+  Agent: $(Agent)
 
 jobs:
 # partially disable setup for now - done manually on build VM
