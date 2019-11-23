@@ -122,7 +122,7 @@ jobs:
       # try running the test script
       python test.py --cfg=configs/patch_deconvnet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/patch_deconvnet_running_model_1.pth
 
-- job: patch_deconvnet_skip
+- job: patch_deconvnet_skip_local
   timeoutInMinutes: 5
   displayName: patch deconvnet skip
   pool:
