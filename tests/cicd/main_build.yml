@@ -215,7 +215,7 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/seresnet_unet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
       
-- job: patch_deconvnet
+- job: patch_deconvnet_2
   timeoutInMinutes: 5
   displayName: patch deconvnet
   pool:
@@ -228,7 +228,7 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/patch_deconvnet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1  
 
-- job: patch_deconvnet_skip
+- job: patch_deconvnet_skip_2
   timeoutInMinutes: 5
   displayName: patch deconvnet skip
   pool:
