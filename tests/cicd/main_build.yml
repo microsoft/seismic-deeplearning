@@ -11,14 +11,16 @@ trigger:
 - master
 - staging
 
-jobs:
+parameters:
+  Agent: deepseismicagentpool
 
+jobs:
 # partially disable setup for now - done manually on build VM
 - job: setup
   timeoutInMinutes: 5
   displayName: Setup
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
 
   steps:
   - bash: |
@@ -43,7 +45,7 @@ jobs:
 - job: unit_tests_job
   timeoutInMinutes: 20
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       echo "Starting unit tests"
@@ -60,7 +62,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: hrnet patch
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       conda activate seismic-interpretation
@@ -76,7 +78,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: unet patch
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       conda activate seismic-interpretation
@@ -92,7 +94,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: seresnet unet patch
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       conda activate seismic-interpretation
@@ -108,7 +110,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: patch deconvnet
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       conda activate seismic-interpretation
@@ -124,7 +126,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: patch deconvnet skip
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       conda activate seismic-interpretation
@@ -142,7 +144,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: seresnet unet
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       conda activate seismic-interpretation
@@ -158,7 +160,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: hrnet penobscot
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       conda activate seismic-interpretation
@@ -178,7 +180,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: hrnet patch
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       conda activate seismic-interpretation
@@ -191,7 +193,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: unet patch
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       conda activate seismic-interpretation
@@ -204,7 +206,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: seresnet unet patch
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       conda activate seismic-interpretation
@@ -217,7 +219,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: patch deconvnet
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       conda activate seismic-interpretation
@@ -230,7 +232,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: patch deconvnet skip
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       conda activate seismic-interpretation
@@ -248,7 +250,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: section deconvnet skip
   pool:
-    name: deepseismicagentpool
+    name: $(Agent)
   steps:
   - bash: |
       conda activate seismic-interpretation
@@ -259,4 +261,3 @@ jobs:
       model=$(ls -td */*/*/section_deconvnet_skip/* | head -1)
       # try running the test script
       python test.py --cfg=configs/section_deconvnet_skip.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/section_deconvnet_skip_running_model_1.pth
-
