@@ -202,7 +202,7 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/unet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1      
 
-- job: seresnet_unet_patch
+- job: seresnet_unet_patch_2
   timeoutInMinutes: 5
   displayName: seresnet unet patch
   pool:
