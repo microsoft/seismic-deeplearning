@@ -41,6 +41,8 @@ jobs:
   
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination ./models/your_model_name
+    displayName: Setup
+    failOnStderr: True
 
   - bash: |
       echo "Starting unit tests"
