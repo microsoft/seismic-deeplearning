@@ -16,7 +16,7 @@ variables:
 
 jobs:
 # partially disable setup for now - done manually on build VM
-- job: setup
+- job: unit_tests
 
   displayName: Setup
   pool:
@@ -32,7 +32,7 @@ jobs:
       uname -ra
 
       # make sure we have the latest and greatest
-      # yes | conda env update -f environment/anaconda/local/environment.yml
+      conda env create -f environment/anaconda/local/environment.yml
       conda activate seismic-interpretation
       pip install -e interpretation
       pip install -e cv_lib
