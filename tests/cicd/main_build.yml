@@ -33,7 +33,7 @@ jobs:
 
       # make sure we have the latest and greatest
       conda env create -f environment/anaconda/local/environment.yml
-      conda activate seismic-interpretation
+      source activate seismic-interpretation
       pip install -e interpretation
       pip install -e cv_lib
       # add this if pytorch stops detecting GPU
