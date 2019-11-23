@@ -176,7 +176,7 @@ jobs:
 # DISTRIBUTED PATCH JOBS
 ###################################################################################################
 
-- job: hrnet_patch
+- job: hrnet_patch_2
   timeoutInMinutes: 5
   displayName: hrnet patch
   pool:
