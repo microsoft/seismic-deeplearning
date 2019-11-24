@@ -2,6 +2,7 @@
 parameters:  
   storagename: #
   storagekey: #
+  conda: seismic-interpretation
 
 steps:
 - bash: |
@@ -9,7 +10,7 @@ steps:
 
     # make sure we have the latest and greatest
     conda env create -f environment/anaconda/local/environment.yml --force
-    source activate $(conda)
+    source activate ${{parameter.conda}}
     pip install -e interpretation
     pip install -e cv_lib
     # add this if pytorch stops detecting GPU
