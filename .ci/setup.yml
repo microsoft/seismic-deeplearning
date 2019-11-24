@@ -17,6 +17,6 @@ steps:
     # conda install pytorch torchvision cudatoolkit=9.2 -c pytorch
 
     # copy your model files like so - using dummy file to illustrate
-    azcopy --quiet --source:https://${{parameters.storagename}}.blob.core.windows.net/models/model --source-key ${{parameters.storagekey}} --destination ~/models/your_model_name
+    azcopy --quiet --source:https://${{parameters.storagename}}.blob.core.windows.net/models/model --source-key ${{parameters.storagekey}} --destination ./models/your_model_name
   displayName: Setup
   failOnStderr: True
