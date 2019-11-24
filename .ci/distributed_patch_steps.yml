@@ -1,51 +1,33 @@
 parameters:
-  conda: seismic-interpretation
-  dir: experiments/interpretation/dutchf3_patch/distributed
-  dataset_root: ./data/dutch_f3/data
   nproc: #
   
 steps:
   # 1 - hrnet
   - template: distributed_patch_step.yml
     parameters:
-      conda: ${{parameters.conda}}
-      dir: ${{parameters.dir}}
-      dataset_root: ${{parameters.dataset_root}}
       nproc: ${{parameters.nproc}}
       model_name: hrnet
 
   # 2 -unet
   - template: distributed_patch_step.yml
     parameters:
-      conda: ${{parameters.conda}}
-      dir: ${{parameters.dir}}
-      dataset_root: ${{parameters.dataset_root}}
       nproc: ${{parameters.nproc}}
       model_name: unet
       
   # 3 - seresnet_unet
   - template: distributed_patch_step.yml
     parameters:
-      conda: ${{parameters.conda}}
-      dir: ${{parameters.dir}}
-      dataset_root: ${{parameters.dataset_root}}
       nproc: ${{parameters.nproc}}
       model_name: seresnet_unet
   
   # 4 - patch_deconvnet
   - template: distributed_patch_step.yml
     parameters:
-      conda: ${{parameters.conda}}
-      dir: ${{parameters.dir}}
-      dataset_root: ${{parameters.dataset_root}}
       nproc: ${{parameters.nproc}}
       model_name: patch_deconvnet
   
   # 5 - patch_deconvnet_skip
   - template: distributed_patch_step.yml
     parameters:
-      conda: ${{parameters.conda}}
-      dir: ${{parameters.dir}}
-      dataset_root: ${{parameters.dataset_root}}
       nproc: ${{parameters.nproc}}
       model_name: patch_deconvnet_skip
