@@ -18,7 +18,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: Setup
   pool:
-    name: deepseismicagentpool
+    name: $(AgentName)
 
   steps:
   - bash: |
@@ -44,7 +44,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: HRNET demo
   pool:
-    name: deepseismicagentpool
+    name: $(AgentName)
   steps:
   - bash: |
       echo "TODO: HRNET_demo placeholder"
@@ -54,7 +54,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: F3 block training and evaluation local
   pool:
-    name: deepseismicagentpool
+    name: $(AgentName)
   steps:
   - bash: |
       echo "TODO: F3_block_training_and_evaluation_local placeholder"
