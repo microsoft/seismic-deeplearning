@@ -19,14 +19,25 @@ jobs:
   pool:
     name: $(AgentName)
 
+  strategy:
+    maxParallel: 1
+    matrix:
+      Unit:
+        template: unit_test_steps.yml
+      Local:
+        template: local_patch_steps.yml
+      Distributed:
+        template: distributed_patch_steps.yml
+
   steps:
   - template: setup.yml
     parameters:
       storagename: $(storagename)
       storagekey: $(storagekey)
 
-  - template: unit_test_steps.yml
+  - template: $(template)
+  #- template: unit_test_steps.yml
 
-  - template: local_patch_steps.yml
+  #- template: local_patch_steps.yml
 
-  - template: distributed_patch_steps.yml
+  #- template: distributed_patch_steps.yml
