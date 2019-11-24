@@ -1,7 +1,7 @@
   
 parameters:  
-  conda: # seismic-interpretation
-  dir: # experiments/interpretation/dutchf3_patch/distributed
+  conda: seismic-interpretation
+  dir: experiments/interpretation/dutchf3_patch/distributed
   dataset_root: # './data/dutch_f3/data'
   model_name: # hrnet
   nproc: #
