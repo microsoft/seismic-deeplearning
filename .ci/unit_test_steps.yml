@@ -1,0 +1,15 @@
+steps:
+  - bash: |
+      echo "Starting unit tests"
+      source activate seismic-interpretation
+      pytest --durations=0 --junitxml 'reports/test-unit.xml' cv_lib/tests/ 
+      echo "Unit test job passed"
+    displayName: Unit Tests Job
+    failOnStderr: True
+
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results **/test-*.xml'
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      failTaskOnFailedTests: true
+    condition: succeededOrFailed()
