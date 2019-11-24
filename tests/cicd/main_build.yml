@@ -32,7 +32,7 @@ jobs:
       uname -ra
 
       # make sure we have the latest and greatest
-      conda env create -f environment/anaconda/local/environment.yml
+      conda env create -f environment/anaconda/local/environment.yml --force
       source activate seismic-interpretation
       pip install -e interpretation
       pip install -e cv_lib
