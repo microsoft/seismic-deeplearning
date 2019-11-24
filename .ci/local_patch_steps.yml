@@ -1,0 +1,58 @@
+
+parameters:
+  conda: seismic-interpretation
+  dutchf3_patch: experiments/interpretation/dutchf3_patch/local
+  patch_root: ./data/dutch_f3/data
+  penobscot: experiments/interpretation/penobscot/local
+  penobscot_root: ./data/penobscot
+
+steps:
+  - template: python_train_test.yml
+    parameters:
+      conda: $(conda)
+      dir: $(dutchf3_patch)
+      dataset_root: $(patch_root)
+      model_name: hrnet
+
+  - template: python_train_test.yml
+    parameters:
+      conda: $(conda)
+      dir: $(dutchf3_patch)
+      dataset_root: $(patch_root)
+      model_name: unet
+
+  - template: python_train_test.yml
+    parameters:
+      conda: $(conda)
+      dir: $(dutchf3_patch)
+      dataset_root: $(patch_root)
+      model_name: seresnet_unet
+
+  - template: python_train_test.yml
+    parameters:
+      conda: $(conda)
+      dir: $(dutchf3_patch)
+      dataset_root: $(patch_root)
+      model_name: patch_deconvnet
+
+  - template: python_train_test.yml
+    parameters:
+      conda: $(conda)
+      dir: $(dutchf3_patch)
+      dataset_root: $(patch_root)
+      model_name: patch_deconvnet_skip
+
+# Penobscot dataset
+  - template: python_train_test.yml
+    parameters:
+      conda: $(conda)
+      dir: $(penobscot)
+      dataset_root: $(penobscot_root)
+      model_name: seresnet_unet
+
+  - template: python_train_test.yml
+    parameters:
+      conda: $(conda)
+      dir: $(penobscot)
+      dataset_root: $(penobscot_root)
+      model_name: hrnet
