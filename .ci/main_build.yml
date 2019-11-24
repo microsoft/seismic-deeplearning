@@ -20,9 +20,6 @@ jobs:
     name: $(AgentName)
 
   steps:
-  - bash: |
-      echo "##vso[task.prependpath]$CONDA/bin"
-
   - template: setup.yml
     parameters:
       storagename: $(storagename)
