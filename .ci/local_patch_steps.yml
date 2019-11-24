@@ -9,35 +9,30 @@ parameters:
 steps:
   - template: local_patch_step.yml
     parameters:
-      conda: $(conda)
       dir: $(dutchf3_patch)
       dataset_root: $(patch_root)
       model_name: hrnet
 
   - template: local_patch_step.yml
     parameters:
-      conda: $(conda)
       dir: $(dutchf3_patch)
       dataset_root: $(patch_root)
       model_name: unet
 
   - template: local_patch_step.yml
     parameters:
-      conda: $(conda)
       dir: $(dutchf3_patch)
       dataset_root: $(patch_root)
       model_name: seresnet_unet
 
   - template: local_patch_step.yml
     parameters:
-      conda: $(conda)
       dir: $(dutchf3_patch)
       dataset_root: $(patch_root)
       model_name: patch_deconvnet
 
   - template: local_patch_step.yml
     parameters:
-      conda: $(conda)
       dir: $(dutchf3_patch)
       dataset_root: $(patch_root)
       model_name: patch_deconvnet_skip
@@ -45,14 +40,12 @@ steps:
 # Penobscot dataset
   - template: local_patch_step.yml
     parameters:
-      conda: $(conda)
       dir: $(penobscot)
       dataset_root: $(penobscot_root)
       model_name: seresnet_unet
 
   - template: local_patch_step.yml
     parameters:
-      conda: $(conda)
       dir: $(penobscot)
       dataset_root: $(penobscot_root)
       model_name: hrnet
