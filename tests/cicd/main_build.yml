@@ -63,7 +63,7 @@ jobs:
       cfg: configs/hrnet.yaml
       dataset_root: ./data/dutch_f3/data
       model_name: hrnet
-      model_path: ./models/hrnet_running_model_1.pth
+      model_path: /models/hrnet_running_model_1.pth
       displayName: hrnet patch
 
   - bash: |
