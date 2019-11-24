@@ -36,6 +36,13 @@ steps:
       dataset_root: $(patch_root)
       model_name: patch_deconvnet_skip
 
+# Local Section
+  - template: local_patch_step.yml
+    parameters:
+      dir: $(dutchf3_patch)
+      dataset_root: $(patch_root)
+      model_name: section_deconvnet_skip
+
 # Penobscot dataset
   - template: local_patch_step.yml
     parameters:
