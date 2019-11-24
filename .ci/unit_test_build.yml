@@ -26,7 +26,3 @@ jobs:
       storagekey: $(storagekey)
 
   - template: unit_test_steps.yml
-
-  - template: local_patch_steps.yml
-
-  - template: distributed_patch_steps.yml
