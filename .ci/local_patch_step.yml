@@ -1,6 +1,6 @@
   
 parameters:  
-  conda: #
+  conda: seismic-interpretation
   dir: #
   dataset_root: # './data/dutch_f3/data'
   model_name: # hrnet
