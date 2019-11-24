@@ -20,9 +20,9 @@ jobs:
     name: $(AgentName)
 
   steps:
-  - template: setup.yml
+  - template: steps/setup_step.yml
     parameters:
       storagename: $(storagename)
       storagekey: $(storagekey)
 
-  - template: unit_test_steps.yml
+  - template: steps/unit_test_steps.yml
