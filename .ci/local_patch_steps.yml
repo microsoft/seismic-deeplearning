@@ -1,9 +1,9 @@
 
 parameters:
   dutchf3_patch: experiments/interpretation/dutchf3_patch/local
-  patch_root: ./data/dutch_f3/data
+  patch_root: ~/data/dutch_f3/data
   penobscot: experiments/interpretation/penobscot/local
-  penobscot_root: ./data/penobscot
+  penobscot_root: ~/data/penobscot
 
 steps:
   - template: local_patch_step.yml
