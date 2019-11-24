@@ -11,6 +11,7 @@ repos:
     hooks:
     - id: jupytext
       name: jupytext
-      entry: jupytext --sync --pipe black --check flake8 --pre-commit
-      pass_filenames: false
+      entry: jupytext --from ipynb  --pipe black --check flake8
+      pass_filenames: true
+      files: .ipynb
       language: python
