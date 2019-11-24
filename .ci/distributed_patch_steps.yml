@@ -1,33 +1,25 @@
-parameters:
-  nproc: #
-  
 steps:
   # 1 - hrnet
   - template: distributed_patch_step.yml
     parameters:
-      nproc: ${{parameters.nproc}}
       model_name: hrnet
 
   # 2 -unet
   - template: distributed_patch_step.yml
     parameters:
-      nproc: ${{parameters.nproc}}
       model_name: unet
       
   # 3 - seresnet_unet
   - template: distributed_patch_step.yml
     parameters:
-      nproc: ${{parameters.nproc}}
       model_name: seresnet_unet
   
   # 4 - patch_deconvnet
   - template: distributed_patch_step.yml
     parameters:
-      nproc: ${{parameters.nproc}}
       model_name: patch_deconvnet
   
   # 5 - patch_deconvnet_skip
   - template: distributed_patch_step.yml
     parameters:
-      nproc: ${{parameters.nproc}}
       model_name: patch_deconvnet_skip
