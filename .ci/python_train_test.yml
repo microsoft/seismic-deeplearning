@@ -16,5 +16,5 @@ steps:
       # find the latest model which we just trained
       model=$(ls -td */*/*/${{parameters.model_name}}/* | head -1)
       # try running the test script
-      python test.py --cfg=configs/${{parameters.model_name}} 'DATASET.ROOT' '${{parameters.dataset_root}}' 'TEST.MODEL_PATH' .${model}/models/${{parameters.model_name}}_running_model_1.pth
+      python test.py --cfg=configs/${{parameters.model_name}} 'DATASET.ROOT' '${{parameters.dataset_root}}' 'TEST.MODEL_PATH' ${model}/models/${{parameters.model_name}}_running_model_1.pth
     displayName: ${{parameters.displayName}}
