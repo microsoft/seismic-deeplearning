@@ -51,6 +51,11 @@ jobs:
     displayName: Setup
     failOnStderr: True
 
+  - template: setup.yml
+    parameters:
+      storagename: $(storagename)
+      storagekey: $(storagekey)
+
   - bash: |
       echo "Starting unit tests"
       source activate seismic-interpretation
