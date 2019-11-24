@@ -7,35 +7,35 @@ parameters:
   penobscot_root: ./data/penobscot
 
 steps:
-  - template: python_train_test.yml
+  - template: local_patch_step.yml
     parameters:
       conda: $(conda)
       dir: $(dutchf3_patch)
       dataset_root: $(patch_root)
       model_name: hrnet
 
-  - template: python_train_test.yml
+  - template: local_patch_step.yml
     parameters:
       conda: $(conda)
       dir: $(dutchf3_patch)
       dataset_root: $(patch_root)
       model_name: unet
 
-  - template: python_train_test.yml
+  - template: local_patch_step.yml
     parameters:
       conda: $(conda)
       dir: $(dutchf3_patch)
       dataset_root: $(patch_root)
       model_name: seresnet_unet
 
-  - template: python_train_test.yml
+  - template: local_patch_step.yml
     parameters:
       conda: $(conda)
       dir: $(dutchf3_patch)
       dataset_root: $(patch_root)
       model_name: patch_deconvnet
 
-  - template: python_train_test.yml
+  - template: local_patch_step.yml
     parameters:
       conda: $(conda)
       dir: $(dutchf3_patch)
@@ -43,14 +43,14 @@ steps:
       model_name: patch_deconvnet_skip
 
 # Penobscot dataset
-  - template: python_train_test.yml
+  - template: local_patch_step.yml
     parameters:
       conda: $(conda)
       dir: $(penobscot)
       dataset_root: $(penobscot_root)
       model_name: seresnet_unet
 
-  - template: python_train_test.yml
+  - template: local_patch_step.yml
     parameters:
       conda: $(conda)
       dir: $(penobscot)
