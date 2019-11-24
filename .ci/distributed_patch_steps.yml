@@ -6,7 +6,7 @@ parameters:
   
 steps:
   # 1 - hrnet
-  - template: distribured_patch_step.yml
+  - template: distributed_patch_step.yml
     parameters:
       conda: ${{parameters.conda}}
       dir: ${{parameters.dir}}
@@ -15,7 +15,7 @@ steps:
       model_name: hrnet
 
   # 2 -unet
-  - template: distribured_patch_step.yml
+  - template: distributed_patch_step.yml
     parameters:
       conda: ${{parameters.conda}}
       dir: ${{parameters.dir}}
@@ -24,7 +24,7 @@ steps:
       model_name: unet
       
   # 3 - seresnet_unet
-  - template: distribured_patch_step.yml
+  - template: distributed_patch_step.yml
     parameters:
       conda: ${{parameters.conda}}
       dir: ${{parameters.dir}}
@@ -33,7 +33,7 @@ steps:
       model_name: seresnet_unet
   
   # 4 - patch_deconvnet
-  - template: distribured_patch_step.yml
+  - template: distributed_patch_step.yml
     parameters:
       conda: ${{parameters.conda}}
       dir: ${{parameters.dir}}
@@ -42,7 +42,7 @@ steps:
       model_name: patch_deconvnet
   
   # 5 - patch_deconvnet_skip
-  - template: distribured_patch_step.yml
+  - template: distributed_patch_step.yml
     parameters:
       conda: ${{parameters.conda}}
       dir: ${{parameters.dir}}
