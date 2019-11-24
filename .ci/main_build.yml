@@ -30,3 +30,5 @@ jobs:
   - template: local_patch_steps.yml
 
   - template: distributed_patch_steps.yml
+    parameters:
+      nproc: $(nproc)
