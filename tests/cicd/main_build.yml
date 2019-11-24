@@ -56,16 +56,15 @@ jobs:
 # LOCAL PATCH JOBS
 ###################################################################################################
 
-  - bash: |
-      source activate seismic-interpretation
-      # run the tests      
-      cd experiments/interpretation/dutchf3_patch/local
-      python train.py --cfg=configs/hrnet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
-      # find the latest model which we just trained
-      model=$(ls -td */*/*/hrnet/* | head -1)
-      # try running the test script
-      python test.py --cfg=configs/hrnet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/hrnet_running_model_1.pth
-    displayName: hrnet patch
+  - template: python_train_test.yml
+    parameters:
+      conda: seismic-interpretation
+      dir: experiments/interpretation/dutchf3_patch/local
+      cfg: configs/hrnet.yaml
+      dataset_root: ./data/dutch_f3/data
+      model_name: hrnet
+      model_path: ./models/hrnet_running_model_1.pth
+      displayName: hrnet patch
 
   - bash: |
       source activate seismic-interpretation
