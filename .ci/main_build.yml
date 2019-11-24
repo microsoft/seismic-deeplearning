@@ -69,7 +69,7 @@ jobs:
   - template: local_patch_steps.yml
 
 # DISTRIBUTED PATCH Steps
-#  - template: distributed_patch_steps.yml
+  - template: distributed_patch_steps.yml
 
   - task: PublishTestResults@2
     displayName: 'Publish Test Results **/test-*.xml'
