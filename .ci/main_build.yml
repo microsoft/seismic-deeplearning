@@ -18,6 +18,13 @@ jobs:
 # partially disable setup for now - done manually on build VM
 - job: unit_tests
 
+  variables:
+    conda: seismic-interpretation
+    dutchf3_patch: experiments/interpretation/dutchf3_patch/local
+    patch_root: ./data/dutch_f3/data
+    penobscot: experiments/interpretation/penobscot/local
+    penobscot_root: ./data/penobscot
+
   displayName: Setup
   pool:
     name: $(Agent)
@@ -33,7 +40,7 @@ jobs:
 
       # make sure we have the latest and greatest
       conda env create -f environment/anaconda/local/environment.yml --force
-      source activate seismic-interpretation
+      source activate $(conda)
       pip install -e interpretation
       pip install -e cv_lib
       # add this if pytorch stops detecting GPU
@@ -52,89 +59,20 @@ jobs:
     displayName: Unit Tests Job
     failOnStderr: True
 
+
+# LOCAL PATCH Steps
+  - template: local_patch_steps.yml
+
 ###################################################################################################
-# LOCAL PATCH JOBS
+# DISTRIBUTED PATCH JOBS
 ###################################################################################################
 
   - template: python_train_test.yml
     parameters:
-      conda: seismic-interpretation
-      dir: experiments/interpretation/dutchf3_patch/local
-      cfg: configs/hrnet.yaml
-      dataset_root: ./data/dutch_f3/data
+      conda: $(conda)
+      dir: $(penobscot)
+      dataset_root: $(penobscot_root)
       model_name: hrnet
-      model_path: /models/hrnet_running_model_1.pth
-      displayName: hrnet patch
-
-  - bash: |
-      source activate seismic-interpretation
-      # run the tests      
-      cd experiments/interpretation/dutchf3_patch/local
-      python train.py --cfg=configs/unet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
-      # find the latest model which we just trained
-      model=$(ls -td */*/*/unet/* | head -1)
-      # try running the test script
-      python test.py --cfg=configs/unet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/unet_running_model_1.pth
-    displayName: unet patch
-
-  - bash: |
-      source activate seismic-interpretation
-      # run the tests      
-      cd experiments/interpretation/dutchf3_patch/local
-      python train.py --cfg=configs/seresnet_unet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
-      # find the latest model which we just trained
-      model=$(ls -td */*/*/seresnet_unet/* | head -1)
-      # try running the test script
-      python test.py --cfg=configs/seresnet_unet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/seresnet_unet_running_model_1.pth
-    displayName: seresnet unet patch
-
-  - bash: |
-      source activate seismic-interpretation
-      # run the tests      
-      cd experiments/interpretation/dutchf3_patch/local
-      python train.py --cfg=configs/patch_deconvnet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
-      # find the latest model which we just trained
-      model=$(ls -td */*/*/patch_deconvnet/* | head -1)
-      # try running the test script
-      python test.py --cfg=configs/patch_deconvnet.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/patch_deconvnet_running_model_1.pth
-    displayName: patch deconvnet
-
-  - bash: |
-      source activate seismic-interpretation
-      # run the tests      
-      cd experiments/interpretation/dutchf3_patch/local
-      python train.py --cfg=configs/patch_deconvnet_skip.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
-      # find the latest model which we just trained
-      model=$(ls -td */*/*/patch_deconvnet_skip/* | head -1)
-      # try running the test script
-      python test.py --cfg=configs/patch_deconvnet_skip.yaml 'DATASET.ROOT' './data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/patch_deconvnet_skip_running_model_1.pth
-    displayName: patch deconvnet skip
-
-# Penobscot dataset
-  - bash: |
-      source activate seismic-interpretation
-      # run the tests      
-      cd experiments/interpretation/penobscot/local
-      python train.py --cfg=configs/seresnet_unet.yaml 'DATASET.ROOT' './data/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
-      # find the latest model which we just trained
-      model=$(ls -td */*/*/seresnet_unet/* | head -1)
-      # try running the test script
-      python test.py --cfg=configs/seresnet_unet.yaml 'DATASET.ROOT' './data/penobscot' 'TEST.MODEL_PATH' ${model}/models/seresnet_unet_running_model_1.pth
-    displayName: seresnet unet
-
-  - bash: |
-      source activate seismic-interpretation
-      # run the tests      
-      cd experiments/interpretation/penobscot/local
-      python train.py --cfg=configs/hrnet.yaml 'DATASET.ROOT' './data/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
-      # find the latest model which we just trained
-      model=$(ls -td */*/*/hrnet/* | head -1)
-      # try running the test script
-      python test.py --cfg=configs/hrnet.yaml 'DATASET.ROOT' './data/penobscot' 'TEST.MODEL_PATH' ${model}/models/hrnet_running_model_1.pth
-    displayName: hrnet penobscot
-###################################################################################################
-# DISTRIBUTED PATCH JOBS
-###################################################################################################
 
   - bash: |
       source activate seismic-interpretation
