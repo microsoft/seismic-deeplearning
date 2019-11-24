@@ -17,3 +17,4 @@ steps:
       # try running the test script
       # python test.py --cfg=configs/${{parameters.model_name}}.yaml 'DATASET.ROOT' '${{parameters.dataset_root}}' 'TEST.MODEL_PATH' ${model}/models/${{parameters.model_name}}_running_model_1.pth
     displayName: ${{parameters.model_name}} patch
+    failOnStderr: True
