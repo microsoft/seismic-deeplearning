@@ -1,5 +1,11 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
+resources:
+  repositories:
+    - repository: aitemplates
+      type: github
+      name: microsoft/AI
+      endpoint: AIArchitecturesAndPractices-GitHub
 
 # Pull request against these branches will trigger this build
 pr:
@@ -14,7 +20,7 @@ trigger:
 jobs:
 
 # partially disable setup for now - done manually on build VM
-- job:  HRNET_demo
+- job:  azureml_deviot_notebooks
   timeoutInMinutes: 10
   displayName: Setup
   pool:
@@ -27,9 +33,28 @@ jobs:
       storagekey: $(storagekey)
 
   - bash: |
-      echo "TODO: HRNET_demo placeholder"
-      conda activate seismic-interpretation
-      
+      echo "azureml_deviot_notebooks"
+      cd examples/imaging/azureml_deviot_notebooks/
+      papermill 000_Setup_GeophysicsTutorial_FWI_Azure_devito.ipynb 000_Setup_GeophysicsTutorial_FWI_Azure_devito_Output.ipynb \
+        --log-output \
+        -k python3
+
+  - bash: |
+      source activate seismic-interpretation
+      echo "azureml_deviot_notebooks"
+      cd examples/imaging/azureml_deviot_notebooks/
+      papermill 010_CreateExperimentationDockerImage_GeophysicsTutorial_FWI_Azure_devito.ipynb 010_CreateExperimentationDockerImage_GeophysicsTutorial_FWI_Azure_devito_Output.ipynb\
+        --log-output \
+        -k python3
+
+  - bash: |
+      source activate seismic-interpretation
+      echo "azureml_deviot_notebooks"
+      cd examples/imaging/azureml_deviot_notebooks/
+      papermill 020_UseAzureMLEstimatorForExperimentation_GeophysicsTutorial_FWI_Azure_devito.ipynb 020_UseAzureMLEstimatorForExperimentation_GeophysicsTutorial_FWI_Azure_devito_Output.ipynb
+        --log-output \
+        -k python3
+
 - job: F3_block_training_and_evaluation_local
   timeoutInMinutes: 10
   displayName: F3 block training and evaluation local
@@ -42,6 +67,28 @@ jobs:
       storagekey: $(storagekey)
 
   - bash: |
-      echo "TODO: F3_block_training_and_evaluation_local placeholder"
-      conda activate seismic-interpretation
+      source activate seismic-interpretation
+      echo "azureml_deviot_notebooks"
+      cd examples/interpretation/notebooks/
+      papermill F3_block_training_and_evaluation_local.ipynb F3_block_training_and_evaluation_local_Output.ipynb \
+        --log-output \
+        -k python3
 
+- job: HRNet_demo_notebook
+  timeoutInMinutes: 10
+  displayName: F3 block training and evaluation local
+  pool:
+    name: $(AgentName)
+  steps:
+  - template: steps/setup_step.yml
+    parameters:
+      storagename: $(storagename)
+      storagekey: $(storagekey)
+
+  - bash: |
+      source activate seismic-interpretation
+      echo "azureml_deviot_notebooks"
+      cd examples/interpretation/notebooks/
+      papermill HRNet_demo_notebook.ipynb HRNet_demo_notebook_Ouptut.ipynb \
+        --log-output \
+        -k python3
