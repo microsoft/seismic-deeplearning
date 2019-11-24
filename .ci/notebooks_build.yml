@@ -31,7 +31,7 @@ jobs:
       conda activate seismic-interpretation
       
 - job: F3_block_training_and_evaluation_local
-  timeoutInMinutes: 5
+  timeoutInMinutes: 10
   displayName: F3 block training and evaluation local
   pool:
     name: $(AgentName)
