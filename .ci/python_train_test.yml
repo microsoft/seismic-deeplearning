@@ -2,7 +2,6 @@
 parameters:  
   conda: #
   dir: #
-  cfg: #
   dataset_root: # './data/dutch_f3/data'
   model_name: # hrnet
   model_path: # /models/hrnet_running_model_1.pth
@@ -13,9 +12,9 @@ steps:
       source activate ${{parameters.conda}}
       # run the tests      
       cd ${{parameters.dir}}
-      python train.py --cfg=${{parameters.cfg}} 'DATASET.ROOT' '${{parameters.dataset_root}}' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
+      python train.py --cfg=configs/${{parameters.model_name}} 'DATASET.ROOT' '${{parameters.dataset_root}}' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
       # find the latest model which we just trained
       model=$(ls -td */*/*/${{parameters.model_name}}/* | head -1)
       # try running the test script
-      python test.py --cfg=${{parameters.cfg}} 'DATASET.ROOT' '${{parameters.dataset_root}}' 'TEST.MODEL_PATH' .${model}${{parameters.model_path}}
+      python test.py --cfg=configs/${{parameters.model_name}} 'DATASET.ROOT' '${{parameters.dataset_root}}' 'TEST.MODEL_PATH' .${model}${{parameters.model_path}}
     displayName: ${{parameters.displayName}}
