@@ -11,69 +11,22 @@ trigger:
 - master
 - staging
 
-variables:
-  Agent: $(AgentName)
-
 jobs:
 # partially disable setup for now - done manually on build VM
-- job: unit_tests
+- job: DeepSeismic
 
-  variables:
-    conda: seismic-interpretation
-    dutchf3_patch: experiments/interpretation/dutchf3_patch/local
-    patch_root: ./data/dutch_f3/data
-    penobscot: experiments/interpretation/penobscot/local
-    penobscot_root: ./data/penobscot
-
-  displayName: Setup
+  displayName: Deep Seismic Main Build
   pool:
-    name: $(Agent)
+    name: $(AgentName)
 
   steps:
-  - bash: |
-      echo "Running setup..."
-
-      pwd
-      ls
-      git branch
-      uname -ra
-
-      # make sure we have the latest and greatest
-      conda env create -f environment/anaconda/local/environment.yml --force
-      source activate $(conda)
-      pip install -e interpretation
-      pip install -e cv_lib
-      # add this if pytorch stops detecting GPU
-      # conda install pytorch torchvision cudatoolkit=9.2 -c pytorch
-  
-      # copy your model files like so - using dummy file to illustrate
-      azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination ./models/your_model_name
-    displayName: Setup
-    failOnStderr: True
-
   - template: setup.yml
     parameters:
       storagename: $(storagename)
       storagekey: $(storagekey)
 
-  - bash: |
-      echo "Starting unit tests"
-      source activate seismic-interpretation
-      pytest --durations=0 --junitxml 'reports/test-unit.xml' cv_lib/tests/ 
-      echo "Unit test job passed"
-    displayName: Unit Tests Job
-    failOnStderr: True
+  - template: unit_test_steps.yml
 
-
-# LOCAL PATCH Steps
   - template: local_patch_steps.yml
 
-# DISTRIBUTED PATCH Steps
   - template: distributed_patch_steps.yml
-
-  - task: PublishTestResults@2
-    displayName: 'Publish Test Results **/test-*.xml'
-    inputs:
-      testResultsFiles: '**/test-*.xml'
-      failTaskOnFailedTests: true
-    condition: succeededOrFailed()
