@@ -1,0 +1,22 @@
+ 
+parameters:  
+  storagename: #
+  storagekey: #
+  conda: seismic-interpretation
+
+steps:
+- bash: |
+    echo "Running setup..."
+
+    # make sure we have the latest and greatest
+    conda env create -f environment/anaconda/local/environment.yml --force
+    source activate ${{parameters.conda}}
+    pip install -e interpretation
+    pip install -e cv_lib
+    # add this if pytorch stops detecting GPU
+    # conda install pytorch torchvision cudatoolkit=9.2 -c pytorch
+
+    # copy your model files like so - using dummy file to illustrate
+    azcopy --quiet --source:https://${{parameters.storagename}}.blob.core.windows.net/models/model --source-key ${{parameters.storagekey}} --destination ./models/your_model_name
+  displayName: Setup
+  failOnStderr: True
