@@ -19,6 +19,7 @@ DATASET:
   INLINE_WIDTH: 481
 
 
+
 MODEL:
   NAME: seg_hrnet
   IN_CHANNELS: 3
