@@ -12,26 +12,102 @@ trigger:
 - staging
 
 jobs:
+# partially disable setup for now - done manually on build VM
+- job: setup
+  timeoutInMinutes: 5
+  displayName: Setup
 
-- job: uni_test_job
-  timeoutInMinutes: 10 # how long to run the job before automatically cancelling
   pool:
     name: deepseismicagentpool
 
   steps:
   - bash: |
-      echo "First step"
-      echo "Replace this with command"
-      echo "Dummy unit test job passed"
-    displayName: Unit Test Job
+      echo "Running setup..."
+      pwd
+      ls
+      git branch
+      uname -ra
 
-- job: integration_test_job
-  timeoutInMinutes: 10 # how long to run the job before automatically cancelling
   pool:
     name: deepseismicagentpool
-
   steps:
   - bash: |
-      echo "First step"
-      echo "Dummy integration test job passed"
-    displayName: Integration Test Job
+      conda activate seismic-interpretation
+      export PYTHONPATH="$PWD/interpretation:$PYTHONPATH"
+      # run the tests      
+      cd experiments/interpretation/dutchf3_patch/distributed
+      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/hrnet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
+
+- job: unet_patch
+  timeoutInMinutes: 5
+  displayName: unet patch
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      conda activate seismic-interpretation
+      export PYTHONPATH="$PWD/interpretation:$PYTHONPATH"
+      # run the tests      
+      cd experiments/interpretation/dutchf3_patch/distributed
+      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/unet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1      
+
+- job: seresnet_unet_patch
+  timeoutInMinutes: 5
+  displayName: seresnet unet patch
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      conda activate seismic-interpretation
+      export PYTHONPATH="$PWD/interpretation:$PYTHONPATH"
+      # run the tests      
+      cd experiments/interpretation/dutchf3_patch/distributed
+      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/seresnet_unet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
+      
+- job: patch_deconvnet
+  timeoutInMinutes: 5
+  displayName: patch deconvnet
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      conda activate seismic-interpretation
+      export PYTHONPATH="$PWD/interpretation:$PYTHONPATH"
+      # run the tests      
+      cd experiments/interpretation/dutchf3_patch/distributed
+      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/patch_deconvnet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1  
+
+- job: patch_deconvnet_skip
+  timeoutInMinutes: 5
+  displayName: patch deconvnet skip
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      conda activate seismic-interpretation
+      export PYTHONPATH="$PWD/interpretation:$PYTHONPATH"
+      # run the tests      
+      cd experiments/interpretation/dutchf3_patch/distributed
+      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/patch_deconvnet_skip.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
+
+
+###################################################################################################
+# LOCAL SECTION JOBS
+###################################################################################################
+
+- job: section_deconvnet_skip
+  timeoutInMinutes: 5
+  displayName: section deconvnet skip
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      conda activate seismic-interpretation
+      # run the tests      
+      cd experiments/interpretation/dutchf3_section/local
+      python train.py --cfg=configs/section_deconvnet_skip.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
+      # find the latest model which we just trained
+      model=$(ls -td */*/*/section_deconvnet_skip/* | head -1)
+      # try running the test script
+      python test.py --cfg=configs/section_deconvnet_skip.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/section_deconvnet_skip_running_model_1.pth
+

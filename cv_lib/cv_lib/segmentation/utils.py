@@ -23,9 +23,7 @@ def save_images(pred_dict, output_dir, num_classes, colours, extra_identifier=""
         )
 
 
-def save_image(
-    image_numpy_array, output_dir, num_classes, colours, extra_identifier=""
-):
+def save_image(image_numpy_array, output_dir, num_classes, colours, extra_identifier=""):
     """Save segmentation map as image
     
     Args:
@@ -35,11 +33,7 @@ def save_image(
         colours ([type]): [description]
         extra_identifier (str, optional): [description]. Defaults to "".
     """
-    im_array = decode_segmap(
-        image_numpy_array, n_classes=num_classes, label_colours=colours,
-    )
-    im = pipe(
-        (im_array * 255).astype(np.uint8).squeeze(), _chw_to_hwc, Image.fromarray,
-    )
+    im_array = decode_segmap(image_numpy_array, n_classes=num_classes, label_colours=colours,)
+    im = pipe((im_array * 255).astype(np.uint8).squeeze(), _chw_to_hwc, Image.fromarray,)
     filename = path.join(output_dir, f"{id}_{extra_identifier}.png")
     im.save(filename)

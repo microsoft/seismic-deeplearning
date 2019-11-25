@@ -7,7 +7,7 @@ OUTPUT_DIR: 'output'
 LOG_DIR: 'log'
 WORKERS: 4
 PRINT_FREQ: 10
-LOG_CONFIG: /home/maxkaz/repos/DeepSeismic/logging.conf
+LOG_CONFIG: logging.conf
 SEED: 2019
 
 DATASET:
@@ -20,7 +20,7 @@ MODEL:
   IN_CHANNELS: 1
 
 TRAIN:
-  BATCH_SIZE_PER_GPU: 32
+  BATCH_SIZE_PER_GPU: 16
   BEGIN_EPOCH: 0
   END_EPOCH: 300
   MIN_LR: 0.001

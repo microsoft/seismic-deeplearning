@@ -22,9 +22,9 @@ def _torch_hist(label_true, label_pred, n_class):
     assert len(label_true.shape) == 1, "Labels need to be 1D"
     assert len(label_pred.shape) == 1, "Predictions need to be 1D"
     mask = (label_true >= 0) & (label_true < n_class)
-    hist = torch.bincount(
-        n_class * label_true[mask] + label_pred[mask], minlength=n_class ** 2
-    ).reshape(n_class, n_class)
+    hist = torch.bincount(n_class * label_true[mask] + label_pred[mask], minlength=n_class ** 2).reshape(
+        n_class, n_class
+    )
     return hist
 
 
@@ -83,16 +83,12 @@ class InlineMeanIoU(Metric):
     def reset(self):
         self._pred_dict = defaultdict(
             lambda: _default_tensor(
-                self._image_height * self._scale,
-                self._image_width * self._scale,
-                pad_value=self._pad_value,
+                self._image_height * self._scale, self._image_width * self._scale, pad_value=self._pad_value,
             )
         )
         self._mask_dict = defaultdict(
             lambda: _default_tensor(
-                self._image_height * self._scale,
-                self._image_width * self._scale,
-                pad_value=self._pad_value,
+                self._image_height * self._scale, self._image_width * self._scale, pad_value=self._pad_value,
             )
         )
 
@@ -120,13 +116,11 @@ class InlineMeanIoU(Metric):
             width = (x_end + 1) - x_start
 
             self._pred_dict[id][
-                patch_loc[0] * 2 : patch_loc[0] * 2 + height,
-                patch_loc[1] * 2 : patch_loc[1] * 2 + width,
+                patch_loc[0] * 2 : patch_loc[0] * 2 + height, patch_loc[1] * 2 : patch_loc[1] * 2 + width,
             ] = pred[y_start : y_end + 1, x_start : x_end + 1]
 
             self._mask_dict[id][
-                patch_loc[0] * 2 : patch_loc[0] * 2 + height,
-                patch_loc[1] * 2 : patch_loc[1] * 2 + width,
+                patch_loc[0] * 2 : patch_loc[0] * 2 + height, patch_loc[1] * 2 : patch_loc[1] * 2 + width,
             ] = mask[y_start : y_end + 1, x_start : x_end + 1]
 
     def iou_per_inline(self):

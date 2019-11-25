@@ -91,6 +91,7 @@ env.bak/
 venv.bak/
 wheels/
 
+
 .dev_env
 .azureml
 
@@ -114,8 +115,4 @@ interpretation/environment/anaconda/local/src/cv-lib
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
+*.pth

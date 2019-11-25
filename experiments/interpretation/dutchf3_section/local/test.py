@@ -1,34 +1,29 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # commitHash: c76bf579a0d5090ebd32426907d051d499f3e847
 # url: https://github.com/olivesgatech/facies_classification_benchmark
 
 """
 Modified version of the Alaudah testing script
-#TODO: Needs to be improved. Needs to be able to run across multiple GPUs and better factoring around the loader
+# TODO: Needs to be improved. Needs to be able to run across multiple GPUs and better
+#       factoring around the loader
 """
 
-import itertools
 import logging
 import logging.config
 import os
 from os import path
 
-import cv2
 import fire
 import numpy as np
 import torch
-import torch.nn.functional as F
 from albumentations import Compose, Normalize
+from cv_lib.utils import load_log_configuration
 from cv_lib.segmentation import models
-from deepseismic_interpretation.dutchf3.data import (
-    add_patch_depth_channels,
-    get_seismic_labels,
-    get_test_loader,
-)
+
+from deepseismic_interpretation.dutchf3.data import get_test_loader
 from default import _C as config
 from default import update_config
-from toolz import compose, curry, itertoolz, pipe
 from torch.utils import data
 
 _CLASS_NAMES = [
@@ -50,17 +45,14 @@ class runningScore(object):
 
     def _fast_hist(self, label_true, label_pred, n_class):
         mask = (label_true >= 0) & (label_true < n_class)
-        hist = np.bincount(
-            n_class * label_true[mask].astype(int) + label_pred[mask],
-            minlength=n_class ** 2,
-        ).reshape(n_class, n_class)
+        hist = np.bincount(n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,).reshape(
+            n_class, n_class
+        )
         return hist
 
     def update(self, label_trues, label_preds):
         for lt, lp in zip(label_trues, label_preds):
-            self.confusion_matrix += self._fast_hist(
-                lt.flatten(), lp.flatten(), self.n_classes
-            )
+            self.confusion_matrix += self._fast_hist(lt.flatten(), lp.flatten(), self.n_classes)
 
     def get_scores(self):
         """Returns accuracy score evaluation result.
@@ -73,13 +65,9 @@ class runningScore(object):
         acc = np.diag(hist).sum() / hist.sum()
         acc_cls = np.diag(hist) / hist.sum(axis=1)
         mean_acc_cls = np.nanmean(acc_cls)
-        iu = np.diag(hist) / (
-            hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist)
-        )
+        iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
         mean_iu = np.nanmean(iu)
-        freq = (
-            hist.sum(axis=1) / hist.sum()
-        )  # fraction of the pixels that come from each class
+        freq = hist.sum(axis=1) / hist.sum()  # fraction of the pixels that come from each class
         fwavacc = (freq[freq > 0] * iu[freq > 0]).sum()
         cls_iu = dict(zip(range(self.n_classes), iu))
 
@@ -100,28 +88,16 @@ class runningScore(object):
 
 
 def _evaluate_split(
-    split,
-    section_aug,
-    model,
-    device,
-    running_metrics_overall,
-    config,
+    split, section_aug, model, device, running_metrics_overall, config,
 ):
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
-    test_set = TestSectionLoader(
-        data_dir=DATA_ROOT,
-        split=split,
-        is_transform=True,
-        augmentations=section_aug,
-    )
+    test_set = TestSectionLoader(data_dir=DATA_ROOT, split=split, is_transform=True, augmentations=section_aug,)
 
     n_classes = test_set.n_classes
 
-    test_loader = data.DataLoader(
-        test_set, batch_size=1, num_workers=config.WORKERS, shuffle=False
-    )
+    test_loader = data.DataLoader(test_set, batch_size=1, num_workers=config.WORKERS, shuffle=False)
     running_metrics_split = runningScore(n_classes)
 
     # testing mode:
@@ -145,9 +121,7 @@ def _evaluate_split(
     # Log split results
     logger.info(f'Pixel Acc: {score["Pixel Acc: "]:.3f}')
     for cdx, class_name in enumerate(_CLASS_NAMES):
-        logger.info(
-            f'  {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}'
-        )
+        logger.info(f'  {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
 
     logger.info(f'Mean Class Acc: {score["Mean Class Acc: "]:.3f}')
     logger.info(f'Freq Weighted IoU: {score["Freq Weighted IoU: "]:.3f}')
@@ -181,7 +155,9 @@ def _write_section_file(labels, section_file):
 def test(*options, cfg=None):
     update_config(config, options=options, config_file=cfg)
     n_classes = config.DATASET.NUM_CLASSES
-    logging.config.fileConfig(config.LOG_CONFIG)
+
+    # Start logging
+    load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log_dir, _ = os.path.split(config.TEST.MODEL_PATH)
@@ -194,33 +170,15 @@ def test(*options, cfg=None):
     running_metrics_overall = runningScore(n_classes)
 
     # Augmentation
-    section_aug = Compose(
-        [
-            Normalize(
-                mean=(config.TRAIN.MEAN,),
-                std=(config.TRAIN.STD,),
-                max_pixel_value=1,
-            )
-        ]
-    )
+    section_aug = Compose([Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,)])
 
-    splits = (
-        ["test1", "test2"]
-        if "Both" in config.TEST.SPLIT
-        else [config.TEST.SPLIT]
-    )
+    splits = ["test1", "test2"] if "Both" in config.TEST.SPLIT else [config.TEST.SPLIT]
 
     for sdx, split in enumerate(splits):
-        labels = np.load(
-            path.join(DATA_ROOT, "test_once", split + "_labels.npy")
-        )
-        section_file = path.join(
-            DATA_ROOT, "splits", "section_" + split + ".txt"
-        )
+        labels = np.load(path.join(DATA_ROOT, "test_once", split + "_labels.npy"))
+        section_file = path.join(DATA_ROOT, "splits", "section_" + split + ".txt")
         _write_section_file(labels, section_file)
-        _evaluate_split(
-            split, section_aug, model, device, running_metrics_overall, config
-        )
+        _evaluate_split(split, section_aug, model, device, running_metrics_overall, config)
 
     # FINAL TEST RESULTS:
     score, class_iou = running_metrics_overall.get_scores()
@@ -228,9 +186,7 @@ def test(*options, cfg=None):
     logger.info("--------------- FINAL RESULTS -----------------")
     logger.info(f'Pixel Acc: {score["Pixel Acc: "]:.3f}')
     for cdx, class_name in enumerate(_CLASS_NAMES):
-        logger.info(
-            f'     {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}'
-        )
+        logger.info(f'     {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
     logger.info(f'Mean Class Acc: {score["Mean Class Acc: "]:.3f}')
     logger.info(f'Freq Weighted IoU: {score["Freq Weighted IoU: "]:.3f}')
     logger.info(f'Mean IoU: {score["Mean IoU: "]:0.3f}')

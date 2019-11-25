@@ -287,12 +287,7 @@ class patch_deconvnet_skip(nn.Module):
                 if isinstance(l1, nn.Conv2d) and isinstance(l2, nn.Conv2d):
                     if i_layer == 0:
                         l2.weight.data = (
-                            (
-                                l1.weight.data[:, 0, :, :]
-                                + l1.weight.data[:, 1, :, :]
-                                + l1.weight.data[:, 2, :, :]
-                            )
-                            / 3.0
+                            (l1.weight.data[:, 0, :, :] + l1.weight.data[:, 1, :, :] + l1.weight.data[:, 2, :, :]) / 3.0
                         ).view(l2.weight.size())
                         l2.bias.data = l1.bias.data
                         i_layer = i_layer + 1
@@ -310,4 +305,3 @@ def get_seg_model(cfg, **kwargs):
     ), f"Patch deconvnet is not implemented to accept {cfg.MODEL.IN_CHANNELS} channels. Please only pass 1 for cfg.MODEL.IN_CHANNELS"
     model = patch_deconvnet_skip(n_classes=cfg.DATASET.NUM_CLASSES)
     return model
-
