@@ -5,12 +5,6 @@ parameters:
   conda: seismic-interpretation
 
 steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '3.6'
-    architecture: 'x64'
-  displayName: 'Use Python 3.6'
-
 - bash: |
     echo "Running setup..."
 
