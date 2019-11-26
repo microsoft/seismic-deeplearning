@@ -9,7 +9,7 @@ dependencies:
   - cudatoolkit==10.1.243
   - jupyter
   - ipykernel
-  - torchvision
+  - torchvision==0.4.2
   - pandas==0.25.3
   - opencv==4.1.2
   - scikit-learn=0.21.3
