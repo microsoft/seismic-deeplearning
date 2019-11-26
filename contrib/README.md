@@ -1,3 +1,7 @@
-This is a contrib folder - software located here is not guarateed to run or be useful - it is not tested in any way, shape or form.
+Contrib folder
+Code in this folder has not been tested, and are meant for exploratory work only.
 
-You can use software located in this folder as a starting point at your own risk. You might find certain software items located in this folder to be valuable.
+We encourage submissiosn to the contrib folder, and once it is well-tested, do submit a pull request and work with the repository owners to graduate it to the main DeepSeismic repository.
+
+Thank you.
+
