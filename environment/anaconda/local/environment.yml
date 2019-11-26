@@ -24,7 +24,7 @@ dependencies:
     - tabulate==0.8.2
     - jinja2==2.10.3
     - gitpython==3.0.4
-    - tensortensorboard==2.0.0
+    - tensorboard==2.0.0
     - tensorboardx==1.8
     - tqdm==4.38.0
     - invoke
