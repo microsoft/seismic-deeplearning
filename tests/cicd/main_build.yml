@@ -12,18 +12,17 @@ trigger:
 - staging
 
 jobs:
-
 # partially disable setup for now - done manually on build VM
 - job: setup
   timeoutInMinutes: 5
   displayName: Setup
+
   pool:
     name: deepseismicagentpool
 
   steps:
   - bash: |
       echo "Running setup..."
-
       pwd
       ls
       git branch
