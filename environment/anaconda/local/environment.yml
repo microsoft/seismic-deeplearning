@@ -5,32 +5,31 @@ channels:
 dependencies:
   - python=3.6
   - pip
-  - pytorch
+  - pytorch==1.3.1
   - jupyter
   - ipykernel
   - torchvision
-  - pandas
-  - opencv
-  - scikit-learn
+  - pandas==0.25.3
+  - opencv==4.1.2
+  - scikit-learn=0.21.3
   - tensorflow==2.0
-  - tqdm
-  - itkwidgets
+  - tqdm==4.39.0
+  - itkwidgets==0.23.1
   - pip:
-    - segyio
+    - segyio==1.8.8
     - pytorch-ignite==0.3.0.dev20191105 # pre-release until stable available
-    - fire
-    - toolz
+    - fire==0.2.1
+    - toolz==0.10.0
     - tabulate==0.8.2
-    - Jinja2
-    - gitpython
-    - tensorboard
-    - tensorboardx
-    - tqdm
-    - invoke
-    - yacs
-    - albumentations
+    - Jinja2==2.10.3
+    - gitpython==3.0.5
+    - tensorboard==2.0.1
+    - tensorboardx==1.9
+    - invoke==1.3.0
+    - yacs==0.1.6
+    - albumentations==0.4.3
     - black
     - pylint
     - scipy==1.1.0
-    - jupytext
+    - jupytext==1.3.0
     - pytest
