@@ -167,5 +167,5 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 | **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=120&branchName=master) |
 
 # Related projects
+Refer to [Azure Reference Architectures](https://docs.microsoft.com/en-us/azure/architecture/reference-architectures/) for recommended practices, along with considerations for scalability, availability, manageability, and security. Most also include a deployable solution or reference implementation.
 
-[Microsoft AI Labs Github](https://aka.ms/ai-labs) Find other Best Practice projects, and Azure AI design patterns in our central repository. 
