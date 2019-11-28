@@ -1,4 +1,4 @@
-name: tseismic-interpretation
+name: seismic-interpretation
 channels:
  - conda-forge
  - pytorch
