@@ -1,5 +1,5 @@
 # DeepSeismic
-![DeepSeismic](./DeepSeismicLogo.jpg )
+![DeepSeismic](./assets/DeepSeismicLogo.jpg )
 
 This repository shows you how to perform seismic imaging and interpretation on Azure. It empowers geophysicists and data scientists to run seismic experiments using state-of-art DSL-based PDE solvers and segmentation algorithms on Azure.  
 
@@ -84,8 +84,8 @@ The dataset was split 70% training, 10% validation and 20% test. The results bel
 |    DeepSeismic   |    SEResNet UNet + section depth    |    1.0      |    .98        |    .99    |
 |                  |    HRNet(patch) + section depth     |    1.0      |    .97        |    .98    |
 
-![Best Penobscot SEResNet](images/penobscot_seresnet_best.png "Best performing inlines, Mask and Predictions from SEResNet")
-![Worst Penobscot SEResNet](images/penobscot_seresnet_worst.png "Worst performing inlines  Mask and Predictions from SEResNet")
+![Best Penobscot SEResNet](assets/penobscot_seresnet_best.png "Best performing inlines, Mask and Predictions from SEResNet")
+![Worst Penobscot SEResNet](assets/penobscot_seresnet_worst.png "Worst performing inlines  Mask and Predictions from SEResNet")
 
 
 
@@ -112,7 +112,9 @@ Refer to the script itself for more argument options.
 To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script, e.g.
 
 ```
-./download_penobscot.sh /data/penobscot
+data_dir='/data/penobscot'
+mkdir "$data_dir"
+./scripts/download_penobscot.sh "$data_dir"
 ```
 
 Note that the specified download location (e.g `/data/penobscot`) should be created beforehand, and configured appropriate `write` pemissions.
@@ -120,9 +122,12 @@ Note that the specified download location (e.g `/data/penobscot`) should be crea
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
 
 ```
-python scripts/prepare_penobscot.py split_inline --data-dir=/mnt/penobscot --val-ratio=.1 --test-ratio=.2
+python scripts/prepare_penobscot.py split_inline --data-dir=/data/penobscot --val-ratio=.1 --test-ratio=.2
 ```
 
+### Pretrained Models
+#### HRNet
+To achieve the same results as the benchmarks above you will need to download the HRNet model pretrained on Imagenet. This can be found [here](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk). Download this to your local drive and make sure you add the path to the Yacs configuration script.
 
 #### Scripts
 - [parallel_training.sh](scripts/parallel_training.sh): Script to launch multiple jobs in parallel. Used mainly for local hyperparameter tuning. Look at the script for further instructions
@@ -157,4 +162,10 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 | **Legal Compliance** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=110&branchName=master) |
 | **Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=111&branchName=staging) |
 | **Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=111&branchName=master) |
+| **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=120&branchName=staging) |
+| **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=120&branchName=master) |
+
+## Related projects
+
+[Microsoft AI Github](https://github.com/microsoft/ai) Find other Best Practice projects, and Azure AI Designed patterns in our central repository. 
 

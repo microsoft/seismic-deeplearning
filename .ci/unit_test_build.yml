@@ -1,0 +1,28 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Pull request against these branches will trigger this build
+pr:
+- master
+- staging
+
+# Any commit to this branch will trigger the build.
+trigger:
+- master
+- staging
+
+jobs:
+# partially disable setup for now - done manually on build VM
+- job: DeepSeismic
+
+  displayName: Deep Seismic Main Build
+  pool:
+    name: $(AgentName)
+
+  steps:
+  - template: steps/setup_step.yml
+    parameters:
+      storagename: $(storageaccoutname)
+      storagekey: $(storagekey)
+
+  - template: steps/unit_test_steps.yml
