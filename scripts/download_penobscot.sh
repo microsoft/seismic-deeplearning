@@ -54,3 +54,5 @@ unzip horizons.zip
 unzip masks.zip
 unzip tiles_crosslines.zip
 unzip tiles_inlines.zip
+
+echo Download complete.
