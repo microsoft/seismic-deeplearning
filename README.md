@@ -37,23 +37,28 @@ conda env update --file environment/anaconda/local/environment.yml
 ```
 from the root of DeepSeismic repo.
 
-### Viewers
+### Viewers (optional)
+
+For seismic interpretation (segmentation), if you want to visualize cross-sections of a 3D volume (both the input velocity model and the segmented output) you can use
+[segyviewer](https://github.com/equinor/segyviewer). To install and use segyviewer, please follow the instructions below.
 
 #### segyviewer
 
-For seismic interpretation (segmentation), if you want to visualize cross-sections of a 3D volume (both the input velocity model and the segmented output) you can use
-[segyviewer](https://github.com/equinor/segyviewer), for example like so:
+To install [segyviewer](https://github.com/equinor/segyviewer) run:
 ```bash
-segyviewer /mnt/dutchf3/data.segy
-```
-
-To install [segyviewer](https://github.com/equinor/segyviewer) run
-```bash
-conda env -n segyviewer python=2.7
+conda env create -n segyviewer python=2.7
 conda activate segyviewer
 conda install -c anaconda pyqt=4.11.4
 pip install segyviewer
 ```
+
+To visualize cross-sections of a 3D volume, you can run
+[segyviewer](https://github.com/equinor/segyviewer) like so:
+```bash
+segyviewer /mnt/dutchf3/data.segy
+```
+
+
 
 ### Benchmarks
 
@@ -93,6 +98,30 @@ The dataset was split 70% training, 10% validation and 20% test. The results bel
 ##### Netherlands F3
 To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
 [this github repository](https://github.com/olivesgatech/facies_classification_benchmark).
+
+Once you've downloaded the data set, create an empty `splits` directory, under the downloaded `data` directory. This is where your training/test/validation splits will be saved.
+
+```
+cd data
+mkdir splits
+```
+
+At this point, your `data` directory tree should look like this:
+
+```
+data
+├── splits
+├── test_once
+│   ├── test1_labels.npy
+│   ├── test1_seismic.npy
+│   ├── test2_labels.npy
+│   └── test2_seismic.npy
+└── train
+    ├── train_labels.npy
+    └── train_seismic.npy
+```
+
+
 
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script:
 
