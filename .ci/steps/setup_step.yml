@@ -5,6 +5,14 @@ parameters:
   conda: seismic-interpretation
 
 steps:
+
+- task: AzureCLI@1
+  displayName: 'Add Conda to Path'
+  inputs:
+    azureSubscription: ${{parameters.azureSubscription}}
+    scriptLocation: inlineScript
+    inlineScript: 'echo "##vso[task.prependpath]$CONDA/bin"'
+
 - bash: |
     echo "Running setup..."
 
