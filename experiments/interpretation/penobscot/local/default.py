@@ -51,6 +51,8 @@ _C.DATASET.INLINE_WIDTH = 481
 _C.MODEL = CN()
 _C.MODEL.NAME = "resnet_unet"
 _C.MODEL.IN_CHANNELS = 1
+_C.MODEL.PRETRAINED = ""
+_C.MODEL.EXTRA = CN(new_allowed=True)
 
 # training
 _C.TRAIN = CN()

@@ -7,29 +7,32 @@ The repository provides sample notebooks, data loaders for seismic data, utility
 
 
 ## Interpretation
-For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation, and also benchmarking results from running these algorithms using various seismic datasets (Dutch F3, and Penobscot).
+For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-the-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation, and also benchmarking results from running these algorithms using various seismic datasets (Dutch F3, and Penobscot).
+
+To run examples available on the repo, please follow instructions below to:
+1) [Set up the environment](#setting-up-environment)
+2) [Download the data sets](#dataset-download-and-preparation)
+3) [Run example notebooks and scripts](#run-examples)
 
 ### Setting up Environment
-Navigate to the folder where you pulled the DeepSeismic repo to
-
-Run
+Navigate to the folder where you pulled the DeepSeismic repo to run:
 ```bash
 conda env create -f environment/anaconda/local/environment.yml
 ```
-This will create the appropriate environment to run experiments
+This will create the appropriate conda environment to run experiments.
 
-Then you will need to install the common packages for interpretation
+Next you will need to install the common package for interpretation:
 ```bash
 conda activate seismic-interpretation
 pip install -e interpretation
 ```
 
-Then you will also need to install cv_lib
+Then you will also need to install `cv_lib` which contains computer vision related utilities:
 ```bash
 pip install -e cv_lib
 ```
 
-Both repos are installed in developer mode with the -e flag. This means that to update simply go to the folder and pull the appropriate commit or branch. 
+Both repos are installed in developer mode with the `-e` flag. This means that to update simply go to the folder and pull the appropriate commit or branch. 
 
 During development, in case you need to update the environment due to a conda env file change, you can run
 ```
@@ -37,22 +40,125 @@ conda env update --file environment/anaconda/local/environment.yml
 ```
 from the root of DeepSeismic repo.
 
-### Viewers
+### Dataset download and preparation
+
+This repository provides examples on how to run seismic interpretation on two publicly available annotated seismic datasets: [Penobscot](https://zenodo.org/record/1341774) and [F3 Netherlands](https://github.com/olivesgatech/facies_classification_benchmark).
+
+#### Penobscot
+To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script, e.g.
+
+```
+data_dir='/data/penobscot'
+mkdir "$data_dir"
+./scripts/download_penobscot.sh "$data_dir"
+```
+
+Note that the specified download location (e.g `/data/penobscot`) should be created beforehand, and configured with appropriate `write` pemissions.
+
+To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
+
+```
+python scripts/prepare_penobscot.py split_inline --data-dir=/data/penobscot --val-ratio=.1 --test-ratio=.2
+```
+
+#### Netherlands F3
+To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
+[this github repository](https://github.com/olivesgatech/facies_classification_benchmark).
+
+Once you've downloaded the data set, create an empty `splits` directory, under the downloaded `data` directory. This is where your training/test/validation splits will be saved.
+
+```
+cd data
+mkdir splits
+```
+
+At this point, your `data` directory tree should look like this:
+
+```
+data
+├── splits
+├── test_once
+│   ├── test1_labels.npy
+│   ├── test1_seismic.npy
+│   ├── test2_labels.npy
+│   └── test2_seismic.npy
+└── train
+    ├── train_labels.npy
+    └── train_seismic.npy
+```
+
+To prepare the data for the experiments (e.g. split into train/val/test), please run the following script:
+
+```
+# For section-based experiments
+python scripts/prepare_dutchf3.py split_train_val section --data-dir=/mnt/dutchf3
+
+
+# For patch-based experiments
+python scripts/prepare_dutchf3.py split_train_val patch --data-dir=/mnt/dutchf3 --stride=50 --patch=100
+
+```
+
+Refer to the script itself for more argument options.
+
+### Run Examples
+
+#### Notebooks
+We provide example notebooks under `examples/interpretation/notebooks/` to demonstrate how to train seismic interpretation models and evaluate them on Penobscot and F3 datasets. 
+
+Make sure to run the notebooks in the conda environment we previously set up (`seismic-interpretation`). To register the conda environment in Jupyter, please run:
+
+```
+python -m ipykernel install --user --name seismic-interpretation
+```
+
+#### Experiments
+
+We also provide scripts for a number of experiments we conducted using different segmentation approaches. These experiments are available under `experiments/interpretation`, and can be used as examples. Within each experiment start from the `train.sh` and `test.sh` scripts under the `local/` (single GPU) and `distributed/` (multiple GPUs) directories, which invoke the corresponding python scripts, `train.py` and `test.py`. Take a look at the experiment configurations (see Experiment Configuration Files section below) for experiment options and modify if necessary.
+
+Please refer to individual experiment README files for more information. 
+
+#### Configuration Files
+We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manage configuration options for the experiments. There are three ways to pass arguments to the experiment scripts (e.g. train.py or test.py):
+
+- __default.py__ - A project config file `default.py` is a one-stop reference point for all configurable options, and provides sensible defaults for all arguments. If no arguments are passed to `train.py` or `test.py` script (e.g. `python train.py`), the arguments are by default loaded from `default.py`. Please take a look at `default.py` to familiarize yourself with the experiment arguments the script you run uses.
+
+- __yml config files__ - YAML configuration files under `configs/` are typically created one for each experiment. These are meant to be used for repeatable experiment runs and reproducible settings. Each configuration file only overrides the options that are changing in that experiment (e.g. options loaded from `defaults.py` during an experiment run will be overridden by arguments loaded from the yaml file). As an example, to use yml configuration file with the training script, run:
+
+    ```
+    python train.py --cfg "configs/hrnet.yaml"
+    ```
+
+- __command line__ - Finally, options can be passed in through `options` argument, and those will override arguments loaded from the configuration file. We created CLIs for all our scripts (using Python Fire library), so you can pass these options via command-line arguments, like so:
+
+    ```
+    python train.py DATASET.ROOT "/mnt/dutchf3" TRAIN.END_EPOCH 10
+    ```
+
+
+### Pretrained Models
+#### HRNet
+To achieve the same results as the benchmarks above you will need to download the HRNet model pretrained on ImageNet. This can be found [here](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk). Download this to your local drive and make sure you add the path to the experiment (or notebook) configuration file.
+
+### Viewers (optional)
+
+For seismic interpretation (segmentation), if you want to visualize cross-sections of a 3D volume (both the input velocity model and the segmented output) you can use
+[segyviewer](https://github.com/equinor/segyviewer). To install and use segyviewer, please follow the instructions below.
 
 #### segyviewer
 
-For seismic interpretation (segmentation), if you want to visualize cross-sections of a 3D volume (both the input velocity model and the segmented output) you can use
-[segyviewer](https://github.com/equinor/segyviewer), for example like so:
+To install [segyviewer](https://github.com/equinor/segyviewer) run:
 ```bash
-segyviewer /mnt/dutchf3/data.segy
-```
-
-To install [segyviewer](https://github.com/equinor/segyviewer) run
-```bash
-conda env -n segyviewer python=2.7
+conda env create -n segyviewer python=2.7
 conda activate segyviewer
 conda install -c anaconda pyqt=4.11.4
 pip install segyviewer
+```
+
+To visualize cross-sections of a 3D volume, you can run
+[segyviewer](https://github.com/equinor/segyviewer) like so:
+```bash
+segyviewer /mnt/dutchf3/data.segy
 ```
 
 ### Benchmarks
@@ -88,47 +194,6 @@ The dataset was split 70% training, 10% validation and 20% test. The results bel
 ![Worst Penobscot SEResNet](assets/penobscot_seresnet_worst.png "Worst performing inlines  Mask and Predictions from SEResNet")
 
 
-
-#### Data
-##### Netherlands F3
-To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
-[this github repository](https://github.com/olivesgatech/facies_classification_benchmark).
-
-To prepare the data for the experiments (e.g. split into train/val/test), please run the following script:
-
-```
-# For section-based experiments
-python scripts/prepare_dutchf3.py split_train_val section --data-dir=/mnt/dutchf3
-
-
-# For patch-based experiments
-python scripts/prepare_dutchf3.py split_train_val patch --data-dir=/mnt/dutchf3 --stride=50 --patch=100
-
-```
-
-Refer to the script itself for more argument options.
-
-##### Penobscot
-To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script, e.g.
-
-```
-data_dir='/data/penobscot'
-mkdir "$data_dir"
-./scripts/download_penobscot.sh "$data_dir"
-```
-
-Note that the specified download location (e.g `/data/penobscot`) should be created beforehand, and configured appropriate `write` pemissions.
-
-To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
-
-```
-python scripts/prepare_penobscot.py split_inline --data-dir=/data/penobscot --val-ratio=.1 --test-ratio=.2
-```
-
-### Pretrained Models
-#### HRNet
-To achieve the same results as the benchmarks above you will need to download the HRNet model pretrained on Imagenet. This can be found [here](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk). Download this to your local drive and make sure you add the path to the Yacs configuration script.
-
 #### Scripts
 - [parallel_training.sh](scripts/parallel_training.sh): Script to launch multiple jobs in parallel. Used mainly for local hyperparameter tuning. Look at the script for further instructions
 
@@ -158,7 +223,6 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 ## Build Status
 | Build | Branch | Status |
 | --- | --- | --- |
-
 | **Legal Compliance** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=110&branchName=staging) |
 | **Legal Compliance** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=110&branchName=master) |
 | **Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=111&branchName=staging) |
@@ -166,6 +230,4 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 | **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=120&branchName=staging) |
 | **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=120&branchName=master) |
 
-# Related projects
 
-[Microsoft AI Labs Github](https://aka.ms/ai-labs) Find other Best Practice projects, and Azure AI design patterns in our central repository. 
