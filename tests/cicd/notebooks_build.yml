@@ -23,12 +23,10 @@ jobs:
   steps:
   - bash: |
       echo "Running setup..."
-
       pwd
       ls
       git branch
       uname -ra
-
       # make sure we have the latest and greatest
       # yes | conda env update -f environment/anaconda/local/environment.yml
       conda activate seismic-interpretation
@@ -39,7 +37,6 @@ jobs:
   
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
-
 - job: HRNET_demo
   timeoutInMinutes: 5
   displayName: HRNET demo
@@ -47,8 +44,8 @@ jobs:
     name: deepseismicagentpool
   steps:
   - bash: |
-      echo "TODO: HRNET_demo placeholder"
       conda activate seismic-interpretation
+      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/HRNet_demo_notebook.ipynb 
       
 - job: F3_block_training_and_evaluation_local
   timeoutInMinutes: 5
@@ -56,7 +53,6 @@ jobs:
   pool:
     name: deepseismicagentpool
   steps:
-  - bash: |
-      echo "TODO: F3_block_training_and_evaluation_local placeholder"
-      conda activate seismic-interpretation
-
+  - bash: |      
+      conda activate seismic-interpretation      
+      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/F3_block_training_and_evaluation_local.ipynb 
