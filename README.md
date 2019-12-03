@@ -49,11 +49,11 @@ To download the Penobscot dataset run the [download_penobscot.sh](scripts/downlo
 
 ```
 data_dir='/data/penobscot'
-mkdir "$data_dir"
-./scripts/download_penobscot.sh "$data_dir"
+mkdir $data_dir
+./scripts/download_penobscot.sh $data_dir
 ```
 
-Note that the specified download location (e.g `/data/penobscot`) should be created beforehand, and configured with appropriate `write` pemissions.
+Note that the specified download location (e.g `/data/penobscot`) should be configured with appropriate `write` pemissions.
 
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
 
@@ -61,11 +61,11 @@ To prepare the data for the experiments (e.g. split into train/val/test), please
 python scripts/prepare_penobscot.py split_inline --data-dir=/data/penobscot --val-ratio=.1 --test-ratio=.2
 ```
 
-#### Netherlands F3
+#### F3 Netherlands
 To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
-[this github repository](https://github.com/olivesgatech/facies_classification_benchmark).
+[this github repository](https://github.com/yalaudah/facies_classification_benchmark) (section Dataset).
 
-Once you've downloaded the data set, create an empty `splits` directory, under the downloaded `data` directory. This is where your training/test/validation splits will be saved.
+Once you've downloaded the data set, make sure to create an empty `splits` directory, under the downloaded `data` directory. This is where your training/test/validation splits will be saved.
 
 ```
 cd data
