@@ -166,8 +166,15 @@ We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manag
 
 
 ### Pretrained Models
+
 #### HRNet
-To achieve the same results as the benchmarks above you will need to download the HRNet model pretrained on ImageNet. This can be found [here](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk). Download this to your local drive and make sure you add the path to the experiment (or notebook) configuration file.
+
+To achieve the same results as the benchmarks above you will need to download the HRNet model [pretrained](https://github.com/HRNet/HRNet-Image-Classification) on ImageNet. We are specifically using the [HRNet-W48-C](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk) pre-trained model - download this model to your local drive and make sure you add the path to the experiment (or notebook) configuration file under `TEST.MODEL_PATH` setting. Other  HRNet variants are also available [here](https://github.com/HRNet/HRNet-Image-Classification) - you can navigate to those from the [main HRNet landing page](https://github.com/HRNet/HRNet-Object-Detection) for object detection.
+
+To facilitate easier download on a Linux machine of your choice (or [Azure Data Science Virtual Machine](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/) which we recommend), we created an automated download scipt for you, just run
+```bash
+./scripts/download_hrnet.sh 'your_folder_to_store_the_model'
+```
 
 ### Viewers (optional)
 
