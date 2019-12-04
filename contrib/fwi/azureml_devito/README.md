@@ -40,9 +40,11 @@ The devito fwi examples are run in AzuremL using 4 notebooks:
  
    ```Devito``` fwi computation artifacts (images and notebooks with data processing output results) are tracked under the AzureML workspace, and can be later downloaded and visualized.   
   
-   Two ways of running devito code are shown: 
-    (1) using __custom code__ (slightly modified graphing functions that save images to files). The AzureML experimentation job is defined by the devito code packaged as a py file. The experimentation job (defined by [azureml.core.experiment.Experiment](https://docs.microsoft.com/en-us/python/api/azureml-core/azureml.core.experiment.experiment?view=azure-ml-py) class can be used to track metrics or other artifacts (images) that are available in Azure portal.  
-    (2) using [__papermill__](https://github.com/nteract/papermill) invoked via its Python API to run unedited devito demo notebooks (including the  [dask](https://dask.org/) local cluster [example](https://github.com/opesci/devito/blob/master/examples/seismic/tutorials/04_dask.ipynb) on the remote compute target and the results as saved notebooks that are available in Azure portal.
+   Two ways of running devito code are shown:  
+    (1) using __custom code__ (slightly modified graphing functions that save images to files). The AzureML experimentation job is defined by the devito code packaged as a py file. The experimentation job (defined by [azureml.core.experiment.Experiment](https://docs.microsoft.com/en-us/python/api/azureml-core/azureml.core.experiment.experiment?view=azure-ml-py) class can be used to track metrics or other artifacts (images) that are available in Azure portal.   
+    
+    (2) using [__papermill__](https://github.com/nteract/papermill) invoked via its Python API to run unedited devito demo notebooks (including the  [dask](https://dask.org/) local cluster [example](https://github.com/opesci/devito/blob/master/examples/seismic/tutorials/04_dask.ipynb) on the remote compute target and the results as saved notebooks that are available in Azure portal.  
+    
  - ```030_ScaleJobsUsingAzuremL_GeophysicsTutorial_FWI_Azure_devito.ipynb```: shows how the devito fwi tutorial notebooks can be run in parallel on the elastically allocated AzureML [remote compute cluster](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-set-up-training-targets) created before. By submitting multiple jobs via azureml.core.Experiment submit(azureml.train.estimator.Estimator) one can use the [portal](https://portal.azure.com) to visualize the elastic allocation of AzureML [remote compute cluster](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-set-up-training-targets) nodes. 
  
 
