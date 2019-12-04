@@ -15,7 +15,24 @@ To run examples available on the repo, please follow instructions below to:
 3) [Run example notebooks and scripts](#run-examples)
 
 ### Setting up Environment
-Navigate to the folder where you pulled the DeepSeismic repo to run:
+
+Follow the instruction bellow to read about compute requirements and install required libraries.
+
+<details>
+  <summary><b>Compute environment</b></summary>
+
+We recommend using a virtual machine to run the example notebooks and scripts. Specifically, you will need a GPU powered Linux machine, as this repository is developed and tested on Linux only. The easiest way to get started is to use the [Azure Data Science Virtual Machine (DSVM)](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/). This VM will come installed with all the system requirements that are needed to run the notebooks in this repository. 
+
+For this repo, we recommend selecting an Ubuntu VM of type [Standard_NC6_v3](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-gpu#ncv3-series). The machine is powered by NVIDIA Tesla V100 GPU which can be found in most Azure regions.
+
+> NOTE: For users new to Azure, your subscription may not come with a quota for GPUs. You may need to go into the Azure portal to increase your quota for GPU VMs. Learn more about how to do this here: https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits.
+
+</details>
+
+<details>
+  <summary><b>Package Installation</b></summary>
+
+To install packages contained in this repository, navigate to the directory where you pulled the DeepSeismic repo to run:
 ```bash
 conda env create -f environment/anaconda/local/environment.yml
 ```
@@ -40,6 +57,8 @@ conda env update --file environment/anaconda/local/environment.yml
 ```
 from the root of DeepSeismic repo.
 
+</details>
+
 ### Dataset download and preparation
 
 This repository provides examples on how to run seismic interpretation on two publicly available annotated seismic datasets: [Penobscot](https://zenodo.org/record/1341774) and [F3 Netherlands](https://github.com/olivesgatech/facies_classification_benchmark).
@@ -49,11 +68,11 @@ To download the Penobscot dataset run the [download_penobscot.sh](scripts/downlo
 
 ```
 data_dir='/data/penobscot'
-mkdir "$data_dir"
-./scripts/download_penobscot.sh "$data_dir"
+mkdir $data_dir
+./scripts/download_penobscot.sh $data_dir
 ```
 
-Note that the specified download location (e.g `/data/penobscot`) should be created beforehand, and configured with appropriate `write` pemissions.
+Note that the specified download location (e.g `/data/penobscot`) should be configured with appropriate `write` pemissions.
 
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
 
@@ -61,11 +80,11 @@ To prepare the data for the experiments (e.g. split into train/val/test), please
 python scripts/prepare_penobscot.py split_inline --data-dir=/data/penobscot --val-ratio=.1 --test-ratio=.2
 ```
 
-#### Netherlands F3
+#### F3 Netherlands
 To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
-[this github repository](https://github.com/olivesgatech/facies_classification_benchmark).
+[this github repository](https://github.com/yalaudah/facies_classification_benchmark) (section Dataset).
 
-Once you've downloaded the data set, create an empty `splits` directory, under the downloaded `data` directory. This is where your training/test/validation splits will be saved.
+Once you've downloaded the data set, make sure to create an empty `splits` directory, under the downloaded `data` directory. This is where your training/test/validation splits will be saved.
 
 ```
 cd data
