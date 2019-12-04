@@ -185,28 +185,31 @@ def _get_distributed(distributed_string):
 
 
 def create_environment_from_local(name="amlenv", conda_env_name=None):
-    """[summary]
+    """Creates environment from environment
+
+    If no value is passed in to the conda_env_name it will simply select the 
+    currently running environment
     
     Args:
-        name (str, optional): [description]. Defaults to "amlenv".
-        conda_env_name ([type], optional): [description]. Defaults to None.
+        name (str, optional): name of environment. Defaults to "amlenv".
+        conda_env_name (str, optional): name of the environment to use. Defaults to None.
     
     Returns:
-        [type]: [description]
+        azureml.core.Environment
     """
     conda_env_name = os.getenv("CONDA_DEFAULT_ENV") if conda_env_name is None else conda_env_name
     return Environment.from_existing_conda_environment(name, conda_env_name)
 
 
 def create_environment_from_conda_file(conda_path, name="amlenv"):
-    """[summary]
+    """Creates environment from supplied conda file
     
     Args:
-        conda_path ([type]): [description]
-        name (str, optional): [description]. Defaults to "amlenv".
+        conda_path (str): path to conda environment file
+        name (str, optional): name of environment. Defaults to "amlenv".
     
     Returns:
-        [type]: [description]
+        azureml.core.Environment
     """
     return Environment.from_existing_conda_specification(name, conda_path)
 
@@ -277,20 +280,5 @@ class PyTorchExperiment(BaseExperiment):
         )
 
         self._logger.debug(estimator.conda_dependencies.__dict__)
-        run = self._experiment.submit(estimator)
-        return run
+        return self._experiment.submit(estimator)
 
-
-if __name__ == "__main__":
-    exp = PyTorchExperiment("pytorch")
-    run = exp.submit(
-        os.path.abspath("./experiments/interpretation"),
-        "penobscot/local/train.py",
-        {"--cfg": "configs/hrnet.yaml"},
-        node_count=1,
-        workers_per_node=1,
-        distributed=None,
-        conda_environment_name="seismic-interpretation",
-        dependencies_file=None,
-    )
-    print("here")

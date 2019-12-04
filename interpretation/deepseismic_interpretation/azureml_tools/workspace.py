@@ -2,20 +2,18 @@
 # Licensed under the MIT License.
 
 
-import os
 import logging
-
+import os
 from pathlib import Path
 
 import azureml
-from azureml.core.authentication import (
-    AzureCliAuthentication,
-    InteractiveLoginAuthentication,
-    ServicePrincipalAuthentication,
-    AuthenticationException,
-)
+from azureml.core.authentication import (AuthenticationException,
+                                         AzureCliAuthentication,
+                                         InteractiveLoginAuthentication,
+                                         ServicePrincipalAuthentication)
 
 _DEFAULT_AML_PATH = "aml_config/azml_config.json"
+
 
 def _get_auth():
     """Returns authentication to Azure Machine Learning workspace."""
@@ -25,9 +23,7 @@ def _get_auth():
         aml_sp_password = os.environ.get("AML_SP_PASSWORD")
         aml_sp_tennant_id = os.environ.get("AML_SP_TENNANT_ID")
         aml_sp_username = os.environ.get("AML_SP_USERNAME")
-        auth = ServicePrincipalAuthentication(
-            aml_sp_tennant_id, aml_sp_username, aml_sp_password
-        )
+        auth = ServicePrincipalAuthentication(aml_sp_tennant_id, aml_sp_username, aml_sp_password)
     else:
         logger.debug("Trying to authenticate with CLI Authentication")
         try:
@@ -41,11 +37,7 @@ def _get_auth():
 
 
 def create_workspace(
-    workspace_name,
-    resource_group,
-    subscription_id,
-    workspace_region,
-    filename="azml_config.json",
+    workspace_name, resource_group, subscription_id, workspace_region, filename="azml_config.json",
 ):
     """Creates Azure Machine Learning workspace."""
     logger = logging.getLogger(__name__)

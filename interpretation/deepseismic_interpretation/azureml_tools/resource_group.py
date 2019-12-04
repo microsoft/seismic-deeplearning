@@ -58,5 +58,3 @@ def create_resource_group(profile_credentials, subscription_id, location, resour
         )
 
     return resource_group
-
-
