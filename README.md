@@ -77,12 +77,14 @@ This repository provides examples on how to run seismic interpretation on two pu
 To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script, e.g.
 
 ```
-data_dir='/data/penobscot'
-mkdir $data_dir
-./scripts/download_penobscot.sh $data_dir
+data_dir="$HOME/data/penobscot"
+mkdir -p "$data_dir"
+./scripts/download_penobscot.sh "$data_dir"
 ```
 
-Note that the specified download location (e.g `/data/penobscot`) should be configured with appropriate `write` pemissions.
+Note that the specified download location should be configured with appropriate `write` permissions. On some Linux virtual machines, you may want to place the data into `/mnt` or `/data` folder so you have to make sure you have write access.
+
+To make things easier, we suggested you use your home directory where you might run out of space. If this happens on an [Azure Data Science Virtual Machine](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/) you can resize the disk quite easily from [Azure Portal](https://portal.azure.com) - please see the Troubleshooting section at the end of this README regarding how to do this.
 
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
 
@@ -94,7 +96,7 @@ python scripts/prepare_penobscot.py split_inline --data-dir=/data/penobscot --va
 To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
 [this github repository](https://github.com/yalaudah/facies_classification_benchmark) (section Dataset).
 
-Once you've downloaded the data set, make sure to create an empty `splits` directory, under the downloaded `data` directory. This is where your training/test/validation splits will be saved.
+Once you've downloaded the data set, make sure to create an empty `splits` directory, under the downloaded `data` directory; you can re-use the same data directory as the one for Penobscot dataset created earlier. This is where your training/test/validation splits will be saved.
 
 ```
 cd data
@@ -269,5 +271,23 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 # Related projects
 
 [Microsoft AI Labs Github](https://aka.ms/ai-labs) Find other Best Practice projects, and Azure AI design patterns in our central repository. 
+
+# Troubleshooting
+
+<details>
+  <summary><b>How to resize Data Science Virtual Machine disk</b></summary>
+
+  1. Go to the [Azure Portal](https://portal.azure.com) and find your virtual machine by typing its name in the search bar at the very top of the page.
+
+  2. In the Overview panel on the left hand side, click Stop button to stop the virtual machine.
+
+  3. Next, select Disks in the same panel on the left hand side.
+
+  4. Click the Name of the OS Disk - you'll be navigated to the Disk view. From this view, select Configuration on the left hand side and then increase Size in GB and hit the Save button.
+
+  5. Navigate back to the Virtual Machine view in Step 2 and click the Start button to start the virtual machine.
+
+</details>
+
 
 
