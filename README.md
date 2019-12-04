@@ -16,6 +16,8 @@ There are two ways to get started with the DeepSeismic codebase, which currently
 - if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_demo_notebook.ipynb)
 - to actually run the code, you'll need to set up a compute environment (which includes setting up a GPU-enabled Linux VM and downloading the appropriate Anaconda Python packages) and download the datasets which you'd like to work with - detailed steps for doing this are provided in the next `Interpretation` section below.
 
+If you run into any problems, chances are your problem has already been solved in the [Troubleshooting](#troubleshooting) section.
+
 ## Interpretation
 For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-the-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation, and also benchmarking results from running these algorithms using various seismic datasets (Dutch F3, and Penobscot).
 
@@ -84,7 +86,7 @@ mkdir -p "$data_dir"
 
 Note that the specified download location should be configured with appropriate `write` permissions. On some Linux virtual machines, you may want to place the data into `/mnt` or `/data` folder so you have to make sure you have write access.
 
-To make things easier, we suggested you use your home directory where you might run out of space. If this happens on an [Azure Data Science Virtual Machine](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/) you can resize the disk quite easily from [Azure Portal](https://portal.azure.com) - please see the Troubleshooting section at the end of this README regarding how to do this.
+To make things easier, we suggested you use your home directory where you might run out of space. If this happens on an [Azure Data Science Virtual Machine](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/) you can resize the disk quite easily from [Azure Portal](https://portal.azure.com) - please see the [Troubleshooting](#troubleshooting) section at the end of this README regarding [how to do this](#how-to-resize-data-science-virtual-machine-disk).
 
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
 
@@ -275,6 +277,70 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 # Troubleshooting
 
 <details>
+  <summary><b>Data Science Virtual Machine conda package installation errors</b></summary>
+
+  It could happen that you don't have sufficient permissions to run conda commands / install packages in an Anaconda packages directory. To remedy the situation, please run the following commands
+  ```bash
+  rm -rf /anaconda/pkgs/*
+  sudo chown -R $(whoami) /anaconda
+  ```
+
+  After these commands complete, try installing the packages again.
+
+</details>
+
+<details>
+  <summary><b>Model training or scoring is not using GPU</b></summary>
+
+  To see if GPU is being using while your model is being trained or used for inference, run
+  ```bash
+  nvidia-smi
+  ```
+  and confirm that you see you Python process using the GPU.
+
+  If not, you may want to try reverting to an older version of CUDA for use with pyTorch. After the environment has been setup, run the following command (by default we use CUDA 10) after running `conda activate seismic-interpretation` to activate the conda environment:
+  ```bash
+  conda install pytorch torchvision cudatoolkit=9.2 -c pytorch
+  ```
+
+  To test whether this setup worked, right after you can open `ipython` and execute the following code
+  ```python
+  import torch                                                                                  
+  torch.cuda.is_available() 
+  ```
+
+  The output should say "True".
+
+  If the output is still "False", you may want to try setting your environment variable to specify the device manually - to test this, start a new `ipython` session and type:
+  ```python
+  import os
+  os.environ['CUDA_VISIBLE_DEVICES']='0'
+  import torch                                                                                  
+  torch.cuda.is_available() 
+  ```
+
+  Output should say "True" this time. If it does, you can make the change permanent by adding
+  ```bash
+  export CUDA_VISIBLE_DEVICES=0
+  ```
+  to your `$HOME/.bashrc` file.
+
+</details>
+
+<details>
+  <summary><b>GPU out of memory errors</b></summary>
+
+  You should be able to see how much GPU memory your process is using by running
+  ```bash
+  nvidia-smi
+  ```
+  and seeing if this amount is close to the physical memory limit specified by the GPU manufacturer.
+
+  If we're getting close to the memory limit, you may want to lower the batch size in the model configuration file. Specifically, `TRAIN.BATCH_SIZE_PER_GPU` and `VALIDATION.BATCH_SIZE_PER_GPU` settings.
+
+</details>
+
+<details>
   <summary><b>How to resize Data Science Virtual Machine disk</b></summary>
 
   1. Go to the [Azure Portal](https://portal.azure.com) and find your virtual machine by typing its name in the search bar at the very top of the page.
@@ -288,6 +354,8 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
   5. Navigate back to the Virtual Machine view in Step 2 and click the Start button to start the virtual machine.
 
 </details>
+
+
 
 
 
