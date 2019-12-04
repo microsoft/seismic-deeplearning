@@ -35,8 +35,6 @@ _CLASS_NAMES = [
     "zechstein",
 ]
 
-DATA_ROOT = config.DATASET.ROOT
-
 
 class runningScore(object):
     def __init__(self, n_classes):
@@ -93,7 +91,9 @@ def _evaluate_split(
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
-    test_set = TestSectionLoader(data_dir=DATA_ROOT, split=split, is_transform=True, augmentations=section_aug,)
+    test_set = TestSectionLoader(
+        data_dir=config.DATASET.ROOT, split=split, is_transform=True, augmentations=section_aug,
+    )
 
     n_classes = test_set.n_classes
 
@@ -175,8 +175,8 @@ def test(*options, cfg=None):
     splits = ["test1", "test2"] if "Both" in config.TEST.SPLIT else [config.TEST.SPLIT]
 
     for sdx, split in enumerate(splits):
-        labels = np.load(path.join(DATA_ROOT, "test_once", split + "_labels.npy"))
-        section_file = path.join(DATA_ROOT, "splits", "section_" + split + ".txt")
+        labels = np.load(path.join(config.DATASET.ROOT, "test_once", split + "_labels.npy"))
+        section_file = path.join(config.DATASET.ROOT, "splits", "section_" + split + ".txt")
         _write_section_file(labels, section_file)
         _evaluate_split(split, section_aug, model, device, running_metrics_overall, config)
 
