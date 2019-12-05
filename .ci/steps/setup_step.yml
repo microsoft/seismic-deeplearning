@@ -5,11 +5,15 @@ parameters:
   conda: seismic-interpretation
 
 steps:
+
+- bash: |
+    echo "##vso[task.prependpath]$CONDA/bin"
+
 - bash: |
     echo "Running setup..."
 
     # make sure we have the latest and greatest
-    conda env create -f environment/anaconda/local/environment.yml --force
+    conda env create -f environment/anaconda/local/environment.yml python=3.6 --force
     source activate ${{parameters.conda}}
     pip install -e interpretation
     pip install -e cv_lib
