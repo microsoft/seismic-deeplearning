@@ -3,8 +3,20 @@
 
 This repository shows you how to perform seismic imaging and interpretation on Azure. It empowers geophysicists and data scientists to run seismic experiments using state-of-art DSL-based PDE solvers and segmentation algorithms on Azure.  
 
-The repository provides sample notebooks, data loaders for seismic data, utility codes, and out-of-the box ML pipelines.
+The repository provides sample notebooks, data loaders for seismic data, utilities, and out-of-the box ML pipelines, organized as follows:
+- **sample notebooks**: these can be found in the `examples` folder - they are standard Jupyter notebooks which highlight how to use the codebase by walking the user through a set of pre-made examples
+- **experiments**: the goal is to provide runnable Python scripts which train and test (score) our machine learning models in `experiments` folder. The models themselves are swappable, meaning a single train script can be used to run a different model on the same dataset by simply swapping out the configuration file which defines the model. Experiments are organized by model types and datasets - for example, "2D segmentation on Dutch F3 dataset", "2D segmentation on Penobscot dataset" and "3D segmentation on Penobscot dataset" are all different experiments. As another example, if one is swapping 2D segmentation models on Dutch F3 dataset, one would just point the train and test scripts to a different configuration file within the same experiment.
+- **pip installable utilities**: we provide `cv_lib` and `deepseismic_interpretation` utilities (more info below) which are used by both sample notebooks and experiments mentioned above
 
+DeepSeismic currently focuses on Seismic Interpretation (3D segmentation aka facies classification) with experimental code provided around Seismic Imaging.
+
+### Quick Start
+
+There are two ways to get started with the DeepSeismic codebase, which currently focuses on Interpretation:
+- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_demo_notebook.ipynb)
+- to actually run the code, you'll need to set up a compute environment (which includes setting up a GPU-enabled Linux VM and downloading the appropriate Anaconda Python packages) and download the datasets which you'd like to work with - detailed steps for doing this are provided in the next `Interpretation` section below.
+
+If you run into any problems, chances are your problem has already been solved in the [Troubleshooting](#troubleshooting) section.
 
 ## Interpretation
 For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-the-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation, and also benchmarking results from running these algorithms using various seismic datasets (Dutch F3, and Penobscot).
@@ -15,7 +27,24 @@ To run examples available on the repo, please follow instructions below to:
 3) [Run example notebooks and scripts](#run-examples)
 
 ### Setting up Environment
-Navigate to the folder where you pulled the DeepSeismic repo to run:
+
+Follow the instruction bellow to read about compute requirements and install required libraries.
+
+<details>
+  <summary><b>Compute environment</b></summary>
+
+We recommend using a virtual machine to run the example notebooks and scripts. Specifically, you will need a GPU powered Linux machine, as this repository is developed and tested on Linux only. The easiest way to get started is to use the [Azure Data Science Virtual Machine (DSVM)](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/). This VM will come installed with all the system requirements that are needed to run the notebooks in this repository. 
+
+For this repo, we recommend selecting an Ubuntu VM of type [Standard_NC6_v3](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-gpu#ncv3-series). The machine is powered by NVIDIA Tesla V100 GPU which can be found in most Azure regions.
+
+> NOTE: For users new to Azure, your subscription may not come with a quota for GPUs. You may need to go into the Azure portal to increase your quota for GPU VMs. Learn more about how to do this here: https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits.
+
+</details>
+
+<details>
+  <summary><b>Package Installation</b></summary>
+
+To install packages contained in this repository, navigate to the directory where you pulled the DeepSeismic repo to run:
 ```bash
 conda env create -f environment/anaconda/local/environment.yml
 ```
@@ -40,6 +69,8 @@ conda env update --file environment/anaconda/local/environment.yml
 ```
 from the root of DeepSeismic repo.
 
+</details>
+
 ### Dataset download and preparation
 
 This repository provides examples on how to run seismic interpretation on two publicly available annotated seismic datasets: [Penobscot](https://zenodo.org/record/1341774) and [F3 Netherlands](https://github.com/olivesgatech/facies_classification_benchmark).
@@ -48,12 +79,14 @@ This repository provides examples on how to run seismic interpretation on two pu
 To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script, e.g.
 
 ```
-data_dir='/data/penobscot'
-mkdir "$data_dir"
+data_dir="$HOME/data/penobscot"
+mkdir -p "$data_dir"
 ./scripts/download_penobscot.sh "$data_dir"
 ```
 
-Note that the specified download location (e.g `/data/penobscot`) should be created beforehand, and configured with appropriate `write` pemissions.
+Note that the specified download location should be configured with appropriate `write` permissions. On some Linux virtual machines, you may want to place the data into `/mnt` or `/data` folder so you have to make sure you have write access.
+
+To make things easier, we suggested you use your home directory where you might run out of space. If this happens on an [Azure Data Science Virtual Machine](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/) you can resize the disk quite easily from [Azure Portal](https://portal.azure.com) - please see the [Troubleshooting](#troubleshooting) section at the end of this README regarding [how to do this](#how-to-resize-data-science-virtual-machine-disk).
 
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
 
@@ -61,11 +94,11 @@ To prepare the data for the experiments (e.g. split into train/val/test), please
 python scripts/prepare_penobscot.py split_inline --data-dir=/data/penobscot --val-ratio=.1 --test-ratio=.2
 ```
 
-#### Netherlands F3
+#### F3 Netherlands
 To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
-[this github repository](https://github.com/olivesgatech/facies_classification_benchmark).
+[this github repository](https://github.com/yalaudah/facies_classification_benchmark) (section Dataset).
 
-Once you've downloaded the data set, create an empty `splits` directory, under the downloaded `data` directory. This is where your training/test/validation splits will be saved.
+Once you've downloaded the data set, make sure to create an empty `splits` directory, under the downloaded `data` directory; you can re-use the same data directory as the one for Penobscot dataset created earlier. This is where your training/test/validation splits will be saved.
 
 ```
 cd data
@@ -114,12 +147,38 @@ python -m ipykernel install --user --name seismic-interpretation
 
 #### Experiments
 
-We also provide scripts for a number of experiments we conducted using different segmentation approaches. These experiments are available under `experiments/interpretation`, and can be used as examples. Please refer to individual experiment README files for more information. 
+We also provide scripts for a number of experiments we conducted using different segmentation approaches. These experiments are available under `experiments/interpretation`, and can be used as examples. Within each experiment start from the `train.sh` and `test.sh` scripts under the `local/` (single GPU) and `distributed/` (multiple GPUs) directories, which invoke the corresponding python scripts, `train.py` and `test.py`. Take a look at the experiment configurations (see Experiment Configuration Files section below) for experiment options and modify if necessary.
+
+Please refer to individual experiment README files for more information. 
+
+#### Configuration Files
+We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manage configuration options for the experiments. There are three ways to pass arguments to the experiment scripts (e.g. train.py or test.py):
+
+- __default.py__ - A project config file `default.py` is a one-stop reference point for all configurable options, and provides sensible defaults for all arguments. If no arguments are passed to `train.py` or `test.py` script (e.g. `python train.py`), the arguments are by default loaded from `default.py`. Please take a look at `default.py` to familiarize yourself with the experiment arguments the script you run uses.
+
+- __yml config files__ - YAML configuration files under `configs/` are typically created one for each experiment. These are meant to be used for repeatable experiment runs and reproducible settings. Each configuration file only overrides the options that are changing in that experiment (e.g. options loaded from `defaults.py` during an experiment run will be overridden by arguments loaded from the yaml file). As an example, to use yml configuration file with the training script, run:
+
+    ```
+    python train.py --cfg "configs/hrnet.yaml"
+    ```
+
+- __command line__ - Finally, options can be passed in through `options` argument, and those will override arguments loaded from the configuration file. We created CLIs for all our scripts (using Python Fire library), so you can pass these options via command-line arguments, like so:
+
+    ```
+    python train.py DATASET.ROOT "/mnt/dutchf3" TRAIN.END_EPOCH 10
+    ```
 
 
 ### Pretrained Models
+
 #### HRNet
-To achieve the same results as the benchmarks above you will need to download the HRNet model pretrained on ImageNet. This can be found [here](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk). Download this to your local drive and make sure you add the path to the Yacs configuration script.
+
+To achieve the same results as the benchmarks above you will need to download the HRNet model [pretrained](https://github.com/HRNet/HRNet-Image-Classification) on ImageNet. We are specifically using the [HRNet-W48-C](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk) pre-trained model - download this model to your local drive and make sure you add the path to the experiment (or notebook) configuration file under `TEST.MODEL_PATH` setting. Other  HRNet variants are also available [here](https://github.com/HRNet/HRNet-Image-Classification) - you can navigate to those from the [main HRNet landing page](https://github.com/HRNet/HRNet-Object-Detection) for object detection.
+
+To facilitate easier download on a Linux machine of your choice (or [Azure Data Science Virtual Machine](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/) which we recommend), we created an automated download scipt for you, just run
+```bash
+./scripts/download_hrnet.sh 'your_folder_to_store_the_model'
+```
 
 ### Viewers (optional)
 
@@ -181,14 +240,6 @@ The dataset was split 70% training, 10% validation and 20% test. The results bel
 - [kill_windows.sh](scripts/kill_windows.sh): Script to kill multiple tmux windows. Used to kill jobs that parallel_training.sh might have started.
 
 
-## Seismic Imaging
-For seismic imaging, the repository shows how you can leverage open-source PDE solvers (e.g. Devito), and perform Full-Waveform Inversion (FWI) at scale on Azure, using Azure Machine Learning (Azure ML), and Azure Batch. The repository provides a collection of sample notebooks that shows 
-
-* How you can create customized Docker containers with Devito and use this on Azure
-* How you can create Azure ML estimators for performing FWI using Devito. 
-This enable the Devito code to easily run on a single machine, as well as multiple machines using Azure ML managed computes.
-
-
 ## Contributing
 
 This project welcomes contributions and suggestions. Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
@@ -211,7 +262,92 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 | **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=120&branchName=staging) |
 | **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=120&branchName=master) |
 
-## Related projects
+# Related projects
 
-[Microsoft AI Github](https://github.com/microsoft/ai) Find other Best Practice projects, and Azure AI Designed patterns in our central repository. 
+[Microsoft AI Labs Github](https://aka.ms/ai-labs) Find other Best Practice projects, and Azure AI design patterns in our central repository. 
+
+# Troubleshooting
+
+<details>
+  <summary><b>Data Science Virtual Machine conda package installation errors</b></summary>
+
+  It could happen that you don't have sufficient permissions to run conda commands / install packages in an Anaconda packages directory. To remedy the situation, please run the following commands
+  ```bash
+  rm -rf /anaconda/pkgs/*
+  sudo chown -R $(whoami) /anaconda
+  ```
+
+  After these commands complete, try installing the packages again.
+
+</details>
+
+<details>
+  <summary><b>Model training or scoring is not using GPU</b></summary>
+
+  To see if GPU is being using while your model is being trained or used for inference, run
+  ```bash
+  nvidia-smi
+  ```
+  and confirm that you see you Python process using the GPU.
+
+  If not, you may want to try reverting to an older version of CUDA for use with pyTorch. After the environment has been setup, run the following command (by default we use CUDA 10) after running `conda activate seismic-interpretation` to activate the conda environment:
+  ```bash
+  conda install pytorch torchvision cudatoolkit=9.2 -c pytorch
+  ```
+
+  To test whether this setup worked, right after you can open `ipython` and execute the following code
+  ```python
+  import torch                                                                                  
+  torch.cuda.is_available() 
+  ```
+
+  The output should say "True".
+
+  If the output is still "False", you may want to try setting your environment variable to specify the device manually - to test this, start a new `ipython` session and type:
+  ```python
+  import os
+  os.environ['CUDA_VISIBLE_DEVICES']='0'
+  import torch                                                                                  
+  torch.cuda.is_available() 
+  ```
+
+  Output should say "True" this time. If it does, you can make the change permanent by adding
+  ```bash
+  export CUDA_VISIBLE_DEVICES=0
+  ```
+  to your `$HOME/.bashrc` file.
+
+</details>
+
+<details>
+  <summary><b>GPU out of memory errors</b></summary>
+
+  You should be able to see how much GPU memory your process is using by running
+  ```bash
+  nvidia-smi
+  ```
+  and seeing if this amount is close to the physical memory limit specified by the GPU manufacturer.
+
+  If we're getting close to the memory limit, you may want to lower the batch size in the model configuration file. Specifically, `TRAIN.BATCH_SIZE_PER_GPU` and `VALIDATION.BATCH_SIZE_PER_GPU` settings.
+
+</details>
+
+<details>
+  <summary><b>How to resize Data Science Virtual Machine disk</b></summary>
+
+  1. Go to the [Azure Portal](https://portal.azure.com) and find your virtual machine by typing its name in the search bar at the very top of the page.
+
+  2. In the Overview panel on the left hand side, click Stop button to stop the virtual machine.
+
+  3. Next, select Disks in the same panel on the left hand side.
+
+  4. Click the Name of the OS Disk - you'll be navigated to the Disk view. From this view, select Configuration on the left hand side and then increase Size in GB and hit the Save button.
+
+  5. Navigate back to the Virtual Machine view in Step 2 and click the Start button to start the virtual machine.
+
+</details>
+
+
+
+
 
