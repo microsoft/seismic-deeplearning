@@ -268,6 +268,17 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 # Troubleshooting
 
+For Data Science Virtual Machine conda package installation issues, make sure you locate the anaconda location on the DSVM, for example by running:
+```
+which python
+```
+A typical output will be:
+```
+someusername@somevm:/projects/DeepSeismic$ which python
+/anaconda/envs/py35/bin/python
+```
+which will indicate that anaconda folder is __/anaconda__. We'll refer to this location in instructions below, but you should update the commands according to your local anaconda folder.
+
 <details>
   <summary><b>Data Science Virtual Machine conda package installation errors</b></summary>
 
@@ -278,6 +289,22 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
   ```
 
   After these commands complete, try installing the packages again.
+
+</details>
+
+<details>
+  <summary><b>Data Science Virtual Machine conda package installation warnings</b></summary>
+
+  It could happen that while creating the conda environment defined by environment/anaconda/local/environment.yml on an Ubuntu DSVM, one can get multiple warnings like this:  
+  WARNING conda.gateways.disk.delete:unlink_or_rename_to_trash(140): Could not remove or rename /anaconda/pkgs/ipywidgets-7.5.1-py_0/site-packages/ipywidgets-7.5.1.dist-info/LICENSE.  Please remove this file manually (you may need to reboot to free file handles)  
+    
+  If that happens, similar to instructions above, stop the conda environment creation (type ```Ctrl+C```) and then change recursively the ownership /data/anaconda pckages from root to current user, by running this command: 
+
+  ```bash
+  sudo chown -R $USER /anaconda
+  ```
+
+  After these command completes, try creating the conda environment in __environment/anaconda/local/environment.yml__ again.
 
 </details>
 
