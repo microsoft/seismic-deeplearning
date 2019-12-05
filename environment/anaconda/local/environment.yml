@@ -12,7 +12,7 @@ dependencies:
   - torchvision==0.4.2
   - pandas==0.25.3
   - opencv==4.1.2
-  - scikit-learn=0.21.3
+  - scikit-learn==0.21.3
   - tensorflow==2.0
   - tqdm==4.39.0
   - itkwidgets==0.23.1  

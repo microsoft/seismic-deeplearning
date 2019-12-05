@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
 
 echo "Downloading Dutch F3 from https://github.com/bolgebrygg/MalenoV"
 # fetch Dutch F3 from Malenov project.
