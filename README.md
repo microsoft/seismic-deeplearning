@@ -177,7 +177,7 @@ To achieve the same results as the benchmarks above you will need to download th
 
 To facilitate easier download on a Linux machine of your choice (or [Azure Data Science Virtual Machine](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/) which we recommend), we created an automated download scipt for you, just run
 ```bash
-./scripts/download_hrnet.sh 'your_folder_to_store_the_model'
+./scripts/download_hrnet.sh 'your_folder_to_store_the_model' 'model_file'
 ```
 
 ### Viewers (optional)
