@@ -2,10 +2,16 @@
 # Licensed under the MIT License.
 # commitHash: c76bf579a0d5090ebd32426907d051d499f3e847
 # url: https://github.com/olivesgatech/facies_classification_benchmark
-
+#
+# To Test:
+# python test.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
+#
+# /* spell-checker: disable */
 """
 Modified version of the Alaudah testing script
-#TODO: Needs to be improved. Needs to be able to run across multiple GPUs and better factoring around the loader
+Runs only on single GPU
+
+Estimated time to run on single V100: 5 hours
 """
 
 import itertools

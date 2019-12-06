@@ -1,10 +1,16 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-
-"""Train models on Dutch F3 salt dataset
+#
+# To Test:
+# python -m torch.distributed.launch --nproc_per_node=2 train.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
+#
+# /* spell-checker: disable */
+"""Train models on Dutch F3 dataset
 
 Trains models using PyTorch DistributedDataParallel
 Uses a warmup schedule that then goes into a cyclic learning rate
+
+Time to run on two V100s for 300 epochs: 2.5 days
 """
 
 import logging
@@ -78,7 +84,7 @@ def update_sampler_epoch(data_loader, engine):
     data_loader.sampler.epoch = engine.state.epoch
 
 
-def run(*options, cfg=None, local_rank=0):
+def run(*options, cfg=None, local_rank=0, debug=False):
     """Run training and validation of model
 
     Notes:
@@ -239,6 +245,9 @@ def run(*options, cfg=None, local_rank=0):
     )
 
     # Set the validation run to start on the epoch completion of the training run
+    if debug:
+        logger.info("Running Validation in Debug/Test mode")
+        val_loader = take(3, val_loader)
     trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
     if local_rank == 0:  # Run only on master process
@@ -313,6 +322,10 @@ def run(*options, cfg=None, local_rank=0):
         evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
         logger.info("Starting training")
+
+    if debug:
+        logger.info("Running Training in Debug/Test mode")
+        train_loader = take(3, train_loader)
 
     trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
 

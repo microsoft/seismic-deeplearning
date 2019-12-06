@@ -5,6 +5,13 @@
 # python train.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
 #
 # /* spell-checker: disable */
+"""Train models on Dutch F3 dataset
+
+Trains models using PyTorch
+Uses a warmup schedule that then goes into a cyclic learning rate
+
+Time to run on single V100 for 300 epochs: 4.5 days
+"""
 
 import logging
 import logging.config

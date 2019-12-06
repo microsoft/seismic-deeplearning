@@ -5,6 +5,13 @@
 # python test.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
 #
 # /* spell-checker: disable */
+"""Train models on Penobscot dataset
+
+Test models using PyTorch 
+
+Time to run on single V100: 30 minutes
+"""
+
 
 import logging
 import logging.config
