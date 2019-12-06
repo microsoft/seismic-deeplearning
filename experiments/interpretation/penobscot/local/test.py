@@ -1,5 +1,9 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
+#
+# To Test:
+# python test.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
+#
 # /* spell-checker: disable */
 
 import logging
@@ -93,7 +97,7 @@ _BOTTOM_K = 2  # Number of worst performing inlines to log to tensorboard
 mask_value = 255
 
 
-def run(*options, cfg=None):
+def run(*options, cfg=None, debug=False):
     """Run testing of model
 
     Notes:
@@ -267,6 +271,10 @@ def run(*options, cfg=None):
     )
 
     logger.info("Starting training")
+    if debug:
+        logger.info("Running in Debug/Test mode")
+        test_loader = take(3, test_loader)
+
     evaluator.run(test_loader, max_epochs=1)
 
     # Log top N and bottom N inlines in terms of IoU to tensorboard

@@ -1,5 +1,9 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
+#
+# To Test:
+# python train.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
+#
 # /* spell-checker: disable */
 
 import logging
@@ -53,6 +57,8 @@ from cv_lib.segmentation.dutchf3.utils import (
 
 from default import _C as config
 from default import update_config
+from toolz import take
+
 
 mask_value = 255
 _SEG_COLOURS = np.asarray(
@@ -70,7 +76,7 @@ def _prepare_batch(batch, device=None, non_blocking=False):
     )
 
 
-def run(*options, cfg=None):
+def run(*options, cfg=None, debug=False):
     """Run training and validation of model
 
     Notes:
@@ -83,6 +89,7 @@ def run(*options, cfg=None):
                                     config. To see what options are available consult
                                     default.py
         cfg (str, optional): Location of config file to load. Defaults to None.
+        debug (bool): Places scripts in debug/test mode and only executes a few iterations
     """
 
     update_config(config, options=options, config_file=cfg)
@@ -220,6 +227,9 @@ def run(*options, cfg=None):
     )
 
     # Set the validation run to start on the epoch completion of the training run
+    if debug:
+        logger.info("Running Validation in Debug/Test mode")
+        val_loader = take(3, val_loader)
     trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
     evaluator.add_event_handler(
@@ -285,6 +295,9 @@ def run(*options, cfg=None):
     evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
     logger.info("Starting training")
+    if debug:
+        logger.info("Running Training in Debug/Test mode")
+        train_loader = take(3, train_loader)
     trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
 
 
