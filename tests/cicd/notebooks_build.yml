@@ -37,6 +37,7 @@ jobs:
   
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
+
 - job: HRNET_demo
   timeoutInMinutes: 5
   displayName: HRNET demo
@@ -45,7 +46,7 @@ jobs:
   steps:
   - bash: |
       conda activate seismic-interpretation
-      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/HRNet_demo_notebook.ipynb 
+      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/HRNet_demo_notebook.ipynb --dataset_root /home/alfred/data/penobscot
       
 - job: F3_block_training_and_evaluation_local
   timeoutInMinutes: 5
