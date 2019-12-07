@@ -173,7 +173,7 @@ jobs:
 # DISTRIBUTED PATCH JOBS
 ###################################################################################################
 
-- job: hrnet_patch
+- job: hrnet_patch_dist
   timeoutInMinutes: 5
   displayName: hrnet patch
   pool:
@@ -186,7 +186,7 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
 
-- job: unet_patch
+- job: unet_patch_dist
   timeoutInMinutes: 5
   displayName: unet patch
   pool:
@@ -199,7 +199,7 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/unet.yaml --debug     
 
-- job: seresnet_unet_patch
+- job: seresnet_unet_patch_dist
   timeoutInMinutes: 5
   displayName: seresnet unet patch
   pool:
@@ -212,7 +212,7 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/seresnet_unet.yaml --debug
       
-- job: patch_deconvnet
+- job: patch_deconvnet_dist
   timeoutInMinutes: 5
   displayName: patch deconvnet
   pool:
@@ -225,7 +225,7 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1  --cfg=configs/patch_deconvnet.yaml --debug
 
-- job: patch_deconvnet_skip
+- job: patch_deconvnet_skip_dist
   timeoutInMinutes: 5
   displayName: patch deconvnet skip
   pool:
