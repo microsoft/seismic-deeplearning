@@ -269,11 +269,11 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 # Troubleshooting
 
 For Data Science Virtual Machine conda package installation issues, make sure you locate the anaconda location on the DSVM, for example by running:
-```
+```bash
 which python
 ```
 A typical output will be:
-```
+```bash
 someusername@somevm:/projects/DeepSeismic$ which python
 /anaconda/envs/py35/bin/python
 ```
