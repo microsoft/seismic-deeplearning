@@ -13,70 +13,57 @@ trigger:
 
 jobs:
 
-# partially disable setup for now - done manually on build VM
-# - job: setup
+# - job: hrnet_penobscot
 #   timeoutInMinutes: 5
-#   displayName: Setup
+#   displayName: hrnet penobscot
 #   pool:
 #     name: deepseismicagentpool
-
 #   steps:
 #   - bash: |
-#       echo "Running setup..."
-#       pwd
-#       ls
-#       git branch
-#       uname -ra
-#       # make sure we have the latest and greatest
-#       # yes | conda env update -f environment/anaconda/local/environment.yml
-#       conda activate seismic-interpretation
-#       pip install -e interpretation
-#       pip install -e cv_lib
-#       # add this if pytorch stops detecting GPU
-#       # conda install pytorch torchvision cudatoolkit=9.2 -c pytorch
-  
-#       # copy your model files like so - using dummy file to illustrate
-#       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
+#       conda env list
+#       source activate seismic-interpretation
+#       # run the tests      
+#       cd experiments/interpretation/penobscot/local
+#       python train.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
+#       # find the latest model which we just trained
+#       model=$(ls -td */seg_hrnet/*/* | head -1)
+#       echo ${model}
+#       # # try running the test script
+#       python test.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth --cfg=configs/hrnet.yaml  --debug
 
-- job: hrnet_penobscot
+# - job: seresnet_unet_penobscot
+#   timeoutInMinutes: 5
+#   displayName: seresnet_unet penobscot
+#   pool:
+#     name: deepseismicagentpool
+#   steps:
+#   - bash: |
+#       conda env list
+#       source activate seismic-interpretation
+#       # run the tests      
+#       cd experiments/interpretation/penobscot/local
+#       python train.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/seresnet_unet.yaml --debug
+#       # find the latest model which we just trained
+#       model=$(ls -td */resnet_unet/*/* | head -1)
+#       echo ${model}
+#       # try running the test script
+#       python test.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth --cfg=configs/seresnet_unet.yaml  --debug
+
+- job: hrnet_dutchf3
   timeoutInMinutes: 5
-  displayName: hrnet penobscot
+  displayName: hrnet dutchf3
   pool:
     name: deepseismicagentpool
   steps:
   - bash: |
       conda env list
       source activate seismic-interpretation
-      which python
-      which pytest
       # run the tests      
-      cd experiments/interpretation/penobscot/local
-      python train.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
+      cd experiments/interpretation/dutchf3_patch/local
+      python train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
       # find the latest model which we just trained
       model=$(ls -td */seg_hrnet/*/* | head -1)
       echo ${model}
-      ls -ltra ${model}
-      # ls -ltra output/seg_hrnet/model
-      # # try running the test script
-      python test.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth --cfg=configs/hrnet.yaml  --debug
-
-- job: seresnet_unet_penobscot
-  timeoutInMinutes: 5
-  displayName: seresnet_unet penobscot
-  pool:
-    name: deepseismicagentpool
-  steps:
-  - bash: |
-      conda env list
-      source activate seismic-interpretation
-      which python
-      which pytest
-      # run the tests      
-      cd experiments/interpretation/penobscot/local
-      python train.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/seresnet_unet.yaml --debug
-      # find the latest model which we just trained
-      model=$(ls -td */resnet_unet/*/* | head -1)
-      echo ${model}
       # try running the test script
-      python test.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth --cfg=configs/seresnet_unet.yaml  --debug
+      python test.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/seg_hrnet_running_model_1.pth --cfg=configs/hrnet.yaml --debug
 
