@@ -46,7 +46,7 @@ jobs:
   steps:
   - bash: |
       conda activate seismic-interpretation
-      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/HRNet_demo_notebook.ipynb --dataset_root /home/alfred/data/penobscot
+      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb --dataset_root /home/alfred/data/penobscot
       
 - job: F3_block_training_and_evaluation_local
   timeoutInMinutes: 5
@@ -56,4 +56,4 @@ jobs:
   steps:
   - bash: |      
       conda activate seismic-interpretation      
-      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/F3_block_training_and_evaluation_local.ipynb 
+      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/F3_block_training_and_evaluation_local.ipynb --dataset_root /home/alfred/data/dutch_f3/data
