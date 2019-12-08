@@ -372,8 +372,8 @@ def test(*options, cfg=None, debug=False):
 
     splits = ["test1", "test2"] if "Both" in config.TEST.SPLIT else [config.TEST.SPLIT]
     for sdx, split in enumerate(splits):
-        labels = np.load(path.join(config.DATASEST.ROOT, "test_once", split + "_labels.npy"))
-        section_file = path.join(config.DATASEST.ROOT, "splits", "section_" + split + ".txt")
+        labels = np.load(path.join(config.DATASET.ROOT, "test_once", split + "_labels.npy"))
+        section_file = path.join(config.DATASET.ROOT, "splits", "section_" + split + ".txt")
         _write_section_file(labels, section_file)
         _evaluate_split(
             split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config, debug=debug
