@@ -38,39 +38,21 @@ jobs:
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
 
-# - job: HRNET_demo
-#   timeoutInMinutes: 5
-#   displayName: HRNET demo
-#   pool:
-#     name: deepseismicagentpool
-#   steps:
-#   - bash: |
-#       source activate seismic-interpretation
-#       pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb --dataset_root /home/alfred/data/penobscot  
-# - job: F3_block_training_and_evaluation_local
-#   timeoutInMinutes: 5
-#   displayName: F3 block training and evaluation local
-#   pool:
-#     name: deepseismicagentpool
-#   steps:
-#   - bash: |      
-#       source activate seismic-interpretation      
-#       pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/F3_block_training_and_evaluation_local.ipynb --dataset_root /home/alfred/data/dutch_f3/data
-- job: hrnet_penobscot
+- job: HRNET_demo
   timeoutInMinutes: 5
-  displayName: hrnet penobscot
+  displayName: HRNET demo
   pool:
     name: deepseismicagentpool
   steps:
   - bash: |
-      conda env list
       source activate seismic-interpretation
-      which python
-      which pytest
-      # run the tests      
-      cd experiments/interpretation/penobscot/local
-      python train.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
-      # find the latest model which we just trained
-      # model=$(ls -td */*/*/hrnet/* | head -1)
-      # # try running the test script
-      # python test.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TEST.MODEL_PATH' ${model}/models/hrnet_running_model_1.pth --cfg=configs/hrnet.yaml  --debug
+      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb --dataset_root /home/alfred/data/penobscot  
+- job: F3_block_training_and_evaluation_local
+  timeoutInMinutes: 5
+  displayName: F3 block training and evaluation local
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |      
+      source activate seismic-interpretation      
+      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/F3_block_training_and_evaluation_local.ipynb --dataset_root /home/alfred/data/dutch_f3/data
