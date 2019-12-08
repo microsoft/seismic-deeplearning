@@ -220,19 +220,19 @@ jobs:
 # LOCAL SECTION JOBS
 ###################################################################################################
 
-- job: section_deconvnet_skip
-  timeoutInMinutes: 5
-  displayName: section deconvnet skip
-  pool:
-    name: deepseismicagentpool
-  steps:
-  - bash: |
-      conda activate seismic-interpretation
-      # run the tests      
-      cd experiments/interpretation/dutchf3_section/local
-      python train.py --cfg=configs/section_deconvnet_skip.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
-      # find the latest model which we just trained
-      model=$(ls -td */*/*/section_deconvnet_skip/* | head -1)
-      # try running the test script
-      python test.py --cfg=configs/section_deconvnet_skip.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/section_deconvnet_skip_running_model_1.pth
+# - job: section_deconvnet_skip
+#   timeoutInMinutes: 5
+#   displayName: section deconvnet skip
+#   pool:
+#     name: deepseismicagentpool
+#   steps:
+#   - bash: |
+#       source activate seismic-interpretation
+#       # run the tests      
+#       cd experiments/interpretation/dutchf3_section/local
+#       python train.py --cfg=configs/section_deconvnet_skip.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
+#       # find the latest model which we just trained
+#       model=$(ls -td */*/*/section_deconvnet_skip/* | head -1)
+#       # try running the test script
+#       python test.py --cfg=configs/section_deconvnet_skip.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/section_deconvnet_skip_running_model_1.pth
 
