@@ -173,9 +173,9 @@ jobs:
 # DISTRIBUTED PATCH JOBS
 ###################################################################################################
 
-- job: hrnet_patch
+- job: hrnet_patch_dist
   timeoutInMinutes: 5
-  displayName: hrnet patch
+  displayName: hrnet patch distributed
   pool:
     name: deepseismicagentpool
   steps:
@@ -186,9 +186,9 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/hrnet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
 
-- job: unet_patch
+- job: unet_patch_dist
   timeoutInMinutes: 5
-  displayName: unet patch
+  displayName: unet patch distributed
   pool:
     name: deepseismicagentpool
   steps:
@@ -199,9 +199,9 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/unet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1      
 
-- job: seresnet_unet_patch
+- job: seresnet_unet_patch_dist
   timeoutInMinutes: 5
-  displayName: seresnet unet patch
+  displayName: seresnet unet patch distributed
   pool:
     name: deepseismicagentpool
   steps:
@@ -212,9 +212,9 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/seresnet_unet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
       
-- job: patch_deconvnet
+- job: patch_deconvnet_dist
   timeoutInMinutes: 5
-  displayName: patch deconvnet
+  displayName: patch deconvnet distributed
   pool:
     name: deepseismicagentpool
   steps:
@@ -225,9 +225,9 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/patch_deconvnet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1  
 
-- job: patch_deconvnet_skip
+- job: patch_deconvnet_skip_dist
   timeoutInMinutes: 5
-  displayName: patch deconvnet skip
+  displayName: patch deconvnet skip distributed
   pool:
     name: deepseismicagentpool
   steps:
