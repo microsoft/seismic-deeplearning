@@ -1,6 +1,9 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 #
+# To Run on 2 GPUs
+# python -m torch.distributed.launch --nproc_per_node=2 train.py --cfg "configs/hrnet.yaml"
+#
 # To Test:
 # python -m torch.distributed.launch --nproc_per_node=2 train.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
 #
