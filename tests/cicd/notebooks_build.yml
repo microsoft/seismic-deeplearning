@@ -37,6 +37,7 @@ jobs:
   
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
+
 - job: HRNET_demo
   timeoutInMinutes: 5
   displayName: HRNET demo
@@ -44,18 +45,17 @@ jobs:
     name: deepseismicagentpool
   steps:
   - bash: |
-      conda activate seismic-interpretation
-      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/HRNet_demo_notebook.ipynb 
-      
-- job: F3_block_training_and_evaluation_local
-  timeoutInMinutes: 5
-  displayName: F3 block training and evaluation local
-  pool:
-    name: deepseismicagentpool
-  steps:
-  - bash: |      
-      conda activate seismic-interpretation      
-      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/F3_block_training_and_evaluation_local.ipynb 
+      source activate seismic-interpretation
+      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb --dataset_root /home/alfred/data/penobscot  
+# - job: F3_block_training_and_evaluation_local
+#   timeoutInMinutes: 5
+#   displayName: F3 block training and evaluation local
+#   pool:
+#     name: deepseismicagentpool
+#   steps:
+#   - bash: |      
+#       source activate seismic-interpretation      
+#       pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/F3_block_training_and_evaluation_local.ipynb --dataset_root /home/alfred/data/dutch_f3/data
 - job: hrnet_patch
   timeoutInMinutes: 5
   displayName: hrnet patch
@@ -63,7 +63,7 @@ jobs:
     name: deepseismicagentpool
   steps:
   - bash: |
-      conda activate seismic-interpretation
+      source activate seismic-interpretation 
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/local
       python train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
