@@ -64,6 +64,8 @@ jobs:
   steps:
   - bash: |
       conda activate seismic-interpretation
+      which python
+      which pytest
       # run the tests      
       cd experiments/interpretation/penobscot/local
       python train.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
