@@ -59,3 +59,24 @@ jobs:
       # ls -ltra output/seg_hrnet/model
       # # try running the test script
       python test.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth --cfg=configs/hrnet.yaml  --debug
+
+- job: seresnet_unet_penobscot
+  timeoutInMinutes: 5
+  displayName: seresnet_unet penobscot
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      conda env list
+      source activate seismic-interpretation
+      which python
+      which pytest
+      # run the tests      
+      cd experiments/interpretation/penobscot/local
+      python train.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/seresnet_unet.yaml --debug
+      # find the latest model which we just trained
+      model=$(ls -td */resnet_unet/*/* | head -1)
+      echo ${model}
+      # try running the test script
+      python test.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth --cfg=configs/seresnet_unet.yaml  --debug
+
