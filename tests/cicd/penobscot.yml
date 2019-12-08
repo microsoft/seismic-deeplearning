@@ -58,4 +58,4 @@ jobs:
       ls -ltra ${model}
       # ls -ltra output/seg_hrnet/model
       # # try running the test script
-      # python test.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TEST.MODEL_PATH' ${model}/models/hrnet_running_model_1.pth --cfg=configs/hrnet.yaml  --debug
+      python test.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth --cfg=configs/hrnet.yaml  --debug
