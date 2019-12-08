@@ -139,6 +139,7 @@ jobs:
   steps:
   - bash: |
       source activate seismic-interpretation
+      export PYTHONPATH="$PWD/interpretation:$PYTHONPATH"
       # run the tests      
       cd experiments/interpretation/penobscot/distributed
-      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
+      python -m torch.distributed.launch --nproc_per_node=$(nproc) experiments/interpretation/penobscot/distributed/train.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
