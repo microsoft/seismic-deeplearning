@@ -65,5 +65,5 @@ jobs:
       model=$(ls -td */seg_hrnet/*/* | head -1)
       echo ${model}
       # try running the test script
-      python test.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/seg_hrnet_running_model_1.pth --cfg=configs/hrnet.yaml --debug
+      python test.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth --cfg=configs/hrnet.yaml --debug
 
