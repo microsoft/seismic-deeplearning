@@ -14,29 +14,29 @@ trigger:
 jobs:
 
 # partially disable setup for now - done manually on build VM
-- job: setup
-  timeoutInMinutes: 5
-  displayName: Setup
-  pool:
-    name: deepseismicagentpool
+# - job: setup
+#   timeoutInMinutes: 5
+#   displayName: Setup
+#   pool:
+#     name: deepseismicagentpool
 
-  steps:
-  - bash: |
-      echo "Running setup..."
-      pwd
-      ls
-      git branch
-      uname -ra
-      # make sure we have the latest and greatest
-      # yes | conda env update -f environment/anaconda/local/environment.yml
-      conda activate seismic-interpretation
-      pip install -e interpretation
-      pip install -e cv_lib
-      # add this if pytorch stops detecting GPU
-      # conda install pytorch torchvision cudatoolkit=9.2 -c pytorch
+#   steps:
+#   - bash: |
+#       echo "Running setup..."
+#       pwd
+#       ls
+#       git branch
+#       uname -ra
+#       # make sure we have the latest and greatest
+#       # yes | conda env update -f environment/anaconda/local/environment.yml
+#       conda activate seismic-interpretation
+#       pip install -e interpretation
+#       pip install -e cv_lib
+#       # add this if pytorch stops detecting GPU
+#       # conda install pytorch torchvision cudatoolkit=9.2 -c pytorch
   
-      # copy your model files like so - using dummy file to illustrate
-      azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
+#       # copy your model files like so - using dummy file to illustrate
+#       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
 
 - job: hrnet_penobscot
   timeoutInMinutes: 5
@@ -53,6 +53,8 @@ jobs:
       cd experiments/interpretation/penobscot/local
       python train.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
       # find the latest model which we just trained
-      # model=$(ls -td */*/*/hrnet/* | head -1)
+      model=$(ls -td */*/*/hrnet/* | head -1)
+      echo ${model}
+      ls -ltra
       # # try running the test script
       # python test.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TEST.MODEL_PATH' ${model}/models/hrnet_running_model_1.pth --cfg=configs/hrnet.yaml  --debug
