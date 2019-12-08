@@ -13,6 +13,10 @@ trigger:
 
 jobs:
 
+# ###################################################################################################
+# # LOCAL PATCH JOBS
+# ###################################################################################################
+
 # - job: hrnet_penobscot
 #   timeoutInMinutes: 5
 #   displayName: hrnet penobscot
@@ -131,6 +135,11 @@ jobs:
 #       # try running the test script
 #       python test.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'VALIDATION.BATCH_SIZE_PER_GPU' 1 'TEST.MODEL_PATH' ${model}/patch_deconvnet_skip_running_model_1.pth --cfg=configs/patch_deconvnet_skip.yaml --debug
 
+
+# ###################################################################################################
+# # DISTRIBUTED PATCH JOBS
+# ###################################################################################################
+
 # - job: hrnet_dutchf3_dist
 #   timeoutInMinutes: 5
 #   displayName: hrnet dutchf3 distributed
@@ -142,6 +151,7 @@ jobs:
 #       # run the tests      
 #       cd experiments/interpretation/dutchf3_patch/distributed
 #       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
+
 
 - job: unet_dutchf3_dist
   timeoutInMinutes: 5
