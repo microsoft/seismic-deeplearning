@@ -106,14 +106,15 @@ jobs:
     name: deepseismicagentpool
   steps:
   - bash: |
+      nvidia-smi
       source activate seismic-interpretation
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/local
-      python train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.BATCH_SIZE_PER_GPU' 16 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/patch_deconvnet.yaml --debug
+      python train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.BATCH_SIZE_PER_GPU' 2 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/patch_deconvnet.yaml --debug
       # find the latest model which we just trained
       model=$(ls -td */patch_deconvnet/*/* | head -1)
       # try running the test script
-      python test.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'VALIDATION.BATCH_SIZE_PER_GPU' 16 'TEST.MODEL_PATH' ${model}/patch_deconvnet_running_model_1.pth --cfg=configs/patch_deconvnet.yaml --debug
+      python test.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'VALIDATION.BATCH_SIZE_PER_GPU' 2 'TEST.MODEL_PATH' ${model}/patch_deconvnet_running_model_1.pth --cfg=configs/patch_deconvnet.yaml --debug
 
 - job: patch_deconvnet_skip_dutchf3
   timeoutInMinutes: 5
@@ -125,9 +126,9 @@ jobs:
       conda activate seismic-interpretation
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/local
-      python train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.BATCH_SIZE_PER_GPU' 16 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/patch_deconvnet_skip.yaml --debug
+      python train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.BATCH_SIZE_PER_GPU' 2 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/patch_deconvnet_skip.yaml --debug
       # find the latest model which we just trained
       model=$(ls -td */patch_deconvnet_skip/*/* | head -1)
       # try running the test script
-      python test.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'VALIDATION.BATCH_SIZE_PER_GPU' 16 'TEST.MODEL_PATH' ${model}/patch_deconvnet_skip_running_model_1.pth --cfg=configs/patch_deconvnet_skip.yaml --debug
+      python test.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'VALIDATION.BATCH_SIZE_PER_GPU' 2 'TEST.MODEL_PATH' ${model}/patch_deconvnet_skip_running_model_1.pth --cfg=configs/patch_deconvnet_skip.yaml --debug
 
