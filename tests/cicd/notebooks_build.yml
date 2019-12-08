@@ -56,3 +56,14 @@ jobs:
   - bash: |      
       conda activate seismic-interpretation      
       pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/F3_block_training_and_evaluation_local.ipynb 
+- job: hrnet_patch
+  timeoutInMinutes: 5
+  displayName: hrnet patch
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      conda activate seismic-interpretation
+      # run the tests      
+      cd experiments/interpretation/dutchf3_patch/local
+      python train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
