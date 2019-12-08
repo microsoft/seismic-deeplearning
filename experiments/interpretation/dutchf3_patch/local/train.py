@@ -171,7 +171,10 @@ def run(*options, cfg=None, debug=False):
         weight_decay=config.TRAIN.WEIGHT_DECAY,
     )
 
-    output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),)
+    try:
+        output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),)
+    except TypeError:
+        output_dir = generate_path(config.OUTPUT_DIR, config.MODEL.NAME, current_datetime(),)
 
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
 
