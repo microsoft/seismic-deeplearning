@@ -53,8 +53,8 @@ jobs:
       cd experiments/interpretation/penobscot/local
       python train.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
       # find the latest model which we just trained
-      model=$(ls -td */*/*/hrnet/* | head -1)
+      model=$(ls -td */seg_hrnet/* | head -1)
       echo ${model}
-      ls -ltra
+      ls -ltra output/seg_hrnet/model
       # # try running the test script
       # python test.py 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TEST.MODEL_PATH' ${model}/models/hrnet_running_model_1.pth --cfg=configs/hrnet.yaml  --debug
