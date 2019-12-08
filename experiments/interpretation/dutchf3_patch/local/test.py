@@ -266,7 +266,7 @@ def _evaluate_split(
 
     if debug:
         logger.info("Running in Debug/Test mode")
-        test_loader = take(10, test_loader)
+        test_loader = take(1, test_loader)
 
     running_metrics_split = runningScore(n_classes)
 
