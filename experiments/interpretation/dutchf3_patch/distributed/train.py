@@ -72,6 +72,7 @@ from ignite.engine import Events
 from ignite.utils import convert_tensor
 from toolz import compose, curry
 from torch.utils import data
+from toolz import take
 
 
 def prepare_batch(batch, device=None, non_blocking=False):
@@ -264,6 +265,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
             output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),)
         except TypeError:
             output_dir = generate_path(config.OUTPUT_DIR, config.MODEL.NAME, current_datetime(),)
+            
         summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
         logger.info(f"Logging Tensorboard to {path.join(output_dir, config.LOG_DIR)}")
         trainer.add_event_handler(
