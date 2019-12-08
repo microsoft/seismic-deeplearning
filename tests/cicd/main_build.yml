@@ -232,7 +232,8 @@ jobs:
       cd experiments/interpretation/dutchf3_section/local
       python train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/section_deconvnet_skip.yaml --debug
       # find the latest model which we just trained
-      model=$(ls -td */*/*/section_deconvnet_skip/* | head -1)
+      model=$(ls -td */section_deconvnet_skip/*/* | head -1)
+      echo ${model}
       # try running the test script
-      python test.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/section_deconvnet_skip_running_model_1.pth --cfg=configs/section_deconvnet_skip.yaml --debug
+      python test.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/section_deconvnet_skip_running_model_1.pth --cfg=configs/section_deconvnet_skip.yaml --debug
 
