@@ -123,7 +123,7 @@ jobs:
     name: deepseismicagentpool
   steps:
   - bash: |
-      conda activate seismic-interpretation
+      source activate seismic-interpretation
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/local
       python train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.BATCH_SIZE_PER_GPU' 1 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/patch_deconvnet_skip.yaml --debug
