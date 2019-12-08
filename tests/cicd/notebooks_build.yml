@@ -63,7 +63,8 @@ jobs:
     name: deepseismicagentpool
   steps:
   - bash: |
-      conda activate seismic-interpretation
+      conda env list
+      source activate seismic-interpretation
       which python
       which pytest
       # run the tests      
