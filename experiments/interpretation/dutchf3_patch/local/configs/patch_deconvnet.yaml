@@ -31,7 +31,7 @@ TRAIN:
   WEIGHT_DECAY: 0.0001
   SNAPSHOTS: 5
   AUGMENTATION: True
-  DEPTH: "No" # Options are No, Patch and Section
+  DEPTH: "none" # Options are None, Patch and Section
   STRIDE: 50
   PATCH_SIZE: 99
   AUGMENTATIONS:
