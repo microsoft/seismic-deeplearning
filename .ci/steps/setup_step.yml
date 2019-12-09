@@ -14,6 +14,7 @@ steps:
 
     # make sure we have the latest and greatest
     conda env create -f environment/anaconda/local/environment.yml python=3.6 --force
+    conda init bash
     source activate ${{parameters.conda}}
     pip install -e interpretation
     pip install -e cv_lib

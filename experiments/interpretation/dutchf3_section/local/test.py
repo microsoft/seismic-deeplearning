@@ -25,6 +25,8 @@ from deepseismic_interpretation.dutchf3.data import get_test_loader
 from default import _C as config
 from default import update_config
 from torch.utils import data
+from toolz import take
+
 
 _CLASS_NAMES = [
     "upper_ns",
@@ -86,7 +88,7 @@ class runningScore(object):
 
 
 def _evaluate_split(
-    split, section_aug, model, device, running_metrics_overall, config,
+    split, section_aug, model, device, running_metrics_overall, config, debug=False
 ):
     logger = logging.getLogger(__name__)
 
@@ -98,6 +100,10 @@ def _evaluate_split(
     n_classes = test_set.n_classes
 
     test_loader = data.DataLoader(test_set, batch_size=1, num_workers=config.WORKERS, shuffle=False)
+    if debug:
+        logger.info("Running in Debug/Test mode")
+        test_loader = take(1, test_loader)
+
     running_metrics_split = runningScore(n_classes)
 
     # testing mode:
@@ -152,7 +158,7 @@ def _write_section_file(labels, section_file):
     file_object.close()
 
 
-def test(*options, cfg=None):
+def test(*options, cfg=None, debug=False):
     update_config(config, options=options, config_file=cfg)
     n_classes = config.DATASET.NUM_CLASSES
 
@@ -178,7 +184,7 @@ def test(*options, cfg=None):
         labels = np.load(path.join(config.DATASET.ROOT, "test_once", split + "_labels.npy"))
         section_file = path.join(config.DATASET.ROOT, "splits", "section_" + split + ".txt")
         _write_section_file(labels, section_file)
-        _evaluate_split(split, section_aug, model, device, running_metrics_overall, config)
+        _evaluate_split(split, section_aug, model, device, running_metrics_overall, config, debug=debug)
 
     # FINAL TEST RESULTS:
     score, class_iou = running_metrics_overall.get_scores()

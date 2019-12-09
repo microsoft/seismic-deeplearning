@@ -1,10 +1,19 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-
-"""Train models on Dutch F3 salt dataset
+#
+# To Run on 2 GPUs
+# python -m torch.distributed.launch --nproc_per_node=2 train.py --cfg "configs/hrnet.yaml"
+#
+# To Test:
+# python -m torch.distributed.launch --nproc_per_node=2 train.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
+#
+# /* spell-checker: disable */
+"""Train models on Dutch F3 dataset
 
 Trains models using PyTorch DistributedDataParallel
 Uses a warmup schedule that then goes into a cyclic learning rate
+
+Time to run on two V100s for 300 epochs: 2.5 days
 """
 
 import logging
@@ -63,6 +72,7 @@ from ignite.engine import Events
 from ignite.utils import convert_tensor
 from toolz import compose, curry
 from torch.utils import data
+from toolz import take
 
 
 def prepare_batch(batch, device=None, non_blocking=False):
@@ -78,7 +88,7 @@ def update_sampler_epoch(data_loader, engine):
     data_loader.sampler.epoch = engine.state.epoch
 
 
-def run(*options, cfg=None, local_rank=0):
+def run(*options, cfg=None, local_rank=0, debug=False):
     """Run training and validation of model
 
     Notes:
@@ -239,6 +249,9 @@ def run(*options, cfg=None, local_rank=0):
     )
 
     # Set the validation run to start on the epoch completion of the training run
+    if debug:
+        logger.info("Running Validation in Debug/Test mode")
+        val_loader = take(3, val_loader)
     trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
     if local_rank == 0:  # Run only on master process
@@ -248,7 +261,11 @@ def run(*options, cfg=None, local_rank=0):
         )
         trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
 
-        output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),)
+        try:
+            output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),)
+        except TypeError:
+            output_dir = generate_path(config.OUTPUT_DIR, config.MODEL.NAME, current_datetime(),)
+            
         summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
         logger.info(f"Logging Tensorboard to {path.join(output_dir, config.LOG_DIR)}")
         trainer.add_event_handler(
@@ -313,6 +330,10 @@ def run(*options, cfg=None, local_rank=0):
         evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
         logger.info("Starting training")
+
+    if debug:
+        logger.info("Running Training in Debug/Test mode")
+        train_loader = take(3, train_loader)
 
     trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
 
