@@ -16,10 +16,8 @@ jobs:
 - job: setup
   timeoutInMinutes: 10
   displayName: Setup
-
   pool:
     name: deepseismicagentpool
-
   steps:
   - bash: |
       echo "Running setup..."
@@ -35,16 +33,17 @@ jobs:
 
 - job: unit_tests_job
   dependsOn: setup
-  timeoutInMinutes: 20
+  timeoutInMinutes: 5
+  displayName: Unit Tests Job
   pool:
     name: deepseismicagentpool
   steps:
   - bash: |
       echo "Starting unit tests"
-      conda activate seismic-interpretation
+      source activate seismic-interpretation
       pytest --durations=0 cv_lib/tests/
       echo "Unit test job passed"
-    displayName: Unit Tests Job
+    
 
 ###################################################################################################
 # LOCAL PATCH JOBS
@@ -106,6 +105,7 @@ jobs:
       echo ${model}
       # try running the test script
       python test.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth --cfg=configs/hrnet.yaml --debug
+
 
 - job: unet_dutchf3
   dependsOn: setup
@@ -195,6 +195,7 @@ jobs:
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
 
 - job: unet_dutchf3_dist
+  dependsOn: setup
   timeoutInMinutes: 5
   displayName: unet dutchf3 distributed
   pool:
@@ -207,6 +208,7 @@ jobs:
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/unet.yaml --debug
       
 - job: seresnet_unet_dutchf3_dist
+  dependsOn: setup
   timeoutInMinutes: 5
   displayName: seresnet unet dutchf3 distributed
   pool:
