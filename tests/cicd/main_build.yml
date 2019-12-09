@@ -14,7 +14,7 @@ trigger:
 jobs:
 # partially disable setup for now - done manually on build VM
 - job: setup
-  timeoutInMinutes: 5
+  timeoutInMinutes: 10
   displayName: Setup
 
   pool:
@@ -28,18 +28,13 @@ jobs:
       git branch
       uname -ra
 
-      # make sure we have the latest and greatest
-      # yes | conda env update -f environment/anaconda/local/environment.yml
-      conda activate seismic-interpretation
-      pip install -e interpretation
-      pip install -e cv_lib
-      # add this if pytorch stops detecting GPU
-      # conda install pytorch torchvision cudatoolkit=9.2 -c pytorch
+      ./scripts/env_reinstall.sh 
   
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
 
 - job: unit_tests_job
+  dependsOn: setup
   timeoutInMinutes: 20
   pool:
     name: deepseismicagentpool
@@ -56,6 +51,7 @@ jobs:
 ###################################################################################################
 
 - job: hrnet_patch
+  dependsOn: setup
   timeoutInMinutes: 5
   displayName: hrnet patch
   pool:
@@ -72,6 +68,7 @@ jobs:
       python test.py --cfg=configs/hrnet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/hrnet_running_model_1.pth
 
 - job: unet_patch
+  dependsOn: setup
   timeoutInMinutes: 5
   displayName: unet patch
   pool:
@@ -88,6 +85,7 @@ jobs:
       python test.py --cfg=configs/unet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/unet_running_model_1.pth
 
 - job: seresnet_unet_patch
+  dependsOn: setup
   timeoutInMinutes: 5
   displayName: seresnet unet patch
   pool:
@@ -104,6 +102,7 @@ jobs:
       python test.py --cfg=configs/seresnet_unet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/seresnet_unet_running_model_1.pth
 
 - job: patch_deconvnet
+  dependsOn: setup
   timeoutInMinutes: 5
   displayName: patch deconvnet
   pool:
@@ -120,6 +119,7 @@ jobs:
       python test.py --cfg=configs/patch_deconvnet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/models/patch_deconvnet_running_model_1.pth
 
 - job: patch_deconvnet_skip
+  dependsOn: setup
   timeoutInMinutes: 5
   displayName: patch deconvnet skip
   pool:
@@ -138,6 +138,7 @@ jobs:
 # Penobscot dataset
 
 - job: seresnet_unet
+  dependsOn: setup
   timeoutInMinutes: 5
   displayName: seresnet unet
   pool:
@@ -154,6 +155,7 @@ jobs:
       python test.py --cfg=configs/seresnet_unet.yaml 'DATASET.ROOT' '/home/alfred/data/penobscot' 'TEST.MODEL_PATH' ${model}/models/seresnet_unet_running_model_1.pth
 
 - job: hrnet_penobscot
+  dependsOn: setup
   timeoutInMinutes: 5
   displayName: hrnet penobscot
   pool:
@@ -173,9 +175,10 @@ jobs:
 # DISTRIBUTED PATCH JOBS
 ###################################################################################################
 
-- job: hrnet_patch
+- job: hrnet_patch_dist
+  dependsOn: setup
   timeoutInMinutes: 5
-  displayName: hrnet patch
+  displayName: hrnet patch distributed
   pool:
     name: deepseismicagentpool
   steps:
@@ -186,9 +189,10 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/hrnet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
 
-- job: unet_patch
+- job: unet_patch_dist
+  dependsOn: setup
   timeoutInMinutes: 5
-  displayName: unet patch
+  displayName: unet patch distributed
   pool:
     name: deepseismicagentpool
   steps:
@@ -199,9 +203,10 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/unet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1      
 
-- job: seresnet_unet_patch
+- job: seresnet_unet_patch_dist
+  dependsOn: setup
   timeoutInMinutes: 5
-  displayName: seresnet unet patch
+  displayName: seresnet unet patch distributed
   pool:
     name: deepseismicagentpool
   steps:
@@ -212,9 +217,10 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/seresnet_unet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1
       
-- job: patch_deconvnet
+- job: patch_deconvnet_dist
+  dependsOn: setup
   timeoutInMinutes: 5
-  displayName: patch deconvnet
+  displayName: patch deconvnet distributed
   pool:
     name: deepseismicagentpool
   steps:
@@ -225,9 +231,10 @@ jobs:
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py --cfg=configs/patch_deconvnet.yaml 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1  
 
-- job: patch_deconvnet_skip
+- job: patch_deconvnet_skip_dist
+  dependsOn: setup
   timeoutInMinutes: 5
-  displayName: patch deconvnet skip
+  displayName: patch deconvnet skip distributed
   pool:
     name: deepseismicagentpool
   steps:
@@ -244,6 +251,7 @@ jobs:
 ###################################################################################################
 
 - job: section_deconvnet_skip
+  dependsOn: setup
   timeoutInMinutes: 5
   displayName: section deconvnet skip
   pool:
