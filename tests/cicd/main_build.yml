@@ -205,7 +205,7 @@ jobs:
       source activate seismic-interpretation
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/distributed
-      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/patch_deconvnet_skip.yaml --debug
+      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'TRAIN.BATCH_SIZE_PER_GPU' 1 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/patch_deconvnet_skip.yaml --debug
 
 - job: patch_deconvnet_dist
   dependsOn: setup
@@ -218,7 +218,7 @@ jobs:
       source activate seismic-interpretation
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/distributed
-      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/patch_deconvnet.yaml --debug
+      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'TRAIN.BATCH_SIZE_PER_GPU' 1 'DATASET.ROOT' '/home/alfred/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/patch_deconvnet.yaml --debug
 
 - job: seresnet_unet_dutchf3_dist
   dependsOn: setup
