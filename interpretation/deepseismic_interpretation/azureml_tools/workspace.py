@@ -7,10 +7,12 @@ import os
 from pathlib import Path
 
 import azureml
-from azureml.core.authentication import (AuthenticationException,
-                                         AzureCliAuthentication,
-                                         InteractiveLoginAuthentication,
-                                         ServicePrincipalAuthentication)
+from azureml.core.authentication import (
+    AuthenticationException,
+    AzureCliAuthentication,
+    InteractiveLoginAuthentication,
+    ServicePrincipalAuthentication,
+)
 
 _DEFAULT_AML_PATH = "aml_config/azml_config.json"
 

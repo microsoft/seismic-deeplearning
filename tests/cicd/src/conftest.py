@@ -3,17 +3,21 @@
 
 import pytest
 
+
 def pytest_addoption(parser):
     parser.addoption("--nbname", action="store", type=str, default=None)
     parser.addoption("--dataset_root", action="store", type=str, default=None)
+
 
 @pytest.fixture
 def nbname(request):
     return request.config.getoption("--nbname")
 
+
 @pytest.fixture
 def dataset_root(request):
     return request.config.getoption("--dataset_root")
+
 
 """
 def pytest_generate_tests(metafunc):

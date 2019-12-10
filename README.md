@@ -13,7 +13,7 @@ DeepSeismic currently focuses on Seismic Interpretation (3D segmentation aka fac
 ### Quick Start
 
 There are two ways to get started with the DeepSeismic codebase, which currently focuses on Interpretation:
-- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_demo_notebook.ipynb)
+- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb)
 - to actually run the code, you'll need to set up a compute environment (which includes setting up a GPU-enabled Linux VM and downloading the appropriate Anaconda Python packages) and download the datasets which you'd like to work with - detailed steps for doing this are provided in the next `Interpretation` section below.
 
 If you run into any problems, chances are your problem has already been solved in the [Troubleshooting](#troubleshooting) section.
@@ -30,19 +30,17 @@ To run examples available on the repo, please follow instructions below to:
 
 Follow the instruction bellow to read about compute requirements and install required libraries.
 
-<details>
-  <summary><b>Compute environment</b></summary>
 
-We recommend using a virtual machine to run the example notebooks and scripts. Specifically, you will need a GPU powered Linux machine, as this repository is developed and tested on Linux only. The easiest way to get started is to use the [Azure Data Science Virtual Machine (DSVM)](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/). This VM will come installed with all the system requirements that are needed to run the notebooks in this repository. 
+#### Compute environment
+
+We recommend using a virtual machine to run the example notebooks and scripts. Specifically, you will need a GPU powered Linux machine, as this repository is developed and tested on Linux only. The easiest way to get started is to use the [Azure Data Science Virtual Machine (DS VM)](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/). This VM will come installed with all the system requirements that are needed to run the notebooks in this repository. 
 
 For this repo, we recommend selecting an Ubuntu VM of type [Standard_NC6_v3](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-gpu#ncv3-series). The machine is powered by NVIDIA Tesla V100 GPU which can be found in most Azure regions.
 
 > NOTE: For users new to Azure, your subscription may not come with a quota for GPUs. You may need to go into the Azure portal to increase your quota for GPU VMs. Learn more about how to do this here: https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits.
 
-</details>
 
-<details>
-  <summary><b>Package Installation</b></summary>
+#### Package Installation
 
 To install packages contained in this repository, navigate to the directory where you pulled the DeepSeismic repo to run:
 ```bash
@@ -69,11 +67,16 @@ conda env update --file environment/anaconda/local/environment.yml
 ```
 from the root of DeepSeismic repo.
 
-</details>
 
 ### Dataset download and preparation
 
-This repository provides examples on how to run seismic interpretation on two publicly available annotated seismic datasets: [Penobscot](https://zenodo.org/record/1341774) and [F3 Netherlands](https://github.com/olivesgatech/facies_classification_benchmark).
+This repository provides examples on how to run seismic interpretation on two publicly available annotated seismic datasets: [Penobscot](https://zenodo.org/record/1341774) and [F3 Netherlands](https://github.com/olivesgatech/facies_classification_benchmark). Their respective sizes (uncompressed on disk in your folder after downloading and pre-processing) are:
+- **Penobscot**: 7.9 GB
+- **Dutch F3**: 2.2 GB
+
+Please make sure you have enough disk space to download either dataset.
+
+We have experiments and notebooks which use either one dataset or the other. Depending on which experiment/notebook you want to run you'll need to download the corresponding dataset. We suggest you start by looking at [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb) which requires the Penobscot dataset.
 
 #### Penobscot
 To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script, e.g.
@@ -91,7 +94,7 @@ To make things easier, we suggested you use your home directory where you might 
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
 
 ```
-python scripts/prepare_penobscot.py split_inline --data-dir=/data/penobscot --val-ratio=.1 --test-ratio=.2
+python scripts/prepare_penobscot.py split_inline --data-dir="$HOME/data/penobscot" --val-ratio=.1 --test-ratio=.2
 ```
 
 #### F3 Netherlands
@@ -173,12 +176,12 @@ We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manag
 
 #### HRNet
 
-To achieve the same results as the benchmarks above you will need to download the HRNet model [pretrained](https://github.com/HRNet/HRNet-Image-Classification) on ImageNet. We are specifically using the [HRNet-W48-C](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk) pre-trained model - download this model to your local drive and make sure you add the path to the experiment (or notebook) configuration file under `TEST.MODEL_PATH` setting. Other  HRNet variants are also available [here](https://github.com/HRNet/HRNet-Image-Classification) - you can navigate to those from the [main HRNet landing page](https://github.com/HRNet/HRNet-Object-Detection) for object detection.
+To achieve the same results as the benchmarks above you will need to download the HRNet model [pretrained](https://github.com/HRNet/HRNet-Image-Classification) on ImageNet. We are specifically using the [HRNet-W48-C](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk) pre-trained model; other  HRNet variants are also available [here](https://github.com/HRNet/HRNet-Image-Classification) - you can navigate to those from the [main HRNet landing page](https://github.com/HRNet/HRNet-Object-Detection) for object detection.
 
-To facilitate easier download on a Linux machine of your choice (or [Azure Data Science Virtual Machine](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/) which we recommend), we created an automated download scipt for you, just run
-```bash
-./scripts/download_hrnet.sh 'your_folder_to_store_the_model' 'model_file'
-```
+Unfortunately the OneDrive location which is used to host the model is using a temporary authentication token, so there is no way for us to scipt up model download. There are two ways to upload and use the pre-trained HRNet model on DS VM:
+- download the model to your local drive using a web browser of your choice and then upload the model to the DS VM using something like `scp`; navigate to Portal and copy DS VM's public IP from the Overview panel of your DS VM (you can search your DS VM by name in the search bar of the Portal) then use `scp local_model_location username@DS_VM_public_IP:./model/save/path` to upload
+- alternatively you can use the same public IP to open remote desktop over SSH to your Linux VM using [X2Go](https://wiki.x2go.org/doku.php/download:start): you can basically open the web browser on your VM this way and download the model to VM's disk
+
 
 ### Viewers (optional)
 
@@ -198,7 +201,7 @@ pip install segyviewer
 To visualize cross-sections of a 3D volume, you can run
 [segyviewer](https://github.com/equinor/segyviewer) like so:
 ```bash
-segyviewer /mnt/dutchf3/data.segy
+segyviewer "${HOME}/data/dutchf3/data.segy"
 ```
 
 ### Benchmarks
@@ -297,7 +300,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
   To test whether this setup worked, right after you can open `ipython` and execute the following code
   ```python
-  import torch                                                                                  
+  import torch
   torch.cuda.is_available() 
   ```
 

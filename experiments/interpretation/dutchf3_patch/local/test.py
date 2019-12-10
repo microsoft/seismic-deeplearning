@@ -376,7 +376,15 @@ def test(*options, cfg=None, debug=False):
         section_file = path.join(config.DATASET.ROOT, "splits", "section_" + split + ".txt")
         _write_section_file(labels, section_file)
         _evaluate_split(
-            split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config, debug=debug
+            split,
+            section_aug,
+            model,
+            pre_processing,
+            output_processing,
+            device,
+            running_metrics_overall,
+            config,
+            debug=debug,
         )
 
     # FINAL TEST RESULTS:
