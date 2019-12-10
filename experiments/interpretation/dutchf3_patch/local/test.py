@@ -2,10 +2,16 @@
 # Licensed under the MIT License.
 # commitHash: c76bf579a0d5090ebd32426907d051d499f3e847
 # url: https://github.com/olivesgatech/facies_classification_benchmark
-
+#
+# To Test:
+# python test.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
+#
+# /* spell-checker: disable */
 """
 Modified version of the Alaudah testing script
-#TODO: Needs to be improved. Needs to be able to run across multiple GPUs and better factoring around the loader
+Runs only on single GPU
+
+Estimated time to run on single V100: 5 hours
 """
 
 import itertools
@@ -31,6 +37,8 @@ from default import _C as config
 from default import update_config
 from toolz import compose, curry, itertoolz, pipe
 from torch.utils import data
+from toolz import take
+
 
 _CLASS_NAMES = [
     "upper_ns",
@@ -245,7 +253,7 @@ def to_image(label_mask, n_classes=6):
 
 
 def _evaluate_split(
-    split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config,
+    split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config, debug=False
 ):
     logger = logging.getLogger(__name__)
 
@@ -255,6 +263,11 @@ def _evaluate_split(
     n_classes = test_set.n_classes
 
     test_loader = data.DataLoader(test_set, batch_size=1, num_workers=config.WORKERS, shuffle=False)
+
+    if debug:
+        logger.info("Running in Debug/Test mode")
+        test_loader = take(1, test_loader)
+
     running_metrics_split = runningScore(n_classes)
 
     # testing mode:
@@ -319,7 +332,7 @@ def _write_section_file(labels, section_file):
     file_object.close()
 
 
-def test(*options, cfg=None):
+def test(*options, cfg=None, debug=False):
     update_config(config, options=options, config_file=cfg)
     n_classes = config.DATASET.NUM_CLASSES
 
@@ -359,11 +372,11 @@ def test(*options, cfg=None):
 
     splits = ["test1", "test2"] if "Both" in config.TEST.SPLIT else [config.TEST.SPLIT]
     for sdx, split in enumerate(splits):
-        labels = np.load(path.join(config.DATASEST.ROOT, "test_once", split + "_labels.npy"))
-        section_file = path.join(config.DATASEST.ROOT, "splits", "section_" + split + ".txt")
+        labels = np.load(path.join(config.DATASET.ROOT, "test_once", split + "_labels.npy"))
+        section_file = path.join(config.DATASET.ROOT, "splits", "section_" + split + ".txt")
         _write_section_file(labels, section_file)
         _evaluate_split(
-            split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config,
+            split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config, debug=debug
         )
 
     # FINAL TEST RESULTS:

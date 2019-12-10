@@ -1,6 +1,17 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
+#
+# To Test:
+# python train.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
+#
 # /* spell-checker: disable */
+"""Train models on Dutch F3 dataset
+
+Trains models using PyTorch
+Uses a warmup schedule that then goes into a cyclic learning rate
+
+Time to run on single V100 for 300 epochs: 4.5 days
+"""
 
 import logging
 import logging.config
@@ -54,6 +65,7 @@ from cv_lib.segmentation.dutchf3.utils import (
 
 from default import _C as config
 from default import update_config
+from toolz import take
 
 
 def prepare_batch(batch, device=None, non_blocking=False):
@@ -64,7 +76,7 @@ def prepare_batch(batch, device=None, non_blocking=False):
     )
 
 
-def run(*options, cfg=None):
+def run(*options, cfg=None, debug=False):
     """Run training and validation of model
 
     Notes:
@@ -77,9 +89,12 @@ def run(*options, cfg=None):
                                       config. To see what options are available consult
                                       default.py
         cfg (str, optional): Location of config file to load. Defaults to None.
+        debug (bool): Places scripts in debug/test mode and only executes a few iterations
     """
 
     update_config(config, options=options, config_file=cfg)
+
+    
 
     # Start logging
     load_log_configuration(config.LOG_CONFIG)
@@ -156,7 +171,10 @@ def run(*options, cfg=None):
         weight_decay=config.TRAIN.WEIGHT_DECAY,
     )
 
-    output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),)
+    try:
+        output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),)
+    except TypeError:
+        output_dir = generate_path(config.OUTPUT_DIR, config.MODEL.NAME, current_datetime(),)
 
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
 
@@ -202,6 +220,10 @@ def run(*options, cfg=None):
     )
 
     # Set the validation run to start on the epoch completion of the training run
+    if debug:
+        logger.info("Running Validation in Debug/Test mode")
+        val_loader = take(3, val_loader)
+
     trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
     evaluator.add_event_handler(
@@ -266,6 +288,10 @@ def run(*options, cfg=None):
     evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
     logger.info("Starting training")
+    if debug:
+        logger.info("Running Training in Debug/Test mode")
+        train_loader = take(3, train_loader)
+
     trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
 
 
