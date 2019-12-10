@@ -3,13 +3,12 @@ CUDNN:
   DETERMINISTIC: false
   ENABLED: true
 GPUS: (0,)
-OUTPUT_DIR: 'output' 
+OUTPUT_DIR: 'output'
 LOG_DIR: 'log'
 WORKERS: 4
 PRINT_FREQ: 10
 LOG_CONFIG: logging.conf
 SEED: 2019
-
 
 DATASET:
   NUM_CLASSES: 6
@@ -17,7 +16,7 @@ DATASET:
   CLASS_WEIGHTS: [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 MODEL:
-  NAME: patch_deconvnet
+  NAME: patch_deconvnet_skip
   IN_CHANNELS: 1
 
 
@@ -31,7 +30,7 @@ TRAIN:
   WEIGHT_DECAY: 0.0001
   SNAPSHOTS: 5
   AUGMENTATION: True
-  DEPTH: "No" # Options are No, Patch and Section
+  DEPTH: "none" #"patch" # Options are None, Patch and Section
   STRIDE: 50
   PATCH_SIZE: 99
   AUGMENTATIONS:
@@ -48,12 +47,13 @@ TRAIN:
 VALIDATION:
   BATCH_SIZE_PER_GPU: 512
 
-TEST:
-  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/mat/exp/5cc37bbe5302e1989ef1388d629400a16f82d1a9/patch_deconvnet/Aug27_200339/models/patch_deconvnet_snapshot1model_50.pth"
+TEST: 
+  MODEL_PATH: ""
   TEST_STRIDE: 10
   SPLIT: 'Both' # Can be Both, Test1, Test2
   INLINE: True
   CROSSLINE: True
   POST_PROCESSING: 
-    SIZE: 99 
+    SIZE: 99 # 
     CROP_PIXELS: 0 # Number of pixels to crop top, bottom, left and right
+
