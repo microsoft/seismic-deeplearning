@@ -76,7 +76,7 @@ This repository provides examples on how to run seismic interpretation on two pu
 
 Please make sure you have enough disk space to download either dataset.
 
-We have experiments and notebooks which use either one dataset or the other. Depending on which experiment/notebook you want to run you'll need to download the corresponding dataset. We suggest you start by looking at [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_demo_notebook.ipynb) which requires the Penobscot dataset.
+We have experiments and notebooks which use either one dataset or the other. Depending on which experiment/notebook you want to run you'll need to download the corresponding dataset. We suggest you start by looking at [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb) which requires the Penobscot dataset.
 
 #### Penobscot
 To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script, e.g.
