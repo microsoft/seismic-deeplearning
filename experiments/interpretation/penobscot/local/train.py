@@ -194,7 +194,7 @@ def run(*options, cfg=None, debug=False):
         output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),)
     except TypeError:
         output_dir = generate_path(config.OUTPUT_DIR, config.MODEL.NAME, current_datetime(),)
-        
+
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
     snapshot_duration = scheduler_step * len(train_loader)
     scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration)
