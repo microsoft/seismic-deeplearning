@@ -13,7 +13,7 @@ DeepSeismic currently focuses on Seismic Interpretation (3D segmentation aka fac
 ### Quick Start
 
 There are two ways to get started with the DeepSeismic codebase, which currently focuses on Interpretation:
-- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_demo_notebook.ipynb)
+- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb)
 - to actually run the code, you'll need to set up a compute environment (which includes setting up a GPU-enabled Linux VM and downloading the appropriate Anaconda Python packages) and download the datasets which you'd like to work with - detailed steps for doing this are provided in the next `Interpretation` section below.
 
 If you run into any problems, chances are your problem has already been solved in the [Troubleshooting](#troubleshooting) section.
@@ -300,7 +300,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
   To test whether this setup worked, right after you can open `ipython` and execute the following code
   ```python
-  import torch                                                                                  environment/anaconda/local/environment.yml
+  import torch
   torch.cuda.is_available() 
   ```
 
