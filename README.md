@@ -152,7 +152,10 @@ python -m ipykernel install --user --name seismic-interpretation
 
 We also provide scripts for a number of experiments we conducted using different segmentation approaches. These experiments are available under `experiments/interpretation`, and can be used as examples. Within each experiment start from the `train.sh` and `test.sh` scripts under the `local/` (single GPU) and `distributed/` (multiple GPUs) directories, which invoke the corresponding python scripts, `train.py` and `test.py`. Take a look at the experiment configurations (see Experiment Configuration Files section below) for experiment options and modify if necessary.
 
-Please refer to individual experiment README files for more information. 
+Please refer to individual experiment README files for more information.
+- [Penobscot](experiments/interpretation/penobscot/local/README.md)
+- [F3 Netherlands Patch](experiments/interpretation/dutchf3_patch/local/README.md)
+- [F3 Netherlands Section](experiments/interpretation/dutchf3_section/local/README.md)
 
 #### Configuration Files
 We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manage configuration options for the experiments. There are three ways to pass arguments to the experiment scripts (e.g. train.py or test.py):
