@@ -12,6 +12,11 @@ They have admin access to the repo and provide support reviewing issues and pull
    * what you're responsible for #1
    * what you're responsible for #2
    * etc
+   
+* **[George Iordanescu](https://github.com/georgeAccnt-GH)**
+   * fwi - [Azure ML](https://docs.microsoft.com/en-us/azure/machine-learning/)-[devito](https://www.devitoproject.org/) in contrib/fwi/azureml_devito folder
+   
+   
 
 Contributors  (sorted alphabetically)
 -------------------------------------
