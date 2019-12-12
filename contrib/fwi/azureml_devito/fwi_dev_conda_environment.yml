@@ -14,3 +14,4 @@ dependencies:
     - python-dotenv
     - papermill[azure]
     - azureml-sdk[notebooks,automl,explain]==1.0.76
+    - docker
