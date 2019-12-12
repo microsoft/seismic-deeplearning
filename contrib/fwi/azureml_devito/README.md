@@ -19,22 +19,31 @@ conda env create -f fwi_dev_conda_environment.yml
 
 ```
 
-then, one can see the created environment within the list of available environments and activate it:
+then, one can see the created environment within the list of available environments and export it as a .yml file:
 ```
 conda env list
+conda env export --name fwi_dev_conda_environment -f ./contrib/fwi/azureml_devito/fwi_dev_conda_environment_exported.yml
+
+```
+The created conda environment needs to be activated, followed by the installation of its corresponding IPython kernel:
+```
 conda activate fwi_dev_conda_environment
+python -m ipykernel install --user --name fwi_dev_conda_environment --display-name "fwi_dev_conda_environment Python"
 ```
 
 Finally, start Jupyter notebook from within the activated environment:
 ```
 jupyter notebook
 ```
+One can then choose the __fwi_dev_conda_environment Python__ kernel defined above either when a notebook is opened for the first time, or by using the "Kernel/Change kernel" notebook menu.  
+  
+  
 
 [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) is also used to create an ACR in notebook 000_Setup_GeophysicsTutorial_FWI_Azure_devito, and then push and pull docker images. One can also create the ACR via Azure [portal](https://azure.microsoft.com/).
 
 ### Run devito in Azure
 The devito fwi examples are run in AzuremL using 4 notebooks:
- - ```000_Setup_GeophysicsTutorial_FWI_Azure_devito.ipynb```: sets up Azure resources (like resource groups, AzureML [workspace](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-manage-workspace)). 
+ - ```000_Setup_GeophysicsTutorial_FWI_Azure_devito.ipynb```: sets up Azure resources (like resource groups, AzureML [workspace](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-manage-workspace), Azure (docker) [container registry](https://azure.microsoft.com/en-us/services/container-registry/)). 
  - ```010_CreateExperimentationDockerImage_GeophysicsTutorial_FWI_Azure_devito.ipynb```: Creates a custom docker file and the associated image that contains ```devito``` [github repository](https://github.com/opesci/devito.git) (including devito fwi tutorial [notebooks](https://github.com/opesci/devito/tree/master/examples/seismic/tutorials)) and runs the official devito install [tests](https://github.com/opesci/devito/tree/master/tests). 
  - ```020_UseAzureMLEstimatorForExperimentation_GeophysicsTutorial_FWI_Azure_devito.ipynb```: shows how the devito fwi tutorial [notebooks](https://github.com/opesci/devito/tree/master/examples/seismic/tutorials) can be run in AzureML using Azure Machine Learning [generic](https://docs.microsoft.com/en-us/python/api/azureml-train-core/azureml.train.estimator?view=azure-ml-py) [estimators](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-train-ml-models) with custom docker images. FWI computation takes place on a managed AzureML [remote compute cluster](https://docs.microsoft.com/en-us/azure/machine-learning/service/how-to-set-up-training-targets).  
  
