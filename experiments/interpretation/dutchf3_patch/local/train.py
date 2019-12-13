@@ -94,8 +94,6 @@ def run(*options, cfg=None, debug=False):
 
     update_config(config, options=options, config_file=cfg)
 
-    
-
     # Start logging
     load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
