@@ -7,7 +7,7 @@ dependencies:
   - python=3.7 
   - numpy
   - notebook 
-  - nb_conda
+  - ipykernel #nb_conda
   - scikit-learn
   - pip
   - pip:
