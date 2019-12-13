@@ -9,6 +9,7 @@ Contributors  (sorted alphabetically)
 To contributors: please add your name to the list when you submit a patch to the project.
 
 * Ashish Bhatia
+* Daniel Ciborowski
 * George Iordanescu
 * Ilia Karmanov
 * Mathew Salvaris
