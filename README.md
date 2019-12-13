@@ -13,10 +13,16 @@ DeepSeismic currently focuses on Seismic Interpretation (3D segmentation aka fac
 ### Quick Start
 
 There are two ways to get started with the DeepSeismic codebase, which currently focuses on Interpretation:
-- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb)
+- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/master/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb)
 - to actually run the code, you'll need to set up a compute environment (which includes setting up a GPU-enabled Linux VM and downloading the appropriate Anaconda Python packages) and download the datasets which you'd like to work with - detailed steps for doing this are provided in the next `Interpretation` section below.
 
 If you run into any problems, chances are your problem has already been solved in the [Troubleshooting](#troubleshooting) section.
+
+### Pre-run notebooks
+
+Notebooks stored in the repository have output intentionally displaced - you can find full auto-generated versions of the notebooks here:
+- [HRNet Penobscot demo](https://deepseismicstore.blob.core.windows.net/shared/HRNet_Penobscot_demo_notebook.ipynb?sp=r&st=2019-12-13T05:11:15Z&se=2019-12-13T13:11:15Z&spr=https&sv=2019-02-02&sr=b&sig=UFwueAhZcJn8o7g1nzD4GGS7lKv9lHIJXJb%2B7kbyUZc%3D)
+- [Dutch F3 dataset](https://deepseismicstore.blob.core.windows.net/shared/F3_block_training_and_evaluation_local.ipynb?sp=r&st=2019-12-13T05:10:17Z&se=2019-12-13T13:10:17Z&spr=https&sv=2019-02-02&sr=b&sig=UUDCulVUddhqfxN0%2FqcdLZ7DmcGnIYk0j%2BlM0EN8WiM%3D)
 
 ### Azure Machine Learning
 [Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/) enables you to train and deploy your machine learning models and pipelines at scale, ane leverage open-source Python frameworks, such as PyTorch, TensorFlow, and scikit-learn. If you are looking at getting started with using the code in this repository with Azure Machine Learning, refer to [Azure Machine Learning How-to](https://github.com/Azure/MachineLearningNotebooks/tree/master/how-to-use-azureml) to get started.
@@ -79,7 +85,7 @@ This repository provides examples on how to run seismic interpretation on two pu
 
 Please make sure you have enough disk space to download either dataset.
 
-We have experiments and notebooks which use either one dataset or the other. Depending on which experiment/notebook you want to run you'll need to download the corresponding dataset. We suggest you start by looking at [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb) which requires the Penobscot dataset.
+We have experiments and notebooks which use either one dataset or the other. Depending on which experiment/notebook you want to run you'll need to download the corresponding dataset. We suggest you start by looking at [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/master/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb) which requires the Penobscot dataset.
 
 #### Penobscot
 To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script, e.g.
@@ -264,13 +270,12 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 ## Build Status
 | Build | Branch | Status |
 | --- | --- | --- |
-| **Legal Compliance** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=110&branchName=staging) |
-| **Legal Compliance** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=110&branchName=master) |
-| **Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=111&branchName=staging) |
-| **Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=111&branchName=master) |
-| **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=120&branchName=staging) |
-| **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=120&branchName=master) |
-
+| **Legal Compliance** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=124&branchName=staging) |
+| **Legal Compliance** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=124&branchName=master) |
+| **Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=staging) |
+| **Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=master) |
+| **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=staging) |
+| **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=master) |
 
 
 # Troubleshooting
@@ -302,10 +307,12 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
 <details>
   <summary><b>Data Science Virtual Machine conda package installation warnings</b></summary>
 
-  It could happen that while creating the conda environment defined by environment/anaconda/local/environment.yml on an Ubuntu DSVM, one can get multiple warnings like this:  
+  It could happen that while creating the conda environment defined by environment/anaconda/local/environment.yml on an Ubuntu DSVM, one can get multiple warnings like so:
+  ```
   WARNING conda.gateways.disk.delete:unlink_or_rename_to_trash(140): Could not remove or rename /anaconda/pkgs/ipywidgets-7.5.1-py_0/site-packages/ipywidgets-7.5.1.dist-info/LICENSE.  Please remove this file manually (you may need to reboot to free file handles)  
+  ```
     
-  If that happens, similar to instructions above, stop the conda environment creation (type ```Ctrl+C```) and then change recursively the ownership /anaconda directory from root to current user, by running this command: 
+  If this happens, similar to instructions above, stop the conda environment creation (type ```Ctrl+C```) and then change recursively the ownership /anaconda directory from root to current user, by running this command: 
 
   ```bash
   sudo chown -R $USER /anaconda
