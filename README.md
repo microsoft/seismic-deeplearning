@@ -13,10 +13,13 @@ DeepSeismic currently focuses on Seismic Interpretation (3D segmentation aka fac
 ### Quick Start
 
 There are two ways to get started with the DeepSeismic codebase, which currently focuses on Interpretation:
-- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_demo_notebook.ipynb)
+- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb)
 - to actually run the code, you'll need to set up a compute environment (which includes setting up a GPU-enabled Linux VM and downloading the appropriate Anaconda Python packages) and download the datasets which you'd like to work with - detailed steps for doing this are provided in the next `Interpretation` section below.
 
 If you run into any problems, chances are your problem has already been solved in the [Troubleshooting](#troubleshooting) section.
+
+### Azure Machine Learning
+[Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/) enables you to train and deploy your machine learning models and pipelines at scale, ane leverage open-source Python frameworks, such as PyTorch, TensorFlow, and scikit-learn. If you are looking at getting started with using the code in this repository with Azure Machine Learning, refer to [Azure Machine Learning How-to](https://github.com/Azure/MachineLearningNotebooks/tree/master/how-to-use-azureml) to get started.
 
 ## Interpretation
 For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-the-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation, and also benchmarking results from running these algorithms using various seismic datasets (Dutch F3, and Penobscot).
@@ -33,9 +36,9 @@ Follow the instruction bellow to read about compute requirements and install req
 
 #### Compute environment
 
-We recommend using a virtual machine to run the example notebooks and scripts. Specifically, you will need a GPU powered Linux machine, as this repository is developed and tested on Linux only. The easiest way to get started is to use the [Azure Data Science Virtual Machine (DS VM)](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/). This VM will come installed with all the system requirements that are needed to run the notebooks in this repository. 
+We recommend using a virtual machine to run the example notebooks and scripts. Specifically, you will need a GPU powered Linux machine, as this repository is developed and tested on __Linux only__. The easiest way to get started is to use the [Azure Data Science Virtual Machine (DSVM) for Linux (Ubuntu)](https://docs.microsoft.com/en-us/azure/machine-learning/data-science-virtual-machine/dsvm-ubuntu-intro). This VM will come installed with all the system requirements that are needed to create the conda environment described below and then run the notebooks in this repository. 
 
-For this repo, we recommend selecting an Ubuntu VM of type [Standard_NC6_v3](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-gpu#ncv3-series). The machine is powered by NVIDIA Tesla V100 GPU which can be found in most Azure regions.
+For this repo, we recommend selecting a multi-GPU Ubuntu VM of type [Standard_NC12](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-gpu#nc-series). The machine is powered by NVIDIA Tesla K80 (or V100 GPU for NCv2 series) which can be found in most Azure regions.
 
 > NOTE: For users new to Azure, your subscription may not come with a quota for GPUs. You may need to go into the Azure portal to increase your quota for GPU VMs. Learn more about how to do this here: https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits.
 
@@ -76,7 +79,7 @@ This repository provides examples on how to run seismic interpretation on two pu
 
 Please make sure you have enough disk space to download either dataset.
 
-We have experiments and notebooks which use either one dataset or the other. Depending on which experiment/notebook you want to run you'll need to download the corresponding dataset. We suggest you start by looking at [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_demo_notebook.ipynb) which requires the Penobscot dataset.
+We have experiments and notebooks which use either one dataset or the other. Depending on which experiment/notebook you want to run you'll need to download the corresponding dataset. We suggest you start by looking at [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/staging/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb) which requires the Penobscot dataset.
 
 #### Penobscot
 To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script, e.g.
@@ -152,7 +155,10 @@ python -m ipykernel install --user --name seismic-interpretation
 
 We also provide scripts for a number of experiments we conducted using different segmentation approaches. These experiments are available under `experiments/interpretation`, and can be used as examples. Within each experiment start from the `train.sh` and `test.sh` scripts under the `local/` (single GPU) and `distributed/` (multiple GPUs) directories, which invoke the corresponding python scripts, `train.py` and `test.py`. Take a look at the experiment configurations (see Experiment Configuration Files section below) for experiment options and modify if necessary.
 
-Please refer to individual experiment README files for more information. 
+Please refer to individual experiment README files for more information.
+- [Penobscot](experiments/interpretation/penobscot/local/README.md)
+- [F3 Netherlands Patch](experiments/interpretation/dutchf3_patch/local/README.md)
+- [F3 Netherlands Section](experiments/interpretation/dutchf3_section/local/README.md)
 
 #### Configuration Files
 We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manage configuration options for the experiments. There are three ways to pass arguments to the experiment scripts (e.g. train.py or test.py):
@@ -265,11 +271,20 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 | **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=120&branchName=staging) |
 | **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=120&branchName=master) |
 
-# Related projects
 
-[Microsoft AI Labs Github](https://aka.ms/ai-labs) Find other Best Practice projects, and Azure AI design patterns in our central repository. 
 
 # Troubleshooting
+
+For Data Science Virtual Machine conda package installation issues, make sure you locate the anaconda location on the DSVM, for example by running:
+```bash
+which python
+```
+A typical output will be:
+```bash
+someusername@somevm:/projects/DeepSeismic$ which python
+/anaconda/envs/py35/bin/python
+```
+which will indicate that anaconda folder is __/anaconda__. We'll refer to this location in instructions below, but you should update the commands according to your local anaconda folder.
 
 <details>
   <summary><b>Data Science Virtual Machine conda package installation errors</b></summary>
@@ -281,6 +296,22 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
   ```
 
   After these commands complete, try installing the packages again.
+
+</details>
+
+<details>
+  <summary><b>Data Science Virtual Machine conda package installation warnings</b></summary>
+
+  It could happen that while creating the conda environment defined by environment/anaconda/local/environment.yml on an Ubuntu DSVM, one can get multiple warnings like this:  
+  WARNING conda.gateways.disk.delete:unlink_or_rename_to_trash(140): Could not remove or rename /anaconda/pkgs/ipywidgets-7.5.1-py_0/site-packages/ipywidgets-7.5.1.dist-info/LICENSE.  Please remove this file manually (you may need to reboot to free file handles)  
+    
+  If that happens, similar to instructions above, stop the conda environment creation (type ```Ctrl+C```) and then change recursively the ownership /anaconda directory from root to current user, by running this command: 
+
+  ```bash
+  sudo chown -R $USER /anaconda
+  ```
+
+  After these command completes, try creating the conda environment in __environment/anaconda/local/environment.yml__ again.
 
 </details>
 
@@ -300,7 +331,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
   To test whether this setup worked, right after you can open `ipython` and execute the following code
   ```python
-  import torch                                                                                  environment/anaconda/local/environment.yml
+  import torch
   torch.cuda.is_available() 
   ```
 
