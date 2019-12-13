@@ -6,8 +6,7 @@ from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.storage.models import StorageAccountCreateParameters
 from azure.mgmt.storage.v2019_04_01.models import Kind, Sku, SkuName
 
-from deepseismic_interpretation.azureml_tools.resource_group import \
-    create_resource_group
+from deepseismic_interpretation.azureml_tools.resource_group import create_resource_group
 
 
 class StorageAccountCreateFailure(Exception):

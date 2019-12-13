@@ -87,9 +87,7 @@ class runningScore(object):
         self.confusion_matrix = np.zeros((self.n_classes, self.n_classes))
 
 
-def _evaluate_split(
-    split, section_aug, model, device, running_metrics_overall, config, debug=False
-):
+def _evaluate_split(split, section_aug, model, device, running_metrics_overall, config, debug=False):
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
