@@ -4,6 +4,7 @@ Contributor
 All names are sorted alphabetically by last name. 
 Contributors, please add your name to the list when you submit a patch to the project.
 
+
 Contributors  (sorted alphabetically)
 -------------------------------------
 To contributors: please add your name to the list when you submit a patch to the project.
