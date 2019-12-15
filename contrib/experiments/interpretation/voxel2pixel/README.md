@@ -10,8 +10,11 @@ There is also an
 EAGE E-lecture which you can watch: [*Seismic interpretation with deep learning*](https://www.youtube.com/watch?v=lm85Ap4OstM) (YouTube)
 
 ### Setup to get started
-- make sure you follow `SETUP.md` file in root of repo to install all the proper dependencies.
-- download the data by running `scrips/get_F3_voxel.sh` from the root of this repo, i.e. from DeepSeismic folder.
+- make sure you follow `README.md` file in root of repo to install all the proper dependencies.
+- downgrade TensorFlow and pyTorch's CUDA:
+    - downgrade TensorFlow by running `pip install tensorflow-gpu==1.14` 
+    - make sure pyTorch uses downgraded CUDA `pip install torch==1.3.1+cu92 torchvision==0.4.2+cu92 -f https://download.pytorch.org/whl/torch_stable.html`
+- download the data by running `contrib/scrips/get_F3_voxel.sh` from the `contrib` folder of this repo.
 This will download the training and validation labels/masks.
 - to get the main input dataset which is the [Dutch F3 dataset](https://terranubis.com/datainfo/Netherlands-Offshore-F3-Block-Complete), 
 navigate to [MalenoV](https://github.com/bolgebrygg/MalenoV) project website and follow the links (which will lead to 

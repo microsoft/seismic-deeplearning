@@ -7,7 +7,7 @@ from __future__ import print_function
 import os
 
 # set default number of GPUs which are discoverable
-N_GPU = 1
+N_GPU = 4
 DEVICE_IDS = list(range(N_GPU))
 os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(x) for x in DEVICE_IDS])
 
@@ -245,7 +245,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
 
 parser = argparse.ArgumentParser(description="Seismic Distributed Scoring")
-parser.add_argument("-d", "--data", default="/mnt/dutchf3", type=str, help="default dataset folder name")
+parser.add_argument("-d", "--data", default="/home/maxkaz/data/dutchf3", type=str, help="default dataset folder name")
 parser.add_argument(
     "-s",
     "--slice",
