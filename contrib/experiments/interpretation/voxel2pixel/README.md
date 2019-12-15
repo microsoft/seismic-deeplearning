@@ -21,7 +21,8 @@ navigate to [MalenoV](https://github.com/bolgebrygg/MalenoV) project website and
 [this](https://drive.google.com/drive/folders/0B7brcf-eGK8CbGhBdmZoUnhiTWs) download). Save this file as 
 `interpretation/voxel2pixel/F3/data.segy`
 
- 
+If you want to revert downgraded packages, just run `conda env update -f environment/anaconda/local/environment.yml` from the root folder of the repo.
+
 ### Monitoring progress with TensorBoard
 - from the `voxel2pixel` directory, run `tensorboard --logdir='log'` (all runtime logging information is
 written to the `log` folder <br />

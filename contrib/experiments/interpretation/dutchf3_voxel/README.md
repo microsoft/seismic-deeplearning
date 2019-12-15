@@ -13,3 +13,5 @@ To download the train and validation masks, from the root of the repo, run
 This will also download train and validation masks to the same location as data.segy.
 
 That's it!
+
+To run the training script, run `python train.py --cfg=configs/texture_net.yaml`.
