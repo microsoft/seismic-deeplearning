@@ -4,6 +4,7 @@ Contributor
 All names are sorted alphabetically by last name. 
 Contributors, please add your name to the list when you submit a patch to the project.
 
+
 Contributors  (sorted alphabetically)
 -------------------------------------
 To contributors: please add your name to the list when you submit a patch to the project.
@@ -12,9 +13,9 @@ To contributors: please add your name to the list when you submit a patch to the
 * Daniel Ciborowski
 * George Iordanescu
 * Ilia Karmanov
-* Mathew Salvaris
 * Max Kaznady
 * Vanja Paunic
+* Mathew Salvaris
 
 
 ## How to be a contributor to the repository
