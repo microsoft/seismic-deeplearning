@@ -21,8 +21,8 @@ If you run into any problems, chances are your problem has already been solved i
 ### Pre-run notebooks
 
 Notebooks stored in the repository have output intentionally displaced - you can find full auto-generated versions of the notebooks here:
-- [HRNet Penobscot demo](https://deepseismicstore.blob.core.windows.net/shared/HRNet_Penobscot_demo_notebook.ipynb?sp=r&st=2019-12-13T05:11:15Z&se=2019-12-13T13:11:15Z&spr=https&sv=2019-02-02&sr=b&sig=UFwueAhZcJn8o7g1nzD4GGS7lKv9lHIJXJb%2B7kbyUZc%3D)
-- [Dutch F3 dataset](https://deepseismicstore.blob.core.windows.net/shared/F3_block_training_and_evaluation_local.ipynb?sp=r&st=2019-12-13T05:10:17Z&se=2019-12-13T13:10:17Z&spr=https&sv=2019-02-02&sr=b&sig=UUDCulVUddhqfxN0%2FqcdLZ7DmcGnIYk0j%2BlM0EN8WiM%3D)
+- **HRNet Penobscot demo**: [[HTML](https://deepseismicstore.blob.core.windows.net/shared/HRNet_Penobscot_demo_notebook.html)] [[.ipynb](https://deepseismicstore.blob.core.windows.net/shared/HRNet_Penobscot_demo_notebook.ipynb)]
+- **Dutch F3 dataset**: [[HTML](https://deepseismicstore.blob.core.windows.net/shared/F3_block_training_and_evaluation_local.html)] [[.ipynb](https://deepseismicstore.blob.core.windows.net/shared/F3_block_training_and_evaluation_local.ipynb)]
 
 ### Azure Machine Learning
 [Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/) enables you to train and deploy your machine learning models and pipelines at scale, ane leverage open-source Python frameworks, such as PyTorch, TensorFlow, and scikit-learn. If you are looking at getting started with using the code in this repository with Azure Machine Learning, refer to [Azure Machine Learning How-to](https://github.com/Azure/MachineLearningNotebooks/tree/master/how-to-use-azureml) to get started.
