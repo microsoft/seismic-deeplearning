@@ -248,6 +248,14 @@ The dataset was split 70% training, 10% validation and 20% test. The results bel
 ![Best Penobscot SEResNet](assets/penobscot_seresnet_best.png "Best performing inlines, Mask and Predictions from SEResNet")
 ![Worst Penobscot SEResNet](assets/penobscot_seresnet_worst.png "Worst performing inlines  Mask and Predictions from SEResNet")
 
+#### Reproduce benchmarks
+In order to reproduce the benchmarks you will need to navigate to the [experiments](experiments) folder. In there each of the experiments 
+are split into different folders. To run the Netherlands F3 experiment navigate to the [dutchf3_patch/local](experiments/dutchf3_patch/local) folder. In there is a training script [([train.sh](experiments/dutchf3_patch/local/train.sh))
+which will run the training for any configuration you pass in. Once you have run the training you will need to run the [test.sh](experiments/dutchf3_patch/local/test.sh) script. Make sure you specify
+the path to the best performing model from your training run, either by passing it in as an argument or altering the YACS config file. 
+
+To reproduce the benchmarks
+for the Penobscot dataset follow the same instructions but navigate to the [penobscot](penobscot) folder.
 
 #### Scripts
 - [parallel_training.sh](scripts/parallel_training.sh): Script to launch multiple jobs in parallel. Used mainly for local hyperparameter tuning. Look at the script for further instructions
