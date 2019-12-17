@@ -89,6 +89,24 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+wheels/
+
+
+.dev_env
+.azureml
+
+# Logs
+*.tfevents.*
+**/runs
+**/log
+**/output
+
+#
+interpretation/environment/anaconda/local/src/*
+interpretation/environment/anaconda/local/src/cv-lib
+.code-workspace.code-workspace
+**/.vscode
+**/.idea
 
 # Spyder project settings
 .spyderproject
@@ -97,8 +115,4 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
+*.pth

@@ -1,0 +1,109 @@
+CUDNN:
+  BENCHMARK: true
+  DETERMINISTIC: false
+  ENABLED: true
+GPUS: (0,)
+OUTPUT_DIR: 'outputs' 
+LOG_DIR: 'log'
+WORKERS: 4
+PRINT_FREQ: 50
+
+LOG_CONFIG: logging.conf
+SEED: 2019
+
+
+DATASET:
+  NUM_CLASSES: 7
+  ROOT: /mnt/penobscot
+  CLASS_WEIGHTS: [0.02630481, 0.05448931, 0.0811898 , 0.01866496, 0.15868563, 0.0875993 , 0.5730662]
+  INLINE_HEIGHT: 1501
+  INLINE_WIDTH: 481
+
+
+MODEL:
+  NAME: seg_hrnet
+  IN_CHANNELS: 3
+  PRETRAINED: '/data/hrnet_pretrained/image_classification/hrnetv2_w48_imagenet_pretrained.pth'
+  EXTRA:
+    FINAL_CONV_KERNEL: 1
+    STAGE2:
+      NUM_MODULES: 1
+      NUM_BRANCHES: 2
+      BLOCK: BASIC
+      NUM_BLOCKS:
+      - 4
+      - 4
+      NUM_CHANNELS:
+      - 48
+      - 96
+      FUSE_METHOD: SUM
+    STAGE3:
+      NUM_MODULES: 4
+      NUM_BRANCHES: 3
+      BLOCK: BASIC
+      NUM_BLOCKS:
+      - 4
+      - 4
+      - 4
+      NUM_CHANNELS:
+      - 48
+      - 96
+      - 192
+      FUSE_METHOD: SUM
+    STAGE4:
+      NUM_MODULES: 3
+      NUM_BRANCHES: 4
+      BLOCK: BASIC
+      NUM_BLOCKS:
+      - 4
+      - 4
+      - 4
+      - 4
+      NUM_CHANNELS:
+      - 48
+      - 96
+      - 192
+      - 384
+      FUSE_METHOD: SUM
+
+TRAIN:
+  COMPLETE_PATCHES_ONLY: True
+  BATCH_SIZE_PER_GPU: 32
+  BEGIN_EPOCH: 0
+  END_EPOCH: 300
+  MIN_LR: 0.0001
+  MAX_LR: 0.02
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.0001
+  SNAPSHOTS: 5
+  AUGMENTATION: True
+  DEPTH: "none" #"patch" # Options are none, patch and section
+  STRIDE: 64
+  PATCH_SIZE: 128
+  AUGMENTATIONS:
+    RESIZE:
+      HEIGHT: 256
+      WIDTH: 256
+    PAD:
+      HEIGHT: 256
+      WIDTH: 256
+  MEAN:  [-0.0001777, 0.49, -0.0000688] # First value is for images, second for depth and then combination of both
+  STD: [0.14076 , 0.2717, 0.06286] 
+  MAX: 1 
+  MODEL_DIR: "models"
+
+
+VALIDATION:
+  BATCH_SIZE_PER_GPU: 128
+  COMPLETE_PATCHES_ONLY: True
+
+TEST: 
+  COMPLETE_PATCHES_ONLY: False
+  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/experiments/segmentation/penobscot/local/output/penobscot/437970c875226e7e39c8109c0de8d21c5e5d6e3b/seg_hrnet/Sep25_144942/models/seg_hrnet_running_model_28.pth"
+  AUGMENTATIONS:
+    RESIZE:
+      HEIGHT: 256
+      WIDTH: 256
+    PAD:
+      HEIGHT: 256
+      WIDTH: 256

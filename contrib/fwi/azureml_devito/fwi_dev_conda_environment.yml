@@ -1,0 +1,17 @@
+
+name: fwi_dev_conda_environment
+    
+channels:
+  - anaconda
+dependencies:
+  - python=3.7 
+  - numpy
+  - notebook 
+  - ipykernel #nb_conda
+  - scikit-learn
+  - pip
+  - pip:
+    - python-dotenv
+    - papermill[azure]
+    - azureml-sdk[notebooks,automl,explain]==1.0.76
+    - docker

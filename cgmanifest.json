@@ -1,0 +1,64 @@
+{"Registrations":[ 
+    {
+      "component": { 
+       "type": "git", 
+       "git": { 
+         "repositoryUrl": "https://github.com/olivesgatech/facies_classification_benchmark", 
+         "commitHash": "12102683a1ae78f8fbc953823c35a43b151194b3" 
+         }
+       },
+       "license": "MIT"
+    },
+    {
+      "component": { 
+       "type": "git", 
+       "git": { 
+         "repositoryUrl": "https://github.com/waldeland/CNN-for-ASI", 
+         "commitHash": "6f985cccecf9a811565d0b7cd919412569a22b7b" 
+         }
+       },
+       "license": "MIT"
+    },
+    {
+      "component": { 
+      "type": "git", 
+      "git": { 
+        "repositoryUrl": "https://github.com/opesci/devito", 
+        "commitHash": "f6129286d9c0b3a8bfe07e724ac5b00dc762efee" 
+        }
+      },
+      "license": "MIT"
+   },
+   {
+    "component": { 
+    "type": "git", 
+    "git": { 
+      "repositoryUrl": "https://github.com/pytorch/ignite", 
+      "commitHash": "38a4f37de759e33bc08441bde99bcb50f3d81f55" 
+      }
+    },
+    "license": "BSD-3-Clause"
+   },
+   {
+    "component": { 
+    "type": "git", 
+    "git": { 
+      "repositoryUrl": "https://github.com/HRNet/HRNet-Semantic-Segmentation", 
+      "commitHash": "06142dc1c7026e256a7561c3e875b06622b5670f" 
+      }
+    },
+    "license": "MIT"
+   },
+   {
+    "component": { 
+    "type": "git", 
+    "git": { 
+      "repositoryUrl": "https://github.com/dask/dask", 
+      "commitHash": "54019e9c05134585c9c40e4195206aa78e2ea61a" 
+      }
+    },
+    "license": "IPL-1.0"
+   }
+ ],
+ "Version": 1
+}

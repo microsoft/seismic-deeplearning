@@ -1,0 +1,9 @@
+numpy>=1.16.4
+toolz>=0.9.0
+pandas>=0.24.2
+ignite>=1.1.0
+scikit_learn>=0.21.3
+tensorboardX>=1.8
+torch>=1.2.0
+torchvision>=0.4.0
+tqdm>=4.33.0
