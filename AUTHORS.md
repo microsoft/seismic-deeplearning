@@ -16,7 +16,8 @@ To contributors: please add your name to the list when you submit a patch to the
 * Max Kaznady
 * Vanja Paunic
 * Mathew Salvaris
-
+* Sharat Chikkerur
+* Wee Hyong Tok
 
 ## How to be a contributor to the repository
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
