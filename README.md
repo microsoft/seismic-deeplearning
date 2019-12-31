@@ -108,7 +108,13 @@ python scripts/prepare_penobscot.py split_inline --data-dir="$HOME/data/penobsco
 
 #### F3 Netherlands
 To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
-[this github repository](https://github.com/yalaudah/facies_classification_benchmark) (section Dataset).
+[this github repository](https://github.com/yalaudah/facies_classification_benchmark) (section Dataset). Atternatively, you can use the [download script](scripts/download_dutch_f3.sh)
+
+```
+data_dir="$HOME/data/dutch"
+mkdir -p "$data_dir"
+./scripts/download_dutch_f3.sh "$data_dir"
+```
 
 Once you've downloaded the data set, make sure to create an empty `splits` directory, under the downloaded `data` directory; you can re-use the same data directory as the one for Penobscot dataset created earlier. This is where your training/test/validation splits will be saved.
 
