@@ -142,11 +142,11 @@ To prepare the data for the experiments (e.g. split into train/val/test), please
 
 ```
 # For section-based experiments
-python scripts/prepare_dutchf3.py split_train_val section --data-dir=/mnt/dutchf3/data
+python scripts/prepare_dutchf3.py split_train_val section --data-dir=$data_dir/data
 
 
 # For patch-based experiments
-python scripts/prepare_dutchf3.py split_train_val patch --data-dir=/mnt/dutchf3/data --stride=50 --patch=100
+python scripts/prepare_dutchf3.py split_train_val patch --data-dir=$data_dir/data --stride=50 --patch=100
 
 ```
 
