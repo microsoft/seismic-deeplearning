@@ -13,7 +13,7 @@ import numpy as np
 import torch
 from toolz import curry
 from torch.utils import data
-
+import logging
 from deepseismic_interpretation.dutchf3.utils.batch import (
     interpolate_to_fit_data,
     parse_labels_in_image,
@@ -641,7 +641,6 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
         elif direction == "x":
             im = self.seismic[idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size]
             lbl = self.labels[idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size]
-
         im, lbl = _transform_WH_to_HW(im), _transform_WH_to_HW(lbl)
 
         # TODO: Add check for rotation augmentations and raise warning if found
@@ -707,6 +706,11 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
         if self.is_transform:
             im, lbl = self.transform(im, lbl)
         return im, lbl
+    
+    def __repr__(self):
+        unique, counts = np.unique(self.labels, return_counts=True)
+        ratio = counts/np.sum(counts)
+        return "\n".join(f"{lbl}: {cnt} [{rat}]"for lbl, cnt, rat in zip(unique, counts, ratio))
 
 
 _TRAIN_PATCH_LOADERS = {
@@ -751,6 +755,8 @@ _TEST_LOADERS = {"section": TestSectionLoaderWithDepth}
 
 
 def get_test_loader(cfg):
+    logger = logging.getLogger(__name__)
+    logger.info(f"Test loader {cfg.TRAIN.DEPTH}")
     return _TEST_LOADERS.get(cfg.TRAIN.DEPTH, TestSectionLoader)
 
 
