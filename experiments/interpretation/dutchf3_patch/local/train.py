@@ -110,6 +110,13 @@ def run(*options, cfg=None, debug=False):
     basic_aug = Compose(
         [
             Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1),
+            PadIfNeeded(
+                min_height=config.TRAIN.PATCH_SIZE,
+                min_width=config.TRAIN.PATCH_SIZE,
+                border_mode=cv2.BORDER_CONSTANT,
+                always_apply=True,
+                mask_value=255,
+            ),
             Resize(
                 config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
             ),
@@ -138,7 +145,7 @@ def run(*options, cfg=None, debug=False):
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=train_aug,
     )
-
+    logger.info(train_set)
     val_set = TrainPatchLoader(
         config.DATASET.ROOT,
         split="val",
@@ -147,7 +154,7 @@ def run(*options, cfg=None, debug=False):
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=val_aug,
     )
-
+    logger.info(val_set)
     n_classes = train_set.n_classes
 
     train_loader = data.DataLoader(

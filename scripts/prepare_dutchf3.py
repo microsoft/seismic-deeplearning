@@ -119,8 +119,8 @@ def split_patch_train_val(data_dir, stride, patch, per_val=0.2, log_config=None)
 
     # Generate patches from sections
     # Process inlines
-    horz_locations = range(0, xline - patch, stride)
-    vert_locations = range(0, depth - patch, stride)
+    horz_locations = range(0, xline - stride, stride)
+    vert_locations = range(0, depth - stride, stride)
     logger.debug("Generating Inline patches")
     logger.debug(horz_locations)
     logger.debug(vert_locations)
@@ -131,21 +131,29 @@ def split_patch_train_val(data_dir, stride, patch, per_val=0.2, log_config=None)
             for j, k in locations:
                 yield "i_" + str(i) + "_" + str(j) + "_" + str(k)
 
+    test_iline_range = list(test_iline_range)
     test_i_list = list(_i_extract_patches(test_iline_range, horz_locations, vert_locations))
     train_i_list = list(_i_extract_patches(train_iline_range, horz_locations, vert_locations))
+    logger.debug(train_iline_range)
+    logger.debug(test_iline_range)
 
     # Process crosslines
-    horz_locations = range(0, iline - patch, stride)
-    vert_locations = range(0, depth - patch, stride)
+    horz_locations = range(0, iline - stride, stride)
+    vert_locations = range(0, depth - stride, stride)
+    logger.debug("Generating Crossline patches")
+    logger.debug(horz_locations)
+    logger.debug(vert_locations)
 
     def _x_extract_patches(xline_range, horz_locations, vert_locations):
         for j in xline_range:
             locations = ([i, k] for i in horz_locations for k in vert_locations)
             for i, k in locations:
                 yield "x_" + str(i) + "_" + str(j) + "_" + str(k)
-
+    test_xline_range = list(test_xline_range)
     test_x_list = list(_x_extract_patches(test_xline_range, horz_locations, vert_locations))
     train_x_list = list(_x_extract_patches(train_xline_range, horz_locations, vert_locations))
+    logger.debug(train_xline_range)
+    logger.debug(test_xline_range)
 
     train_list = train_x_list + train_i_list
     test_list = test_x_list + test_i_list
@@ -254,7 +262,7 @@ def split_alaudah_et_al_19(data_dir, stride, fraction_validation=0.2, loader_typ
 
 # TODO: Try https://github.com/Chilipp/docrep for doscstring reuse
 class SplitTrainValCLI(object):
-    def section(self, data_dir, per_val=0.2, log_config=None):
+    def section(self, data_dir, per_val=0.2, log_config="logging.conf"):
         """Generate section based train and validation files for Netherlands F3 dataset.
 
         Args:
@@ -265,7 +273,7 @@ class SplitTrainValCLI(object):
         """
         return split_section_train_val(data_dir, per_val=per_val, log_config=log_config)
 
-    def patch(self, data_dir, stride, patch, per_val=0.2, log_config=None):
+    def patch(self, data_dir, stride, patch, per_val=0.2, log_config="logging.conf"):
         """Generate patch based train and validation files for Netherlands F3 dataset.
 
         Args:

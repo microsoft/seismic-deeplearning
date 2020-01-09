@@ -92,7 +92,7 @@ VALIDATION:
   BATCH_SIZE_PER_GPU: 128
 
 TEST: 
-  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/experiments/segmentation/dutchf3/local/output/mat/exp/237c16780794800631c3f1895cacc475e15aca99/seg_hrnet/Sep17_115731/models/seg_hrnet_running_model_33.pth"
+  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/experiments/interpretation/dutchf3_patch/local/output/staging/0d1d2bbf9685995a0515ca1d9de90f9bcec0db90/seg_hrnet/Dec20_233535/models/seg_hrnet_running_model_33.pth"
   TEST_STRIDE: 10
   SPLIT: 'Both' # Can be Both, Test1, Test2
   INLINE: True
