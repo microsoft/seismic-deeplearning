@@ -94,6 +94,9 @@ def run(*options, cfg=None, debug=False):
 
     update_config(config, options=options, config_file=cfg)
 
+    # we will write the model under outputs / config_file_name / model_dir
+    config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
+
     # Start logging
     load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
@@ -177,9 +180,9 @@ def run(*options, cfg=None, debug=False):
     )
 
     try:
-        output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),)
+        output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
     except TypeError:
-        output_dir = generate_path(config.OUTPUT_DIR, config.MODEL.NAME, current_datetime(),)
+        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
 
@@ -285,7 +288,7 @@ def run(*options, cfg=None, debug=False):
         return (trainer.state.iteration % snapshot_duration) == 0
 
     checkpoint_handler = SnapshotHandler(
-        path.join(output_dir, config.TRAIN.MODEL_DIR),
+        output_dir,
         config.MODEL.NAME,
         extract_metric_from("mIoU"),
         snapshot_function,

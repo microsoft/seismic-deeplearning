@@ -19,7 +19,6 @@ MODEL:
   NAME: patch_deconvnet_skip
   IN_CHANNELS: 1
 
-
 TRAIN:
   BATCH_SIZE_PER_GPU: 64
   BEGIN_EPOCH: 0
@@ -45,7 +44,7 @@ TRAIN:
   MODEL_DIR: "models"
 
 VALIDATION:
-  BATCH_SIZE_PER_GPU: 512
+  BATCH_SIZE_PER_GPU: 64
 
 TEST: 
   MODEL_PATH: ""
