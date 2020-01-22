@@ -2,9 +2,13 @@
 
 # specify pretrained HRNet backbone
 PRETRAINED_HRNET='/home/maxkaz/models/hrnetv2_w48_imagenet_pretrained.pth'
-DATA_F3='/home/alfred/data/dutch_f3/data'
-DATA_PENOBSCOT='/home/maxkaz/data/penobscot'
+# DATA_F3='/home/alfred/data/dutch_f3/data'
+# DATA_PENOBSCOT='/home/maxkaz/data/penobscot'
+DATA_F3='/storage/data/dutchf3/data'
+DATA_PENOBSCOT='/storage/data/penobscot'
 
+# bug to fix conda not launching from a bash shell
+source /data/anaconda/etc/profile.d/conda.sh
 conda activate seismic-interpretation
 
 cd experiments/interpretation/penobscot/local
@@ -15,7 +19,7 @@ nohup time python train.py \
     'DATASET.ROOT' "${DATA_PENOBSCOT}" \
     'TRAIN.DEPTH' 'section' \
     'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-    --cfg "configs/seresnet.yaml" > seresnet_unet.log 2>&1 &
+    --cfg "configs/seresnet_unet.yaml" > seresnet_unet.log 2>&1 &
 # wait for python to pick up the runtime env before switching it
 sleep 1
 
@@ -26,7 +30,7 @@ nohup time python train.py \
     'TRAIN.DEPTH' 'section' \
     'MODEL.PRETRAINED' "${PRETRAINED_HRNET}" \
     'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-    --cfg=configs/hrnet.yaml --debug > hrnet.log 2>&1 &
+    --cfg=configs/hrnet.yaml > hrnet.log 2>&1 &
 # wait for python to pick up the runtime env before switching it
 sleep 1
 
