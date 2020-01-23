@@ -4,7 +4,7 @@ channels:
  - pytorch
 dependencies:
   - python=3.6.7
-  - pip
+  - pip=19.0
   - pytorch==1.4.0
   - cudatoolkit==10.1.243
   - jupyter
