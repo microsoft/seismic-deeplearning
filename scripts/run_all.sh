@@ -6,6 +6,8 @@ PRETRAINED_HRNET='/home/maxkaz/models/hrnetv2_w48_imagenet_pretrained.pth'
 # DATA_PENOBSCOT='/home/maxkaz/data/penobscot'
 DATA_F3='/storage/data/dutchf3/data'
 DATA_PENOBSCOT='/storage/data/penobscot'
+# subdirectory where results are written
+OUTPUT_DIR='output'
 
 # bug to fix conda not launching from a bash shell
 source /data/anaconda/etc/profile.d/conda.sh
@@ -18,7 +20,7 @@ export CUDA_VISIBLE_DEVICES=0
 nohup time python train.py \
     'DATASET.ROOT' "${DATA_PENOBSCOT}" \
     'TRAIN.DEPTH' 'section' \
-    'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
+    'OUTPUT_DIR' "${OUTPUT_DIR}" 'TRAIN.MODEL_DIR' 'section_depth' \
     --cfg "configs/seresnet_unet.yaml" > seresnet_unet.log 2>&1 &
 # wait for python to pick up the runtime env before switching it
 sleep 1
@@ -29,7 +31,7 @@ nohup time python train.py \
     'DATASET.ROOT' "${DATA_PENOBSCOT}" \
     'TRAIN.DEPTH' 'section' \
     'MODEL.PRETRAINED' "${PRETRAINED_HRNET}" \
-    'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
+    'OUTPUT_DIR' "${OUTPUT_DIR}" 'TRAIN.MODEL_DIR' 'section_depth' \
     --cfg=configs/hrnet.yaml > hrnet.log 2>&1 &
 # wait for python to pick up the runtime env before switching it
 sleep 1
@@ -41,7 +43,7 @@ export CUDA_VISIBLE_DEVICES=2
 nohup time python train.py \
     'DATASET.ROOT' "${DATA_F3}" \
     'TRAIN.DEPTH' 'none' \
-    'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
+    'OUTPUT_DIR' "${OUTPUT_DIR}" 'TRAIN.MODEL_DIR' 'no_depth' \
     --cfg=configs/patch_deconvnet.yaml > patch_deconvnet.log 2>&1 &
 # wait for python to pick up the runtime env before switching it
 sleep 1
@@ -51,7 +53,7 @@ export CUDA_VISIBLE_DEVICES=3
 nohup time python train.py \
     'DATASET.ROOT' "${DATA_F3}" \
     'TRAIN.DEPTH' 'none' \
-    'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
+    'OUTPUT_DIR' "${OUTPUT_DIR}" 'TRAIN.MODEL_DIR' 'no_depth' \
     --cfg=configs/patch_deconvnet_skip.yaml > patch_deconvnet_skip.log 2>&1 &
 # wait for python to pick up the runtime env before switching it
 sleep 1
@@ -61,7 +63,7 @@ export CUDA_VISIBLE_DEVICES=4
 nohup time python train.py \
     'DATASET.ROOT' "${DATA_F3}" \
     'TRAIN.DEPTH' 'section' \
-    'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
+    'OUTPUT_DIR' "${OUTPUT_DIR}" 'TRAIN.MODEL_DIR' 'section_depth' \
     --cfg=configs/seresnet_unet.yaml > seresnet_unet.log 2>&1 &
 # wait for python to pick up the runtime env before switching it
 sleep 1
@@ -72,7 +74,7 @@ nohup time python train.py \
     'DATASET.ROOT' "${DATA_F3}" \
     'TRAIN.DEPTH' 'patch' \
     'MODEL.PRETRAINED' "${PRETRAINED_HRNET}" \
-    'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'patch_depth' \
+    'OUTPUT_DIR' "${OUTPUT_DIR}" 'TRAIN.MODEL_DIR' 'patch_depth' \
     --cfg=configs/hrnet.yaml > hrnet_patch.log 2>&1 &
 # wait for python to pick up the runtime env before switching it
 sleep 1
@@ -83,7 +85,7 @@ nohup time python train.py \
     'DATASET.ROOT' "${DATA_F3}" \
     'TRAIN.DEPTH' 'section' \
     'MODEL.PRETRAINED' "${PRETRAINED_HRNET}" \
-    'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
+    'OUTPUT_DIR' "${OUTPUT_DIR}" 'TRAIN.MODEL_DIR' 'section_depth' \
     --cfg=configs/hrnet.yaml > hrnet_section.log 2>&1 &
 # wait for python to pick up the runtime env before switching it
 sleep 1
@@ -96,7 +98,7 @@ export CUDA_VISIBLE_DEVICES=7
 nohup time python train.py \
     'DATASET.ROOT' "${DATA_F3}" \
     'TRAIN.DEPTH' 'none' \
-    'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
+    'OUTPUT_DIR' "${OUTPUT_DIR}" 'TRAIN.MODEL_DIR' 'no_depth' \
     --cfg=configs/section_deconvnet_skip.yaml > section_deconvnet_skip.log 2>&1 &
 # wait for python to pick up the runtime env before switching it
 sleep 1
