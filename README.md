@@ -3,9 +3,9 @@
 
 This repository shows you how to perform seismic imaging and interpretation on Azure. It empowers geophysicists and data scientists to run seismic experiments using state-of-art DSL-based PDE solvers and segmentation algorithms on Azure.  
 
-The repository provides sample notebooks, data loaders for seismic data, utilities, and out-of-the box ML pipelines, organized as follows:
+The repository provides sample notebooks, data loaders for seismic data, utilities, and out-of-the-box ML pipelines, organized as follows:
 - **sample notebooks**: these can be found in the `examples` folder - they are standard Jupyter notebooks which highlight how to use the codebase by walking the user through a set of pre-made examples
-- **experiments**: the goal is to provide runnable Python scripts which train and test (score) our machine learning models in `experiments` folder. The models themselves are swappable, meaning a single train script can be used to run a different model on the same dataset by simply swapping out the configuration file which defines the model. Experiments are organized by model types and datasets - for example, "2D segmentation on Dutch F3 dataset", "2D segmentation on Penobscot dataset" and "3D segmentation on Penobscot dataset" are all different experiments. As another example, if one is swapping 2D segmentation models on Dutch F3 dataset, one would just point the train and test scripts to a different configuration file within the same experiment.
+- **experiments**: the goal is to provide runnable Python scripts that train and test (score) our machine learning models in the `experiments` folder. The models themselves are swappable, meaning a single train script can be used to run a different model on the same dataset by simply swapping out the configuration file which defines the model. Experiments are organized by model types and datasets - for example, "2D segmentation on Dutch F3 dataset", "2D segmentation on Penobscot dataset" and "3D segmentation on Penobscot dataset" are all different experiments. As another example, if one is swapping 2D segmentation models on the Dutch F3 dataset, one would just point the train and test scripts to a different configuration file within the same experiment.
 - **pip installable utilities**: we provide `cv_lib` and `deepseismic_interpretation` utilities (more info below) which are used by both sample notebooks and experiments mentioned above
 
 DeepSeismic currently focuses on Seismic Interpretation (3D segmentation aka facies classification) with experimental code provided around Seismic Imaging.
@@ -14,7 +14,7 @@ DeepSeismic currently focuses on Seismic Interpretation (3D segmentation aka fac
 
 There are two ways to get started with the DeepSeismic codebase, which currently focuses on Interpretation:
 - if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/master/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb)
-- to actually run the code, you'll need to set up a compute environment (which includes setting up a GPU-enabled Linux VM and downloading the appropriate Anaconda Python packages) and download the datasets which you'd like to work with - detailed steps for doing this are provided in the next `Interpretation` section below.
+- to run the code, you'll need to set up a compute environment (which includes setting up a GPU-enabled Linux VM and downloading the appropriate Anaconda Python packages) and download the datasets which you'd like to work with - detailed steps for doing this are provided in the next `Interpretation` section below.
 
 If you run into any problems, chances are your problem has already been solved in the [Troubleshooting](#troubleshooting) section.
 
@@ -37,7 +37,7 @@ To run examples available on the repo, please follow instructions below to:
 
 ### Setting up Environment
 
-Follow the instruction bellow to read about compute requirements and install required libraries.
+Follow the instructions below to read about compute requirements and install required libraries.
 
 
 #### Compute environment
@@ -55,9 +55,9 @@ To install packages contained in this repository, navigate to the directory wher
 ```bash
 conda env create -f environment/anaconda/local/environment.yml
 ```
-This will create the appropriate conda environment to run experiments.
+This will create the appropriate conda environment to run experiments. If you run into problems with this step, see the [troubleshooting section](#Troubleshooting).
 
-Next you will need to install the common package for interpretation:
+Next, you will need to install the common package for interpretation:
 ```bash
 conda activate seismic-interpretation
 pip install -e interpretation
@@ -195,9 +195,9 @@ We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manag
 
 To achieve the same results as the benchmarks above you will need to download the HRNet model [pretrained](https://github.com/HRNet/HRNet-Image-Classification) on ImageNet. We are specifically using the [HRNet-W48-C](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk) pre-trained model; other  HRNet variants are also available [here](https://github.com/HRNet/HRNet-Image-Classification) - you can navigate to those from the [main HRNet landing page](https://github.com/HRNet/HRNet-Object-Detection) for object detection.
 
-Unfortunately the OneDrive location which is used to host the model is using a temporary authentication token, so there is no way for us to scipt up model download. There are two ways to upload and use the pre-trained HRNet model on DS VM:
+Unfortunately, the OneDrive location which is used to host the model is using a temporary authentication token, so there is no way for us to script up model download. There are two ways to upload and use the pre-trained HRNet model on DS VM:
 - download the model to your local drive using a web browser of your choice and then upload the model to the DS VM using something like `scp`; navigate to Portal and copy DS VM's public IP from the Overview panel of your DS VM (you can search your DS VM by name in the search bar of the Portal) then use `scp local_model_location username@DS_VM_public_IP:./model/save/path` to upload
-- alternatively you can use the same public IP to open remote desktop over SSH to your Linux VM using [X2Go](https://wiki.x2go.org/doku.php/download:start): you can basically open the web browser on your VM this way and download the model to VM's disk
+- alternatively, you can use the same public IP to open remote desktop over SSH to your Linux VM using [X2Go](https://wiki.x2go.org/doku.php/download:start): you can basically open the web browser on your VM this way and download the model to VM's disk
 
 
 ### Viewers (optional)
@@ -227,7 +227,7 @@ segyviewer "${HOME}/data/dutchf3/data.segy"
 
 This section contains benchmarks of different algorithms for seismic interpretation on 3D seismic datasets with densely-annotated data.
 
-Below are the results from the models contained in this repo. To run them check the instructions in <benchmarks> folder. Alternatively take a look in <examples> for how to run them on your own dataset
+Below are the results from the models contained in this repo. To run them check the instructions in <benchmarks> folder. Alternatively, take a look in <examples> for how to run them on your own dataset
 
 #### Netherlands F3
 
@@ -242,7 +242,7 @@ Below are the results from the models contained in this repo. To run them check 
 
 #### Penobscot
 
-Trained and tested on full dataset. Inlines with artefacts were left in for training, validation and testing.
+Trained and tested on the full dataset. Inlines with artifacts were left in for training, validation and testing.
 The dataset was split 70% training, 10% validation and 20% test. The results below are from the test set
 
 |    Source        |    Experiment                       |    PA       |    IoU       |    MCA     |
@@ -254,8 +254,7 @@ The dataset was split 70% training, 10% validation and 20% test. The results bel
 ![Worst Penobscot SEResNet](assets/penobscot_seresnet_worst.png "Worst performing inlines  Mask and Predictions from SEResNet")
 
 #### Reproduce benchmarks
-In order to reproduce the benchmarks you will need to navigate to the [experiments](experiments) folder. In there each of the experiments 
-are split into different folders. To run the Netherlands F3 experiment navigate to the [dutchf3_patch/local](experiments/dutchf3_patch/local) folder. In there is a training script [([train.sh](experiments/dutchf3_patch/local/train.sh))
+In order to reproduce the benchmarks, you will need to navigate to the [experiments](experiments) folder. In there, each of the experiments are split into different folders. To run the Netherlands F3 experiment navigate to the [dutchf3_patch/local](experiments/dutchf3_patch/local) folder. In there is a training script [([train.sh](experiments/dutchf3_patch/local/train.sh))
 which will run the training for any configuration you pass in. Once you have run the training you will need to run the [test.sh](experiments/dutchf3_patch/local/test.sh) script. Make sure you specify
 the path to the best performing model from your training run, either by passing it in as an argument or altering the YACS config file. 
 
@@ -302,7 +301,7 @@ A typical output will be:
 someusername@somevm:/projects/DeepSeismic$ which python
 /anaconda/envs/py35/bin/python
 ```
-which will indicate that anaconda folder is __/anaconda__. We'll refer to this location in instructions below, but you should update the commands according to your local anaconda folder.
+which will indicate that anaconda folder is __/anaconda__. We'll refer to this location in the instructions below, but you should update the commands according to your local anaconda folder.
 
 <details>
   <summary><b>Data Science Virtual Machine conda package installation errors</b></summary>
@@ -338,13 +337,13 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
 <details>
   <summary><b>Model training or scoring is not using GPU</b></summary>
 
-  To see if GPU is being using while your model is being trained or used for inference, run
+  To see if GPU is being used while your model is being trained or used for inference, run
   ```bash
   nvidia-smi
   ```
-  and confirm that you see you Python process using the GPU.
+  and confirm that you see your Python process using the GPU.
 
-  If not, you may want to try reverting to an older version of CUDA for use with pyTorch. After the environment has been setup, run the following command (by default we use CUDA 10) after running `conda activate seismic-interpretation` to activate the conda environment:
+  If not, you may want to try reverting to an older version of CUDA for use with PyTorch. After the environment has been set up, run the following command (by default we use CUDA 10) after running `conda activate seismic-interpretation` to activate the conda environment:
   ```bash
   conda install pytorch torchvision cudatoolkit=9.2 -c pytorch
   ```
@@ -365,7 +364,7 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
   torch.cuda.is_available() 
   ```
 
-  Output should say "True" this time. If it does, you can make the change permanent by adding
+  The output should say "True" this time. If it does, you can make the change permanent by adding
   ```bash
   export CUDA_VISIBLE_DEVICES=0
   ```
@@ -380,7 +379,7 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
   ```bash
   nvidia-smi
   ```
-  and seeing if this amount is close to the physical memory limit specified by the GPU manufacturer.
+  and see if this amount is close to the physical memory limit specified by the GPU manufacturer.
 
   If we're getting close to the memory limit, you may want to lower the batch size in the model configuration file. Specifically, `TRAIN.BATCH_SIZE_PER_GPU` and `VALIDATION.BATCH_SIZE_PER_GPU` settings.
 
@@ -391,11 +390,11 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
 
   1. Go to the [Azure Portal](https://portal.azure.com) and find your virtual machine by typing its name in the search bar at the very top of the page.
 
-  2. In the Overview panel on the left hand side, click Stop button to stop the virtual machine.
+  2. In the Overview panel on the left-hand side, click the Stop button to stop the virtual machine.
 
-  3. Next, select Disks in the same panel on the left hand side.
+  3. Next, select Disks in the same panel on the left-hand side.
 
-  4. Click the Name of the OS Disk - you'll be navigated to the Disk view. From this view, select Configuration on the left hand side and then increase Size in GB and hit the Save button.
+  4. Click the Name of the OS Disk - you'll be navigated to the Disk view. From this view, select Configuration on the left-hand side and then increase Size in GB and hit the Save button.
 
   5. Navigate back to the Virtual Machine view in Step 2 and click the Start button to start the virtual machine.
 
