@@ -147,7 +147,6 @@ python scripts/prepare_dutchf3.py split_train_val section --data-dir=$data_dir/d
 
 # For patch-based experiments
 python scripts/prepare_dutchf3.py split_train_val patch --data-dir=$data_dir/data --stride=50 --patch=100
-
 ```
 
 Refer to the script itself for more argument options.
