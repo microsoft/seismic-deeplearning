@@ -10,7 +10,6 @@ PRINT_FREQ: 10
 LOG_CONFIG: logging.conf
 SEED: 2019
 
-
 DATASET:
   NUM_CLASSES: 6
   ROOT: /mnt/dutchf3
@@ -19,7 +18,6 @@ DATASET:
 MODEL:
   NAME: patch_deconvnet
   IN_CHANNELS: 1
-
 
 TRAIN:
   BATCH_SIZE_PER_GPU: 64
@@ -46,7 +44,7 @@ TRAIN:
   MODEL_DIR: "models"
 
 VALIDATION:
-  BATCH_SIZE_PER_GPU: 512
+  BATCH_SIZE_PER_GPU: 64
 
 TEST:
   MODEL_PATH: "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/mat/exp/5cc37bbe5302e1989ef1388d629400a16f82d1a9/patch_deconvnet/Aug27_200339/models/patch_deconvnet_snapshot1model_50.pth"
