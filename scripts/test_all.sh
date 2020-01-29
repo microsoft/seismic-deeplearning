@@ -1,13 +1,25 @@
 #!/bin/bash
 
+# specify pretrained HRNet backbone
+PRETRAINED_HRNET='/home/maxkaz/models/hrnetv2_w48_imagenet_pretrained.pth'
 # DATA_F3='/home/alfred/data/dutch_f3/data'
 # DATA_PENOBSCOT='/home/maxkaz/data/penobscot'
 DATA_F3='/storage/data/dutchf3/data'
 DATA_PENOBSCOT='/storage/data/penobscot'
 # name of your git branch which you ran the training code from
-BRANCH="maxkaz/names"
+BRANCH="maxkaz/scripts"
 # name of directory where results are kept
 OUTPUT_DIR="output"
+# directory where to copy pre-trained models to
+OUTPUT_PRETRAINED="/storage/pretrained_models/"
+
+if [ -d ${OUTPUT_PRETRAINED} ]; then
+    echo "erasing pre-trained models in ${OUTPUT_PRETRAINED}"
+    rm -rf "${OUTPUT_PRETRAINED}"
+fi
+
+mkdir -p "${OUTPUT_PRETRAINED}"
+echo "Pre-trained models will be copied to ${OUTPUT_PRETRAINED}"
 
 # bug to fix conda not launching from a bash shell
 source /data/anaconda/etc/profile.d/conda.sh
@@ -19,8 +31,9 @@ cd experiments/interpretation/penobscot/local
 export CUDA_VISIBLE_DEVICES=0
 CONFIG_NAME='seresnet_unet'
 model=$(ls -td ${OUTPUT_DIR}/${BRANCH}/*/${CONFIG_NAME}/section_depth/*/*.pth | head -1)
+cp $model ${OUTPUT_PRETRAINED}/penobscot_seresnetunet_patch_section_depth.pth
 nohup time python test.py \
-    'DATASET.ROOT' "${DATASET_ROOT}" 'TEST.MODEL_PATH' "${model}" \
+    'DATASET.ROOT' "${DATA_PENOBSCOT}" 'TEST.MODEL_PATH' "${model}" \
     --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_test.log 2>&1 &
 sleep 1
 
@@ -28,8 +41,10 @@ sleep 1
 export CUDA_VISIBLE_DEVICES=1
 CONFIG_NAME='hrnet'
 model=$(ls -td ${OUTPUT_DIR}/${BRANCH}/*/${CONFIG_NAME}/section_depth/*/*.pth | head -1)
+cp $model ${OUTPUT_PRETRAINED}/penobscot_hrnet_patch_section_depth.pth
 nohup time python test.py \
-    'DATASET.ROOT' "${DATASET_ROOT}" 'TEST.MODEL_PATH' "${model}" \
+    'DATASET.ROOT' "${DATA_PENOBSCOT}" 'TEST.MODEL_PATH' "${model}" \
+    'MODEL.PRETRAINED' "${PRETRAINED_HRNET}" \
     --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_test.log 2>&1 &
 sleep 1
 
@@ -39,8 +54,9 @@ cd ../../dutchf3_patch/local
 export CUDA_VISIBLE_DEVICES=2
 CONFIG_NAME='patch_deconvnet'
 model=$(ls -td ${OUTPUT_DIR}/${BRANCH}/*/${CONFIG_NAME}/no_depth/*/*.pth | head -1)
+cp $model ${OUTPUT_PRETRAINED}/dutchf3_deconvnet_patch_no_depth.pth
 nohup time python test.py \
-    'DATASET.ROOT' "${DATASET_ROOT}" 'TEST.MODEL_PATH' "${model}" \
+    'DATASET.ROOT' "${DATA_F3}" 'TEST.MODEL_PATH' "${model}" \
     --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_test.log 2>&1 &
 sleep 1
 
@@ -48,8 +64,9 @@ sleep 1
 export CUDA_VISIBLE_DEVICES=3
 CONFIG_NAME='patch_deconvnet_skip'
 model=$(ls -td ${OUTPUT_DIR}/${BRANCH}/*/${CONFIG_NAME}/no_depth/*/*.pth | head -1)
+cp $model ${OUTPUT_PRETRAINED}/dutchf3_deconvnetskip_patch_no_depth.pth
 nohup time python test.py \
-    'DATASET.ROOT' "${DATASET_ROOT}" 'TEST.MODEL_PATH' "${model}" \
+    'DATASET.ROOT' "${DATA_F3}" 'TEST.MODEL_PATH' "${model}" \
     --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_test.log 2>&1 &
 sleep 1
 
@@ -57,8 +74,9 @@ sleep 1
 export CUDA_VISIBLE_DEVICES=4
 CONFIG_NAME='seresnet_unet'
 model=$(ls -td ${OUTPUT_DIR}/${BRANCH}/*/${CONFIG_NAME}/section_depth/*/*.pth | head -1)
+cp $model ${OUTPUT_PRETRAINED}/dutchf3_seresnetunet_patch_section_depth.pth
 nohup time python test.py \
-    'DATASET.ROOT' "${DATASET_ROOT}" 'TEST.MODEL_PATH' "${model}" \
+    'DATASET.ROOT' "${DATA_F3}" 'TEST.MODEL_PATH' "${model}" \
     --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_test.log 2>&1 &
 sleep 1
 
@@ -66,18 +84,22 @@ sleep 1
 export CUDA_VISIBLE_DEVICES=5
 CONFIG_NAME='hrnet'
 model=$(ls -td ${OUTPUT_DIR}/${BRANCH}/*/${CONFIG_NAME}/patch_depth/*/*.pth | head -1)
+cp $model ${OUTPUT_PRETRAINED}/dutchf3_hrnet_patch_patch_depth.pth
 nohup time python test.py \
-    'DATASET.ROOT' "${DATASET_ROOT}" 'TEST.MODEL_PATH' "${model}" \
-    --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_test.log 2>&1 &
+    'DATASET.ROOT' "${DATA_F3}" 'TEST.MODEL_PATH' "${model}" \
+    'MODEL.PRETRAINED' "${PRETRAINED_HRNET}" \
+    --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_patch_test.log 2>&1 &
 sleep 1
 
 # HRNet + section depth
 export CUDA_VISIBLE_DEVICES=6
 CONFIG_NAME='hrnet'
 model=$(ls -td ${OUTPUT_DIR}/${BRANCH}/*/${CONFIG_NAME}/section_depth/*/*.pth | head -1)
+cp $model ${OUTPUT_PRETRAINED}/dutchf3_hrnet_patch_section_depth.pth
 nohup time python test.py \
-    'DATASET.ROOT' "${DATASET_ROOT}" 'TEST.MODEL_PATH' "${model}" \
-    --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_test.log 2>&1 &
+    'DATASET.ROOT' "${DATA_F3}" 'TEST.MODEL_PATH' "${model}" \
+    'MODEL.PRETRAINED' "${PRETRAINED_HRNET}" \
+    --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_section_test.log 2>&1 &
 sleep 1
 
 cd ../../dutchf3_section/local
@@ -87,8 +109,9 @@ cd ../../dutchf3_section/local
 export CUDA_VISIBLE_DEVICES=7
 CONFIG_NAME='section_deconvnet_skip'
 model=$(ls -td ${OUTPUT_DIR}/${BRANCH}/*/${CONFIG_NAME}/no_depth/*/*.pth | head -1)
+cp $model ${OUTPUT_PRETRAINED}/dutchf3_deconvnetskip_patch_no_depth.pth
 nohup time python test.py \
-    'DATASET.ROOT' "${DATASET_ROOT}" 'TEST.MODEL_PATH' "${model}" \
+    'DATASET.ROOT' "${DATA_F3}" 'TEST.MODEL_PATH' "${model}" \
     --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_test.log 2>&1 &
 sleep 1
 
@@ -103,8 +126,9 @@ cd ../../dutchf3_patch/local
 export CUDA_VISIBLE_DEVICES=2
 CONFIG_NAME='patch_deconvnet'
 model=$(ls -td ../distributed/${OUTPUT_DIR}/${BRANCH}/*/${CONFIG_NAME}/no_depth/*/*.pth | head -1)
+cp $model ${OUTPUT_PRETRAINED}/dutchf3_deconvnet_patch_no_depth_distributed.pth
 nohup time python test.py \
-    'DATASET.ROOT' "${DATASET_ROOT}" 'TEST.MODEL_PATH' "${model}" \
+    'DATASET.ROOT' "${DATA_F3}" 'TEST.MODEL_PATH' "${model}" \
     --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_distributed_test.log 2>&1 &
 sleep 1
 
@@ -112,8 +136,9 @@ sleep 1
 export CUDA_VISIBLE_DEVICES=3
 CONFIG_NAME='patch_deconvnet_skip'
 model=$(ls -td ../distributed/${OUTPUT_DIR}/${BRANCH}/*/${CONFIG_NAME}/no_depth/*/*.pth | head -1)
+cp $model ${OUTPUT_PRETRAINED}/dutchf3_deconvnetskip_patch_no_depth_distributed.pth
 nohup time python test.py \
-    'DATASET.ROOT' "${DATASET_ROOT}" 'TEST.MODEL_PATH' "${model}" \
+    'DATASET.ROOT' "${DATA_F3}" 'TEST.MODEL_PATH' "${model}" \
     --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_distributed_test.log 2>&1 &
 sleep 1
 
@@ -121,8 +146,9 @@ sleep 1
 export CUDA_VISIBLE_DEVICES=4
 CONFIG_NAME='seresnet_unet'
 model=$(ls -td ../distributed/${OUTPUT_DIR}/${BRANCH}/*/${CONFIG_NAME}/section_depth/*/*.pth | head -1)
+cp $model ${OUTPUT_PRETRAINED}/dutchf3_seresnetunet_patch_section_depth_distributed.pth
 nohup time python test.py \
-    'DATASET.ROOT' "${DATASET_ROOT}" 'TEST.MODEL_PATH' "${model}" \
+    'DATASET.ROOT' "${DATA_F3}" 'TEST.MODEL_PATH' "${model}" \
     --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_distributed_test.log 2>&1 &
 sleep 1
 
@@ -130,8 +156,10 @@ sleep 1
 export CUDA_VISIBLE_DEVICES=5
 CONFIG_NAME='hrnet'
 model=$(ls -td ../distributed/${OUTPUT_DIR}/${BRANCH}/*/${CONFIG_NAME}/patch_depth/*/*.pth | head -1)
+cp $model ${OUTPUT_PRETRAINED}/dutchf3_hrnet_patch_patch_depth_distributed.pth
 nohup time python test.py \
-    'DATASET.ROOT' "${DATASET_ROOT}" 'TEST.MODEL_PATH' "${model}" \
+    'DATASET.ROOT' "${DATA_F3}" 'TEST.MODEL_PATH' "${model}" \
+    'MODEL.PRETRAINED' "${PRETRAINED_HRNET}" \
     --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_distributed_test.log 2>&1 &
 sleep 1
 
@@ -139,8 +167,10 @@ sleep 1
 export CUDA_VISIBLE_DEVICES=6
 CONFIG_NAME='hrnet'
 model=$(ls -td ../distributed/${OUTPUT_DIR}/${BRANCH}/*/${CONFIG_NAME}/section_depth/*/*.pth | head -1)
+cp $model ${OUTPUT_PRETRAINED}/dutchf3_hrnet_patch_section_depth_distributed.pth
 nohup time python test.py \
-    'DATASET.ROOT' "${DATASET_ROOT}" 'TEST.MODEL_PATH' "${model}" \
+    'DATASET.ROOT' "${DATA_F3}" 'TEST.MODEL_PATH' "${model}" \
+    'MODEL.PRETRAINED' "${PRETRAINED_HRNET}" \
     --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_distributed_test.log 2>&1 &
 sleep 1
 
