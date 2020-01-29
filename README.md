@@ -266,6 +266,11 @@ for the Penobscot dataset follow the same instructions but navigate to the [peno
 
 - [kill_windows.sh](scripts/kill_windows.sh): Script to kill multiple tmux windows. Used to kill jobs that parallel_training.sh might have started.
 
+- [run_all.sh](scripts/run_all.sh): similar to `parallel_training.sh` above, provides a multiprocess execution on an ND40 VM with 8 GPUs. Designed to work with `test_all.sh` script below. Trains 8 models concurrently.
+
+- [run_distributed.sh](scripts/run_distributed.sh): sequentially launches distributed training jobs, which should produce the same results on Dutch F3 dataset with patch based methods as the single-GPU training (just takes less time per model to train). Also designed to work with `test_all.sh` script below.
+
+- [test_all.sh](scripts/test_all.sh): after running `run_all.sh` and `run_distributed.sh` scripts above, this script scores single-GPU-trained and multi-GPU-trained models in the repo to reproduce the results given in the table.
 
 ## Contributing
 
