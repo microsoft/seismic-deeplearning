@@ -17,39 +17,35 @@ RUN wget --quiet https://repo.continuum.io/archive/Anaconda3-2019.10-Linux-x86_6
     rm ~/anaconda.sh && \
     ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
     echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc
-    
 
 # download the seismic-deeplearning repo
-WORKDIR /root
 RUN apt-get install -y zip && \
     wget --quiet https://github.com/microsoft/seismic-deeplearning/archive/master.zip -O master.zip && \
-    unzip master.zip && rm master.zip 
+    unzip master.zip && rm master.zip
 
-# Setup the environment: 
 RUN cd seismic-deeplearning-master && \
+    conda update conda -y && \
     conda env create -f environment/anaconda/local/environment.yml && \
-    echo "conda activate seismic-interpretation" >> ~/.bashrc && \
-    conda activate seismic-interpretation && \
     pip install -e interpretation && \
-    pip install -e cv_lib
+    pip install -e cv_lib && \
+
+# ENV PATH /opt/conda/envs/seismic-interpretation/bin:$PATH
+
+# RUN echo "source /opt/conda/etc/profile.d/conda.sh" >> $HOME/.profile  && \ 
+#     echo "conda activate seismic-interpretation" >> $HOME/.profile 
+# ENV PATH="${HOME}/conda/envs/seismic-deeplearning/bin:${PATH}"
 
 
-ENV PATH="${HOME}/conda/envs/seismic-deeplearning/bin:${PATH}"
+# TODO: Download the datasets here:
 
-
-
-# Copy data : #TODO
 # TODO: In readme, ask user to download HRNet model and mount it to the docker container 
-
-# VOLUME 
+ 
 
 # Run notebook
 EXPOSE 8888/tcp
-# CMD ["conda", "run", "-n", "seismic-interpretation", "jupyter", "notebook", "--allow-root", "--ip", "0.0.0.0", "--port", "8888"]
-# CMD jupyter notebook --allow-root --ip 0.0.0.0 --port 8888 --no-browser --notebook-dir .
-CMD source /data/anaconda/etc/profile.d/conda.sh && \
-    conda activate seismic-interpretation && \
-    jupyter notebook --allow-root --ip 0.0.0.0 --port 8888 
 
-# command to run, and map ports:
-# sudo docker run --rm -it -p 8888:8888 seismic-deeplearning
+# CMD /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh" && \
+#     conda run -n seismic-interpretation && \
+CMD jupyter notebook --allow-root --ip 0.0.0.0 --port 8888 --notebook-dir seismic-deeplearning-master
+
+
