@@ -6,4 +6,3 @@ The folder contains notebook examples illustrating the use of segmentation algor
 * [Penobscot dataset](notebooks/HRNet_Penobscot_demo_notebook.ipynb): 
 In this notebook, we demonstrate how to train an [HRNet](https://github.com/HRNet/HRNet-Semantic-Segmentation) model for facies prediction using [Penobscot](https://terranubis.com/datainfo/Penobscot) dataset. The Penobscot 3D seismic dataset was acquired in the Scotian shelf, offshore Nova Scotia, Canada. This notebook illustrates the use of HRNet based segmentation algorithm on the dataset. Details of HRNet based model can be found [here](https://arxiv.org/abs/1904.04514)
 
-![HRNet Model architecture](https://github.com/HRNet/HRNet-Semantic-Segmentation/blob/master/figures/seg-hrnet.png")
