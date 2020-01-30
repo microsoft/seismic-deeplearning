@@ -103,7 +103,7 @@ To make things easier, we suggested you use your home directory where you might 
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
 
 ```
-python scripts/prepare_penobscot.py split_inline --data-dir="$HOME/data/penobscot" --val-ratio=.1 --test-ratio=.2
+python scripts/prepare_penobscot.py split_inline --data-dir=$data_dir --val-ratio=.1 --test-ratio=.2
 ```
 
 #### F3 Netherlands
