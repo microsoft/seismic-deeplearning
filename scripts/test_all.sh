@@ -1,17 +1,22 @@
 #!/bin/bash
 
+# specify absolute locations to your models, data and storage
+MODEL_ROOT="/your/model/root"
+DATA_ROOT="/your/data/root"
+STORAGE_ROOT="/your/storage/root"
+
 # specify pretrained HRNet backbone
-PRETRAINED_HRNET='/home/maxkaz/models/hrnetv2_w48_imagenet_pretrained.pth'
-# DATA_F3='/home/alfred/data/dutch_f3/data'
-# DATA_PENOBSCOT='/home/maxkaz/data/penobscot'
-DATA_F3='/storage/data/dutchf3/data'
-DATA_PENOBSCOT='/storage/data/penobscot'
+PRETRAINED_HRNET="${MODEL_ROOT}/hrnetv2_w48_imagenet_pretrained.pth"
+DATA_F3="${DATA_ROOT}/dutchf3/data"
+DATA_PENOBSCOT="${DATA_ROOT}/penobscot"
 # name of your git branch which you ran the training code from
-BRANCH="maxkaz/scripts"
+BRANCH="your/git/branch/with/slashes/if/they/exist/in/branch/name"
+
 # name of directory where results are kept
 OUTPUT_DIR="output"
+
 # directory where to copy pre-trained models to
-OUTPUT_PRETRAINED="/storage/pretrained_models/"
+OUTPUT_PRETRAINED="${STORAGE_ROOT}/pretrained_models/"
 
 if [ -d ${OUTPUT_PRETRAINED} ]; then
     echo "erasing pre-trained models in ${OUTPUT_PRETRAINED}"
