@@ -46,7 +46,7 @@ RUN data_dir="..//data/dutch" && \
 # To prepare the data for the experiments (run prepare_ scripts)
 
 # TODO: In readme, ask user to download HRNet model and mount it to the docker container 
- 
+# TODO: maxkaz suggested we group RUN commands to reduce # of layers, and therefore, docker image size.  
 
 # Run notebook
 EXPOSE 8888/tcp
