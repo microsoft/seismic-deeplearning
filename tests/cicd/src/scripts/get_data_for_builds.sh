@@ -36,6 +36,7 @@ wait
 DATA_F3="${DATA_F3}/data"
 
 # test preprocessing scripts
-python scripts/prepare_penobscot.py split_inline --data-dir=${DATA_PENOBSCOT} --val-ratio=.1 --test-ratio=.2
-python scripts/prepare_dutchf3.py split_train_val section --data-dir=${DATA_F3}
-python scripts/prepare_dutchf3.py split_train_val patch --data-dir=${DATA_F3} --stride=50 --patch=100
+cd scripts
+python prepare_penobscot.py split_inline --data-dir=${DATA_PENOBSCOT} --val-ratio=.1 --test-ratio=.2
+python prepare_dutchf3.py split_train_val section --data-dir=${DATA_F3}
+python prepare_dutchf3.py split_train_val patch --data-dir=${DATA_F3} --stride=50 --patch=100
