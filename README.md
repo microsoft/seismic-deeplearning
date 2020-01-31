@@ -103,7 +103,7 @@ To make things easier, we suggested you use your home directory where you might 
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
 
 ```
-python scripts/prepare_penobscot.py split_inline --data-dir="$HOME/data/penobscot" --val-ratio=.1 --test-ratio=.2
+python scripts/prepare_penobscot.py split_inline --data-dir=$data_dir --val-ratio=.1 --test-ratio=.2
 ```
 
 #### F3 Netherlands
@@ -266,6 +266,11 @@ for the Penobscot dataset follow the same instructions but navigate to the [peno
 
 - [kill_windows.sh](scripts/kill_windows.sh): Script to kill multiple tmux windows. Used to kill jobs that parallel_training.sh might have started.
 
+- [run_all.sh](scripts/run_all.sh): similar to `parallel_training.sh` above, provides a multiprocess execution on an ND40 VM with 8 GPUs. Designed to work with `test_all.sh` script below. Trains 8 models concurrently.
+
+- [run_distributed.sh](scripts/run_distributed.sh): sequentially launches distributed training jobs, which should produce the same results on Dutch F3 dataset with patch based methods as the single-GPU training (just takes less time per model to train). Also designed to work with `test_all.sh` script below.
+
+- [test_all.sh](scripts/test_all.sh): after running `run_all.sh` and `run_distributed.sh` scripts above, this script scores single-GPU-trained and multi-GPU-trained models in the repo to reproduce the results given in the table.
 
 ## Contributing
 
@@ -284,10 +289,10 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 | --- | --- | --- |
 | **Legal Compliance** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=124&branchName=staging) |
 | **Legal Compliance** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=124&branchName=master) |
-| **Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=staging) |
-| **Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=master) |
-| **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=staging) |
-| **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=master) |
+| **Core Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=staging) |
+| **Core Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=master) |
+| **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=staging) |
+| **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=master) |
 
 
 # Troubleshooting
