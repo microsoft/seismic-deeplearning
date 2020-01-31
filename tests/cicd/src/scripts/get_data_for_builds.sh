@@ -17,16 +17,14 @@ source activate seismic-interpretation
 # these have to match the rest of the build jobs unless we want to
 # define this in ADO pipelines
 DATA_F3="${DATA_ROOT}/dutch_f3"
-DATA_PENOBSCOT="${DATA_ROOT}/PENOBSCOT"
+DATA_PENOBSCOT="${DATA_ROOT}/penobscot"
 
 # remove data
 if [ -d ${DATA_ROOT} ]; then
-echo "Erasing data root dir ${DATA_ROOT}"
-rm -rf "${DATA_ROOT}"
+    echo "Erasing data root dir ${DATA_ROOT}"
+    rm -rf "${DATA_ROOT}"
 fi
 mkdir "${DATA_ROOT}"
-
-rm -r $DATA_ROOT
 
 # test download scripts in parallel
 ./scripts/download_penobscot.sh "${DATA_PENOBSCOT}" & 
