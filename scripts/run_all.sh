@@ -1,11 +1,14 @@
 #!/bin/bash
 
+# specify absolute locations to your models and data
+MODEL_ROOT="/your/model/root"
+DATA_ROOT="/your/data/root"
+
 # specify pretrained HRNet backbone
-PRETRAINED_HRNET='/home/maxkaz/models/hrnetv2_w48_imagenet_pretrained.pth'
-# DATA_F3='/home/alfred/data/dutch_f3/data'
-# DATA_PENOBSCOT='/home/maxkaz/data/penobscot'
-DATA_F3='/storage/data/dutchf3/data'
-DATA_PENOBSCOT='/storage/data/penobscot'
+PRETRAINED_HRNET="${MODEL_ROOT}/hrnetv2_w48_imagenet_pretrained.pth"
+DATA_F3="${DATA_ROOT}/dutchf3/data"
+DATA_PENOBSCOT="${DATA_ROOT}/penobscot"
+
 # subdirectory where results are written
 OUTPUT_DIR='output'
 
