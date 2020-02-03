@@ -22,4 +22,5 @@ openssl dgst -md5 $temp_file
  
 # Unzip the data 
 unzip -d $1 $temp_file && rm $temp_file
+mkdir $1/data/splits
 echo "Download complete"
