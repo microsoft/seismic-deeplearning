@@ -22,6 +22,9 @@ jobs:
 
   steps:
   - bash: |
+      # terminate as soon as any internal script fails
+      set -e
+
       echo "Running setup..."
       pwd
       ls

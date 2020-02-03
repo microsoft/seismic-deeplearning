@@ -24,7 +24,8 @@ if [ -d ${DATA_ROOT} ]; then
     echo "Erasing data root dir ${DATA_ROOT}"
     rm -rf "${DATA_ROOT}"
 fi
-mkdir "${DATA_ROOT}"
+mkdir -p "${DATA_F3}"
+mkdir -p "${DATA_PENOBSCOT}"
 
 # test download scripts in parallel
 ./scripts/download_penobscot.sh "${DATA_PENOBSCOT}" & 
