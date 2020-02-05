@@ -3,8 +3,8 @@ CUDNN:
   DETERMINISTIC: false
   ENABLED: true
 GPUS: (0,)
-OUTPUT_DIR: 'output'
-LOG_DIR: 'log'
+OUTPUT_DIR: "output"
+LOG_DIR: "log"
 WORKERS: 4
 PRINT_FREQ: 50
 LOG_CONFIG: logging.conf
@@ -30,7 +30,7 @@ TRAIN:
   WEIGHT_DECAY: 0.0001
   SNAPSHOTS: 5
   AUGMENTATION: True
-  DEPTH: "none" #"patch" # Options are No, Patch and Section
+  DEPTH: "none" # Options are No, Patch and Section
   STRIDE: 50
   PATCH_SIZE: 99
   AUGMENTATIONS:
@@ -50,7 +50,7 @@ VALIDATION:
 TEST: 
   # MODEL_PATH: "data/home/mat/repos/DeepSeismic/examples/interpretation/notebooks/output/models/model_patch_deconvnet_skip_2.pth"
   TEST_STRIDE: 10
-  SPLIT: 'test1' # Can be both, test1, test2
+  SPLIT: "test1" # Can be both, test1, test2
   INLINE: True
   CROSSLINE: True
   POST_PROCESSING: 

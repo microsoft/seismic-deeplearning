@@ -3,8 +3,8 @@ CUDNN:
   DETERMINISTIC: false
   ENABLED: true
 GPUS: (0,)
-OUTPUT_DIR: 'outputs' 
-LOG_DIR: 'log'
+OUTPUT_DIR: "outputs" 
+LOG_DIR: "log"
 WORKERS: 4
 PRINT_FREQ: 50
 
