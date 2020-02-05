@@ -48,7 +48,7 @@ TRAIN:
   MODEL_DIR: "models"
 
 TEST:
-  MODEL_PATH: ""
+  # MODEL_PATH: 
   TEST_STRIDE: 10
   SPLIT: 'Both' # Can be Both, Test1, Test2
   INLINE: True

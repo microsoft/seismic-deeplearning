@@ -2,11 +2,13 @@
 # Licensed under the MIT License.
 
 import itertools
+from os import path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn.functional as F
+import yacs
 from ignite.utils import convert_tensor
 from scipy.ndimage import zoom
 from toolz import compose, curry, itertoolz, pipe
@@ -240,3 +242,38 @@ def plot_aline(aline, labels, xlabel, ylabel="depth"):
     plt.imshow(labels)
     plt.xlabel(xlabel)
     plt.title("Label")
+
+def validate_config_paths(config):
+    """Checks that all paths in the config file are valid"""
+    # TODO: this is currently hardcoded, in the future, its better to have a more generic solution.
+
+    # Make sure DATASET.ROOT directory exist:
+    assert path.isdir(config.DATASET.ROOT), f"The DATASET.ROOT specified in the config file is not a \
+        valid directory. Please make sure this path is correct: {config.DATASET.ROOT}"
+
+    # if a pretrained model path is specified in the config, it should exist: 
+    if hasattr(config, MODEL.PRETRAINED):
+        assert path.exists(config.MODEL.PRETRAINED), f"A pretrained model is specified in the config \
+            file but does not exist. Please make sure this path is correct: {config.MODEL.PRETRAINED}"
+
+    # if a test model path is specified in the config, it should exist: 
+    if hasattr(config, TEST.MODEL_PATH):
+        assert path.exists(config.TEST.MODEL_PATH), f"The TEST.MODEL_PATH specified in the config \
+            file does not exist. Please make sure this path is correct: {config.TEST.MODEL_PATH}"
+
+    # Furthermore, if this is a HRNet model, the pretrained model path should exist if the test model is specified: 
+    if "hrnet" in config.MODEL.NAME:
+        if hasattr(config, TEST.MODEL_PATH): 
+            assert path.exists(config.MODEL.PRETRAINED), "For an HRNet model, you should specify the MODEL.PRETRAINED \
+                path in the config file if the TEST.MODEL_PATH is also specified."
+
+    # Finally, make sure these directories exist or create them: 
+    if not path.isdir(config.OUTPUT_DIR):
+        os.makedirs(config.OUTPUT_DIR)
+
+    if not path.isdir(config.LOG_DIR):
+        os.makedirs(config.LOG_DIR)
+
+    if not path.isdir(config.MODEL_DIR):
+        os.makedirs(config.MODEL_DIR)
+
