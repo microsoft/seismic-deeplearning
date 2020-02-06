@@ -91,7 +91,7 @@ def split_patch_train_val(data_dir, stride, patch, per_val=0.2, log_config=None)
 
     Args:
         data_dir (str): data directory path
-        stride (int): stride to use when sectioning of the volume
+        stride (int): stride to use when sectioning of the volume. Make sure stride << patch.
         patch (int): size of patch to extract
         per_val (float, optional): the fraction of the volume to use for validation.
             Defaults to 0.2.
@@ -119,8 +119,8 @@ def split_patch_train_val(data_dir, stride, patch, per_val=0.2, log_config=None)
 
     # Generate patches from sections
     # Process inlines
-    horz_locations = range(0, xline - stride, stride)
-    vert_locations = range(0, depth - stride, stride)
+    horz_locations = range(0, xline - patch, stride)
+    vert_locations = range(0, depth - patch, stride)
     logger.debug("Generating Inline patches")
     logger.debug(horz_locations)
     logger.debug(vert_locations)
@@ -138,8 +138,8 @@ def split_patch_train_val(data_dir, stride, patch, per_val=0.2, log_config=None)
     logger.debug(test_iline_range)
 
     # Process crosslines
-    horz_locations = range(0, iline - stride, stride)
-    vert_locations = range(0, depth - stride, stride)
+    horz_locations = range(0, iline - patch, stride)
+    vert_locations = range(0, depth - patch, stride)
     logger.debug("Generating Crossline patches")
     logger.debug(horz_locations)
     logger.debug(vert_locations)
@@ -183,7 +183,7 @@ def split_alaudah_et_al_19(data_dir, stride, fraction_validation=0.2, loader_typ
 
     Args:
         data_dir (str): data directory path
-        stride (int): stride to use when sectioning of the volume
+        stride (int): stride to use when sectioning of the volume. Make sure stride << patch.
         fraction_validation (float, optional): the fraction of the volume to use for validation.
             Defaults to 0.2.
         loader_type (str, optional): type of data loader, can be "patch" or "section".
@@ -222,14 +222,14 @@ def split_alaudah_et_al_19(data_dir, stride, fraction_validation=0.2, loader_typ
         x_list = ["x_" + str(x) for x in range(xline)]
     elif loader_type == "patch":
         i_list = []
-        horz_locations = range(0, xline - stride, stride)
-        vert_locations = range(0, depth - stride, stride)
+        horz_locations = range(0, xline - patch, stride)
+        vert_locations = range(0, depth - patch, stride)
         logger.debug("Generating Inline patches")
         logger.debug(horz_locations)
         logger.debug(vert_locations)
         for i in range(iline):
             # for every inline:
-            # images are references by top-left corner:
+            # images are referenced by top-left corner:
             locations = [[j, k] for j in horz_locations for k in vert_locations]
             patches_list = ["i_" + str(i) + "_" + str(j) + "_" + str(k) for j, k in locations]
             i_list.append(patches_list)
@@ -238,11 +238,11 @@ def split_alaudah_et_al_19(data_dir, stride, fraction_validation=0.2, loader_typ
         i_list = list(itertools.chain(*i_list))
 
         x_list = []
-        horz_locations = range(0, iline - stride, stride)
-        vert_locations = range(0, depth - stride, stride)
+        horz_locations = range(0, iline - patch, stride)
+        vert_locations = range(0, depth - patch, stride)
         for j in range(xline):
             # for every xline:
-            # images are references by top-left corner:
+            # images are referenced by top-left corner:
             locations = [[i, k] for i in horz_locations for k in vert_locations]
             patches_list = ["x_" + str(i) + "_" + str(j) + "_" + str(k) for i, k in locations]
             x_list.append(patches_list)
