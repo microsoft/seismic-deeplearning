@@ -15,7 +15,7 @@ SEED: 2019
 
 DATASET:
   NUM_CLASSES: 6
-  ROOT: "data/dutch"
+  ROOT: "/home/username/data/dutch"
   CLASS_WEIGHTS: [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 MODEL:
@@ -43,12 +43,12 @@ TRAIN:
     PAD:
       HEIGHT: 256
       WIDTH: 256
-  MEAN: 0.0009997 # 0.0009996710808862074
-  STD: 0.20977 # 0.20976548783479299 
+  MEAN: 0.0009997 
+  STD: 0.20977 
   MODEL_DIR: "models"
 
 TEST:
-  # MODEL_PATH: 
+  MODEL_PATH: "/your/trained/model/path/model_name.pth" # must be an absolute path
   TEST_STRIDE: 10
   SPLIT: "Both" # Can be Both, Test1, Test2
   INLINE: True

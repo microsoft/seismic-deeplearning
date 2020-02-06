@@ -12,7 +12,7 @@ SEED: 2019
 
 DATASET:
   NUM_CLASSES: 6
-  ROOT: "data/dutch"
+  ROOT: "/home/username/data/dutch"
   CLASS_WEIGHTS: [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 MODEL:
@@ -40,15 +40,15 @@ TRAIN:
     PAD:
       HEIGHT: 99
       WIDTH: 99
-  MEAN: 0.0009997 # 0.0009996710808862074
-  STD: 0.20977 # 0.20976548783479299 
+  MEAN: 0.0009997 
+  STD: 0.20977
   MODEL_DIR: "models"
 
 VALIDATION:
   BATCH_SIZE_PER_GPU: 512
 
 TEST: 
-  # MODEL_PATH: "data/home/mat/repos/DeepSeismic/examples/interpretation/notebooks/output/models/model_patch_deconvnet_skip_2.pth"
+  MODEL_PATH: "/your/trained/model/path/model_name.pth" # must be an absolute path
   TEST_STRIDE: 10
   SPLIT: "test1" # Can be both, test1, test2
   INLINE: True
