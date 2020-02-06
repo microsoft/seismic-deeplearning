@@ -247,50 +247,25 @@ def validate_config_paths(config):
     """Checks that all paths in the config file are valid"""
     # TODO: this is currently hardcoded, in the future, its better to have a more generic solution.
 
-    # define the home directory
-    home = os.path.expanduser('~') 
-
     # Make sure DATASET.ROOT directory exist:
-    assert os.path.isdir(os.path.join(home, config.DATASET.ROOT)), f"The DATASET.ROOT specified in the config file is not a \
-valid directory. Please make sure this path is correct: {config.DATASET.ROOT}"
+    assert os.path.isdir(config.DATASET.ROOT), \
+        "The DATASET.ROOT specified in the config file is not a valid directory." \
+        f" Please make sure this path is correct: {config.DATASET.ROOT}"
 
     # if a pretrained model path is specified in the config, it should exist: 
-    try:    
-        assert os.path.isfile(config.MODEL.PRETRAINED), f"A pretrained model is specified in the config \
-file but does not exist. Please make sure this path is correct: {config.MODEL.PRETRAINED}"
-    except AttributeError:
-        pass
+    if 'PRETRAINED' in config.MODEL.keys():
+        assert os.path.isfile(config.MODEL.PRETRAINED), \
+            "A pretrained model is specified in the config file but does not exist." \
+            f" Please make sure this path is correct: {config.MODEL.PRETRAINED}"
 
     # if a test model path is specified in the config, it should exist: 
-    try:
-        assert os.path.isfile(config.TEST.MODEL_PATH), f"The TEST.MODEL_PATH specified in the config \
-file does not exist. Please make sure this path is correct: {config.TEST.MODEL_PATH}"
-    except AttributeError:
-        pass
-
-    # Furthermore, if this is a HRNet model, the pretrained model path should exist if the test model is specified: 
-    if "hrnet" in config.MODEL.NAME:
-        try:
-            assert os.path.isfile(config.MODEL.PRETRAINED), "For an HRNet model, you should specify the MODEL.PRETRAINED \
-path in the config file if the TEST.MODEL_PATH is also specified."
-        except AttributeError:
-            pass
-
-    # Finally, make sure these directories exist or create them: 
-    try: 
-        if not os.path.isdir(config.OUTPUT_DIR): 
-            os.makedirs(config.OUTPUT_DIR) 
-    except AttributeError:
-        pass
-
-    try: 
-        if not os.path.isdir(config.LOG_DIR): 
-            os.makedirs(config.LOG_DIR) 
-    except AttributeError:
-        pass
-
-    try: 
-        if not os.path.isdir(config.MODEL_DIR): 
-            os.makedirs(config.MODEL_DIR) 
-    except AttributeError:
-        pass
+    if 'TEST' in config.keys():
+        if 'MODEL_PATH' in config.TEST.keys():
+            assert os.path.isfile(config.TEST.MODEL_PATH), \
+                "The TEST.MODEL_PATH specified in the config file does not exist." \
+                f" Please make sure this path is correct: {config.TEST.MODEL_PATH}"
+            # Furthermore, if this is a HRNet model, the pretrained model path should exist if the test model is specified: 
+            if "hrnet" in config.MODEL.NAME:
+                assert os.path.isfile(config.MODEL.PRETRAINED), \
+                    "For an HRNet model, you should specify the MODEL.PRETRAINED path" \
+                    " in the config file if the TEST.MODEL_PATH is also specified."
