@@ -447,7 +447,8 @@ TrainVoxelLoaderWithDepth = TrainVoxelWaldelandLoader
 
 
 class TestSectionLoader(SectionLoader):
-    def __init__(self, data_dir, split="test1", is_transform=True, augmentations=None):
+    def __init__(self, data_dir, split="test1", is_transform=True, augmentations=None,
+                 seismic_path=None, label_path=None):
         super(TestSectionLoader, self).__init__(
             data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
         )
@@ -458,6 +459,10 @@ class TestSectionLoader(SectionLoader):
         elif "test2" in self.split:
             self.seismic = np.load(_test2_data_for(self.data_dir))
             self.labels = np.load(_test2_labels_for(self.data_dir))
+        else:
+            # Load npy files (seismc and corresponding labels) from provided location (path)
+            self.seismic = np.load(seismic_path)
+            self.labels = np.load(label_path)
 
         # We are in test mode. Only read the given split. The other one might not
         # be available.
@@ -576,7 +581,8 @@ class PatchLoader(data.Dataset):
 
 
 class TestPatchLoader(PatchLoader):
-    def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None):
+    def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None,
+                 txt_path=None):
         super(TestPatchLoader, self).__init__(
             data_dir, stride=stride, patch_size=patch_size, is_transform=is_transform, augmentations=augmentations,
         )
@@ -587,8 +593,11 @@ class TestPatchLoader(PatchLoader):
 
         # We are in test mode. Only read the given split. The other one might not
         # be available.
-        self.split = "test1"  # TODO: Fix this can also be test2
-        txt_path = path.join(self.data_dir, "splits", "patch_" + self.split + ".txt")
+        # If txt_path is not provided, it will be assumed as below. Otherwise, provided path will be used for 
+        # loading txt file and create patches.
+        if not txt_path:
+            self.split = "test1"  # TODO: Fix this can also be test2
+            txt_path = path.join(self.data_dir, "splits", "patch_" + self.split + ".txt")
         patch_list = tuple(open(txt_path, "r"))
         patch_list = [id_.rstrip() for id_ in patch_list]
         self.patches = patch_list
