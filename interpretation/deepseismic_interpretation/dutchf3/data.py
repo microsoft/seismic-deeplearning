@@ -447,10 +447,11 @@ TrainVoxelLoaderWithDepth = TrainVoxelWaldelandLoader
 
 
 class TestSectionLoader(SectionLoader):
-    def __init__(self, data_dir, split="test1", is_transform=True, augmentations=None,
-                 seismic_path=None, label_path=None):
+    print("*** TestSectionLoader ***")
+    def __init__(self, data_dir, split = "test1", is_transform = True, augmentations = None,
+                 seismic_path = None, label_path = None):
         super(TestSectionLoader, self).__init__(
-            data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
+           data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
         )
 
         if "test1" in self.split:
@@ -459,8 +460,9 @@ class TestSectionLoader(SectionLoader):
         elif "test2" in self.split:
             self.seismic = np.load(_test2_data_for(self.data_dir))
             self.labels = np.load(_test2_labels_for(self.data_dir))
-        else:
-            # Load npy files (seismc and corresponding labels) from provided location (path)
+        elif seismic_path is not None and label_path is not None:
+            # Load npy files (seismc and corresponding labels) from provided
+            # location (path)
             self.seismic = np.load(seismic_path)
             self.labels = np.load(label_path)
 
@@ -473,6 +475,7 @@ class TestSectionLoader(SectionLoader):
 
 
 class TestSectionLoaderWithDepth(TestSectionLoader):
+    print("*** TestSectionLoaderWithDepth ***")
     def __init__(self, data_dir, split="test1", is_transform=True, augmentations=None):
         super(TestSectionLoaderWithDepth, self).__init__(
             data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
