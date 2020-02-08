@@ -246,7 +246,8 @@ def get_random_batch(
 
 
 class SectionLoader(data.Dataset):
-    def __init__(self, data_dir, split="train", is_transform=True, augmentations=None):
+    def __init__(self, data_dir, split="train", is_transform=True, augmentations=None,
+                 seismic_path=None, label_path=None):
         self.split = split
         self.data_dir = data_dir
         self.is_transform = is_transform
@@ -355,13 +356,25 @@ class VoxelLoader(data.Dataset):
 
 
 class TrainSectionLoader(SectionLoader):
-    def __init__(self, data_dir, split="train", is_transform=True, augmentations=None):
+    def __init__(self, data_dir, split="train", is_transform=True, augmentations=None,
+                 seismic_path=None, label_path=None):
         super(TrainSectionLoader, self).__init__(
             data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
+            seismic_path=seismic_path, label_path=label_path
         )
 
-        self.seismic = np.load(_train_data_for(self.data_dir))
-        self.labels = np.load(_train_labels_for(self.data_dir))
+        if seismic_path is not None and label_path is not None:
+            # Load npy files (seismc and corresponding labels) from provided
+            # location (path)
+            if not path.isfile(seismic_path):
+                raise Exception(f"{seismic_path} does not exist")
+            if not path.isfile(label_path):
+                raise Exception(f"{label_path} does not exist")
+            self.seismic = np.load(seismic_path)
+            self.labels = np.load(label_path)
+        else:
+            self.seismic = np.load(_train_data_for(self.data_dir))
+            self.labels = np.load(_train_labels_for(self.data_dir))
 
         # reading the file names for split
         txt_path = path.join(self.data_dir, "splits", "section_" + split + ".txt")
@@ -371,9 +384,11 @@ class TrainSectionLoader(SectionLoader):
 
 
 class TrainSectionLoaderWithDepth(TrainSectionLoader):
-    def __init__(self, data_dir, split="train", is_transform=True, augmentations=None):
+    def __init__(self, data_dir, split="train", is_transform=True, augmentations=None,
+                 seismic_path=None, label_path=None):
         super(TrainSectionLoaderWithDepth, self).__init__(
             data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
+            seismic_path=seismic_path, label_path=label_path
         )
         self.seismic = add_section_depth_channels(self.seismic)  # NCWH
 
@@ -463,6 +478,10 @@ class TestSectionLoader(SectionLoader):
         elif seismic_path is not None and label_path is not None:
             # Load npy files (seismc and corresponding labels) from provided
             # location (path)
+            if not path.isfile(seismic_path):
+                raise Exception(f"{seismic_path} does not exist")
+            if not path.isfile(label_path):
+                raise Exception(f"{label_path} does not exist")
             self.seismic = np.load(seismic_path)
             self.labels = np.load(label_path)
 
@@ -476,9 +495,11 @@ class TestSectionLoader(SectionLoader):
 
 class TestSectionLoaderWithDepth(TestSectionLoader):
     print("*** TestSectionLoaderWithDepth ***")
-    def __init__(self, data_dir, split="test1", is_transform=True, augmentations=None):
+    def __init__(self, data_dir, split="test1", is_transform=True, augmentations=None,
+                 seismic_path = None, label_path = None):
         super(TestSectionLoaderWithDepth, self).__init__(
             data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
+            seismic_path = seismic_path, label_path = label_path
         )
         self.seismic = add_section_depth_channels(self.seismic)  # NCWH
 
@@ -529,7 +550,8 @@ class PatchLoader(data.Dataset):
         Data loader for the patch-based deconvnet
     """
 
-    def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None):
+    def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None,
+                 seismic_path=None, label_path=None):
         self.data_dir = data_dir
         self.is_transform = is_transform
         self.augmentations = augmentations
@@ -609,15 +631,27 @@ class TestPatchLoader(PatchLoader):
 class TrainPatchLoader(PatchLoader):
     def __init__(
         self, data_dir, split="train", stride=30, patch_size=99, is_transform=True, augmentations=None,
+        seismic_path=None, label_path=None
     ):
         super(TrainPatchLoader, self).__init__(
             data_dir, stride=stride, patch_size=patch_size, is_transform=is_transform, augmentations=augmentations,
+            seismic_path=seismic_path, label_path=label_path
         )
         # self.seismic = self.pad_volume(np.load(seismic_path))
         # self.labels = self.pad_volume(np.load(labels_path))
         warnings.warn("This no longer pads the volume")
-        self.seismic = np.load(_train_data_for(self.data_dir))
-        self.labels = np.load(_train_labels_for(self.data_dir))
+        if seismic_path is not None and label_path is not None:
+            # Load npy files (seismc and corresponding labels) from provided
+            # location (path)
+            if not path.isfile(seismic_path):
+                raise Exception(f"{seismic_path} does not exist")
+            if not path.isfile(label_path):
+                raise Exception(f"{label_path} does not exist")
+            self.seismic = np.load(seismic_path)
+            self.labels = np.load(label_path)
+        else:
+            self.seismic = np.load(_train_data_for(self.data_dir))
+            self.labels = np.load(_train_labels_for(self.data_dir))
         # We are in train/val mode. Most likely the test splits are not saved yet,
         # so don't attempt to load them.
         self.split = split
@@ -631,9 +665,11 @@ class TrainPatchLoader(PatchLoader):
 class TrainPatchLoaderWithDepth(TrainPatchLoader):
     def __init__(
         self, data_dir, split="train", stride=30, patch_size=99, is_transform=True, augmentations=None,
+        seismic_path=None, label_path=None
     ):
         super(TrainPatchLoaderWithDepth, self).__init__(
-            data_dir, stride=stride, patch_size=patch_size, is_transform=is_transform, augmentations=augmentations,
+            data_dir, split=split, stride=stride, patch_size=patch_size, is_transform=is_transform, augmentations=augmentations,
+            seismic_path=seismic_path, label_path=label_path
         )
 
     def __getitem__(self, index):
@@ -678,6 +714,7 @@ def _transform_HWC_to_CHW(numpy_array):
 class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
     def __init__(
         self, data_dir, split="train", stride=30, patch_size=99, is_transform=True, augmentations=None,
+        seismic_path=None, label_path=None
     ):
         super(TrainPatchLoaderWithSectionDepth, self).__init__(
             data_dir,
@@ -686,6 +723,8 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             patch_size=patch_size,
             is_transform=is_transform,
             augmentations=augmentations,
+            seismic_path = seismic_path,
+            label_path = label_path
         )
         self.seismic = add_section_depth_channels(self.seismic)
 
