@@ -1,3 +1,7 @@
+"""
+Tests for TrainLoader and TestLoader classes when overriding the file names of the seismic and label data.
+"""
+
 import tempfile
 import numpy as np
 from interpretation.deepseismic_interpretation.dutchf3.data import get_test_loader, TrainPatchLoaderWithDepth, TrainSectionLoaderWithDepth
@@ -33,7 +37,7 @@ def assert_dimensions(test_section_loader):
     assert test_section_loader.seismic.shape[3] == D
 
 
-def test_TestSectionLoader_test1():
+def test_TestSectionLoader_should_load_data_from_test1_set():
     with open(CONFIG_FILE, "rt") as f_read:
         config = yacs.config.load_cfg(f_read)
 
@@ -56,7 +60,7 @@ def test_TestSectionLoader_test1():
         assert_dimensions(test_set)
 
 
-def test_TestSectionLoader_test2():
+def test_TestSectionLoader_should_load_data_from_test2_set():
     with tempfile.TemporaryDirectory() as data_dir:
         os.makedirs(os.path.join(data_dir, "test_once"))
         os.makedirs(os.path.join(data_dir, "splits"))
@@ -78,7 +82,7 @@ def test_TestSectionLoader_test2():
         assert_dimensions(test_set)
 
 
-def test_TestSectionLoader_custom():
+def test_TestSectionLoader_should_load_data_from_path_override_data():
     with tempfile.TemporaryDirectory() as data_dir:
         os.makedirs(os.path.join(data_dir, "volume_name"))
         os.makedirs(os.path.join(data_dir, "splits"))
@@ -111,8 +115,6 @@ def test_TrainSectionLoaderWithDepth_should_fail_on_empty_file_names(tmpdir):
     """
     Check for exception when files do not exist
     """
-    # Setup
-    
 
     # Test
     with pytest.raises(Exception) as excinfo:

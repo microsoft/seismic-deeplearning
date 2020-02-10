@@ -246,6 +246,15 @@ def get_random_batch(
 
 
 class SectionLoader(data.Dataset):
+    """
+    Base class for section data loader
+    :param str data_dir: Root directory for training/test data
+    :param str split: split file to use for loading patches
+    :param bool is_transform: Transform patch to dimensions expected by PyTorch
+    :param list augmentations: Data augmentations to apply to patches
+    :param str seismic_path: Override file path for seismic data
+    :param str label_path: Override file path for label data
+    """
     def __init__(self, data_dir, split="train", is_transform=True, augmentations=None,
                  seismic_path=None, label_path=None):
         self.split = split
@@ -356,6 +365,15 @@ class VoxelLoader(data.Dataset):
 
 
 class TrainSectionLoader(SectionLoader):
+    """
+    Training data loader for sections
+    :param str data_dir: Root directory for training/test data
+    :param str split: split file to use for loading patches
+    :param bool is_transform: Transform patch to dimensions expected by PyTorch
+    :param list augmentations: Data augmentations to apply to patches
+    :param str seismic_path: Override file path for seismic data
+    :param str label_path: Override file path for label data
+    """
     def __init__(self, data_dir, split="train", is_transform=True, augmentations=None,
                  seismic_path=None, label_path=None):
         super(TrainSectionLoader, self).__init__(
@@ -384,6 +402,15 @@ class TrainSectionLoader(SectionLoader):
 
 
 class TrainSectionLoaderWithDepth(TrainSectionLoader):
+    """
+    Section data loader that includes additional channel for depth
+    :param str data_dir: Root directory for training/test data
+    :param str split: split file to use for loading patches
+    :param bool is_transform: Transform patch to dimensions expected by PyTorch
+    :param list augmentations: Data augmentations to apply to patches
+    :param str seismic_path: Override file path for seismic data
+    :param str label_path: Override file path for label data
+    """
     def __init__(self, data_dir, split="train", is_transform=True, augmentations=None,
                  seismic_path=None, label_path=None):
         super(TrainSectionLoaderWithDepth, self).__init__(
@@ -462,7 +489,15 @@ TrainVoxelLoaderWithDepth = TrainVoxelWaldelandLoader
 
 
 class TestSectionLoader(SectionLoader):
-    print("*** TestSectionLoader ***")
+    """
+    Test data loader for sections
+    :param str data_dir: Root directory for training/test data
+    :param str split: split file to use for loading patches
+    :param bool is_transform: Transform patch to dimensions expected by PyTorch
+    :param list augmentations: Data augmentations to apply to patches
+    :param str seismic_path: Override file path for seismic data
+    :param str label_path: Override file path for label data
+    """
     def __init__(self, data_dir, split = "test1", is_transform = True, augmentations = None,
                  seismic_path = None, label_path = None):
         super(TestSectionLoader, self).__init__(
@@ -494,6 +529,15 @@ class TestSectionLoader(SectionLoader):
 
 
 class TestSectionLoaderWithDepth(TestSectionLoader):
+    """
+    Test data loader for sections that includes additional channel for depth
+    :param str data_dir: Root directory for training/test data
+    :param str split: split file to use for loading patches
+    :param bool is_transform: Transform patch to dimensions expected by PyTorch
+    :param list augmentations: Data augmentations to apply to patches
+    :param str seismic_path: Override file path for seismic data
+    :param str label_path: Override file path for label data
+    """
     print("*** TestSectionLoaderWithDepth ***")
     def __init__(self, data_dir, split="test1", is_transform=True, augmentations=None,
                  seismic_path = None, label_path = None):
@@ -547,9 +591,16 @@ def _transform_WH_to_HW(numpy_array):
 
 class PatchLoader(data.Dataset):
     """
-        Data loader for the patch-based deconvnet
+    Base Data loader for the patch-based deconvnet
+    :param str data_dir: Root directory for training/test data
+    :param int stride: training data stride
+    :param int patch_size: Size of patch for training
+    :param str split: split file to use for loading patches
+    :param bool is_transform: Transform patch to dimensions expected by PyTorch
+    :param list augmentations: Data augmentations to apply to patches
+    :param str seismic_path: Override file path for seismic data
+    :param str label_path: Override file path for label data
     """
-
     def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None,
                  seismic_path=None, label_path=None):
         self.data_dir = data_dir
@@ -606,6 +657,16 @@ class PatchLoader(data.Dataset):
 
 
 class TestPatchLoader(PatchLoader):
+    """
+    Test Data loader for the patch-based deconvnet
+    :param str data_dir: Root directory for training/test data
+    :param int stride: training data stride
+    :param int patch_size: Size of patch for training
+    :param bool is_transform: Transform patch to dimensions expected by PyTorch
+    :param list augmentations: Data augmentations to apply to patches
+    :param str seismic_path: Override file path for seismic data
+    :param str label_path: Override file path for label data
+    """
     def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None,
                  txt_path=None):
         super(TestPatchLoader, self).__init__(
@@ -629,6 +690,17 @@ class TestPatchLoader(PatchLoader):
 
 
 class TrainPatchLoader(PatchLoader):
+    """
+    Train data loader for the patch-based deconvnet
+    :param str data_dir: Root directory for training/test data
+    :param int stride: training data stride
+    :param int patch_size: Size of patch for training
+    :param str split: split file to use for loading patches
+    :param bool is_transform: Transform patch to dimensions expected by PyTorch
+    :param list augmentations: Data augmentations to apply to patches
+    :param str seismic_path: Override file path for seismic data
+    :param str label_path: Override file path for label data
+    """
     def __init__(
         self, data_dir, split="train", stride=30, patch_size=99, is_transform=True, augmentations=None,
         seismic_path=None, label_path=None
@@ -663,6 +735,17 @@ class TrainPatchLoader(PatchLoader):
 
 
 class TrainPatchLoaderWithDepth(TrainPatchLoader):
+    """
+    Train data loader for the patch-based deconvnet with patch depth channel
+    :param str data_dir: Root directory for training/test data
+    :param int stride: training data stride
+    :param int patch_size: Size of patch for training
+    :param str split: split file to use for loading patches
+    :param bool is_transform: Transform patch to dimensions expected by PyTorch
+    :param list augmentations: Data augmentations to apply to patches
+    :param str seismic_path: Override file path for seismic data
+    :param str label_path: Override file path for label data
+    """
     def __init__(
         self, data_dir, split="train", stride=30, patch_size=99, is_transform=True, augmentations=None,
         seismic_path=None, label_path=None
@@ -712,6 +795,17 @@ def _transform_HWC_to_CHW(numpy_array):
 
 
 class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
+    """
+    Train data loader for the patch-based deconvnet section depth channel
+    :param str data_dir: Root directory for training/test data
+    :param int stride: training data stride
+    :param int patch_size: Size of patch for training
+    :param str split: split file to use for loading patches
+    :param bool is_transform: Transform patch to dimensions expected by PyTorch
+    :param list augmentations: Data augmentations to apply to patches
+    :param str seismic_path: Override file path for seismic data
+    :param str label_path: Override file path for label data
+    """
     def __init__(
         self, data_dir, split="train", stride=30, patch_size=99, is_transform=True, augmentations=None,
         seismic_path=None, label_path=None
