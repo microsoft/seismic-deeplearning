@@ -8,8 +8,6 @@ from interpretation.deepseismic_interpretation.dutchf3.data import get_test_load
 import pytest
 import yacs.config
 import os
-#from albumentations import Compose, Normalize
-
 
 # npy files dimensions
 IL = 5
@@ -96,11 +94,6 @@ def test_TestSectionLoader_should_load_data_from_path_override_data():
         txt_path = os.path.join(data_dir, "splits", "section_volume_name.txt")
         open(txt_path, 'a').close()
 
-        # Augmentation
-        # section_aug = Compose(
-        #     [Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1)]
-        # )
-
         TestSectionLoader = get_test_loader(config)
         test_set = TestSectionLoader(data_dir = data_dir,
                                      split = "volume_name",
@@ -157,6 +150,7 @@ def test_TrainSectionLoaderWithDepth_should_fail_on_missing_seismic_file(tmpdir)
         )
     assert "does not exist" in str(excinfo.value)
 
+
 def test_TrainSectionLoaderWithDepth_should_fail_on_missing_label_file(tmpdir):
     """
     Check for exception when training param is empty
@@ -202,7 +196,6 @@ def test_TrainSectionLoaderWithDepth_should_load_with_one_train_and_label_file(t
     txt_path = os.path.join(tmpdir, "splits", "section_volume_name.txt")
     open(txt_path, 'a').close()
 
-
     # Test
     train_set = TrainSectionLoaderWithDepth(
         data_dir = tmpdir,
@@ -216,13 +209,11 @@ def test_TrainSectionLoaderWithDepth_should_load_with_one_train_and_label_file(t
     assert train_set.labels.shape == (IL, XL, D)
     assert train_set.seismic.shape == (IL, 3, XL, D)
 
+
 def test_TrainPatchLoaderWithDepth_should_fail_on_empty_file_names(tmpdir):
     """
     Check for exception when files do not exist
     """
-    # Setup
-    
-
     # Test
     with pytest.raises(Exception) as excinfo:
 
@@ -267,6 +258,7 @@ def test_TrainPatchLoaderWithDepth_should_fail_on_missing_seismic_file(tmpdir):
             label_path=os.path.join(tmpdir, "volume_name", "labels.npy")
         )
     assert "does not exist" in str(excinfo.value)
+
 
 def test_TrainPatchLoaderWithDepth_should_fail_on_missing_label_file(tmpdir):
     """
@@ -314,7 +306,6 @@ def test_TrainPatchLoaderWithDepth_should_load_with_one_train_and_label_file(tmp
 
     txt_path = os.path.join(tmpdir, "splits", "patch_volume_name.txt")
     open(txt_path, 'a').close()
-
 
     # Test
     train_set = TrainPatchLoaderWithDepth(

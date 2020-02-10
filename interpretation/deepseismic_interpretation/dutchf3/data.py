@@ -538,7 +538,6 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
     """
-    print("*** TestSectionLoaderWithDepth ***")
     def __init__(self, data_dir, split="test1", is_transform=True, augmentations=None,
                  seismic_path = None, label_path = None):
         super(TestSectionLoaderWithDepth, self).__init__(
