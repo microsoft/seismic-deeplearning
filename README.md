@@ -103,7 +103,9 @@ To make things easier, we suggested you use your home directory where you might 
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
 
 ```
-python scripts/prepare_penobscot.py split_inline --data-dir=$data_dir --val-ratio=.1 --test-ratio=.2
+cd scripts
+python prepare_penobscot.py split_inline --data-dir=$data_dir --val-ratio=.1 --test-ratio=.2
+cd ..
 ```
 
 #### F3 Netherlands
@@ -112,18 +114,13 @@ To download the F3 Netherlands dataset for 2D experiments, please follow the dat
 
 ```
 data_dir="$HOME/data/dutch"
-mkdir -p "$data_dir"
-./scripts/download_dutch_f3.sh "$data_dir"
+mkdir -p "${data_dir}"
+./scripts/download_dutch_f3.sh "${data_dir}"
 ```
 
-Once you've downloaded the data set, make sure to create an empty `splits` directory, under the downloaded `data` directory; you can re-use the same data directory as the one for Penobscot dataset created earlier. This is where your training/test/validation splits will be saved.
+Download scripts also automatically create any subfolders in `${data_dir}` which are needed for the data preprocessing scripts.
 
-```
-cd data
-mkdir splits
-```
-
-At this point, your `data` directory tree should look like this:
+At this point, your `${data_dir}` directory should contain a `data` folder, which should look like this:
 
 ```
 data
@@ -141,12 +138,18 @@ data
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script:
 
 ```
+# change working directory to scripts folder
+cd scripts
+
 # For section-based experiments
-python scripts/prepare_dutchf3.py split_train_val section --data-dir=$data_dir/data
+python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data
 
 
 # For patch-based experiments
-python scripts/prepare_dutchf3.py split_train_val patch --data-dir=$data_dir/data --stride=50 --patch=100
+python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --stride=50 --patch=100
+
+# go back to repo root
+cd ..
 ```
 
 Refer to the script itself for more argument options.

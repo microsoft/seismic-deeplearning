@@ -22,14 +22,22 @@ jobs:
 
   steps:
   - bash: |
+      # terminate as soon as any internal script fails
+      set -e
+
       echo "Running setup..."
       pwd
       ls
       git branch
       uname -ra
-      
+
       ./scripts/env_reinstall.sh 
-  
+
+      # use hardcoded root for now because not sure how env changes under ADO policy
+      DATA_ROOT="/home/alfred/data_dynamic"
+
+      ./tests/cicd/src/scripts/get_data_for_builds.sh ${DATA_ROOT}
+
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
 
@@ -42,7 +50,7 @@ jobs:
   steps:
   - bash: |
       source activate seismic-interpretation
-      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb --dataset_root /home/alfred/data/penobscot
+      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb --dataset_root /home/alfred/data_dynamic/penobscot
       
 - job: F3_block_training_and_evaluation_local
   dependsOn: setup
@@ -53,4 +61,4 @@ jobs:
   steps:
   - bash: |      
       source activate seismic-interpretation      
-      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/F3_block_training_and_evaluation_local.ipynb --dataset_root /home/alfred/data/dutch_f3/data
+      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname examples/interpretation/notebooks/F3_block_training_and_evaluation_local.ipynb --dataset_root /home/alfred/data_dynamic/dutch_f3/data
