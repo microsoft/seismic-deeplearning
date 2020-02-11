@@ -52,6 +52,7 @@ EXPOSE 8888/tcp
 # CMD /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh" && \
 #     conda run -n seismic-interpretation && \
 CMD conda activate seismic-interpretation && \
+    python -m ipykernel install --user --name seismic-interpretation && \
     jupyter notebook --allow-root --ip 0.0.0.0 --port 8888 
 # --notebook-dir seismic-deeplearning-master
 
