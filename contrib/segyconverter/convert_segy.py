@@ -13,7 +13,8 @@ import json
 
 def _clip(output_dir, stddev_file, k, min_range, max_range, normalize):
     """
-    Normalization step on all files in output_dir
+    Normalization step on all files in output_dir. This function overwrites the existing
+    data file
     :param str output_dir: Directory path of all npy files to normalize
     :param str stddev_file: txt file containing standard deviation result
     :param int k: number of standard deviation to be used in normalization
@@ -25,7 +26,7 @@ def _clip(output_dir, stddev_file, k, min_range, max_range, normalize):
         raise Exception("Std Deviation file could not be found")
     with open(os.path.join(output_dir, txt_file), 'r') as f:
         metadatastr = f.read()
-        
+
     try:
         metadata = json.loads(metadatastr)
         stddev = float(metadata['stddev'])
@@ -35,8 +36,9 @@ def _clip(output_dir, stddev_file, k, min_range, max_range, normalize):
 
     npy_files = list(f for f in os.listdir(output_dir) if f.endswith('.npy'))
     for local_filename in npy_files:
-        normalize_cube.clip_file(os.path.join(output_dir, local_filename), stddev, mean,
-                                 k, min_range, max_range, normalize=normalize)
+        cube = np.load(os.path.join(output_dir, local_filename))
+        norm_cube = normalize_cube.main(cube, stddev, mean, k, min_range, max_range, normalize=normalize)
+        np.save(os.path.join(output_dir, local_filename), norm_cube)
 
 
 def main(input_file, output_dir, prefix, iline=189, xline=193, metadata_only=False, stride=128, cube_size=-1, normalize=True, clip=True, input=None):

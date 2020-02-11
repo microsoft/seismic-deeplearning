@@ -23,6 +23,18 @@ def compute_statistics(stddev: float, mean: float, max_range: float, k: int):
     return min_clip, max_clip, scale
 
 
+def clip_value(v: float, min_clip: float, max_clip: float):
+    """
+        Clip seismic voxel value
+    """
+    # Clip value
+    if v > max_clip:
+        v = max_clip
+    if v < min_clip:
+        v = min_clip
+    return v
+
+
 def norm_value(v: float, min_clip: float, max_clip: float, min_range: float, max_range: float, scale: float):
     """
         Normalize seismic voxel value to be within [min_range, max_clip] according to
@@ -36,49 +48,40 @@ def norm_value(v: float, min_clip: float, max_clip: float, min_range: float, max
         :returns: normalized value, must be within [min_range, max_range]
         :rtype: float
     """
-    offset = 0
-    if scale != 1:
-        offset = -1 * min_clip  # Normalizing - set values between 0 and 1
+    offset = -1 * min_clip  # Normalizing - set values between 0 and 1
     # Clip value
-    if v > max_clip:
-        v = max_clip
-    if v < min_clip:
-        v = min_clip
+    v = clip_value(v, min_clip, max_clip)
     # Scale value
     v = (v + offset) * scale
     # This value should ALWAYS be between min_range and max_range here
-    if scale != 1 and (v > max_range or v < min_range):
+    if v > max_range or v < min_range:
         raise Exception('normalized value should be within [{0},{1}].\
              The value was: {2}'.format(min_range, max_range, v))
     return v
 
 
-def clip_file(local_filename, stddev, mean, k, min_range_value, max_range_value, normalize=True):
-    """
-        Normalize npy array file according to statistics. This function overwrites the existing
-        data file
-        :param str local_filename: npy data file
-        :param float stddev: standard deviation value
-        :param int k: number of standard deviation to be used in normalization
-        :param float min_range_value: minium range value
-        :param float max_range_value: maximum range value
-    """
-    # Load local npy file
-    cube = np.load(local_filename)
-    # Normalize block
-    try:
-        norm_cube = main(cube=cube, stddev=stddev, mean=mean, k=k, min_range=min_range_value,
-                         max_range=max_range_value, normalize=normalize)
-    except Exception as ex:
-        print("ERROR: Not possible to normalize cube. {}".format(ex))
-    # Save normalized cube locally
-    np.save(local_filename, norm_cube)
+# def clip_file(local_filename, min_clip, max_clip):
+#     """
+#         Clip npy array file according to statistics. This function overwrites the existing
+#         data file
+#         :param min_clip: minimum value used for clipping
+#         :param max_clip: maximum value used for clipping
+#     """
+#     # Load local npy file
+#     cube = np.load(local_filename)
+#     # Normalize block
+#     try:
+#         clipped_cube = clip_cube(cube, min_clip=min_clip, max_clip=max_clip)
+#     except Exception as ex:
+#         print("ERROR: Not possible to normalize cube. {}".format(ex))
+#     # Save normalized cube locally
+#     np.save(local_filename, clipped_cube)
 
 
 def normalize_cube(cube: np.array, min_clip: float, max_clip: float, scale: float,
                    min_range: float, max_range: float):
     """
-        Normalize cube according to statistics
+        Normalize cube according to statistics. Normalization implies in clipping and normalize cube.
         :param cube: 3D array to be normalized
         :param min_clip: minimum value used for clipping
         :param max_clip: maximum value used for clipping
@@ -94,6 +97,20 @@ def normalize_cube(cube: np.array, min_clip: float, max_clip: float, scale: floa
     norm_cube = vfunc(cube, min_clip=min_clip, max_clip=max_clip, min_range=min_range, max_range=max_range,
                       scale=scale)
     return norm_cube
+
+
+def clip_cube(cube: np.array, min_clip: float, max_clip: float):
+    """
+        Clip cube values according to statistics
+        :param min_clip: minimum value used for clipping
+        :param max_clip: maximum value used for clipping
+        :returns: clipped 3D array
+        :rtype: numpy array
+    """
+    # Define function for normalization
+    vfunc = np.vectorize(clip_value)
+    clip_cube = vfunv(cube, min_clip=min_clip, max_clip=max_clip)
+    return clip_cube
 
 
 def main(cube: np.array, stddev: float, mean: float, k: float, min_range: float, max_range: float, normalize=True):
@@ -116,12 +133,14 @@ def main(cube: np.array, stddev: float, mean: float, k: float, min_range: float,
 
     # Compute statistics
     min_clip, max_clip, scale = compute_statistics(stddev=stddev, mean=mean, k=k, max_range=max_range)
+
     if not normalize:
-        scale = 1
-    # Normalize cube
-    norm_cube = normalize_cube(cube=cube, min_clip=min_clip, max_clip=max_clip, scale=scale, min_range=min_range,
-                               max_range=max_range)
-    return norm_cube
+        # Only clip values
+        return clip_cube(cube=cube, min_clip=min_clip, max_clip=max_clip)
+    else:
+        # Normalize cube
+        return normalize_cube(cube=cube, min_clip=min_clip, max_clip=max_clip, scale=scale, min_range=min_range,
+                              max_range=max_range)
 
 
 if __name__ == '__main__':
