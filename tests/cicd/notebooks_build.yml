@@ -52,7 +52,8 @@ jobs:
       source activate seismic-interpretation
       pytest -s tests/cicd/src/notebook_integration_tests.py \
         --nbname examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb \
-        --dataset_root /home/alfred/data_dynamic/penobscot
+        --dataset_root /home/alfred/data_dynamic/penobscot \
+        --model_pretrained /home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth
       
 - job: F3_block_training_and_evaluation_local
   dependsOn: setup
@@ -65,4 +66,5 @@ jobs:
       source activate seismic-interpretation      
       pytest -s tests/cicd/src/notebook_integration_tests.py \
         --nbname examples/interpretation/notebooks/F3_block_training_and_evaluation_local.ipynb \
-        --dataset_root /home/alfred/data_dynamic/dutch_f3/data --model_pretrained /home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth
+        --dataset_root /home/alfred/data_dynamic/dutch_f3/data \
+        --model_pretrained /home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth
