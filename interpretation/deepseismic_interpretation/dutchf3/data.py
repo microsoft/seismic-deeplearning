@@ -663,8 +663,6 @@ class TestPatchLoader(PatchLoader):
     :param int patch_size: Size of patch for training
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
-    :param str seismic_path: Override file path for seismic data
-    :param str label_path: Override file path for label data
     """
     def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None,
                  txt_path=None):
