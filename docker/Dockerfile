@@ -8,20 +8,18 @@ RUN apt-get update && \
     apt-get install -y curl git build-essential wget bzip2 ca-certificates \
     libglib2.0-0 libxext6 libsm6 libxrender1 
 
-# Install Anaconda
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 ENV PATH /opt/conda/bin:$PATH
 SHELL ["/bin/bash", "-c"] 
 
-RUN wget --quiet https://repo.continuum.io/archive/Anaconda3-2019.10-Linux-x86_64.sh -O ~/anaconda.sh && \
-    /bin/bash ~/anaconda.sh -b -p /opt/conda && \
-    rm ~/anaconda.sh && \
+# Install Anaconda and download the seismic-deeplearning repo
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p /opt/conda && \
+    rm ~/miniconda.sh && \
     ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
     echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-    echo "conda activate base" >> ~/.bashrc
-
-# download the seismic-deeplearning repo
-RUN apt-get install -y zip && \
+    echo "conda activate base" >> ~/.bashrc && \
+    apt-get install -y zip && \
     wget --quiet https://github.com/microsoft/seismic-deeplearning/archive/master.zip -O master.zip && \
     unzip master.zip && rm master.zip
 
