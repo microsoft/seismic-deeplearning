@@ -7,11 +7,11 @@ import timeit
 import argparse
 import numpy as np
 import utils.segyextract as segyextract
-import utils.normalize_cube as normalize_cube
+import utils.dataprep as dataprep
 import json
 
 
-def _clip(output_dir, stddev_file, k, min_range, max_range, normalize):
+def _filter_data(output_dir, stddev_file, k, min_range, max_range, normalize):
     """
     Normalization step on all files in output_dir. This function overwrites the existing
     data file
@@ -37,7 +37,7 @@ def _clip(output_dir, stddev_file, k, min_range, max_range, normalize):
     npy_files = list(f for f in os.listdir(output_dir) if f.endswith('.npy'))
     for local_filename in npy_files:
         cube = np.load(os.path.join(output_dir, local_filename))
-        norm_cube = normalize_cube.main(cube, stddev, mean, k, min_range, max_range, normalize=normalize)
+        norm_cube = dataprep.apply(cube, stddev, mean, k, min_range, max_range, normalize=normalize)
         np.save(os.path.join(output_dir, local_filename), norm_cube)
 
 
@@ -95,15 +95,15 @@ def main(input_file, output_dir, prefix, iline=189, xline=193, metadata_only=Fal
         # At this point, there should be npy files in the output directory + one file containing the std deviation found in the segy
         if normalize:
             print("Normalizing and Clipping File")
-            wrapped_clip = segyextract.timewrapper(_clip, output_dir, f"{prefix}.json", 12, 0, 1, normalize)
-            process_time_normalize = timeit.timeit(wrapped_clip, number=1)
+            timed_filter_data = segyextract.timewrapper(_filter_data, output_dir, f"{prefix}_stats.json", 12, 0, 1, normalize)
+            process_time_normalize = timeit.timeit(timed_filter_data, number=1)
             print(f"Completed normalization and clipping in {process_time_normalize} seconds")
         elif clip:
             normalize = False
             print("Clipping File")
-            wrapped_clip = segyextract.timewrapper(_clip, output_dir, f"{prefix}.json", 12, 0, 1, normalize)
-            process_time_normalize = timeit.timeit(wrapped_clip, number=1)
-            print(f"Completed normalization and clipping in {process_time_normalize} seconds")
+            timed_filter_data = segyextract.timewrapper(_filter_data, output_dir, f"{prefix}_stats.json", 12, 0, 1, normalize)
+            process_time_normalize = timeit.timeit(timed_filter_data, number=1)
+            print(f"Completed clipping in {process_time_normalize} seconds")
 
 
 if __name__ == '__main__':

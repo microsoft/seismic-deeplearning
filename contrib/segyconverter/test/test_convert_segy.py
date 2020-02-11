@@ -143,8 +143,8 @@ class TestConvertSEGY:
                           metadata_only, stride, cube_size, normalize, clip, inputpath)
 
         # Validate
-        expected_max = 33.31
-        expected_min = -33.31
+        expected_max = 35.59
+        expected_min = -35.59
         npy_files = test_util.get_npy_files(tmpdir.strpath)
         assert(len(npy_files) == 2)
         min_val, max_val = _get_min_max(tmpdir.strpath)
@@ -176,12 +176,12 @@ class TestConvertSEGY:
                           metadata_only, stride, cube_size, normalize, clip, inputpath)
 
         # Validate
-        expected_max = 51.5
-        expected_min = -51.5
+        expected_max = 1039.8
+        expected_min = -1039.8
         npy_files = test_util.get_npy_files(tmpdir.strpath)
         assert(len(npy_files) == 2)
         min_val, max_val = _get_min_max(tmpdir.strpath)
-        assert (min_val >= expected_min)
+        assert expected_min == pytest.approx(min_val, rel=1e-3)
         assert expected_max == pytest.approx(max_val, rel=1e-3)
 
 

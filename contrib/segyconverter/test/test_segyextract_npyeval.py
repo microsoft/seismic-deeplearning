@@ -289,7 +289,7 @@ def _compare_variance(filename, prefix, data, outputdir):
         segy_stddev = np.sqrt(np.var(data))
 
     # Check statistics file generated from segy
-    with open(os.path.join(outputdir, prefix + '.json'), 'r') as f:
+    with open(os.path.join(outputdir, prefix + '_stats.json'), 'r') as f:
         metadatastr = f.read()
     
     metadata = json.loads(metadatastr)

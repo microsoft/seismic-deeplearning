@@ -60,24 +60,6 @@ def norm_value(v: float, min_clip: float, max_clip: float, min_range: float, max
     return v
 
 
-# def clip_file(local_filename, min_clip, max_clip):
-#     """
-#         Clip npy array file according to statistics. This function overwrites the existing
-#         data file
-#         :param min_clip: minimum value used for clipping
-#         :param max_clip: maximum value used for clipping
-#     """
-#     # Load local npy file
-#     cube = np.load(local_filename)
-#     # Normalize block
-#     try:
-#         clipped_cube = clip_cube(cube, min_clip=min_clip, max_clip=max_clip)
-#     except Exception as ex:
-#         print("ERROR: Not possible to normalize cube. {}".format(ex))
-#     # Save normalized cube locally
-#     np.save(local_filename, clipped_cube)
-
-
 def normalize_cube(cube: np.array, min_clip: float, max_clip: float, scale: float,
                    min_range: float, max_range: float):
     """
@@ -109,11 +91,11 @@ def clip_cube(cube: np.array, min_clip: float, max_clip: float):
     """
     # Define function for normalization
     vfunc = np.vectorize(clip_value)
-    clip_cube = vfunv(cube, min_clip=min_clip, max_clip=max_clip)
+    clip_cube = vfunc(cube, min_clip=min_clip, max_clip=max_clip)
     return clip_cube
 
 
-def main(cube: np.array, stddev: float, mean: float, k: float, min_range: float, max_range: float, normalize=True):
+def apply(cube: np.array, stddev: float, mean: float, k: float, min_range: float, max_range: float, normalize=True):
     """
     Compute statistics and normalize cube
     :param cube: 3D array to be normalized
@@ -141,29 +123,3 @@ def main(cube: np.array, stddev: float, mean: float, k: float, min_range: float,
         # Normalize cube
         return normalize_cube(cube=cube, min_clip=min_clip, max_clip=max_clip, scale=scale, min_range=min_range,
                               max_range=max_range)
-
-
-if __name__ == '__main__':
-    """
-        Normalize cube (numpy array) based on statistics. Normalized cube range will be within
-        [min, max] range
-
-        Sample call: python3 normalize_cube.py --cube=<cube> --stddev=<stddev_value> --max_range=<max_range_value>
-                    --min_range=<min_range_value> -k=<k>
-    """
-    parser = argparse.ArgumentParser(description='Normalize cube')
-
-    parser.add_argument('--cube', type=np.array, help='Cube (3D numpy array) to be normalized')
-    parser.add_argument('--stddev', type=float, help='pre-computed global standard deviation')
-    parser.add_argument('--max_range', type=str, help='Normalized data will be within [min_range, max_range]',
-                        default=1)
-    parser.add_argument('--min_range', type=str, help='Normalized data will be within [min_range, max_range]',
-                        default=-1)
-    parser.add_argument('--k', type=int, help='Number of stddev used for clipping', default=12)
-
-    args = parser.parse_args()
-
-    try:
-        main(cube=args.cube, stddev=args.stddev, k=args.k, min_range=args.min_range, max_range=args.max_range)
-    except Exception as ex:
-        raise ex

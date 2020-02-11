@@ -88,7 +88,7 @@ def process_segy_data_into_single_array(input_file, output_dir, prefix, iline=18
         stddev = np.sqrt(variance)
         mean = np.mean(block)
 
-        with open(os.path.join(output_dir, prefix + '.json'), 'w') as f:
+        with open(os.path.join(output_dir, prefix + '_stats.json'), 'w') as f:
             f.write(json.dumps({'stddev': str(stddev), 'mean': str(mean)}))
         print("Npy files written: 1")
     return block
@@ -135,7 +135,7 @@ def process_segy_data(input_file, output_dir, prefix,
             filecount += 1
 
         stddev = np.sqrt(variance)
-        with open(os.path.join(output_dir, prefix + '.json'), 'w') as f:
+        with open(os.path.join(output_dir, prefix + '_stats.json'), 'w') as f:
             f.write(json.dumps({'stddev': stddev, 'mean': mean}))
         print("Npy files written: {}".format(filecount))
 

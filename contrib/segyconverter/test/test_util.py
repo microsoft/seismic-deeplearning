@@ -79,7 +79,6 @@ def create_segy_file(masklambda, filename, sorting=segyio.TraceSortingFormat.INL
         # looking up an inline's i's jth crosslines' k should be roughly equal
         # to i.j0k
         trace = np.linspace(-1,1,len(spec.samples),True,dtype=np.single)
-
         if sorting == segyio.TraceSortingFormat.INLINE_SORTING:
             # Write the file trace-by-trace and update headers with iline, xline
             # and offset
@@ -96,7 +95,7 @@ def create_segy_file(masklambda, filename, sorting=segyio.TraceSortingFormat.INL
                         tr += 1
                       
             f.bin.update(
-                tsort=segyio.TraceSortingFormat.CROSSLINE_SORTING
+                tsort=segyio.TraceSortingFormat.INLINE_SORTING
             )
         else:
             # Write the file trace-by-trace and update headers with iline, xline
@@ -110,10 +109,13 @@ def create_segy_file(masklambda, filename, sorting=segyio.TraceSortingFormat.INL
                             segyio.su.iline: il,
                             segyio.su.xline: xl
                         }
-                        f.trace[tr] = trace + (xl / 100.0) + il
+                        f.trace[tr] = trace * (xl / 100.0) + il
                         tr += 1
                  
             f.bin.update(
-                tsort=segyio.TraceSortingFormat.INLINE_SORTING
+                tsort=segyio.TraceSortingFormat.CROSSLINE_SORTING
             )
+        # Add some noise for clipping and normalization tests
+        f.trace[tr // 2] = trace * ((max(spec.xlines) / 100.0) + max(spec.ilines)) * 20
+        f.trace[tr // 3] = trace * ((min(spec.xlines) / 100.0) + min(spec.ilines)) * 20
         print(f"\ttraces: {tr}")
