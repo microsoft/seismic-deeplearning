@@ -26,6 +26,10 @@ def compute_statistics(stddev: float, mean: float, max_range: float, k: int):
 def clip_value(v: float, min_clip: float, max_clip: float):
     """
         Clip seismic voxel value
+        :param min_clip: minimum value used for clipping
+        :param max_clip: maximum value used for clipping
+        :returns: clipped value, must be within [min_clip, max_clip]
+        :rtype: float
     """
     # Clip value
     if v > max_clip:
