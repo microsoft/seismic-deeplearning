@@ -44,6 +44,7 @@ class TestNormalizeCube:
         norm_v = norm_cube.norm_value(input_value, min_clip, max_clip, MIN_RANGE, MAX_RANGE, scale)
         assert norm_v == pytest.approx(expected_norm_value, rel=1e-3)
 
+
     def test_norm_value_on_cube_is_within_range(self):
         # Check if normalized value is within [MIN_RANGE, MAX_RANGE]
         trace = np.linspace(-1, 1, 100, True, dtype=np.single)
