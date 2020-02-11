@@ -5,14 +5,15 @@
 pr:
 - master
 - staging
+- contrib
 
 # Any commit to this branch will trigger the build.
 trigger:
 - master
 - staging
+- contrib
 
 jobs:
-# partially disable setup for now - done manually on build VM
 - job: setup
   timeoutInMinutes: 10
   displayName: Setup

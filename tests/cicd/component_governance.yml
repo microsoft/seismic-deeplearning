@@ -10,10 +10,12 @@
 pr:
 - master
 - staging
+- contrib
 
 trigger:
 - master
 - staging
+- contrib
 
 pool:
   vmImage: 'ubuntu-latest'
