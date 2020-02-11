@@ -40,4 +40,4 @@ DATA_F3="${DATA_F3}/data"
 cd scripts
 python prepare_penobscot.py split_inline --data-dir=${DATA_PENOBSCOT} --val-ratio=.1 --test-ratio=.2
 python prepare_dutchf3.py split_train_val section --data-dir=${DATA_F3}
-python prepare_dutchf3.py split_train_val patch --data-dir=${DATA_F3} --stride=50 --patch=100
+python prepare_dutchf3.py split_train_val patch --data-dir=${DATA_F3} --stride=50 --patch_size=100
