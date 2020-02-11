@@ -296,6 +296,8 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 | **Core Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=master) |
 | **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=staging) |
 | **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=master) |
+| **Azure ML Tests** | staging | TODO add badge link |
+| **Azure ML Tests** | master | TODO add badge link |
 
 
 # Troubleshooting
