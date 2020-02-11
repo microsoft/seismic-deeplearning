@@ -19,12 +19,13 @@ K = 12
 class TestNormalizeCube:
 
     testcube = None  # Set by npy_files fixture
+
     def test_normalize_cube(self):
         """
             Test method that normalize one cube by checking if normalized values are within [max, min] range.
         """
-        trace = np.linspace(-1,1,100,True,dtype=np.single)
-        cube = np.ones((100,50,100)) * trace * 500
+        trace = np.linspace(-1, 1, 100, True, dtype=np.single)
+        cube = np.ones((100, 50, 100)) * trace * 500
         mean = np.mean(cube)
         variance = np.var(cube)
         stddev = np.sqrt(variance)
@@ -32,7 +33,6 @@ class TestNormalizeCube:
         norm_block = norm_cube.normalize_cube(cube, min_clip, max_clip, scale, MIN_RANGE, MAX_RANGE)
         assert np.amax(norm_block) <= MAX_RANGE
         assert np.amin(norm_block) >= MIN_RANGE
-
 
     def test_norm_value_is_correct(self):
         # Check if normalized value is calculated correctly
@@ -59,7 +59,6 @@ class TestNormalizeCube:
 
         pytest.raises(Exception, norm_cube.norm_value, v, min_clip * 10, max_clip * 10, MIN_RANGE, MAX_RANGE, scale * 10)
 
-
     def test_compute_statistics(self):
         # Check if statistics are calculated correctly for provided stddev, max_range and k values
         expected_min_clip = -138.693888
@@ -74,7 +73,6 @@ class TestNormalizeCube:
         # Testing division by zero
         pytest.raises(Exception, norm_cube.compute_statistics, stddev, MAX_RANGE, 0)
         pytest.raises(Exception, norm_cube.compute_statistics, 0, MAX_RANGE, 0)
-
 
     def test_main(self):
         trace = np.linspace(-1,1,100,True,dtype=np.single)
