@@ -5,11 +5,13 @@
 pr:
 - master
 - staging
+- contrib
 
 # Any commit to this branch will trigger the build.
 trigger:
 - master
 - staging
+- contrib
 
 jobs:
 # partially disable setup for now - done manually on build VM
@@ -48,11 +50,15 @@ jobs:
     name: deepseismicagentpool
   steps:
   - bash: |
-      echo "Starting unit tests"
+      echo "Starting cv_lib unit tests"
       source activate seismic-interpretation
       pytest --durations=0 cv_lib/tests/
-      echo "Unit test job passed"
-    
+      echo "cv_lib unit test job passed"
+      echo ""
+      echo "Starting scripts unit tests"
+      source activate seismic-interpretation
+      pytest --durations=0 tests/
+      echo "Script unit test job passed"
 
 ###################################################################################################
 # LOCAL PATCH JOBS

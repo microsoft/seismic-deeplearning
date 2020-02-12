@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
 """Test the extract functions against a variety of SEGY files and trace_header scenarioes
 """
 import pytest
