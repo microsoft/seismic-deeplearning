@@ -14,7 +14,6 @@ trigger:
 - contrib
 
 jobs:
-# partially disable setup for now - done manually on build VM
 - job: setup
   timeoutInMinutes: 10
   displayName: Setup
