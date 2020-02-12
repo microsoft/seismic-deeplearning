@@ -421,7 +421,6 @@ if __name__ == "__main__":
     python prepare_dutchf3.py split_train_val patch --output_dir=splits \
                     --data_dir=data/ --slice_steps=2 --stride=50 \
                     --patch size=100 --label_file=label_file.npy
-
     """
     fire.Fire(
         {"split_train_val": SplitTrainValCLI,
