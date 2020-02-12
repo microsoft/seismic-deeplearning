@@ -257,6 +257,7 @@ def split_alaudah_et_al_19(data_dir, stride, patch_size, fraction_validation=0.2
     """Generate train and validation files (with overlap) for Netherlands F3 dataset.
     The original split method from https://github.com/olivesgatech/facies_classification_benchmark
     DON'T USE, SEE NOTES BELOW
+
     Args:
         data_dir (str): data directory path
         stride (int): stride to use when sectioning of the volume
@@ -266,6 +267,7 @@ def split_alaudah_et_al_19(data_dir, stride, patch_size, fraction_validation=0.2
         loader_type (str, optional): type of data loader, can be "patch" or "section".
             Defaults to "patch".
         log_config (str, optional): path to log config. Defaults to None.
+
     Notes:
         Only kept for reproducibility. It generates overlapping train and val which makes
             validation results unreliable.
@@ -355,7 +357,6 @@ class SplitTrainValCLI(object):
                 If slice_steps > 1 the function will skip:
                     slice_steps - 1 slice.
                 Defaults to 1, do not skip any slice.
-            log_config (str): path to log configurations
         """
         if data_dir is not None:
             label_file = path.join(data_dir, label_file)
@@ -398,7 +399,6 @@ if __name__ == "__main__":
     python prepare_dutchf3.py split_train_val patch --output_dir=splits \
                     --data_dir=data/ --slice_steps=2 --stride=50 \
                     --patch size=100 --label_file=label_file.npy
-
     """
     fire.Fire(
         {"split_train_val": SplitTrainValCLI,
