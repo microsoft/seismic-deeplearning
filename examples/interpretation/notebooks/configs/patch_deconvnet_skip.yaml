@@ -48,7 +48,8 @@ VALIDATION:
   BATCH_SIZE_PER_GPU: 512
 
 TEST: 
-  MODEL_PATH: "/your/trained/model/path/model_name.pth" # must be an absolute path
+  # Uncomment this if you want to test a model:
+  # MODEL_PATH: "/your/trained/model/path/model_name.pth" # must be an absolute path
   TEST_STRIDE: 10
   SPLIT: "test1" # Can be both, test1, test2
   INLINE: True
