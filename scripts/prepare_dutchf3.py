@@ -394,11 +394,12 @@ class SplitTrainValCLI(object):
 
 if __name__ == "__main__":
     """Example:
-    python prepare_data.py split_train_val section --data_dir=/mnt/dutch
+    python prepare_data.py split_train_val section --data_dir=/mnt/dutch \
+        --label_file=label_file.npy --output_dir=splits --slice_steps=2
     or
     python prepare_dutchf3.py split_train_val patch --output_dir=splits \
-                    --data_dir=data/ --slice_steps=2 --stride=50 \
-                    --patch size=100 --label_file=label_file.npy
+        --data_dir=data/ --slice_steps=2 --stride=50 --patch_size=100 \
+        --label_file=label_file.npy
     """
     fire.Fire(
         {"split_train_val": SplitTrainValCLI}
