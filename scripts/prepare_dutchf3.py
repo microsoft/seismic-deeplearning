@@ -329,7 +329,7 @@ def split_alaudah_et_al_19(data_dir, stride, patch_size, fraction_validation=0.2
     list_train_val = i_list + x_list
 
     # create train and validation splits:
-    train_list, val_list = train_val_split(list_train_val, val_size=fraction_validation, shuffle=True)
+    train_list, val_list = train_test_split(list_train_val, val_size=fraction_validation, shuffle=True)
 
     # write to files to disk:
     splits_path = _get_splits_path(data_dir)
