@@ -41,10 +41,10 @@ jobs:
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
 
 
-- job: unit_tests_job
+- job: cv_lib_unit_tests_job
   dependsOn: setup
   timeoutInMinutes: 5
-  displayName: Unit Tests Job
+  displayName: cv_lib Unit Tests Job
   pool:
     name: deepseismicagentpool
   steps:
@@ -53,7 +53,15 @@ jobs:
       source activate seismic-interpretation
       pytest --durations=0 cv_lib/tests/
       echo "cv_lib unit test job passed"
-      echo ""
+
+- job: scripts_unit_tests_job
+  dependsOn: setup
+  timeoutInMinutes: 5
+  displayName: Unit Tests Job
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
       echo "Starting scripts unit tests"
       source activate seismic-interpretation
       pytest --durations=0 tests/
