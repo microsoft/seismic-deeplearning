@@ -16,12 +16,12 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 
-def _write_split_files(splits_path, train_list, test_list, loader_type):
+def _write_split_files(splits_path, train_list, val_list, loader_type):
     if not path.isdir(splits_path):
         mkdir(splits_path)
     file_object = open(path.join(splits_path,
                        loader_type + "_train_val.txt"), "w")
-    file_object.write("\n".join(train_list + test_list))
+    file_object.write("\n".join(train_list + val_list))
     file_object.close()
     file_object = open(path.join(splits_path,
                        loader_type + "_train.txt"), "w")
@@ -29,7 +29,7 @@ def _write_split_files(splits_path, train_list, test_list, loader_type):
     file_object.close()
     file_object = open(path.join(splits_path,
                        loader_type + "_val.txt"), "w")
-    file_object.write("\n".join(test_list))
+    file_object.write("\n".join(val_list))
     file_object.close()
 
 
@@ -38,11 +38,11 @@ def _get_aline_range(aline, per_val, slice_steps):
         if slice_steps < 1:
             raise ValueError('slice_steps cannot be zero or a negative number')
         # Inline and Crossline sections
-        test_aline = math.floor(aline * per_val / 2)
-        test_aline_range = itertools.chain(range(0, test_aline),
-                                           range(aline - test_aline, aline))
-        train_aline_range = range(test_aline, aline - test_aline, slice_steps)
-        return train_aline_range, test_aline_range
+        val_aline = math.floor(aline * per_val / 2)
+        val_aline_range = itertools.chain(range(0, val_aline),
+                                           range(aline - val_aline, aline))
+        train_aline_range = range(val_aline, aline - val_aline, slice_steps)
+        return train_aline_range, val_aline_range
     except (Exception, ValueError):
         raise
 
@@ -74,32 +74,31 @@ def split_section_train_val(data_dir, output_dir, label_file, per_val=0.2,
     logger.info("Splitting data into sections .... ")
     logger.info(f"Reading data from {data_dir}")
 
-    # labels_path = _get_labels_path(data_dir)
     logger.info(f"Loading {label_file}")
     labels = np.load(label_file)
     logger.debug(f"Data shape [iline|xline|depth] {labels.shape}")
 
     iline, xline, _ = labels.shape
     # Inline sections
-    train_iline_range, test_iline_range = _get_aline_range(iline,
+    train_iline_range, val_iline_range = _get_aline_range(iline,
                                                            per_val,
                                                            slice_steps)
     train_i_list = ["i_" + str(i) for i in train_iline_range]
-    test_i_list = ["i_" + str(i) for i in test_iline_range]
+    val_i_list = ["i_" + str(i) for i in val_iline_range]
 
     # Xline sections
-    train_xline_range, test_xline_range = _get_aline_range(xline,
+    train_xline_range, val_xline_range = _get_aline_range(xline,
                                                            per_val,
                                                            slice_steps)
     train_x_list = ["x_" + str(x) for x in train_xline_range]
-    test_x_list = ["x_" + str(x) for x in test_xline_range]
+    val_x_list = ["x_" + str(x) for x in val_xline_range]
 
     train_list = train_x_list + train_i_list
-    test_list = test_x_list + test_i_list
+    val_list = val_x_list + val_i_list
 
     # write to files to disk
     logger.info(f"Writing {output_dir}")
-    _write_split_files(output_dir, train_list, test_list, "section")
+    _write_split_files(output_dir, train_list, val_list, "section")
 
 
 def split_patch_train_val(data_dir, output_dir, label_file, stride, patch_size,
@@ -129,19 +128,18 @@ def split_patch_train_val(data_dir, output_dir, label_file, stride, patch_size,
     logger.info("Splitting data into patches .... ")
     logger.info(f"Reading data from {data_dir}")
 
-    # labels_path = _get_labels_path(data_dir)
     logger.info(f"Loading {label_file}")
     labels = np.load(label_file)
     logger.debug(f"Data shape [iline|xline|depth] {labels.shape}")
 
     iline, xline, depth = labels.shape
     # Inline sections
-    train_iline_range, test_iline_range = _get_aline_range(iline,
+    train_iline_range, val_iline_range = _get_aline_range(iline,
                                                            per_val,
                                                            slice_steps)
 
     # Xline sections
-    train_xline_range, test_xline_range = _get_aline_range(xline,
+    train_xline_range, val_xline_range = _get_aline_range(xline,
                                                            per_val,
                                                            slice_steps)
 
@@ -152,8 +150,8 @@ def split_patch_train_val(data_dir, output_dir, label_file, stride, patch_size,
 
     # Process inlines
     # iline = xline x depth
-    test_iline = math.floor(xline * per_val / 2)
-    logger.debug(test_iline)
+    val_iline = math.floor(xline * per_val / 2)
+    logger.debug(val_iline)
 
     def _i_extract_patches(iline_range, horz_locations, vert_locations):
         for i in iline_range:
@@ -163,30 +161,30 @@ def split_patch_train_val(data_dir, output_dir, label_file, stride, patch_size,
                 yield "i_" + str(i) + "_" + str(j) + "_" + str(k)
 
     # Process inlines - train
-    horz_locations_train = range(test_iline, xline - patch_size, stride)
+    horz_locations_train = range(val_iline, xline - patch_size, stride)
     logger.debug("Generating Inline patches")
     logger.debug("Generating Inline patches - Train")
     logger.debug(horz_locations_train)
     train_i_list = list(_i_extract_patches(train_iline_range,
                                           horz_locations_train,
                                           vert_locations))
-    # test_iline - define size of the test set for the fist part
-    test_iline_range = list(test_iline_range)
+    # val_iline - define size of the validation set for the fist part
+    val_iline_range = list(val_iline_range)
 
-    # Process inlines - test - begining
-    logger.debug("Generating Inline patches - Test")
-    horz_locations_test_begin = range(0, test_iline, max(1,stride))
-    test_i_list = list(_i_extract_patches(test_iline_range,
-                                           horz_locations_test_begin,
+    # Process inlines - validation - begining
+    logger.debug("Generating Inline patches - validation")
+    horz_locations_val_begin = range(0, val_iline, max(1,stride))
+    val_i_list = list(_i_extract_patches(val_iline_range,
+                                           horz_locations_val_begin,
                                            vert_locations))
-    # Process inlines - test - end
-    horz_locations_test_end = range(xline - stride + 1, xline, max(1,stride))
-    test_i_list += list(_i_extract_patches(test_iline_range,
-                                                horz_locations_test_end,
+    # Process inlines - validation - end
+    horz_locations_val_end = range(xline - stride + 1, xline, max(1,stride))
+    val_i_list += list(_i_extract_patches(val_iline_range,
+                                                horz_locations_val_end,
                                                 vert_locations))
 
     logger.debug(train_iline_range)
-    logger.debug(test_iline_range)
+    logger.debug(val_iline_range)
 
     # Process crosslines
     def _x_extract_patches(xline_range, horz_locations, vert_locations):
@@ -199,46 +197,46 @@ def split_patch_train_val(data_dir, output_dir, label_file, stride, patch_size,
     logger.debug("Generating Crossline patches")
     logger.debug("Generating Crossline patches - Train")
     # xline = iline x depth
-    test_xline = math.floor(iline * per_val / 2)
-    logger.debug(test_xline)
+    val_xline = math.floor(iline * per_val / 2)
+    logger.debug(val_xline)
 
     # Process xlines - train
-    horz_locations_train = range(test_xline, iline - patch_size, stride)
+    horz_locations_train = range(val_xline, iline - patch_size, stride)
     logger.debug(horz_locations_train)
     train_x_list = list(_x_extract_patches(train_xline_range,
                                            horz_locations_train,
                                            vert_locations))
 
-    # test_xline - define size of the test set for the fist part
-    test_xline_range = list(test_xline_range)
+    # val_xline - define size of the validation set for the fist part
+    val_xline_range = list(val_xline_range)
 
-    # Process xlines - test - begining
-    logger.debug("Generating Inline patches - Test")
-    horz_locations_test_begin = range(0, test_xline, max(1,stride))
-    test_x_list = list(_i_extract_patches(test_xline_range,
-                                           horz_locations_test_begin,
+    # Process xlines - validation - begining
+    logger.debug("Generating Inline patches - validation")
+    horz_locations_val_begin = range(0, val_xline, max(1,stride))
+    val_x_list = list(_i_extract_patches(val_xline_range,
+                                           horz_locations_val_begin,
                                            vert_locations))
-    # Process xlines - test - end
-    horz_locations_test_end = range(iline - stride + 1, iline, max(1,stride))
-    test_x_list += list(_i_extract_patches(test_xline_range,
-                                                horz_locations_test_end,
+    # Process xlines - validation - end
+    horz_locations_val_end = range(iline - stride + 1, iline, max(1,stride))
+    val_x_list += list(_i_extract_patches(val_xline_range,
+                                                horz_locations_val_end,
                                                 vert_locations))
 
-    test_xline_range = list(test_xline_range)
-    test_x_list = list(_x_extract_patches(test_xline_range,
-                                          horz_locations_test_end,
+    val_xline_range = list(val_xline_range)
+    val_x_list = list(_x_extract_patches(val_xline_range,
+                                          horz_locations_val_end,
                                           vert_locations))
     logger.debug(train_xline_range)
-    logger.debug(test_xline_range)
+    logger.debug(val_xline_range)
 
     train_list = train_x_list + train_i_list
-    test_list = test_x_list + test_i_list
+    val_list = val_x_list + val_i_list
 
     # write to files to disk:
     # NOTE: This isn't quite right we should calculate the patches
     # again for the whole volume
     logger.info(f"Writing {output_dir}")
-    _write_split_files(output_dir, train_list, test_list, "patch")
+    _write_split_files(output_dir, train_list, val_list, "patch")
 
 _LOADER_TYPES = {"section": split_section_train_val,
                  "patch": split_patch_train_val}
@@ -330,12 +328,12 @@ def split_alaudah_et_al_19(data_dir, stride, patch_size, fraction_validation=0.2
 
     list_train_val = i_list + x_list
 
-    # create train and test splits:
-    train_list, test_list = train_test_split(list_train_val, test_size=fraction_validation, shuffle=True)
+    # create train and validation splits:
+    train_list, val_list = train_val_split(list_train_val, val_size=fraction_validation, shuffle=True)
 
     # write to files to disk:
     splits_path = _get_splits_path(data_dir)
-    _write_split_files(splits_path, train_list, test_list, loader_type)
+    _write_split_files(splits_path, train_list, val_list, loader_type)
 
 
 # TODO: Try https://github.com/Chilipp/docrep for doscstring reuse
