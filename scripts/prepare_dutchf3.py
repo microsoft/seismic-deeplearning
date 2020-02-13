@@ -401,6 +401,8 @@ if __name__ == "__main__":
                     --patch size=100 --label_file=label_file.npy
     """
     fire.Fire(
-        {"split_train_val": SplitTrainValCLI,
-         "split_alaudah_et_al_19": split_alaudah_et_al_19}
+        {"split_train_val": SplitTrainValCLI}
+         # commenting the following line as this was not updated with
+         # the new parameters names
+         # "split_alaudah_et_al_19": split_alaudah_et_al_19}
     )
