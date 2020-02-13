@@ -361,11 +361,15 @@ class SplitTrainValCLI(object):
         if data_dir is not None:
             label_file = path.join(data_dir, label_file)
         output_dir = path.join(data_dir, output_dir)
-        return split_section_train_val(data_dir, output_dir, label_file,
-                                       slice_steps, per_val, log_config)
+        return split_section_train_val(data_dir=data_dir, 
+                                       output_dir=output_dir, 
+                                       label_file=label_file,
+                                       slice_steps=slice_steps, 
+                                       per_val=per_val, 
+                                       log_config=log_config)
 
     def patch(self, label_file, stride, patch_size,
-              per_val=0.2, log_config="train/deepseismic/configs/logging.conf",
+              per_val=0.2, log_config="logging.conf",
               data_dir=None, output_dir=None, slice_steps=1):
         """Generate train and validation files for Netherlands F3 dataset.
 
@@ -386,20 +390,25 @@ class SplitTrainValCLI(object):
         if data_dir is not None:
             label_file = path.join(data_dir, label_file)
         output_dir = path.join(data_dir, output_dir)
-        return split_patch_train_val(output_dir, label_file,
-                                     stride, patch_size,
-                                     per_val, log_config,
-                                     slice_steps)
+
+        return split_patch_train_val(data_dir=data_dir, 
+                                     output_dir=output_dir, 
+                                     label_file=label_file,
+                                     stride=stride, 
+                                     patch_size=patch_size,
+                                     slice_steps=slice_steps,
+                                     per_val=per_val,
+                                     log_config=log_config)
 
 
 if __name__ == "__main__":
     """Example:
-    python prepare_data.py split_train_val section --data_dir=/mnt/dutch \
+    python prepare_data.py split_train_val section --data_dir=data \
         --label_file=label_file.npy --output_dir=splits --slice_steps=2
     or
-    python prepare_dutchf3.py split_train_val patch --output_dir=splits \
-        --data_dir=data/ --slice_steps=2 --stride=50 --patch_size=100 \
-        --label_file=label_file.npy
+    python prepare_dutchf3.py split_train_val patch --data_dir=data \
+        --label_file=label_file.npy --output_dir=splits --stride=50 \
+        --patch_size=100 --slice_steps=2
     """
     fire.Fire(
         {"split_train_val": SplitTrainValCLI}
