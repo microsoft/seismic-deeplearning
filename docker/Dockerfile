@@ -28,8 +28,10 @@ WORKDIR seismic-deeplearning-master
 # RUN cd seismic-deeplearning-master && \
 RUN conda update conda -y && \
     conda env create -n seismic-interpretation --file environment/anaconda/local/environment.yml && \
+    source activate seismic-interpretation && \
     pip install -e interpretation && \
-    pip install -e cv_lib 
+    pip install -e cv_lib  && \
+    conda init bash
 
 # # Download Penobscot dataset:
 # RUN data_dir="../data/penobscot" && \
@@ -44,16 +46,12 @@ RUN conda update conda -y && \
 # To prepare the data for the experiments (run prepare_ scripts)
 
 # TODO: In readme, ask user to download HRNet model and mount it to the docker container 
-# TODO: maxkaz suggested we group RUN commands to reduce # of layers, and therefore, docker image size.  
 
 # Run notebook
 EXPOSE 8888/tcp
 
-# CMD /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh" && \
-#     conda run -n seismic-interpretation && \
-CMD conda activate seismic-interpretation && \
+CMD source activate seismic-interpretation && \
     python -m ipykernel install --user --name seismic-interpretation && \
     jupyter notebook --allow-root --ip 0.0.0.0 --port 8888 
-# --notebook-dir seismic-deeplearning-master
 
 
