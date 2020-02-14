@@ -40,8 +40,11 @@ def _get_aline_range(aline, per_val, slice_steps):
         # Inline and Crossline sections
         val_aline = math.floor(aline * per_val / 2)
         val_aline_range = itertools.chain(range(0, val_aline),
-                                           range(aline - val_aline, aline))
+                                          range(aline - val_aline, aline))
         train_aline_range = range(val_aline, aline - val_aline, slice_steps)
+
+        print("aline: ", aline)
+        print("val_aline: ", val_aline)
         return train_aline_range, val_aline_range
     except (Exception, ValueError):
         raise
@@ -55,8 +58,6 @@ def split_section_train_val(data_dir, output_dir, label_file, per_val=0.2,
         data_dir (str): data directory path
         output_dir (str): directory under data_dir to store the split files
         label_file (str): npy files with labels. Stored in data_dir
-        stride (int): stride to use when sectioning of the volume
-        patch_size (int): size of patch to extract
         per_val (float, optional):  the fraction of the volume to use for
             validation. Defaults to 0.2.
         log_config (str): path to log configurations
@@ -145,14 +146,10 @@ def split_patch_train_val(data_dir, output_dir, label_file, stride, patch_size,
 
     # Generate patches from sections
     # Vertical locations is common to all patches processed
-    vert_locations = range(0, depth - patch_size, stride)
+    vert_locations = range(0, depth - patch_size, patch_size)
     logger.debug(vert_locations)
 
     # Process inlines
-    # iline = xline x depth
-    val_iline = math.floor(xline * per_val / 2)
-    logger.debug(val_iline)
-
     def _i_extract_patches(iline_range, horz_locations, vert_locations):
         for i in iline_range:
             locations = ([j, k] for j in horz_locations
@@ -161,27 +158,28 @@ def split_patch_train_val(data_dir, output_dir, label_file, stride, patch_size,
                 yield "i_" + str(i) + "_" + str(j) + "_" + str(k)
 
     # Process inlines - train
-    horz_locations_train = range(val_iline, xline - patch_size, stride)
     logger.debug("Generating Inline patches")
     logger.debug("Generating Inline patches - Train")
+    # iline = xline x depth
+    val_iline = math.floor(xline * per_val / 2)
+    logger.debug(val_iline)
+
+    # Process ilines - train
+    horz_locations_train = range(val_iline, xline - val_iline, max(1,patch_size))
     logger.debug(horz_locations_train)
     train_i_list = list(_i_extract_patches(train_iline_range,
                                           horz_locations_train,
                                           vert_locations))
+
     # val_iline - define size of the validation set for the fist part
     val_iline_range = list(val_iline_range)
 
-    # Process inlines - validation - begining
-    logger.debug("Generating Inline patches - validation")
-    horz_locations_val_begin = range(0, val_iline, max(1,stride))
+    # Process inlines - validation
+    horz_locations_val_end = range(xline - val_iline, xline, max(1,patch_size))
+    val_iline_range = list(val_iline_range)
     val_i_list = list(_i_extract_patches(val_iline_range,
-                                           horz_locations_val_begin,
-                                           vert_locations))
-    # Process inlines - validation - end
-    horz_locations_val_end = range(xline - stride + 1, xline, max(1,stride))
-    val_i_list += list(_i_extract_patches(val_iline_range,
-                                                horz_locations_val_end,
-                                                vert_locations))
+                                          horz_locations_val_end,
+                                          vert_locations))
 
     logger.debug(train_iline_range)
     logger.debug(val_iline_range)
@@ -201,7 +199,7 @@ def split_patch_train_val(data_dir, output_dir, label_file, stride, patch_size,
     logger.debug(val_xline)
 
     # Process xlines - train
-    horz_locations_train = range(val_xline, iline - patch_size, stride)
+    horz_locations_train = range(val_xline, iline - val_xline, max(1,patch_size))
     logger.debug(horz_locations_train)
     train_x_list = list(_x_extract_patches(train_xline_range,
                                            horz_locations_train,
@@ -210,27 +208,22 @@ def split_patch_train_val(data_dir, output_dir, label_file, stride, patch_size,
     # val_xline - define size of the validation set for the fist part
     val_xline_range = list(val_xline_range)
 
-    # Process xlines - validation - begining
-    logger.debug("Generating Inline patches - validation")
-    horz_locations_val_begin = range(0, val_xline, max(1,stride))
-    val_x_list = list(_i_extract_patches(val_xline_range,
-                                           horz_locations_val_begin,
-                                           vert_locations))
-    # Process xlines - validation - end
-    horz_locations_val_end = range(iline - stride + 1, iline, max(1,stride))
-    val_x_list += list(_i_extract_patches(val_xline_range,
-                                                horz_locations_val_end,
-                                                vert_locations))
-
+    # Process xlines - validation
+    horz_locations_val_end = range(iline - val_xline, iline, max(1,patch_size))
     val_xline_range = list(val_xline_range)
     val_x_list = list(_x_extract_patches(val_xline_range,
                                           horz_locations_val_end,
                                           vert_locations))
+
     logger.debug(train_xline_range)
     logger.debug(val_xline_range)
 
     train_list = train_x_list + train_i_list
     val_list = val_x_list + val_i_list
+
+    logger.debug(train_list)
+    logger.debug(val_list)
+
 
     # write to files to disk:
     # NOTE: This isn't quite right we should calculate the patches

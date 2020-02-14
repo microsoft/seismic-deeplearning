@@ -7,10 +7,13 @@ import numpy as np
 import pandas as pd
 import tempfile
 import scripts.prepare_dutchf3 as prep_dutchf3
+import math
 
 # Setup
 OUTPUT = None
-ILINE = XLINE = DEPTH = 111
+ILINE = 551
+XLINE = 1008
+DEPTH = 351
 ALINE = np.zeros((ILINE, XLINE, DEPTH))
 STRIDE = 100
 PATCH = 50
@@ -131,8 +134,8 @@ def test_prepare_dutchf3_patch_step_1():
         # test patch_train and slice_steps=1
         y = list(sorted(set(patch_train.y.astype(int))))
         x = list(sorted(set(patch_train.x.astype(int)),reverse=True))
-        assert (float(y[2]) - float(y[1])) == float(SLICE_STEPS)
-        assert (float(x[1]) - float(x[2])) == float(SLICE_STEPS)
+        assert (int(y[2]) - int(y[1])) == SLICE_STEPS
+        assert (int(x[1]) - int(x[2])) == SLICE_STEPS
 
         # reading the file and splitting the data
         patch_val = pd.read_csv(output + '/patch_val.txt', header=None, names=['row', 'a', 'b'])
@@ -141,8 +144,15 @@ def test_prepare_dutchf3_patch_step_1():
         # test patch_val and slice_steps=1
         y = list(sorted(set(patch_val.y.astype(int))))
         x = list(sorted(set(patch_val.x.astype(int)),reverse=True))
-        assert (float(y[2]) - float(y[1])) == float(SLICE_STEPS)
-        assert (float(x[1]) - float(x[2])) == float(SLICE_STEPS)
+        assert (int(y[2]) - int(y[1])) == SLICE_STEPS
+        assert (int(x[1]) - int(x[2])) == SLICE_STEPS
+
+        # test validation set is, at least, PER_VAL
+        # print(len(set(patch_train.y)), len(set(patch_val.y)))
+        PER_VAL_CHK = len(set(patch_train.y))/(len(set(patch_train.y))+len(set(patch_val.y))) * 100
+        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = len(set(patch_train.x))/(len(set(patch_train.x))+len(set(patch_val.x))) * 100
+        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
 
 def test_prepare_dutchf3_patch_step_2():
 
@@ -172,8 +182,8 @@ def test_prepare_dutchf3_patch_step_2():
         # test patch_train and slice_steps=2
         y = list(sorted(set(patch_train.y.astype(int))))
         x = list(sorted(set(patch_train.x.astype(int)),reverse=True))
-        assert (float(y[2]) - float(y[1])) == float(SLICE_STEPS)
-        assert (float(x[1]) - float(x[2])) == float(SLICE_STEPS)
+        assert (int(y[2]) - int(y[1])) == SLICE_STEPS
+        assert (int(x[1]) - int(x[2])) == SLICE_STEPS
 
         # reading the file and splitting the data
         patch_val = pd.read_csv(output + '/patch_val.txt', header=None, names=['row', 'a', 'b'])
@@ -182,15 +192,22 @@ def test_prepare_dutchf3_patch_step_2():
         # test patch_val and slice_steps=2
         y = list(sorted(set(patch_val.y.astype(int))))
         x = list(sorted(set(patch_val.x.astype(int)),reverse=True))
-        assert (float(y[2]) - float(y[1])) != float(SLICE_STEPS)
-        assert (float(x[1]) - float(x[2])) != float(SLICE_STEPS)
+        assert (int(y[2]) - int(y[1])) != SLICE_STEPS
+        assert (int(x[1]) - int(x[2])) != SLICE_STEPS
+
+        # test validation set is, at least, PER_VAL
+        PER_VAL_CHK = len(set(patch_train.y))/(len(set(patch_train.y))+len(set(patch_val.y))) * 100
+        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = len(set(patch_train.x))/(len(set(patch_train.x))+len(set(patch_val.x))) * 100
+        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
+
 
 def test_prepare_dutchf3_patch_train_and_test_sets():
 
     """check a complete run for the script in case further changes are needed
     """
     # setting a value to SLICE_STEPS as needed to test the values
-    SLICE_STEPS = 2
+    SLICE_STEPS = 1
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -223,6 +240,11 @@ def test_prepare_dutchf3_patch_train_and_test_sets():
         assert y_train & y_val == set()
         assert x_train & x_val == set()
 
+        # test validation set is, at least, PER_VAL
+        PER_VAL_CHK = len(set(patch_train.y))/(len(set(patch_train.y))+len(set(patch_val.y))) * 100
+        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = len(set(patch_train.x))/(len(set(patch_train.x))+len(set(patch_val.x))) * 100
+        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
 
 def test_prepare_dutchf3_section_step_1():
 
@@ -255,6 +277,10 @@ def test_prepare_dutchf3_section_step_1():
         assert (float(section_train.section[1]) - float(section_train.section[0])) % float(SLICE_STEPS) == 0.0
         assert (float(section_val.section[1]) - float(section_val.section[0])) % float(SLICE_STEPS) == 0.0
 
+        # test validation set is, at least, PER_VAL
+        PER_VAL_CHK = len(section_val)/(len(section_val)+len(section_train)) * 100
+        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
+
 def test_prepare_dutchf3_section_step_2():
 
     """check a complete run for the script in case further changes are needed
@@ -286,3 +312,7 @@ def test_prepare_dutchf3_section_step_2():
         # test
         assert (float(section_train.section[1]) - float(section_train.section[0])) % float(SLICE_STEPS) == 0.0
         assert (float(section_val.section[1]) - float(section_val.section[0])) % float(SLICE_STEPS) > 0.0
+
+        # test validation set is, at least, PER_VAL
+        PER_VAL_CHK = len(section_val)/(len(section_val)+len(section_train)) * 100
+        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
