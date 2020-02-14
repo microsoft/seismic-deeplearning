@@ -26,6 +26,7 @@ WORKDIR seismic-deeplearning-staging
 
 RUN conda env create -n seismic-interpretation --file environment/anaconda/local/environment.yml && \
     source activate seismic-interpretation && \
+    python -m ipykernel install --user --name seismic-interpretation && \
     pip install -e interpretation && \
     pip install -e cv_lib 
 
@@ -39,13 +40,10 @@ RUN data_dir="..//data/dutch" && \
     mkdir -p "$data_dir" && \
     ./scripts/download_dutch_f3.sh "$data_dir"
 
-# To prepare the data for the experiments (run prepare_ scripts)
-
 # Run notebook
 EXPOSE 8888/tcp
 
 CMD source activate seismic-interpretation && \
-    python -m ipykernel install --user --name seismic-interpretation && \
     jupyter notebook --allow-root --ip 0.0.0.0 --port 8888 
 
 
