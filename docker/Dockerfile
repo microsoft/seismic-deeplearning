@@ -18,7 +18,6 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     rm ~/miniconda.sh && \
     ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
     echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-    echo "conda activate base" >> ~/.bashrc && \
     apt-get install -y zip && \
     wget --quiet https://github.com/microsoft/seismic-deeplearning/archive/master.zip -O master.zip && \
     unzip master.zip && rm master.zip
@@ -26,12 +25,10 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 WORKDIR seismic-deeplearning-master
 
 # RUN cd seismic-deeplearning-master && \
-RUN conda update conda -y && \
-    conda env create -n seismic-interpretation --file environment/anaconda/local/environment.yml && \
+RUN conda env create -n seismic-interpretation --file environment/anaconda/local/environment.yml && \
     source activate seismic-interpretation && \
     pip install -e interpretation && \
-    pip install -e cv_lib  && \
-    conda init bash
+    pip install -e cv_lib 
 
 # # Download Penobscot dataset:
 # RUN data_dir="../data/penobscot" && \
