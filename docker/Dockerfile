@@ -29,19 +29,17 @@ RUN conda env create -n seismic-interpretation --file environment/anaconda/local
     pip install -e interpretation && \
     pip install -e cv_lib 
 
-# # Download Penobscot dataset:
-# RUN data_dir="../data/penobscot" && \
-#     mkdir -p "$data_dir" && \
-#     ./scripts/download_penobscot.sh "$data_dir"
+# Download Penobscot dataset:
+RUN data_dir="../data/penobscot" && \
+    mkdir -p "$data_dir" && \
+    ./scripts/download_penobscot.sh "$data_dir"
 
 # Download F3 dataset:
-# RUN data_dir="..//data/dutch" && \
-#     mkdir -p "$data_dir" && \
-#     ./scripts/download_dutch_f3.sh "$data_dir"
+RUN data_dir="..//data/dutch" && \
+    mkdir -p "$data_dir" && \
+    ./scripts/download_dutch_f3.sh "$data_dir"
 
 # To prepare the data for the experiments (run prepare_ scripts)
-
-# TODO: In readme, ask user to download HRNet model and mount it to the docker container 
 
 # Run notebook
 EXPOSE 8888/tcp
