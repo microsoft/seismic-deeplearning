@@ -103,7 +103,9 @@ To make things easier, we suggested you use your home directory where you might 
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
 
 ```
-python scripts/prepare_penobscot.py split_inline --data-dir="$HOME/data/penobscot" --val-ratio=.1 --test-ratio=.2
+cd scripts
+python prepare_penobscot.py split_inline --data-dir=$data_dir --val-ratio=.1 --test-ratio=.2
+cd ..
 ```
 
 #### F3 Netherlands
@@ -112,18 +114,13 @@ To download the F3 Netherlands dataset for 2D experiments, please follow the dat
 
 ```
 data_dir="$HOME/data/dutch"
-mkdir -p "$data_dir"
-./scripts/download_dutch_f3.sh "$data_dir"
+mkdir -p "${data_dir}"
+./scripts/download_dutch_f3.sh "${data_dir}"
 ```
 
-Once you've downloaded the data set, make sure to create an empty `splits` directory, under the downloaded `data` directory; you can re-use the same data directory as the one for Penobscot dataset created earlier. This is where your training/test/validation splits will be saved.
+Download scripts also automatically create any subfolders in `${data_dir}` which are needed for the data preprocessing scripts.
 
-```
-cd data
-mkdir splits
-```
-
-At this point, your `data` directory tree should look like this:
+At this point, your `${data_dir}` directory should contain a `data` folder, which should look like this:
 
 ```
 data
@@ -141,12 +138,18 @@ data
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script:
 
 ```
+# change working directory to scripts folder
+cd scripts
+
 # For section-based experiments
-python scripts/prepare_dutchf3.py split_train_val section --data-dir=$data_dir/data
+python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data
 
 
 # For patch-based experiments
-python scripts/prepare_dutchf3.py split_train_val patch --data-dir=$data_dir/data --stride=50 --patch=100
+python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --stride=50 --patch=100
+
+# go back to repo root
+cd ..
 ```
 
 Refer to the script itself for more argument options.
@@ -266,6 +269,11 @@ for the Penobscot dataset follow the same instructions but navigate to the [peno
 
 - [kill_windows.sh](scripts/kill_windows.sh): Script to kill multiple tmux windows. Used to kill jobs that parallel_training.sh might have started.
 
+- [run_all.sh](scripts/run_all.sh): similar to `parallel_training.sh` above, provides a multiprocess execution on an ND40 VM with 8 GPUs. Designed to work with `test_all.sh` script below. Trains 8 models concurrently.
+
+- [run_distributed.sh](scripts/run_distributed.sh): sequentially launches distributed training jobs, which should produce the same results on Dutch F3 dataset with patch based methods as the single-GPU training (just takes less time per model to train). Also designed to work with `test_all.sh` script below.
+
+- [test_all.sh](scripts/test_all.sh): after running `run_all.sh` and `run_distributed.sh` scripts above, this script scores single-GPU-trained and multi-GPU-trained models in the repo to reproduce the results given in the table.
 
 ## Contributing
 
@@ -284,10 +292,10 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 | --- | --- | --- |
 | **Legal Compliance** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=124&branchName=staging) |
 | **Legal Compliance** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=124&branchName=master) |
-| **Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=staging) |
-| **Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=master) |
-| **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=staging) |
-| **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=master) |
+| **Core Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=staging) |
+| **Core Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=master) |
+| **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=staging) |
+| **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=master) |
 
 
 # Troubleshooting
