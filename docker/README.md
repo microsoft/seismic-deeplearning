@@ -24,6 +24,6 @@ This process will take a few minutes to complete.
 
 Once the Docker image is built, you can run it anytime using the following command: 
 ```bash
-sudo docker run --rm -it -p 8888:8888 seismic-deeplearning 
+sudo docker run --rm -it -p 8888:8888 --volume <path_to_hrnetv2_w48_imagenet_pretrained.pth>:/data/hrnet_pretrained/image_classification/hrnetv2_w48_imagenet_pretrained.pth seismic-deeplearning 
 ```
-This will run a jupyter notebook server that you can access by clicking on the link in your terminal, and then navigating to the notebook that you would like to run.  
+Make sure to edit `<path_to_hrnetv2_w48_imagenet_pretrained.pth>` to point to the location where you downloaded the model. This command will run a jupyter notebook server that you can access by clicking on the link in your terminal. You can then navigate to the notebook that you would like to run.  
