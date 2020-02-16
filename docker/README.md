@@ -2,14 +2,14 @@ This Docker image allows the user to run the notebooks in this repository on any
 
 # Download the HRNet model: 
 
-To run the [`HRNet_Penobscot_demo_notebook.ipynb`](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb), you will need to manually download the [HRNet-W48-C](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk) pretrained model, as is described [here](https://github.com/microsoft/seismic-deeplearning#hrnet). 
+To run the [`HRNet_Penobscot_demo_notebook.ipynb`](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb), you will need to manually download the [HRNet-W48-C](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk) pretrained model. You can follow the instructions [here.](https://github.com/microsoft/seismic-deeplearning#hrnet). 
 
-If you are using an Azure Virtual Machine to run this code, you can downloaded the model to your local machine, and then copy it to your Azure VM through the command below. Please make sure you update the `<azureuser>` and `<azurehost>` feilds.
+If you are using an Azure Virtual Machine to run this code, you can download the model to your local machine, and then copy it to your Azure VM through the command below. Please make sure you update the `<azureuser>` and `<azurehost>` feilds.
 ```bash
 scp hrnetv2_w48_imagenet_pretrained.pth <azureuser>@<azurehost>:/home/<azureuser>/seismic-deeplearning/docker/hrnetv2_w48_imagenet_pretrained.pth
 ```
 
-Once you have the model downloaded, you can process to build the Docker image. 
+Once you have the model downloaded (ideally under the `docker` directory), you can process to build the Docker image. 
 
 # Build the Docker image:
 
@@ -24,6 +24,6 @@ This process will take a few minutes to complete.
 
 Once the Docker image is built, you can run it anytime using the following command: 
 ```bash
-sudo docker run --rm -it -p 8888:8888 --volume <path_to_hrnetv2_w48_imagenet_pretrained.pth>:/data/hrnet_pretrained/image_classification/hrnetv2_w48_imagenet_pretrained.pth seismic-deeplearning 
+sudo docker run --rm -it -p 8888:8888 --mount type=bind,source=$PWD/hrnetv2_w48_imagenet_pretrained.pth,target=/home/username/models/hrnetv2_w48_imagenet_pretrained.pth seismic-deeplearning 
 ```
-Make sure to edit `<path_to_hrnetv2_w48_imagenet_pretrained.pth>` to point to the location where you downloaded the model. This command will run a jupyter notebook server that you can access by clicking on the link in your terminal. You can then navigate to the notebook that you would like to run.  
+If you have saved the pretrained model in a different directory, make sure you replace `$PWD/hrnetv2_w48_imagenet_pretrained.pth` with the **absolute** path to the pretrained HRNet model. The command above will run a jupyter notebook server that you can access by clicking on the link in your terminal. You can then navigate to the notebook that you would like to run.  
