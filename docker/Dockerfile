@@ -31,14 +31,23 @@ RUN conda env create -n seismic-interpretation --file environment/anaconda/local
     pip install -e cv_lib 
 
 # Download Penobscot dataset:
-RUN data_dir="../data/penobscot" && \
+RUN data_dir="/home/username/data/penobscot" && \
     mkdir -p "$data_dir" && \
-    ./scripts/download_penobscot.sh "$data_dir"
+    ./scripts/download_penobscot.sh "$data_dir"  && \
+    cd scripts  && \
+    source activate seismic-interpretation && \
+    python prepare_penobscot.py split_inline --data-dir=$data_dir --val-ratio=.1 --test-ratio=.2  && \
+    cd ..
 
 # Download F3 dataset:
-RUN data_dir="..//data/dutch" && \
+RUN data_dir="/home/username/data/dutch" && \
     mkdir -p "$data_dir" && \
-    ./scripts/download_dutch_f3.sh "$data_dir"
+    ./scripts/download_dutch_f3.sh "$data_dir" && \
+    cd scripts && \
+    source activate seismic-interpretation && \
+    python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data && \
+    python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --stride=50 --patch_size=100 && \
+    cd ..
 
 # Run notebook
 EXPOSE 8888/tcp
