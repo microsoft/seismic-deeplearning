@@ -131,28 +131,28 @@ def test_prepare_dutchf3_patch_step_1():
         patch_train = pd.read_csv(output + '/patch_train.txt', header=None, names=['row', 'a', 'b'])
         patch_train = pd.DataFrame(patch_train.row.str.split('_').tolist(), columns=['aline', 'x', 'y', 'z'])
 
-        # test patch_train and slice_steps=1
+        # test patch_train and slice_steps=2
         y = list(sorted(set(patch_train.y.astype(int))))
-        x = list(sorted(set(patch_train.x.astype(int)),reverse=True))
-        assert (int(y[2]) - int(y[1])) == SLICE_STEPS
-        assert (int(x[1]) - int(x[2])) == SLICE_STEPS
+        x = list(sorted(set(patch_train.x.astype(int))))
+        assert (int(y[1]) - int(y[0])) == SLICE_STEPS
+        assert (int(x[1]) - int(x[0])) == SLICE_STEPS
 
         # reading the file and splitting the data
         patch_val = pd.read_csv(output + '/patch_val.txt', header=None, names=['row', 'a', 'b'])
         patch_val = pd.DataFrame(patch_val.row.str.split('_').tolist(), columns=['aline', 'x', 'y', 'z'])
 
-        # test patch_val and slice_steps=1
+        # test patch_val and slice_steps=2
         y = list(sorted(set(patch_val.y.astype(int))))
-        x = list(sorted(set(patch_val.x.astype(int)),reverse=True))
-        assert (int(y[2]) - int(y[1])) == SLICE_STEPS
-        assert (int(x[1]) - int(x[2])) == SLICE_STEPS
+        x = list(sorted(set(patch_val.x.astype(int))))
+        assert (int(y[1]) - int(y[0])) != SLICE_STEPS
+        assert (int(x[1]) - int(x[0])) != SLICE_STEPS
 
         # test validation set is, at least, PER_VAL
-        # print(len(set(patch_train.y)), len(set(patch_val.y)))
         PER_VAL_CHK = len(set(patch_train.y))/(len(set(patch_train.y))+len(set(patch_val.y))) * 100
         assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
         PER_VAL_CHK = len(set(patch_train.x))/(len(set(patch_train.x))+len(set(patch_val.x))) * 100
         assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
+
 
 def test_prepare_dutchf3_patch_step_2():
 
@@ -181,9 +181,9 @@ def test_prepare_dutchf3_patch_step_2():
 
         # test patch_train and slice_steps=2
         y = list(sorted(set(patch_train.y.astype(int))))
-        x = list(sorted(set(patch_train.x.astype(int)),reverse=True))
-        assert (int(y[2]) - int(y[1])) == SLICE_STEPS
-        assert (int(x[1]) - int(x[2])) == SLICE_STEPS
+        x = list(sorted(set(patch_train.x.astype(int))))
+        assert (int(y[1]) - int(y[0])) == SLICE_STEPS
+        assert (int(x[1]) - int(x[0])) == SLICE_STEPS
 
         # reading the file and splitting the data
         patch_val = pd.read_csv(output + '/patch_val.txt', header=None, names=['row', 'a', 'b'])
@@ -191,9 +191,9 @@ def test_prepare_dutchf3_patch_step_2():
 
         # test patch_val and slice_steps=2
         y = list(sorted(set(patch_val.y.astype(int))))
-        x = list(sorted(set(patch_val.x.astype(int)),reverse=True))
-        assert (int(y[2]) - int(y[1])) != SLICE_STEPS
-        assert (int(x[1]) - int(x[2])) != SLICE_STEPS
+        x = list(sorted(set(patch_val.x.astype(int))))
+        assert (int(y[1]) - int(y[0])) != SLICE_STEPS
+        assert (int(x[1]) - int(x[0])) != SLICE_STEPS
 
         # test validation set is, at least, PER_VAL
         PER_VAL_CHK = len(set(patch_train.y))/(len(set(patch_train.y))+len(set(patch_val.y))) * 100
