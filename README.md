@@ -142,11 +142,12 @@ To prepare the data for the experiments (e.g. split into train/val/test), please
 cd scripts
 
 # For section-based experiments
-python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data
+python prepare_dutchf3.py split_train_val section --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits
 
 
 # For patch-based experiments
-python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --stride=50 --patch=100
+python prepare_dutchf3.py split_train_val patch --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits \
+--stride=50 --patch_size=100
 
 # go back to repo root
 cd ..
@@ -409,7 +410,6 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
   5. Navigate back to the Virtual Machine view in Step 2 and click the Start button to start the virtual machine.
 
 </details>
-
 
 
 
