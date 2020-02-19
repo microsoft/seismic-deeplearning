@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+# Pull from cuda 10.2 image (based on Ubuntu 18.04): 
 FROM nvidia/cuda:10.2-base
 
 # Install base dependencies
