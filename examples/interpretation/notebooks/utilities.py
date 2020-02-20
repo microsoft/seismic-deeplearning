@@ -3,6 +3,7 @@
 
 import itertools
 import os
+import urllib
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -269,3 +270,48 @@ def validate_config_paths(config):
                 assert os.path.isfile(config.MODEL.PRETRAINED), \
                     "For an HRNet model, you should specify the MODEL.PRETRAINED path" \
                     " in the config file if the TEST.MODEL_PATH is also specified."
+
+def download_pretrained_models(config):
+    """
+    This function downloads models pretrained on the penobscot or dutch f3 datasets from the 
+    deepseismicsharedstore Azure storage. 
+    """
+
+    # this assumes the name of the dataset is preserved in the path -- this is the default behaviour of the code.
+    if "dutch" in config.DATASET.ROOT:
+        dataset = "dutch"
+    elif "penobscot" in config.DATASET.ROOT:
+        dataset = "penobscot"
+    else:
+        raise NameError("Unknown dataset name. Only dutch f3 and penobscot are currently supported.")
+    
+    if "hrnet" in config.MODEL.NAME:
+        model = "hrnet"
+    elif "deconvnet" in config.MODEL.NAME:
+        model = "deconvnet"
+    elif "unet" in config.MODEL.NAME:
+        model = "unet"
+    else:
+        raise NameError("Unknown model name. Only hrnet, deconvnet, and unet are currently supported.")
+
+    # As more pretrained models are added, add their URLs below:
+    if dataset == "penobscot":
+        if model == "hrnet":
+            # TODO: the code should check if the model uses patches or sections. 
+            url = "https://deepseismicsharedstore.blob.core.windows.net/master-public-models/penobscot_hrnet_patch_section_depth.pth"
+        # add other models here .. 
+    # elif dataset == "dutch":
+        # add other models here .. 
+    else:
+        raise NotImplementedError("We don't store a pretrained model for this dataset/model combination yet.")
+    
+    # Download the pretrained model:
+
+    pretrained_model_path = os.path.join("/home/username/models/", "pretrained_" + dataset + "_" + model + ".pth")
+    # check the file does not exist first
+    if not os.path.isfile(pretrained_model_path):
+        urllib.request.urlretrieve(url, pretrained_model_path)
+    else:
+        print("Pretrained model already saved. Skipping download ... ")
+
+    # Update Config test path
