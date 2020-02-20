@@ -271,10 +271,10 @@ def validate_config_paths(config):
                     "For an HRNet model, you should specify the MODEL.PRETRAINED path" \
                     " in the config file if the TEST.MODEL_PATH is also specified."
 
-def download_pretrained_models(config):
+def download_pretrained_model(config):
     """
-    This function downloads models pretrained on the penobscot or dutch f3 datasets from the 
-    deepseismicsharedstore Azure storage. 
+    This function reads the config file and downloads model pretrained on the penobscot or dutch
+    f3 datasets from the deepseismicsharedstore Azure storage. 
     """
 
     # this assumes the name of the dataset is preserved in the path -- this is the default behaviour of the code.
@@ -306,12 +306,19 @@ def download_pretrained_models(config):
         raise NotImplementedError("We don't store a pretrained model for this dataset/model combination yet.")
     
     # Download the pretrained model:
-
     pretrained_model_path = os.path.join("/home/username/models/", "pretrained_" + dataset + "_" + model + ".pth")
-    # check the file does not exist first
-    if not os.path.isfile(pretrained_model_path):
-        urllib.request.urlretrieve(url, pretrained_model_path)
-    else:
-        print("Pretrained model already saved. Skipping download ... ")
 
-    # Update Config test path
+    if not os.path.isfile(pretrained_model_path):
+        print("Downloading the pretrained model. This will take a few mintues..")
+        try:
+            urllib.request.urlretrieve(url, pretrained_model_path)
+        except Exception as e:
+            raise e
+    else:
+        print("Pretrained model already saved. Skipping download.. ")
+
+    # Update config TEST.MODEL_PATH
+    opts = ["TEST.MODEL_PATH", pretrained_model_path]
+    config.merge_from_list(opts)
+
+    return config
