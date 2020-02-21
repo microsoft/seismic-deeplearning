@@ -306,21 +306,26 @@ def download_pretrained_model(config):
         raise NotImplementedError("We don't store a pretrained model for this dataset/model combination yet.")
     
     # Download the pretrained model:
-    pretrained_model_path = os.path.join("/home/username/models/", "pretrained_" + dataset + "_" + model + ".pth")
+    models_dir = config.TRAIN.MODEL_DIR
+
+    if not os.path.isdir(models_dir):
+        os.makedirs(models_dir)
+
+    pretrained_model_path = os.path.join(models_dir, "pretrained_" + dataset + "_" + model + ".pth")
 
     if not os.path.isfile(pretrained_model_path):
-        print("Downloading the pretrained model. This will take a few mintues..")
+        print(f"Downloading the pretrained model to '{pretrained_model_path}'. This will take a few mintues.. \n")
         try:
             urllib.request.urlretrieve(url, pretrained_model_path)
+            print("Model successfully downloaded.. \n")
         except Exception as e:
             raise e
     else:
-        print("Pretrained model already saved. Skipping download.. ")
+        print(f"Pretrained model already saved in '{pretrained_model_path}'. Skipping download.. \n")
 
     # Update config MODEL.PRETRAINED
-    # TODO: Only HRNet uses a pretrained model currently. 
+    # TODO: Only HRNet uses a pretrained model currently.
     opts = ["MODEL.PRETRAINED", pretrained_model_path]
     config.merge_from_list(opts)
-
 
     return config
