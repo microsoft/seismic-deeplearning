@@ -317,8 +317,10 @@ def download_pretrained_model(config):
     else:
         print("Pretrained model already saved. Skipping download.. ")
 
-    # Update config TEST.MODEL_PATH
-    opts = ["TEST.MODEL_PATH", pretrained_model_path]
+    # Update config MODEL.PRETRAINED
+    # TODO: Only HRNet uses a pretrained model currently. 
+    opts = ["MODEL.PRETRAINED", pretrained_model_path]
     config.merge_from_list(opts)
+
 
     return config
