@@ -25,7 +25,7 @@ def model_pretrained(request):
     return request.config.getoption("--model_pretrained")
 
 @pytest.fixture
-def model_pretrained(request):
+def cwd(request):
     return request.config.getoption("--cwd")
 
 """
