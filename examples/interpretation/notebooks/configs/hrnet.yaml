@@ -90,7 +90,7 @@ TRAIN:
   MEAN:  [-0.0001777, 0.49, -0.0000688] # First value is for images, second for depth and then combination of both
   STD: [0.14076 , 0.2717, 0.06286] 
   MAX: 1 
-  MODEL_DIR: "models"
+  MODEL_DIR: "/home/username/models"
 
 
 VALIDATION:
