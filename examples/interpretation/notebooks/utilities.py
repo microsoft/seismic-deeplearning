@@ -332,33 +332,34 @@ def download_pretrained_model(config):
             raise NotImplementedError("We don't store a pretrained model for this dataset/model combination yet.")
 
         print(f"Could not find a user-supplied URL, downloading from '{url}'")
-    
+
+    # make sure the model_dir directory is writeable
+    model_dir = config.TRAIN.MODEL_DIR
+
+    if not os.path.isdir(os.path.dirname(model_dir)) or not os.access(os.path.dirname(model_dir), os.W_OK):
+        print (f"Cannot write to TRAIN.MODEL_DIR={config.TRAIN.MODEL_DIR}")
+        home = str(pathlib.Path.home())
+        model_dir = os.path.join(home, "models")
+        print (f"Will write to TRAIN.MODEL_DIR={model_dir}")
+
+    if not os.path.isdir(model_dir):
+        os.makedirs(model_dir)
+
     if url:
         # Download the pretrained model:
-        model_dir = config.TRAIN.MODEL_DIR
-
-        if not os.path.isdir(os.path.dirname(model_dir)) or not os.access(os.path.dirname(model_dir), os.W_OK):
-            print (f"Cannot write to TRAIN.MODEL_DIR={config.TRAIN.MODEL_DIR}")
-            home = str(pathlib.Path.home())
-            model_dir = os.path.join(home, "models")            
-            print (f"Will write to TRAIN.MODEL_DIR={model_dir}")            
-
-        if not os.path.isdir(model_dir):
-            os.makedirs(model_dir)
-
         pretrained_model_path = os.path.join(model_dir, "pretrained_" + dataset + "_" + model + ".pth")
         
         # always redownload the model
-        print(f"Downloading the pretrained model to '{pretrained_model_path}'. This will take a few mintues.. \n")
-        try:
-            urllib.request.urlretrieve(url, pretrained_model_path)
-            print("Model successfully downloaded.. \n")
-        except Exception as e:
-            raise e
+        print(f"Downloading the pretrained model to '{pretrained_model_path}'. This will take a few mintues.. \n")    
+        urllib.request.urlretrieve(url, pretrained_model_path)
+        print("Model successfully downloaded.. \n")
+    else:
+        # use same model which was on disk anyway - no download needed
+        pretrained_model_path = config.MODEL.PRETRAINED
 
-        # Update config MODEL.PRETRAINED
-        # TODO: Only HRNet uses a pretrained model currently.
-        opts = ["MODEL.PRETRAINED", pretrained_model_path, "TRAIN.MODEL_DIR", model_dir]
-        config.merge_from_list(opts)
-
+    # Update config MODEL.PRETRAINED
+    # TODO: Only HRNet uses a pretrained model currently.
+    opts = ["MODEL.PRETRAINED", pretrained_model_path, "TRAIN.MODEL_DIR", model_dir]
+    config.merge_from_list(opts)
+        
     return config
