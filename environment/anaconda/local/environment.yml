@@ -21,7 +21,7 @@ dependencies:
   - papermill>=1.0.1
   - pip:
     - segyio==1.8.8
-    - pytorch-ignite==0.3.0.dev20191105 # pre-release until stable available
+    - pytorch-ignite==0.3.0
     - fire==0.2.1
     - toolz==0.10.0
     - tabulate==0.8.2
