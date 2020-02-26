@@ -142,11 +142,12 @@ To prepare the data for the experiments (e.g. split into train/val/test), please
 cd scripts
 
 # For section-based experiments
-python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data
+python prepare_dutchf3.py split_train_val section --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits
 
 
 # For patch-based experiments
-python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --stride=50 --patch_size=100
+python prepare_dutchf3.py split_train_val patch --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits \
+--stride=50 --patch_size=100
 
 # go back to repo root
 cd ..
@@ -296,6 +297,8 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 | **Core Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=master) |
 | **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=staging) |
 | **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=master) |
+| **Azure ML Tests** | staging | TODO add badge link |
+| **Azure ML Tests** | master | TODO add badge link |
 
 
 # Troubleshooting
@@ -407,7 +410,6 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
   5. Navigate back to the Virtual Machine view in Step 2 and click the Start button to start the virtual machine.
 
 </details>
-
 
 
 
