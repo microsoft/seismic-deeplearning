@@ -235,24 +235,24 @@ Below are the results from the models contained in this repo. To run them check 
 
 #### Netherlands F3
 
-|    Source        |    Experiment                     |    PA       |    FW IoU    |    MCA     |
-|------------------|-----------------------------------|-------------|--------------|------------|
-|    Alaudah et al.|    Section-based                  |    0.905    |    0.817     |    .832    |
-|                  |    Patch-based                    |    0.852    |    0.743     |    .689    |
-|    DeepSeismic   |    Patch-based+fixed              |    .869     |    .761      |    .775    |
-|                  |    SEResNet UNet+section depth    |    .917     |    .849      |    .834    |
-|                  |    HRNet(patch)+patch_depth       |    .908     |    .843      |    .837    |
-|                  |    HRNet(patch)+section_depth     |    .928     |    .871      |    .871    |
+|    Source        |    Experiment                     |    PA       |    FW IoU    |    MCA     |   V100 (16GB) training time |
+|------------------|-----------------------------------|-------------|--------------|------------|-----------------------------|
+|    Alaudah et al.|    Section-based                  |    0.905    |    0.817     |    .832    |              N/A            |
+|                  |    Patch-based                    |    0.852    |    0.743     |    .689    |              N/A            |
+|    DeepSeismic   |    Patch-based+fixed              |    .875     |    .784      |    .740    |            08h 54min        |
+|                  |    SEResNet UNet+section depth    |    .910     |    .841      |    .809    |            55h 02min        |
+|                  |    HRNet(patch)+patch_depth       |    .884     |    .795      |    .739    |            67h 41min        |
+|                  |    HRNet(patch)+section_depth     |    .900     |    .820      |    .767    |            55h 08min        |
 
 #### Penobscot
 
 Trained and tested on the full dataset. Inlines with artifacts were left in for training, validation and testing.
 The dataset was split 70% training, 10% validation and 20% test. The results below are from the test set
 
-|    Source        |    Experiment                       |    PA       |    IoU       |    MCA     |
-|------------------|-------------------------------------|-------------|--------------|------------|
-|    DeepSeismic   |    SEResNet UNet + section depth    |    1.0      |    .98        |    .99    |
-|                  |    HRNet(patch) + section depth     |    1.0      |    .97        |    .98    |
+|    Source        |    Experiment                       |    PA       |    mIoU      |    MCA     |   V100 (16GB) training time |
+|------------------|-------------------------------------|-------------|--------------|------------|-----------------------------|
+|    DeepSeismic   |    SEResNet UNet + section depth    |    0.72     |    .35       |    .47     |          92h 59min          |
+|                  |    HRNet(patch) + section depth     |    0.91     |    .75       |    .85     |          80h 50min          |
 
 ![Best Penobscot SEResNet](assets/penobscot_seresnet_best.png "Best performing inlines, Mask and Predictions from SEResNet")
 ![Worst Penobscot SEResNet](assets/penobscot_seresnet_worst.png "Worst performing inlines  Mask and Predictions from SEResNet")

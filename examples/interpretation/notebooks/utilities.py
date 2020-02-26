@@ -2,11 +2,13 @@
 # Licensed under the MIT License.
 
 import itertools
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn.functional as F
+import yacs
 from ignite.utils import convert_tensor
 from scipy.ndimage import zoom
 from toolz import compose, curry, itertoolz, pipe
@@ -240,3 +242,30 @@ def plot_aline(aline, labels, xlabel, ylabel="depth"):
     plt.imshow(labels)
     plt.xlabel(xlabel)
     plt.title("Label")
+
+def validate_config_paths(config):
+    """Checks that all paths in the config file are valid"""
+    # TODO: this is currently hardcoded, in the future, its better to have a more generic solution.
+
+    # Make sure DATASET.ROOT directory exist:
+    assert os.path.isdir(config.DATASET.ROOT), \
+        "The DATASET.ROOT specified in the config file is not a valid directory." \
+        f" Please make sure this path is correct: {config.DATASET.ROOT}"
+
+    # if a pretrained model path is specified in the config, it should exist: 
+    if 'PRETRAINED' in config.MODEL.keys():
+        assert os.path.isfile(config.MODEL.PRETRAINED), \
+            "A pretrained model is specified in the config file but does not exist." \
+            f" Please make sure this path is correct: {config.MODEL.PRETRAINED}"
+
+    # if a test model path is specified in the config, it should exist: 
+    if 'TEST' in config.keys():
+        if 'MODEL_PATH' in config.TEST.keys():
+            assert os.path.isfile(config.TEST.MODEL_PATH), \
+                "The TEST.MODEL_PATH specified in the config file does not exist." \
+                f" Please make sure this path is correct: {config.TEST.MODEL_PATH}"
+            # Furthermore, if this is a HRNet model, the pretrained model path should exist if the test model is specified: 
+            if "hrnet" in config.MODEL.NAME:
+                assert os.path.isfile(config.MODEL.PRETRAINED), \
+                    "For an HRNet model, you should specify the MODEL.PRETRAINED path" \
+                    " in the config file if the TEST.MODEL_PATH is also specified."
