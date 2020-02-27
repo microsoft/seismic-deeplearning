@@ -69,3 +69,18 @@ jobs:
         --nbname examples/interpretation/notebooks/F3_block_training_and_evaluation_local.ipynb \
         --dataset_root /home/alfred/data_dynamic/dutch_f3/data \
         --model_pretrained /home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth
+
+- job: notebook_01_segy_sample_files
+  dependsOn: setup
+  timeoutInMinutes: 5
+  displayName: segy create sample files & convert notebooks
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |      
+      source activate seismic-interpretation      
+      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname contrib/segyconverter/01_segy_sample_files.ipynb --cwd contrib/segyconverter || EXITCODE=1
+      # SEGY file exists for next notebook to consume
+      pytest -s tests/cicd/src/notebook_integration_tests.py --nbname contrib/segyconverter/02_segy_convert_sample.ipynb --cwd contrib/segyconverter || EXITCODE=1
+      exit $EXITCODE
+

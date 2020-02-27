@@ -155,6 +155,17 @@ cd ..
 
 Refer to the script itself for more argument options.
 
+#### Bring your own SEG-Y data
+
+If you want to train these models using your own seismic and label data, the files will need to be prepped and
+converted to npy files. Typically, the [segyio](https://pypi.org/project/segyio/) can be used to open SEG-Y files that follow the standard, but more often than not, there are non standard settings or missing traces that will cause segyio to fail. If this happens with your data, read these notebooks and scripts to help prepare your data files:
+
+* [SEG-Y Data Prep README](contrib/segyconverter/README.md)
+* [convert_segy.py utility](contrib/segyconverter/convert_segy.py) - Utility script that can read SEG-Y files with unusual byte header locations and missing traces
+* [segy_convert_sample notebook](contrib/segyconverter/segy_convert_sample.ipynb) - Details on SEG-Y data conversion
+* [segy_sample_files notebook](contrib/segyconverter/segy_sample_files.ipynb) - Create test SEG-Y files that describe the scenarios that may cause issues when converting the data to numpy arrays
+
+
 ### Run Examples
 
 #### Notebooks
