@@ -116,3 +116,7 @@ interpretation/environment/anaconda/local/src/cv-lib
 .ropeproject
 
 *.pth
+
+# Seismic data files
+*.sgy
+*.segy
