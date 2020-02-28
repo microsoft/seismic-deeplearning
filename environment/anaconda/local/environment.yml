@@ -16,7 +16,7 @@ dependencies:
   - tensorflow==2.0
   - opt-einsum>=2.3.2
   - tqdm==4.39.0
-  - itkwidgets==0.23.1  
+  - itkwidgets==0.23.1
   - pytest
   - papermill>=1.0.1
   - pip:
@@ -36,4 +36,4 @@ dependencies:
     - pylint
     - scipy==1.1.0
     - jupytext==1.3.0
-
+    - validators
