@@ -29,6 +29,8 @@ The notebook is designed to be run in demo mode by default using a pre-trained m
 ### Azure Machine Learning
 [Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/) enables you to train and deploy your machine learning models and pipelines at scale, and leverage open-source Python frameworks, such as PyTorch, TensorFlow, and scikit-learn. If you are looking at getting started with using the code in this repository with Azure Machine Learning, refer to [Azure Machine Learning How-to](https://github.com/Azure/MachineLearningNotebooks/tree/master/how-to-use-azureml) to get started.
 
+If you would like to leverage Azure Machine Learning to create a Training Pipeline with this dataset we have guidance on how do so [here](/interpretation/deepseismic_interpretation/azureml_pipelines/README.md)
+
 ## Interpretation
 For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-the-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation.
 
