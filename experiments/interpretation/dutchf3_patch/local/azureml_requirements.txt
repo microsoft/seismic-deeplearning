@@ -1,0 +1,13 @@
+git+https://github.com/microsoft/seismic-deeplearning.git@contrib#egg=cv_lib&subdirectory=cv_lib
+git+https://github.com/microsoft/seismic-deeplearning.git#egg=deepseismic-interpretation&subdirectory=interpretation
+opencv-python==4.1.2.30
+numpy>=1.17.0
+torch==1.4.0
+pytorch-ignite==0.3.0.dev20191105 # pre-release until stable available
+fire==0.2.1
+albumentations==0.4.3
+toolz==0.10.0
+segyio==1.8.8
+scipy==1.1.0
+gitpython==3.0.5
+yacs==0.1.6

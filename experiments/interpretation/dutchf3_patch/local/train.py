@@ -28,6 +28,7 @@ from ignite.metrics import Loss
 from ignite.utils import convert_tensor
 from toolz import compose
 from torch.utils import data
+from git import InvalidGitRepositoryError
 
 from deepseismic_interpretation.dutchf3.data import get_patch_loader, decode_segmap
 from cv_lib.utils import load_log_configuration
@@ -76,7 +77,7 @@ def prepare_batch(batch, device=None, non_blocking=False):
     )
 
 
-def run(*options, cfg=None, debug=False):
+def run(*options, cfg=None, debug=False, input=None):
     """Run training and validation of model
 
     Notes:
@@ -90,12 +91,21 @@ def run(*options, cfg=None, debug=False):
                                       default.py
         cfg (str, optional): Location of config file to load. Defaults to None.
         debug (bool): Places scripts in debug/test mode and only executes a few iterations
+        input (str, optional): Location of data if Azure ML run, 
+            for local runs input is config.DATASET.ROOT
     """
 
     update_config(config, options=options, config_file=cfg)
 
     # we will write the model under outputs / config_file_name / model_dir
     config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
+
+    data_dir = config.DATASET.ROOT
+    output_dir = config.OUTPUT_DIR
+
+    if input is not None:
+        data_dir = input
+        output_dir = data_dir + output_dir
 
     # Start logging
     load_log_configuration(config.LOG_CONFIG)
@@ -141,7 +151,7 @@ def run(*options, cfg=None, debug=False):
     TrainPatchLoader = get_patch_loader(config)
 
     train_set = TrainPatchLoader(
-        config.DATASET.ROOT,
+        data_dir,
         split="train",
         is_transform=True,
         stride=config.TRAIN.STRIDE,
@@ -150,7 +160,7 @@ def run(*options, cfg=None, debug=False):
     )
     logger.info(train_set)
     val_set = TrainPatchLoader(
-        config.DATASET.ROOT,
+        data_dir,
         split="val",
         is_transform=True,
         stride=config.TRAIN.STRIDE,
@@ -180,9 +190,9 @@ def run(*options, cfg=None, debug=False):
     )
 
     try:
-        output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
-    except TypeError:
-        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
+        output_dir = generate_path(output_dir, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
+    except (TypeError, InvalidGitRepositoryError):
+        output_dir = generate_path(output_dir, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
 
