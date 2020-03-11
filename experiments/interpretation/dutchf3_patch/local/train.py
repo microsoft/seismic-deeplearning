@@ -112,14 +112,7 @@ def run(*options, cfg=None, debug=False):
     # Setup Augmentations
     basic_aug = Compose(
         [
-            Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1),
-            PadIfNeeded(
-                min_height=config.TRAIN.PATCH_SIZE,
-                min_width=config.TRAIN.PATCH_SIZE,
-                border_mode=cv2.BORDER_CONSTANT,
-                always_apply=True,
-                mask_value=255,
-            ),
+            Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1),            
             Resize(
                 config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
             ),
