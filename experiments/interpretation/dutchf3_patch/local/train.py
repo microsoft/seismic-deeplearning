@@ -112,9 +112,11 @@ def run(*options, cfg=None, debug=False):
     # Setup Augmentations
     basic_aug = Compose(
         [
-            Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1),            
+            Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1),
             Resize(
-                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+                always_apply=True,
             ),
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
@@ -154,9 +156,14 @@ def run(*options, cfg=None, debug=False):
     n_classes = train_set.n_classes
 
     train_loader = data.DataLoader(
-        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True,
+        train_set,
+        batch_size=config.TRAIN.BATCH_SIZE_PER_GPU,
+        num_workers=config.WORKERS,
+        shuffle=True,
     )
-    val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,)
+    val_loader = data.DataLoader(
+        val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,
+    )
 
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
 
@@ -173,14 +180,25 @@ def run(*options, cfg=None, debug=False):
     )
 
     try:
-        output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
+        output_dir = generate_path(
+            config.OUTPUT_DIR,
+            git_branch(),
+            git_hash(),
+            config_file_name,
+            config.TRAIN.MODEL_DIR,
+            current_datetime(),
+        )
     except TypeError:
-        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
+        output_dir = generate_path(
+            config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),
+        )
 
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
 
     snapshot_duration = scheduler_step * len(train_loader)
-    scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration)
+    scheduler = CosineAnnealingScheduler(
+        optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration
+    )
 
     # weights are inversely proportional to the frequency of the classes in the
     # training set
@@ -193,7 +211,8 @@ def run(*options, cfg=None, debug=False):
     trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
 
     trainer.add_event_handler(
-        Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
+        Events.ITERATION_COMPLETED,
+        logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
     )
     trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
     trainer.add_event_handler(
@@ -211,7 +230,9 @@ def run(*options, cfg=None, debug=False):
         prepare_batch,
         metrics={
             "nll": Loss(criterion, output_transform=_select_pred_and_mask),
-            "pixacc": pixelwise_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "pixacc": pixelwise_accuracy(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
             "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask),
             "mca": mean_class_accuracy(n_classes, output_transform=_select_pred_and_mask),
             "ciou": class_iou(n_classes, output_transform=_select_pred_and_mask),
@@ -270,21 +291,22 @@ def run(*options, cfg=None, debug=False):
     )
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
-        create_image_writer(summary_writer, "Validation/Mask", "mask", transform_func=transform_func),
+        create_image_writer(
+            summary_writer, "Validation/Mask", "mask", transform_func=transform_func
+        ),
     )
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
-        create_image_writer(summary_writer, "Validation/Pred", "y_pred", transform_func=transform_pred),
+        create_image_writer(
+            summary_writer, "Validation/Pred", "y_pred", transform_func=transform_pred
+        ),
     )
 
     def snapshot_function():
         return (trainer.state.iteration % snapshot_duration) == 0
 
     checkpoint_handler = SnapshotHandler(
-        output_dir,
-        config.MODEL.NAME,
-        extract_metric_from("mIoU"),
-        snapshot_function,
+        output_dir, config.MODEL.NAME, extract_metric_from("mIoU"), snapshot_function,
     )
     evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
