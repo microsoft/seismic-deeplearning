@@ -3,7 +3,9 @@
 
 import itertools
 import os
-
+import urllib
+import pathlib
+import validators
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -269,3 +271,95 @@ def validate_config_paths(config):
                 assert os.path.isfile(config.MODEL.PRETRAINED), \
                     "For an HRNet model, you should specify the MODEL.PRETRAINED path" \
                     " in the config file if the TEST.MODEL_PATH is also specified."
+
+def download_pretrained_model(config):
+    """
+    This function reads the config file and downloads model pretrained on the penobscot or dutch
+    f3 datasets from the deepseismicsharedstore Azure storage.
+
+    Pre-trained model is specified with MODEL.PRETRAINED parameter:
+    - if it's a URL, model is downloaded from the URL
+    - if it's a valid file handle, model is loaded from that file
+        - otherwise model is loaded from a pre-made URL which this code creates
+
+    Running this code will overwrite the config.MODEL.PRETRAINED parameter value to the downloaded
+    pretrained model. The is the model which training is initialized from. 
+    If this parameter is blank, we start from a randomly-initialized model.
+
+    DATASET.ROOT parameter specifies the dataset which the model was pre-trained on
+
+    MODEL.DEPTH optional parameter specified whether or not depth information was used in the model
+    and what kind of depth augmentation it was.
+
+    We determine the pre-trained model name from these two parameters.
+
+    """
+
+    # this assumes the name of the dataset is preserved in the path -- this is the default behaviour of the code.
+    if "dutch" in config.DATASET.ROOT:
+        dataset = "dutch"
+    elif "penobscot" in config.DATASET.ROOT:
+        dataset = "penobscot"
+    else:
+        raise NameError("Unknown dataset name. Only dutch f3 and penobscot are currently supported.")
+    
+    if "hrnet" in config.MODEL.NAME:
+        model = "hrnet"
+    elif "deconvnet" in config.MODEL.NAME:
+        model = "deconvnet"
+    elif "unet" in config.MODEL.NAME:
+        model = "unet"
+    else:
+        raise NameError("Unknown model name. Only hrnet, deconvnet, and unet are currently supported.")
+
+    # check if the user already supplied a URL, otherwise figure out the URL
+    if validators.url(config.MODEL.PRETRAINED):
+        url = config.MODEL.PRETRAINED
+        print(f"Will use user-supplied URL of '{url}'")
+    elif os.path.isfile(config.MODEL.PRETRAINED):
+        url = None
+        print(f"Will use user-supplied file on local disk of '{config.MODEL.PRETRAINED}'")
+    else:        
+        # As more pretrained models are added, add their URLs below:
+        if dataset == "penobscot":
+            if model == "hrnet":
+                # TODO: the code should check if the model uses patches or sections. 
+                url = "https://deepseismicsharedstore.blob.core.windows.net/master-public-models/penobscot_hrnet_patch_section_depth.pth"
+            # add other models here .. 
+        # elif dataset == "dutch":
+            # add other models here .. 
+        else:
+            raise NotImplementedError("We don't store a pretrained model for this dataset/model combination yet.")
+
+        print(f"Could not find a user-supplied URL, downloading from '{url}'")
+
+    # make sure the model_dir directory is writeable
+    model_dir = config.TRAIN.MODEL_DIR
+
+    if not os.path.isdir(os.path.dirname(model_dir)) or not os.access(os.path.dirname(model_dir), os.W_OK):
+        print (f"Cannot write to TRAIN.MODEL_DIR={config.TRAIN.MODEL_DIR}")
+        home = str(pathlib.Path.home())
+        model_dir = os.path.join(home, "models")
+        print (f"Will write to TRAIN.MODEL_DIR={model_dir}")
+
+    if not os.path.isdir(model_dir):
+        os.makedirs(model_dir)
+
+    if url:
+        # Download the pretrained model:
+        pretrained_model_path = os.path.join(model_dir, "pretrained_" + dataset + "_" + model + ".pth")
+        
+        # always redownload the model
+        print(f"Downloading the pretrained model to '{pretrained_model_path}'. This will take a few mintues.. \n")    
+        urllib.request.urlretrieve(url, pretrained_model_path)
+        print("Model successfully downloaded.. \n")
+    else:
+        # use same model which was on disk anyway - no download needed
+        pretrained_model_path = config.MODEL.PRETRAINED
+
+    # Update config MODEL.PRETRAINED
+    # TODO: Only HRNet uses a pretrained model currently.
+    opts = ["MODEL.PRETRAINED", pretrained_model_path, "TRAIN.MODEL_DIR", model_dir]
+    config.merge_from_list(opts)
+        
+    return config
