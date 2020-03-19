@@ -181,12 +181,16 @@ def run(*options, cfg=None, debug=False):
 
     try:
         output_dir = generate_path(
+<<<<<<< HEAD
             config.OUTPUT_DIR,
             git_branch(),
             git_hash(),
             config_file_name,
             config.TRAIN.MODEL_DIR,
             current_datetime(),
+=======
+            config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
+>>>>>>> 4484155... added ability to score test images to disk for dutch F3 (#232)
         )
     except TypeError:
         output_dir = generate_path(
