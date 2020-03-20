@@ -166,6 +166,15 @@ Make sure to run the notebooks in the conda environment we previously set up (`s
 python -m ipykernel install --user --name seismic-interpretation
 ```
 
+__Optional__: if you plan to develop a notebook, you can install black formatter with the following commands:
+```bash
+conda activate seismic-interpretation
+jupyter nbextension install https://github.com/drillan/jupyter-black/archive/master.zip --user
+jupyter nbextension enable jupyter-black-master/jupyter-black
+```
+
+This will enable your notebook with a Black formatter button, which then clicked will automatically format a notebook cell which you're in.
+
 #### Experiments
 
 We also provide scripts for a number of experiments we conducted using different segmentation approaches. These experiments are available under `experiments/interpretation`, and can be used as examples. Within each experiment start from the `train.sh` and `test.sh` scripts under the `local/` (single GPU) and `distributed/` (multiple GPUs) directories, which invoke the corresponding python scripts, `train.py` and `test.py`. Take a look at the experiment configurations (see Experiment Configuration Files section below) for experiment options and modify if necessary.
