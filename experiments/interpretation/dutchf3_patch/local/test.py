@@ -327,9 +327,7 @@ def _evaluate_split(
         )
     except TypeError:
         output_dir = generate_path(
-            config.OUTPUT_DIR + "_test",
-            config.MODEL.NAME,
-            current_datetime(),
+            config.OUTPUT_DIR + "_test", config.MODEL.NAME, current_datetime(),
         )
 
     running_metrics_split = runningScore(n_classes)
