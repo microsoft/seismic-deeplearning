@@ -55,7 +55,7 @@ def log_metrics(summary_writer, train_engine, log_interval, engine, metrics_dict
         summary_writer.add_scalar(metrics_dict[m], metrics[m], getattr(train_engine.state, log_interval))
 
 
-def create_image_writer(summary_writer, label, output_variable, normalize=False, transform_func=lambda x: x):
+def create_image_writer(summary_writer, label, output_variable, normalize=True, transform_func=lambda x: x):
     logger = logging.getLogger(__name__)
 
     def write_to(engine):
