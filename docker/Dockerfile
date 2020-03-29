@@ -20,10 +20,10 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
     echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
     apt-get install -y zip && \
-    wget --quiet https://github.com/maxkazmsft/seismic-deeplearning-1/archive/226.zip -O staging.zip && \
+    wget --quiet https://github.com/microsoft/seismic-deeplearning/archive/staging.zip -O staging.zip && \
     unzip staging.zip && rm staging.zip
 
-WORKDIR seismic-deeplearning-1-226
+WORKDIR seismic-deeplearning-staging
 
 RUN conda env create -n seismic-interpretation --file environment/anaconda/local/environment.yml && \
     source activate seismic-interpretation && \
@@ -51,7 +51,9 @@ RUN data_dir="/home/username/data/dutch" && \
     cd ..
 
 # Run notebook
-EXPOSE 8888/tcp
+EXPOSE 9000/tcp
+# TensorBoard inside notebook
+EXPOSE 9001/tcp
 
 CMD source activate seismic-interpretation && \
-    jupyter notebook --allow-root --ip 0.0.0.0 --port 8888
+    jupyter notebook --allow-root --ip 0.0.0.0 --port 9000
