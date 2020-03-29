@@ -95,7 +95,7 @@ jobs:
       conda env list
       source activate seismic-interpretation
       # run the tests      
-      cd experiments/interpretation/penobscot/local      
+      cd experiments/interpretation/penobscot/local
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \

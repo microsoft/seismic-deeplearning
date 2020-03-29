@@ -20,10 +20,10 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
     echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
     apt-get install -y zip && \
-    wget --quiet https://github.com/microsoft/seismic-deeplearning/archive/staging.zip -O staging.zip && \
+    wget --quiet https://github.com/maxkazmsft/seismic-deeplearning-1/archive/226.zip -O staging.zip && \
     unzip staging.zip && rm staging.zip
 
-WORKDIR seismic-deeplearning-staging
+WORKDIR seismic-deeplearning-1-226
 
 RUN conda env create -n seismic-interpretation --file environment/anaconda/local/environment.yml && \
     source activate seismic-interpretation && \
@@ -46,8 +46,8 @@ RUN data_dir="/home/username/data/dutch" && \
     ./scripts/download_dutch_f3.sh "$data_dir" && \
     cd scripts && \
     source activate seismic-interpretation && \
-    python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data && \
-    python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --stride=50 --patch_size=100 && \
+    python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits && \
+    python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 && \
     cd ..
 
 # Run notebook
