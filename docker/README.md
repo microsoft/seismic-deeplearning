@@ -32,7 +32,7 @@ sudo docker build -t seismic-deeplearning .
 This process will take a few minutes to complete. 
 
 # Run the Docker image:
-Once the Docker image is built, you can run it anytime using the following command: 
+Once the Docker image is built, you can run it anytime using the following command:
 ```bash
 sudo nvidia-docker run --rm -it -p 8888:8888 --shm-size 11G --mount type=bind,source=$PWD/hrnetv2_w48_imagenet_pretrained.pth,target=/home/username/models/hrnetv2_w48_imagenet_pretrained.pth seismic-deeplearning
 ```

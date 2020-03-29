@@ -54,6 +54,4 @@ RUN data_dir="/home/username/data/dutch" && \
 EXPOSE 8888/tcp
 
 CMD source activate seismic-interpretation && \
-    jupyter notebook --allow-root --ip 0.0.0.0 --port 8888 
-
-
+    jupyter notebook --allow-root --ip 0.0.0.0 --port 8888
