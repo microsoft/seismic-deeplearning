@@ -724,7 +724,7 @@ _TRAIN_VOXEL_LOADERS = {"voxel": TrainVoxelLoaderWithDepth}
 
 
 def get_patch_loader(cfg):
-    assert cfg.TRAIN.DEPTH in [
+    assert str(cfg.TRAIN.DEPTH).lower() in [
         "section",
         "patch",
         "none",
@@ -734,7 +734,7 @@ def get_patch_loader(cfg):
 
 
 def get_section_loader(cfg):
-    assert cfg.TRAIN.DEPTH in [
+    assert str(cfg.TRAIN.DEPTH).lower() in [
         "section",
         "none",
     ], f"Depth {cfg.TRAIN.DEPTH} not supported for section data. \
@@ -743,7 +743,7 @@ def get_section_loader(cfg):
 
 
 def get_voxel_loader(cfg):
-    assert cfg.TRAIN.DEPTH in [
+    assert str(cfg.TRAIN.DEPTH).lower() in [
         "voxel",
         "none",
     ], f"Depth {cfg.TRAIN.DEPTH} not supported for section data. \

@@ -86,7 +86,7 @@ TRAIN:
   # demo mode snapshot
   SNAPSHOTS: 1
   AUGMENTATION: True
-  DEPTH: "none" # Options are none, patch and section
+  DEPTH: "none" # Options are none, patch, and section
   STRIDE: 64
   PATCH_SIZE: 128
   AUGMENTATIONS:

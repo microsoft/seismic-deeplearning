@@ -29,7 +29,7 @@ TRAIN:
   LR: 0.02
   MOMENTUM: 0.9
   WEIGHT_DECAY: 0.0001    
-  DEPTH: "voxel" # Options are No, Patch, Section and Voxel  
+  DEPTH: "voxel" # Options are none, patch, section and voxel  
   MODEL_DIR: "models"
 
 VALIDATION:
