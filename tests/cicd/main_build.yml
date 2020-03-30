@@ -17,7 +17,7 @@ jobs:
   timeoutInMinutes: 10
   displayName: Setup
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       echo "Running setup..."
@@ -36,7 +36,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: Unit Tests Job
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       echo "Starting unit tests"
@@ -54,7 +54,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: hrnet penobscot
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       conda env list
@@ -74,7 +74,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: seresnet_unet penobscot
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       conda env list
@@ -93,7 +93,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: hrnet dutchf3
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       source activate seismic-interpretation
@@ -112,7 +112,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: unet dutchf3
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       source activate seismic-interpretation
@@ -130,7 +130,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: seresnet unet dutchf3
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       source activate seismic-interpretation
@@ -147,7 +147,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: patch deconvnet dutchf3
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       source activate seismic-interpretation
@@ -164,7 +164,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: patch deconvnet skip dutchf3
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       source activate seismic-interpretation
@@ -186,7 +186,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: hrnet dutchf3 distributed
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       source activate seismic-interpretation
@@ -199,7 +199,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: patch deconvnet skip distributed
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       source activate seismic-interpretation
@@ -212,7 +212,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: patch deconvnet distributed
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       source activate seismic-interpretation
@@ -225,7 +225,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: seresnet unet dutchf3 distributed
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       source activate seismic-interpretation
@@ -238,7 +238,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: unet dutchf3 distributed
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       source activate seismic-interpretation
@@ -255,7 +255,7 @@ jobs:
   timeoutInMinutes: 5
   displayName: section deconvnet skip
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: |
       source activate seismic-interpretation
