@@ -17,7 +17,7 @@ jobs:
   timeoutInMinutes: 10
   displayName: Setup
   pool:
-    name: deepseismicagentpool
+    name: $(Agent_Name)
   steps:
   - bash: echo "##vso[task.prependpath]/anaconda/bin"
     displayName: Add conda to PATH
