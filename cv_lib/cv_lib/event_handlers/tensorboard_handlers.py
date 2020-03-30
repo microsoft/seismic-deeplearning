@@ -2,14 +2,11 @@
 # Licensed under the MIT License.
 
 import torchvision
-import logging
-import logging.config
+from tensorboardX import SummaryWriter
 from toolz import curry
 
 from cv_lib.segmentation.dutchf3.utils import np_to_tb
 from deepseismic_interpretation.dutchf3.data import decode_segmap
-
-from tensorboardX import SummaryWriter
 
 
 def create_summary_writer(log_dir):
@@ -56,36 +53,8 @@ def log_lr(summary_writer, optimizer, log_interval, engine):
     summary_writer.add_scalar("lr", lr[0], getattr(engine.state, log_interval))
 
 
-# TODO: This is deprecated, and will be removed in the future.
-_DEFAULT_METRICS = {"pixacc": "Avg accuracy :", "nll": "Avg loss :"}
-
-# TODO: This is deprecated, and will be removed in the future.
-@curry
-def log_metrics(summary_writer, train_engine, log_interval, engine, metrics_dict=_DEFAULT_METRICS):
-    metrics = engine.state.metrics
-    for m in metrics_dict:
-        summary_writer.add_scalar(metrics_dict[m], metrics[m], getattr(train_engine.state, log_interval))
-
-
-def create_image_writer(summary_writer, label, output_variable, normalize=True, transform_func=lambda x: x):
-    logger = logging.getLogger(__name__)
-    logger.warning(
-        "create_image_writer() in tensorboard_handlers.py is deprecated, and will be removed in a future update."
-    )
-
-    def write_to(engine):
-        try:
-            data_tensor = transform_func(engine.state.output[output_variable])
-            image_grid = torchvision.utils.make_grid(data_tensor, normalize=normalize, scale_each=True)
-            summary_writer.add_image(label, image_grid, engine.state.epoch)
-        except KeyError:
-            logger.warning("Predictions and or ground truth labels not available to report")
-
-    return write_to
-
-
 def log_results(engine, evaluator, summary_writer, n_classes, stage):
-    epoch = engine.state.epoch
+    epoch = engine.state.epoch  # note: the evaluator epoch is always 1.. useless
     metrics = evaluator.state.metrics
     outputs = evaluator.state.output
 
@@ -102,7 +71,7 @@ def log_results(engine, evaluator, summary_writer, n_classes, stage):
     image = outputs["image"]
     mask = outputs["mask"]
     y_pred = outputs["y_pred"].max(1, keepdim=True)[1]
-    VISUALIZATION_LIMIT = 16
+    VISUALIZATION_LIMIT = 8
 
     if evaluator.state.batch[0].shape[0] > VISUALIZATION_LIMIT:
         image = image[:VISUALIZATION_LIMIT]
