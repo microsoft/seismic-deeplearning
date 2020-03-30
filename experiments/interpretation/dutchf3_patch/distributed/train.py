@@ -122,7 +122,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         # provide environment variables, and requires that you use init_method=`env://`.
         torch.distributed.init_process_group(backend="nccl", init_method="env://")
 
-    scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
+    epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
     torch.manual_seed(config.SEED)
@@ -215,7 +215,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[device], find_unused_parameters=True)
 
-    snapshot_duration = scheduler_step * len(train_loader)
+    snapshot_duration = epochs_per_cycle * len(train_loader)
     warmup_duration = 5 * len(train_loader)
     warmup_scheduler = LinearCyclicalScheduler(
         optimizer,
@@ -268,10 +268,17 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         trainer.add_event_handler(
             Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
         )
-        trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))    
+        trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
 
         try:
-            output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
+            output_dir = generate_path(
+                config.OUTPUT_DIR,
+                git_branch(),
+                git_hash(),
+                config_file_name,
+                config.TRAIN.MODEL_DIR,
+                current_datetime(),
+            )
         except TypeError:
             output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
@@ -331,10 +338,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
             return (trainer.state.iteration % snapshot_duration) == 0
 
         checkpoint_handler = SnapshotHandler(
-            output_dir,
-            config.MODEL.NAME,
-            extract_metric_from("mIoU"),
-            snapshot_function,
+            output_dir, config.MODEL.NAME, extract_metric_from("mIoU"), snapshot_function,
         )
         evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
