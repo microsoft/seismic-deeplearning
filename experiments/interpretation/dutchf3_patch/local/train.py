@@ -17,7 +17,6 @@ import logging
 import logging.config
 from os import path
 
-import cv2
 import fire
 import numpy as np
 import torch
@@ -95,7 +94,7 @@ def run(*options, cfg=None, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.PATCH_SIZE,
                 min_width=config.TRAIN.PATCH_SIZE,
-                border_mode=cv2.BORDER_CONSTANT,
+                border_mode=0,
                 always_apply=True,
                 mask_value=255,
             ),
