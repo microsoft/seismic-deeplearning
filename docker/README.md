@@ -27,7 +27,7 @@ sudo systemctl restart docker
 In the `docker` directory, run the following command to build the Docker image and tag it as `seismic-deeplearning`: 
 
 ```bash
-sudo docker build -t seismic-deeplearning .
+sudo docker build -t seismic-deeplearning . 
 ```
 This process will take a few minutes to complete. 
 
