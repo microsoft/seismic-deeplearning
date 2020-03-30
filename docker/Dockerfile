@@ -31,14 +31,15 @@ RUN conda env create -n seismic-interpretation --file environment/anaconda/local
     pip install -e interpretation && \
     pip install -e cv_lib 
 
+# TODO: add back in later when Penobscot notebook is available
 # Download Penobscot dataset:
-RUN data_dir="/home/username/data/penobscot" && \
-    mkdir -p "$data_dir" && \
-    ./scripts/download_penobscot.sh "$data_dir"  && \
-    cd scripts  && \
-    source activate seismic-interpretation && \
-    python prepare_penobscot.py split_inline --data-dir=$data_dir --val-ratio=.1 --test-ratio=.2  && \
-    cd ..
+# RUN data_dir="/home/username/data/penobscot" && \
+#    mkdir -p "$data_dir" && \
+#    ./scripts/download_penobscot.sh "$data_dir"  && \
+#    cd scripts  && \
+#    source activate seismic-interpretation && \
+#    python prepare_penobscot.py split_inline --data-dir=$data_dir --val-ratio=.1 --test-ratio=.2  && \
+#    cd ..
 
 # Download F3 dataset:
 RUN data_dir="/home/username/data/dutch" && \
