@@ -19,6 +19,9 @@ jobs:
   pool:
     name: $(Agent_Name)
   steps:
+  - bash: echo "##vso[task.prependpath]/anaconda/bin"
+    displayName: Add conda to PATH
+
   - bash: |
       echo "Running setup..."
       pwd
