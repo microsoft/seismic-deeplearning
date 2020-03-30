@@ -226,11 +226,12 @@ def run(*options, cfg=None, debug=False):
         evaluator.run(val_loader)
         log_results(engine, evaluator, summary_writer, n_classes, stage="Validation")
 
+    # Checkpointing:
     checkpoint_handler = SnapshotHandler(
         output_dir,
         config.MODEL.NAME,
         extract_metric_from("mIoU"),
-        snapshot_function,
+        lambda: (trainer.state.iteration % snapshot_duration) == 0,
     )
     evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
