@@ -14,7 +14,7 @@ trigger:
 jobs:
 # partially disable setup for now - done manually on build VM
 - job: setup
-  timeoutInMinutes: 10
+  
   displayName: Setup
   pool:
     name: $(Agent_Name)
@@ -33,32 +33,21 @@ jobs:
   
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination ~/models/your_model_name
+    timeoutInMinutes: 10
 
-- job: unit_tests_job
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: Unit Tests Job
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       echo "Starting unit tests"
       source activate seismic-interpretation
       pytest --durations=0 cv_lib/tests/
       echo "Unit test job passed"
+    timeoutInMinutes: 5
+    displayName: Unit Tests
     
 
 ###################################################################################################
-# LOCAL PATCH JOBS
+# LOCAL PATCH Steps
 ###################################################################################################
 
-- job: hrnet_penobscot
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: hrnet penobscot
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       conda env list
       source activate seismic-interpretation
@@ -70,15 +59,9 @@ jobs:
       echo ${model}
       # # try running the test script
       python test.py 'DATASET.ROOT' '~/data/penobscot' 'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth --cfg=configs/hrnet.yaml  --debug
+    timeoutInMinutes: 5
+    displayName: hrnet penobscot
 
-
-- job: seresnet_unet_penobscot
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: seresnet_unet penobscot
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       conda env list
       source activate seismic-interpretation
@@ -90,14 +73,9 @@ jobs:
       echo ${model}
       # try running the test script
       python test.py 'DATASET.ROOT' '~/data/penobscot' 'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth --cfg=configs/seresnet_unet.yaml  --debug
+    timeoutInMinutes: 5
+    displayName: seresnet_unet penobscot
 
-- job: hrnet_dutchf3
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: hrnet dutchf3
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       source activate seismic-interpretation
       # run the tests      
@@ -108,15 +86,9 @@ jobs:
       echo ${model}
       # try running the test script
       python test.py 'DATASET.ROOT' '~/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth --cfg=configs/hrnet.yaml --debug
+    timeoutInMinutes: 5
+    displayName: hrnet dutchf3
 
-
-- job: unet_dutchf3
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: unet dutchf3
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       source activate seismic-interpretation
       # run the tests      
@@ -127,14 +99,9 @@ jobs:
       echo ${model}
       # try running the test script
       python test.py  'DATASET.ROOT' '~/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth --cfg=configs/unet.yaml --debug
+    timeoutInMinutes: 5
+    displayName: unet dutchf3
 
-- job: seresnet_unet_dutchf3
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: seresnet unet dutchf3
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       source activate seismic-interpretation
       # run the tests      
@@ -144,14 +111,9 @@ jobs:
       model=$(ls -td */resnet_unet/*/* | head -1)
       # try running the test script
       python test.py 'DATASET.ROOT' '~/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth --cfg=configs/seresnet_unet.yaml --debug
+    timeoutInMinutes: 5
+    displayName: seresnet unet dutchf3
 
-- job: patch_deconvnet_dutchf3
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: patch deconvnet dutchf3
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       source activate seismic-interpretation
       # run the tests      
@@ -161,14 +123,9 @@ jobs:
       model=$(ls -td */patch_deconvnet/*/* | head -1)
       # try running the test script
       python test.py 'DATASET.ROOT' '~/data/dutch_f3/data' 'VALIDATION.BATCH_SIZE_PER_GPU' 1 'TEST.MODEL_PATH' ${model}/patch_deconvnet_running_model_1.pth --cfg=configs/patch_deconvnet.yaml --debug
+    timeoutInMinutes: 5
+    displayName: patch deconvnet dutchf3
 
-- job: patch_deconvnet_skip_dutchf3
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: patch deconvnet skip dutchf3
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       source activate seismic-interpretation
       # run the tests      
@@ -178,88 +135,58 @@ jobs:
       model=$(ls -td */patch_deconvnet_skip/*/* | head -1)
       # try running the test script
       python test.py 'DATASET.ROOT' '~/data/dutch_f3/data' 'VALIDATION.BATCH_SIZE_PER_GPU' 1 'TEST.MODEL_PATH' ${model}/patch_deconvnet_skip_running_model_1.pth --cfg=configs/patch_deconvnet_skip.yaml --debug
+    timeoutInMinutes: 5
+    displayName: patch deconvnet skip dutchf3
 
 
 ###################################################################################################
-# DISTRIBUTED PATCH JOBS
+# DISTRIBUTED PATCH Steps
 ###################################################################################################
 
-- job: hrnet_dutchf3_dist
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: hrnet dutchf3 distributed
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       source activate seismic-interpretation
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'DATASET.ROOT' '~/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/hrnet.yaml --debug
+    timeoutInMinutes: 5
+    displayName: hrnet dutchf3 distributed
 
-- job: patch_deconvnet_skip_dist
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: patch deconvnet skip distributed
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       source activate seismic-interpretation
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'TRAIN.BATCH_SIZE_PER_GPU' 1 'DATASET.ROOT' '~/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/patch_deconvnet_skip.yaml --debug
+    timeoutInMinutes: 5
+    displayName: patch deconvnet skip distributed
 
-- job: patch_deconvnet_dist
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: patch deconvnet distributed
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       source activate seismic-interpretation
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'TRAIN.BATCH_SIZE_PER_GPU' 1 'DATASET.ROOT' '~/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/patch_deconvnet.yaml --debug
+    timeoutInMinutes: 5
+    displayName: patch deconvnet distributed
 
-- job: seresnet_unet_dutchf3_dist
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: seresnet unet dutchf3 distributed
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       source activate seismic-interpretation
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'DATASET.ROOT' '~/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/seresnet_unet.yaml --debug
+    timeoutInMinutes: 5
+    displayName: seresnet unet dutchf3 distributed
 
-- job: unet_dutchf3_dist
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: unet dutchf3 distributed
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       source activate seismic-interpretation
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/distributed
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py 'DATASET.ROOT' '~/data/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 --cfg=configs/unet.yaml --debug
-     
+    timeoutInMinutes: 5
+    displayName: unet dutchf3 distributed
+
 ###################################################################################################
-# LOCAL SECTION JOBS
+# LOCAL SECTION Step
 ###################################################################################################
 
-- job: section_deconvnet_skip
-  dependsOn: setup
-  timeoutInMinutes: 5
-  displayName: section deconvnet skip
-  pool:
-    name: $(Agent_Name)
-  steps:
   - bash: |
       source activate seismic-interpretation
       # run the tests      
@@ -270,4 +197,5 @@ jobs:
       echo ${model}
       # try running the test script
       python test.py 'DATASET.ROOT' '~/data/dutch_f3/data' 'TEST.MODEL_PATH' ${model}/section_deconvnet_skip_running_model_1.pth --cfg=configs/section_deconvnet_skip.yaml --debug
-
+    timeoutInMinutes: 5
+    displayName: section deconvnet skip
