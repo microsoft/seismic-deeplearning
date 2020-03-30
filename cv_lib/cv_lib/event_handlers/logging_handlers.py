@@ -49,3 +49,7 @@ class Evaluator:
 
     def __call__(self, engine):
         self._evaluation_engine.run(self._data_loader)
+<<<<<<< HEAD
+=======
+
+>>>>>>> remove HorovodLRScheduler
