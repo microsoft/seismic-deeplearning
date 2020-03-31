@@ -7,10 +7,7 @@ from toolz import curry
 from cv_lib.segmentation.dutchf3.utils import np_to_tb
 from deepseismic_interpretation.dutchf3.data import decode_segmap
 
-try:
-    from tensorboardX import SummaryWriter
-except ImportError:
-    raise RuntimeError("No tensorboardX package is found. Please install with the command: \npip install tensorboardX")
+from tensorboardX import SummaryWriter
 
 
 def create_summary_writer(log_dir):
@@ -70,6 +67,7 @@ def log_results(engine, evaluator, summary_writer, n_classes, stage):
 
     for i in range(n_classes):
         summary_writer.add_scalar(f"{stage}/IoU_class_" + str(i), metrics["ciou"][i], epoch)
+
 
     # Log Images:
     image = outputs["image"]

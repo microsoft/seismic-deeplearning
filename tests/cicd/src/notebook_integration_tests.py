@@ -15,9 +15,9 @@ def test_notebook_run(nbname, dataset_root, model_pretrained, cwd):
         OUTPUT_NOTEBOOK,
         kernel_name=KERNEL_NAME,
         parameters={
-            "max_iterations": 3,
             "max_epochs": 1,
             "max_snapshots": 1,
+            "papermill": True,
             "dataset_root": dataset_root,
             "model_pretrained": model_pretrained,
         },

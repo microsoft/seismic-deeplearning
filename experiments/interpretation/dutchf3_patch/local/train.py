@@ -100,7 +100,9 @@ def run(*options, cfg=None, debug=False):
                 value=0,
             ),
             Resize(
-                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+                always_apply=True,
             ),
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
@@ -137,7 +139,6 @@ def run(*options, cfg=None, debug=False):
         augmentations=val_aug,
     )
     logger.info(val_set)
-    n_classes = train_set.n_classes
 
     if debug:
         logger.info("Running in Debug Mode")
@@ -145,9 +146,14 @@ def run(*options, cfg=None, debug=False):
         val_set = data.Subset(val_set, list(range(config.TRAIN.BATCH_SIZE_PER_GPU)))
 
     train_loader = data.DataLoader(
-        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True,
+        train_set,
+        batch_size=config.TRAIN.BATCH_SIZE_PER_GPU,
+        num_workers=config.WORKERS,
+        shuffle=True,
     )
-    val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,)
+    val_loader = data.DataLoader(
+        val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,
+    )
 
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
@@ -161,9 +167,11 @@ def run(*options, cfg=None, debug=False):
         momentum=config.TRAIN.MOMENTUM,
         weight_decay=config.TRAIN.WEIGHT_DECAY,
     )
+
     epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     snapshot_duration = epochs_per_cycle * len(train_loader)
     scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration)
+
 
     # Tensorboard writer:
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, "logs"))
@@ -212,7 +220,6 @@ def run(*options, cfg=None, debug=False):
     )
 
     # Tensorboard and Logging:
-
     trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer))
     trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_validation_output(summary_writer))
 
@@ -232,6 +239,7 @@ def run(*options, cfg=None, debug=False):
         config.MODEL.NAME,
         extract_metric_from("mIoU"),
         lambda: (trainer.state.iteration % snapshot_duration) == 0,
+
     )
     evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
