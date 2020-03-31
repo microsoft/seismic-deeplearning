@@ -101,7 +101,6 @@ def run(*options, cfg=None, debug=False):
     load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
-    scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
     torch.manual_seed(config.SEED)
@@ -116,12 +115,15 @@ def run(*options, cfg=None, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.PATCH_SIZE,
                 min_width=config.TRAIN.PATCH_SIZE,
-                border_mode=cv2.BORDER_CONSTANT,
+                border_mode=0,
                 always_apply=True,
                 mask_value=255,
+                value=0,
             ),
             Resize(
-                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+                always_apply=True,
             ),
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
@@ -158,12 +160,16 @@ def run(*options, cfg=None, debug=False):
         augmentations=val_aug,
     )
     logger.info(val_set)
-    n_classes = train_set.n_classes
 
     train_loader = data.DataLoader(
-        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True,
+        train_set,
+        batch_size=config.TRAIN.BATCH_SIZE_PER_GPU,
+        num_workers=config.WORKERS,
+        shuffle=True,
     )
-    val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,)
+    val_loader = data.DataLoader(
+        val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,
+    )
 
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
 
@@ -179,15 +185,12 @@ def run(*options, cfg=None, debug=False):
         weight_decay=config.TRAIN.WEIGHT_DECAY,
     )
 
-    try:
-        output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
-    except TypeError:
-        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
-
-    summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
-
+    # learning rate scheduler
+    scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     snapshot_duration = scheduler_step * len(train_loader)
-    scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration)
+    scheduler = CosineAnnealingScheduler(
+        optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration
+    )
 
     # weights are inversely proportional to the frequency of the classes in the
     # training set
@@ -199,13 +202,40 @@ def run(*options, cfg=None, debug=False):
 
     trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
 
+    #########################
+    # Logging setup below
+
+    try:
+        output_dir = generate_path(
+            config.OUTPUT_DIR,
+            git_branch(),
+            git_hash(),
+            config_file_name,
+            config.TRAIN.MODEL_DIR,
+            current_datetime(),
+        )
+    except TypeError:
+        output_dir = generate_path(
+            config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),
+        )
+
+    summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
+
+    # log all training output
     trainer.add_event_handler(
-        Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
+        Events.ITERATION_COMPLETED,
+        logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
     )
+
+    # add logging of learning rate
     trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
+
+    # log LR to tensorboard
     trainer.add_event_handler(
         Events.EPOCH_STARTED, tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"),
     )
+
+    # log training summary to tensorboard as well
     trainer.add_event_handler(
         Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer),
     )
@@ -213,12 +243,25 @@ def run(*options, cfg=None, debug=False):
     def _select_pred_and_mask(model_out_dict):
         return (model_out_dict["y_pred"].squeeze(), model_out_dict["mask"].squeeze())
 
+    def _select_max(pred_tensor):
+        return pred_tensor.max(1)[1]
+
+    def _tensor_to_numpy(pred_tensor):
+        return pred_tensor.squeeze().cpu().numpy()
+
+    def snapshot_function():
+        return (trainer.state.iteration % snapshot_duration) == 0
+
+    n_classes = train_set.n_classes
+
     evaluator = create_supervised_evaluator(
         model,
         prepare_batch,
         metrics={
             "nll": Loss(criterion, output_transform=_select_pred_and_mask),
-            "pixacc": pixelwise_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "pixacc": pixelwise_accuracy(
+                n_classes, output_transform=_select_pred_and_mask, device=device
+            ),
             "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask),
             "mca": mean_class_accuracy(n_classes, output_transform=_select_pred_and_mask),
             "ciou": class_iou(n_classes, output_transform=_select_pred_and_mask),
@@ -262,12 +305,6 @@ def run(*options, cfg=None, debug=False):
         ),
     )
 
-    def _select_max(pred_tensor):
-        return pred_tensor.max(1)[1]
-
-    def _tensor_to_numpy(pred_tensor):
-        return pred_tensor.squeeze().cpu().numpy()
-
     transform_func = compose(np_to_tb, decode_segmap(n_classes=n_classes), _tensor_to_numpy)
 
     transform_pred = compose(transform_func, _select_max)
@@ -277,21 +314,19 @@ def run(*options, cfg=None, debug=False):
     )
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
-        create_image_writer(summary_writer, "Validation/Mask", "mask", transform_func=transform_func),
+        create_image_writer(
+            summary_writer, "Validation/Mask", "mask", transform_func=transform_func
+        ),
     )
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
-        create_image_writer(summary_writer, "Validation/Pred", "y_pred", transform_func=transform_pred),
+        create_image_writer(
+            summary_writer, "Validation/Pred", "y_pred", transform_func=transform_pred
+        ),
     )
 
-    def snapshot_function():
-        return (trainer.state.iteration % snapshot_duration) == 0
-
     checkpoint_handler = SnapshotHandler(
-        output_dir,
-        config.MODEL.NAME,
-        extract_metric_from("mIoU"),
-        snapshot_function,
+        output_dir, config.MODEL.NAME, extract_metric_from("mIoU"), snapshot_function,
     )
     evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 

@@ -6,10 +6,7 @@ import torchvision
 import logging
 import logging.config
 
-try:
-    from tensorboardX import SummaryWriter
-except ImportError:
-    raise RuntimeError("No tensorboardX package is found. Please install with the command: \npip install tensorboardX")
+from tensorboardX import SummaryWriter
 
 
 def create_summary_writer(log_dir):
@@ -52,16 +49,22 @@ _DEFAULT_METRICS = {"accuracy": "Avg accuracy :", "nll": "Avg loss :"}
 def log_metrics(summary_writer, train_engine, log_interval, engine, metrics_dict=_DEFAULT_METRICS):
     metrics = engine.state.metrics
     for m in metrics_dict:
-        summary_writer.add_scalar(metrics_dict[m], metrics[m], getattr(train_engine.state, log_interval))
+        summary_writer.add_scalar(
+            metrics_dict[m], metrics[m], getattr(train_engine.state, log_interval)
+        )
 
 
-def create_image_writer(summary_writer, label, output_variable, normalize=False, transform_func=lambda x: x):
+def create_image_writer(
+    summary_writer, label, output_variable, normalize=False, transform_func=lambda x: x
+):
     logger = logging.getLogger(__name__)
 
     def write_to(engine):
         try:
             data_tensor = transform_func(engine.state.output[output_variable])
-            image_grid = torchvision.utils.make_grid(data_tensor, normalize=normalize, scale_each=True)
+            image_grid = torchvision.utils.make_grid(
+                data_tensor, normalize=normalize, scale_each=True
+            )
             summary_writer.add_image(label, image_grid, engine.state.epoch)
         except KeyError:
             logger.warning("Predictions and or ground truth labels not available to report")

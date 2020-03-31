@@ -31,14 +31,15 @@ RUN conda env create -n seismic-interpretation --file environment/anaconda/local
     pip install -e interpretation && \
     pip install -e cv_lib 
 
+# TODO: add back in later when Penobscot notebook is available
 # Download Penobscot dataset:
-RUN data_dir="/home/username/data/penobscot" && \
-    mkdir -p "$data_dir" && \
-    ./scripts/download_penobscot.sh "$data_dir"  && \
-    cd scripts  && \
-    source activate seismic-interpretation && \
-    python prepare_penobscot.py split_inline --data-dir=$data_dir --val-ratio=.1 --test-ratio=.2  && \
-    cd ..
+# RUN data_dir="/home/username/data/penobscot" && \
+#    mkdir -p "$data_dir" && \
+#    ./scripts/download_penobscot.sh "$data_dir"  && \
+#    cd scripts  && \
+#    source activate seismic-interpretation && \
+#    python prepare_penobscot.py split_inline --data-dir=$data_dir --val-ratio=.1 --test-ratio=.2  && \
+#    cd ..
 
 # Download F3 dataset:
 RUN data_dir="/home/username/data/dutch" && \
@@ -46,14 +47,14 @@ RUN data_dir="/home/username/data/dutch" && \
     ./scripts/download_dutch_f3.sh "$data_dir" && \
     cd scripts && \
     source activate seismic-interpretation && \
-    python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data && \
-    python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --stride=50 --patch_size=100 && \
+    python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits && \
+    python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 && \
     cd ..
 
 # Run notebook
-EXPOSE 8888/tcp
+EXPOSE 9000/tcp
+# TensorBoard inside notebook
+EXPOSE 9001/tcp
 
 CMD source activate seismic-interpretation && \
-    jupyter notebook --allow-root --ip 0.0.0.0 --port 8888 
-
-
+    jupyter notebook --allow-root --ip 0.0.0.0 --port 9000

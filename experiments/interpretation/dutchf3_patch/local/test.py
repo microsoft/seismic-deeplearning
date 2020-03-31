@@ -10,8 +10,6 @@
 """
 Modified version of the Alaudah testing script
 Runs only on single GPU
-
-Estimated time to run on single V100: 5 hours
 """
 
 import itertools
@@ -25,9 +23,16 @@ import fire
 import numpy as np
 import torch
 import torch.nn.functional as F
+from PIL import Image
 from albumentations import Compose, Normalize, PadIfNeeded, Resize
 from cv_lib.utils import load_log_configuration
 from cv_lib.segmentation import models
+from cv_lib.segmentation.dutchf3.utils import (
+    current_datetime,
+    generate_path,
+    git_branch,
+    git_hash,
+)
 from deepseismic_interpretation.dutchf3.data import (
     add_patch_depth_channels,
     get_seismic_labels,
@@ -38,6 +43,8 @@ from default import update_config
 from toolz import compose, curry, itertoolz, pipe
 from torch.utils import data
 from toolz import take
+
+from matplotlib import cm
 
 
 _CLASS_NAMES = [
@@ -57,9 +64,9 @@ class runningScore(object):
 
     def _fast_hist(self, label_true, label_pred, n_class):
         mask = (label_true >= 0) & (label_true < n_class)
-        hist = np.bincount(n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,).reshape(
-            n_class, n_class
-        )
+        hist = np.bincount(
+            n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,
+        ).reshape(n_class, n_class)
         return hist
 
     def update(self, label_trues, label_preds):
@@ -97,6 +104,21 @@ class runningScore(object):
 
     def reset(self):
         self.confusion_matrix = np.zeros((self.n_classes, self.n_classes))
+
+
+def normalize(array):
+    """
+    Normalizes a segmentation mask array to be in [0,1] range
+    """
+    min = array.min()
+    return (array - min) / (array.max() - min)
+
+
+def mask_to_disk(mask, fname):
+    """
+    write segmentation mask to disk using a particular colormap
+    """
+    Image.fromarray(cm.gist_earth(normalize(mask), bytes=True)).save(fname)
 
 
 def _transform_CHW_to_HWC(numpy_array):
@@ -180,7 +202,9 @@ def _compose_processing_pipeline(depth, aug=None):
 
 
 def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
-    hdc_wdx_generator = itertools.product(range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride),)
+    hdc_wdx_generator = itertools.product(
+        range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride),
+    )
     for batch_indexes in itertoolz.partition_all(batch_size, hdc_wdx_generator):
         yield batch_indexes
 
@@ -191,7 +215,9 @@ def _output_processing_pipeline(config, output):
     _, _, h, w = output.shape
     if config.TEST.POST_PROCESSING.SIZE != h or config.TEST.POST_PROCESSING.SIZE != w:
         output = F.interpolate(
-            output, size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE,), mode="bilinear",
+            output,
+            size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE,),
+            mode="bilinear",
         )
 
     if config.TEST.POST_PROCESSING.CROP_PIXELS > 0:
@@ -206,7 +232,15 @@ def _output_processing_pipeline(config, output):
 
 
 def _patch_label_2d(
-    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes,
+    model,
+    img,
+    pre_processing,
+    output_processing,
+    patch_size,
+    stride,
+    batch_size,
+    device,
+    num_classes,
 ):
     """Processes a whole section
     """
@@ -221,14 +255,19 @@ def _patch_label_2d(
     # generate output:
     for batch_indexes in _generate_batches(h, w, ps, patch_size, stride, batch_size=batch_size):
         batch = torch.stack(
-            [pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing,) for hdx, wdx in batch_indexes],
+            [
+                pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing,)
+                for hdx, wdx in batch_indexes
+            ],
             dim=0,
         )
 
         model_output = model(batch.to(device))
         for (hdx, wdx), output in zip(batch_indexes, model_output.detach().cpu()):
             output = output_processing(output)
-            output_p[:, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size,] += output
+            output_p[
+                :, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size,
+            ] += output
 
     # crop the output_p in the middle
     output = output_p[:, :, ps:-ps, ps:-ps]
@@ -253,12 +292,22 @@ def to_image(label_mask, n_classes=6):
 
 
 def _evaluate_split(
-    split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config, debug=False
+    split,
+    section_aug,
+    model,
+    pre_processing,
+    output_processing,
+    device,
+    running_metrics_overall,
+    config,
+    debug=False,
 ):
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
-    test_set = TestSectionLoader(config.DATASET.ROOT, split=split, is_transform=True, augmentations=section_aug,)
+    test_set = TestSectionLoader(
+        config.DATASET.ROOT, split=split, is_transform=True, augmentations=section_aug,
+    )
 
     n_classes = test_set.n_classes
 
@@ -267,6 +316,19 @@ def _evaluate_split(
     if debug:
         logger.info("Running in Debug/Test mode")
         test_loader = take(1, test_loader)
+
+    try:
+        output_dir = generate_path(
+            config.OUTPUT_DIR + "_test",
+            git_branch(),
+            git_hash(),
+            config.MODEL.NAME,
+            current_datetime(),
+        )
+    except TypeError:
+        output_dir = generate_path(
+            config.OUTPUT_DIR + "_test", config.MODEL.NAME, current_datetime(),
+        )
 
     running_metrics_split = runningScore(n_classes)
 
@@ -294,6 +356,10 @@ def _evaluate_split(
             gt = labels.numpy()
             running_metrics_split.update(gt, pred)
             running_metrics_overall.update(gt, pred)
+
+            #  dump images to disk for review
+            mask_to_disk(pred.squeeze(), os.path.join(output_dir, f"{i}_pred.png"))
+            mask_to_disk(gt.squeeze(), os.path.join(output_dir, f"{i}_gt.png"))
 
     # get scores
     score, class_iou = running_metrics_split.get_scores()
@@ -350,12 +416,17 @@ def test(*options, cfg=None, debug=False):
     running_metrics_overall = runningScore(n_classes)
 
     # Augmentation
-    section_aug = Compose([Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,)])
+    section_aug = Compose(
+        [Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,)]
+    )
 
+    # TODO: make sure that this is consistent with how normalization and agumentation for train.py
     patch_aug = Compose(
         [
             Resize(
-                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
+                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
+                always_apply=True,
             ),
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,

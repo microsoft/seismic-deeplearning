@@ -142,11 +142,12 @@ To prepare the data for the experiments (e.g. split into train/val/test), please
 cd scripts
 
 # For section-based experiments
-python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data
+python prepare_dutchf3.py split_train_val section --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits
 
 
 # For patch-based experiments
-python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --stride=50 --patch_size=100
+python prepare_dutchf3.py split_train_val patch --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits \
+--stride=50 --patch_size=100
 
 # go back to repo root
 cd ..
@@ -164,6 +165,15 @@ Make sure to run the notebooks in the conda environment we previously set up (`s
 ```
 python -m ipykernel install --user --name seismic-interpretation
 ```
+
+__Optional__: if you plan to develop a notebook, you can install black formatter with the following commands:
+```bash
+conda activate seismic-interpretation
+jupyter nbextension install https://github.com/drillan/jupyter-black/archive/master.zip --user
+jupyter nbextension enable jupyter-black-master/jupyter-black
+```
+
+This will enable your notebook with a Black formatter button, which then clicked will automatically format a notebook cell which you're in.
 
 #### Experiments
 
@@ -296,6 +306,8 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 | **Core Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=master) |
 | **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=staging) |
 | **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=master) |
+| **Azure ML Tests** | staging | TODO add badge link |
+| **Azure ML Tests** | master | TODO add badge link |
 
 
 # Troubleshooting
@@ -407,7 +419,6 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
   5. Navigate back to the Virtual Machine view in Step 2 and click the Start button to start the virtual machine.
 
 </details>
-
 
 
 
