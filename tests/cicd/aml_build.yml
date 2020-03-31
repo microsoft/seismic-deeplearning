@@ -1,0 +1,54 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Pull request against these branches will trigger this build
+pr:
+- master
+- staging
+- contrib
+
+# Any commit to this branch will trigger the build.
+trigger:
+- master
+- staging
+- contrib
+
+jobs:
+
+# partially disable setup for now - done manually on build VM
+- job: setup
+  timeoutInMinutes: 10
+  displayName: Setup
+  pool:
+    name: deepseismicagentpool
+
+  steps:
+  - bash: |
+      # terminate as soon as any internal script fails
+      set -e
+
+      echo "Running setup..."
+      pwd
+      ls
+      git branch
+      uname -ra
+
+      # ENABLE ALL FOLLOWING CODE WHEN YOU'RE READY TO ADD AML BUILD - disabled right now
+      # ./scripts/env_reinstall.sh 
+      # use hardcoded root for now because not sure how env changes under ADO policy
+      # DATA_ROOT="/home/alfred/data_dynamic"
+      # ./tests/cicd/src/scripts/get_data_for_builds.sh ${DATA_ROOT}
+      # copy your model files like so - using dummy file to illustrate
+      # azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
+
+- job: AML_job_placeholder
+  dependsOn: setup
+  timeoutInMinutes: 5
+  displayName: AML job placeholder
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      # UNCOMMENT THIS WHEN YOU HAVE UNCOMMENTED THE SETUP JOB
+      # source activate seismic-interpretation
+      echo "TADA!!"

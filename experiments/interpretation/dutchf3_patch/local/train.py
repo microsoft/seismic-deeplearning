@@ -77,8 +77,6 @@ def run(*options, cfg=None, debug=False):
     load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
-
-    # Set CUDNN benchmark mode:
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
     # Fix random seeds:
@@ -137,7 +135,6 @@ def run(*options, cfg=None, debug=False):
         augmentations=val_aug,
     )
     logger.info(val_set)
-    n_classes = train_set.n_classes
 
     if debug:
         logger.info("Running in Debug Mode")
@@ -161,8 +158,10 @@ def run(*options, cfg=None, debug=False):
         momentum=config.TRAIN.MOMENTUM,
         weight_decay=config.TRAIN.WEIGHT_DECAY,
     )
-    epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
-    snapshot_duration = epochs_per_cycle * len(train_loader)
+
+    # learning rate scheduler
+    scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
+    snapshot_duration = scheduler_step * len(train_loader)
     scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration)
 
     # Tensorboard writer:
@@ -176,17 +175,63 @@ def run(*options, cfg=None, debug=False):
 
     # Ignite trainer and evaluator:
     trainer = create_supervised_trainer(model, optimizer, criterion, prepare_batch, device=device)
-    transform_fn = lambda output_dict: (output_dict["y_pred"].squeeze(), output_dict["mask"].squeeze())
+
+    trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
+
+    #########################
+    # Logging setup below
+
+    try:
+        output_dir = generate_path(
+            config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),
+        )
+    except TypeError:
+        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
+
+    summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
+
+    # log all training output
+    trainer.add_event_handler(
+        Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
+    )
+
+    # add logging of learning rate
+    trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
+
+    # log LR to tensorboard
+    trainer.add_event_handler(
+        Events.EPOCH_STARTED, tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"),
+    )
+
+    # log training summary to tensorboard as well
+    trainer.add_event_handler(
+        Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer),
+    )
+
+    def _select_pred_and_mask(model_out_dict):
+        return (model_out_dict["y_pred"].squeeze(), model_out_dict["mask"].squeeze())
+
+    def _select_max(pred_tensor):
+        return pred_tensor.max(1)[1]
+
+    def _tensor_to_numpy(pred_tensor):
+        return pred_tensor.squeeze().cpu().numpy()
+
+    def snapshot_function():
+        return (trainer.state.iteration % snapshot_duration) == 0
+
+    n_classes = train_set.n_classes
+
     evaluator = create_supervised_evaluator(
         model,
         prepare_batch,
         metrics={
-            "nll": Loss(criterion, output_transform=transform_fn),
-            "pixacc": pixelwise_accuracy(n_classes, output_transform=transform_fn, device=device),
-            "cacc": class_accuracy(n_classes, output_transform=transform_fn),
-            "mca": mean_class_accuracy(n_classes, output_transform=transform_fn),
-            "ciou": class_iou(n_classes, output_transform=transform_fn),
-            "mIoU": mean_iou(n_classes, output_transform=transform_fn),
+            "nll": Loss(criterion, output_transform=_select_pred_and_mask),
+            "pixacc": pixelwise_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
+            "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask),
+            "mca": mean_class_accuracy(n_classes, output_transform=_select_pred_and_mask),
+            "ciou": class_iou(n_classes, output_transform=_select_pred_and_mask),
+            "mIoU": mean_iou(n_classes, output_transform=_select_pred_and_mask),
         },
         device=device,
     )
@@ -211,28 +256,39 @@ def run(*options, cfg=None, debug=False):
         ),
     )
 
-    # Tensorboard and Logging:
+    evaluator.add_event_handler(
+        Events.EPOCH_COMPLETED,
+        tensorboard_handlers.log_metrics(
+            summary_writer,
+            trainer,
+            "epoch",
+            metrics_dict={
+                "mIoU": "Validation/mIoU",
+                "nll": "Validation/Loss",
+                "mca": "Validation/MCA",
+                "pixacc": "Validation/Pixel_Acc",
+            },
+        ),
+    )
+
+    transform_func = compose(np_to_tb, decode_segmap(n_classes=n_classes), _tensor_to_numpy)
 
     trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer))
     trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_validation_output(summary_writer))
 
-    @trainer.on(Events.EPOCH_COMPLETED)
-    def log_training_results(engine):
-        evaluator.run(train_loader)
-        log_results(engine, evaluator, summary_writer, n_classes, stage="Training")
-
-    @trainer.on(Events.EPOCH_COMPLETED)
-    def log_validation_results(engine):
-        evaluator.run(val_loader)
-        log_results(engine, evaluator, summary_writer, n_classes, stage="Validation")
-
-    # Checkpointing:
-    checkpoint_handler = SnapshotHandler(
-        output_dir,
-        config.MODEL.NAME,
-        extract_metric_from("mIoU"),
-        lambda: (trainer.state.iteration % snapshot_duration) == 0,
+    evaluator.add_event_handler(
+        Events.EPOCH_COMPLETED, create_image_writer(summary_writer, "Validation/Image", "image"),
     )
+    evaluator.add_event_handler(
+        Events.EPOCH_COMPLETED,
+        create_image_writer(summary_writer, "Validation/Mask", "mask", transform_func=transform_func),
+    )
+    evaluator.add_event_handler(
+        Events.EPOCH_COMPLETED,
+        create_image_writer(summary_writer, "Validation/Pred", "y_pred", transform_func=transform_pred),
+    )
+
+    checkpoint_handler = SnapshotHandler(output_dir, config.MODEL.NAME, extract_metric_from("mIoU"), snapshot_function,)
     evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
     # Kick everything off:
