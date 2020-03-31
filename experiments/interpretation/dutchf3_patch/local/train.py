@@ -87,7 +87,7 @@ def run(*options, cfg=None, debug=False):
         torch.cuda.manual_seed_all(config.SEED)
     np.random.seed(seed=config.SEED)
 
-    # Setup Augmentations
+    # Augmentation:
     basic_aug = Compose(
         [
             Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1),
@@ -97,6 +97,7 @@ def run(*options, cfg=None, debug=False):
                 border_mode=0,
                 always_apply=True,
                 mask_value=255,
+                value=0,
             ),
             Resize(
                 config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
@@ -104,7 +105,7 @@ def run(*options, cfg=None, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
                 min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                border_mode=cv2.BORDER_CONSTANT,
+                border_mode=0,
                 always_apply=True,
                 mask_value=255,
             ),

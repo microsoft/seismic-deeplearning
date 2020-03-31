@@ -75,7 +75,7 @@ def log_results(engine, evaluator, summary_writer, n_classes, stage):
     image = outputs["image"]
     mask = outputs["mask"]
     y_pred = outputs["y_pred"].max(1, keepdim=True)[1]
-    VISUALIZATION_LIMIT = 8
+    VISUALIZATION_LIMIT = 16
 
     if evaluator.state.batch[0].shape[0] > VISUALIZATION_LIMIT:
         image = image[:VISUALIZATION_LIMIT]
