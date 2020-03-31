@@ -420,6 +420,7 @@ def test(*options, cfg=None, debug=False):
         [Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,)]
     )
 
+    # TODO: make sure that this is consistent with how normalization and agumentation for train.py
     patch_aug = Compose(
         [
             Resize(
