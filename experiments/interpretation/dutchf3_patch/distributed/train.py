@@ -24,54 +24,26 @@ from os import path
 import fire
 import numpy as np
 import torch
-from albumentations import Compose, HorizontalFlip, Normalize, Resize, PadIfNeeded
-from cv_lib.utils import load_log_configuration
-from cv_lib.event_handlers import (
-    SnapshotHandler,
-    logging_handlers,
-    tensorboard_handlers,
-)
-from cv_lib.event_handlers.logging_handlers import Evaluator
-from cv_lib.event_handlers.tensorboard_handlers import (
-    create_image_writer,
-    create_summary_writer,
-)
-from cv_lib.segmentation import models
-from cv_lib.segmentation import extract_metric_from
-from deepseismic_interpretation.dutchf3.data import get_patch_loader, decode_segmap
-from cv_lib.segmentation.dutchf3.engine import (
-    create_supervised_evaluator,
-    create_supervised_trainer,
-)
-
+from albumentations import Compose, HorizontalFlip, Normalize, PadIfNeeded, Resize
+from ignite.contrib.handlers import ConcatScheduler, CosineAnnealingScheduler, LinearCyclicalScheduler
+from ignite.engine import Events
 from ignite.metrics import Loss
-from cv_lib.segmentation.metrics import (
-    pixelwise_accuracy,
-    class_accuracy,
-    mean_class_accuracy,
-    class_iou,
-    mean_iou,
-)
+from ignite.utils import convert_tensor
+from toolz import compose, curry, take
+from torch.utils import data
 
-from cv_lib.segmentation.dutchf3.utils import (
-    current_datetime,
-    generate_path,
-    git_branch,
-    git_hash,
-    np_to_tb,
-)
+from cv_lib import OPENCV_BORDER_CONSTANT
+from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard_handlers
+from cv_lib.event_handlers.logging_handlers import Evaluator
+from cv_lib.event_handlers.tensorboard_handlers import create_image_writer, create_summary_writer
+from cv_lib.segmentation import extract_metric_from, models
+from cv_lib.segmentation.dutchf3.engine import create_supervised_evaluator, create_supervised_trainer
+from cv_lib.segmentation.dutchf3.utils import current_datetime, generate_path, git_branch, git_hash, np_to_tb
+from cv_lib.segmentation.metrics import class_accuracy, class_iou, mean_class_accuracy, mean_iou, pixelwise_accuracy
+from cv_lib.utils import load_log_configuration
+from deepseismic_interpretation.dutchf3.data import decode_segmap, get_patch_loader
 from default import _C as config
 from default import update_config
-from ignite.contrib.handlers import (
-    ConcatScheduler,
-    CosineAnnealingScheduler,
-    LinearCyclicalScheduler,
-)
-from ignite.engine import Events
-from ignite.utils import convert_tensor
-from toolz import compose, curry
-from torch.utils import data
-from toolz import take
 
 
 def prepare_batch(batch, device=None, non_blocking=False):
@@ -136,7 +108,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.PATCH_SIZE,
                 min_width=config.TRAIN.PATCH_SIZE,
-                border_mode=0,
+                border_mode=OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=255,
             ),
@@ -146,7 +118,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
                 min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                border_mode=0,
+                border_mode=OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=255,
             ),

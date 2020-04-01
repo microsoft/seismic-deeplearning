@@ -27,6 +27,7 @@ from ignite.engine import Events
 from ignite.metrics import Loss
 from ignite.utils import convert_tensor
 
+from cv_lib import OPENCV_BORDER_CONSTANT
 from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard_handlers
 from cv_lib.event_handlers.tensorboard_handlers import create_summary_writer, log_results
 from cv_lib.segmentation import extract_metric_from, models
@@ -94,20 +95,18 @@ def run(*options, cfg=None, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.PATCH_SIZE,
                 min_width=config.TRAIN.PATCH_SIZE,
-                border_mode=0,
+                border_mode=OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=255,
                 value=0,
             ),
             Resize(
-                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-                always_apply=True,
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
             ),
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
                 min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                border_mode=0,
+                border_mode=OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=255,
             ),
@@ -146,14 +145,9 @@ def run(*options, cfg=None, debug=False):
         val_set = data.Subset(val_set, list(range(config.TRAIN.BATCH_SIZE_PER_GPU)))
 
     train_loader = data.DataLoader(
-        train_set,
-        batch_size=config.TRAIN.BATCH_SIZE_PER_GPU,
-        num_workers=config.WORKERS,
-        shuffle=True,
+        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True,
     )
-    val_loader = data.DataLoader(
-        val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,
-    )
+    val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,)
 
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
@@ -171,7 +165,6 @@ def run(*options, cfg=None, debug=False):
     epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     snapshot_duration = epochs_per_cycle * len(train_loader)
     scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration)
-
 
     # Tensorboard writer:
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, "logs"))
@@ -239,7 +232,6 @@ def run(*options, cfg=None, debug=False):
         config.MODEL.NAME,
         extract_metric_from("mIoU"),
         lambda: (trainer.state.iteration % snapshot_duration) == 0,
-
     )
     evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
