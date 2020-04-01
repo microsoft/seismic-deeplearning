@@ -29,7 +29,7 @@ from ignite.contrib.handlers import ConcatScheduler, CosineAnnealingScheduler, L
 from ignite.engine import Events
 from ignite.metrics import Loss
 from ignite.utils import convert_tensor
-from toolz import compose, curry
+from toolz import compose, curry, take
 from torch.utils import data
 
 from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard_handlers
