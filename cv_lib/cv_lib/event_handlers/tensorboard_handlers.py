@@ -3,6 +3,8 @@
 
 import torchvision
 from tensorboardX import SummaryWriter
+import logging
+import logging.config
 from toolz import curry
 
 from cv_lib.segmentation.dutchf3.utils import np_to_tb
@@ -84,3 +86,29 @@ def log_results(engine, evaluator, summary_writer, n_classes, stage):
     summary_writer.add_image(f"{stage}/Image", _transform_image(image), epoch)
     summary_writer.add_image(f"{stage}/Mask", _transform_pred(mask, n_classes), epoch)
     summary_writer.add_image(f"{stage}/Pred", _transform_pred(y_pred, n_classes), epoch)
+
+
+# TODO: This is deprecated, and will be removed in the future.
+@curry
+def log_metrics(summary_writer, train_engine, log_interval, engine, metrics_dict=_DEFAULT_METRICS):
+    metrics = engine.state.metrics
+    for m in metrics_dict:
+        summary_writer.add_scalar(metrics_dict[m], metrics[m], getattr(train_engine.state, log_interval))
+
+
+# TODO: This is deprecated, and will be removed in the future.
+def create_image_writer(summary_writer, label, output_variable, normalize=False, transform_func=lambda x: x):
+    logger = logging.getLogger(__name__)
+    logger.warning(
+        "create_image_writer() in tensorboard_handlers.py is deprecated, and will be removed in a future update."
+    )
+
+    def write_to(engine):
+        try:
+            data_tensor = transform_func(engine.state.output[output_variable])
+            image_grid = torchvision.utils.make_grid(data_tensor, normalize=normalize, scale_each=True)
+            summary_writer.add_image(label, image_grid, engine.state.epoch)
+        except KeyError:
+            logger.warning("Predictions and or ground truth labels not available to report")
+
+    return write_to
