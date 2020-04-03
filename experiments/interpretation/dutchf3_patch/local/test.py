@@ -28,7 +28,6 @@ from PIL import Image
 from toolz import compose, curry, itertoolz, pipe, take
 from torch.utils import data
 
-from cv_lib import OPENCV_BORDER_CONSTANT
 from cv_lib.segmentation import models
 from cv_lib.segmentation.dutchf3.utils import current_datetime, generate_path, git_branch, git_hash
 from cv_lib.utils import load_log_configuration
@@ -383,7 +382,7 @@ def test(*options, cfg=None, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
                 min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                border_mode=OPENCV_BORDER_CONSTANT,
+                border_mode=config.OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=255,
             ),

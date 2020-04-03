@@ -90,6 +90,9 @@ def log_results(engine, evaluator, summary_writer, n_classes, stage):
 
 
 # TODO: This is deprecated, and will be removed in the future.
+_DEFAULT_METRICS = {"pixacc": "Avg accuracy :", "nll": "Avg loss :"}
+
+# TODO: This is deprecated, and will be removed in the future.
 @curry
 def log_metrics(summary_writer, train_engine, log_interval, engine, metrics_dict=_DEFAULT_METRICS):
     metrics = engine.state.metrics

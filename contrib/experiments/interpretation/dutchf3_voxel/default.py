@@ -24,6 +24,8 @@ _C.WORKERS = 4
 _C.PRINT_FREQ = 20
 _C.LOG_CONFIG = "logging.conf"
 _C.SEED = 42
+_C.OPENCV_BORDER_CONSTANT = 0
+
 # size of voxel cube: WINDOW_SIZE x WINDOW_SIZE x WINDOW_SIZE; used for 3D models only
 _C.WINDOW_SIZE = 65
 

@@ -21,6 +21,7 @@ _C.AUTO_RESUME = False
 _C.PIN_MEMORY = True
 _C.LOG_CONFIG = "./logging.conf"  # Logging config file relative to the experiment
 _C.SEED = 42
+_C.OPENCV_BORDER_CONSTANT = 0
 
 # Cudnn related params
 _C.CUDNN = CN()

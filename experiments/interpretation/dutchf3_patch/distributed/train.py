@@ -32,7 +32,6 @@ from ignite.utils import convert_tensor
 from toolz import compose, curry, take
 from torch.utils import data
 
-from cv_lib import OPENCV_BORDER_CONSTANT
 from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard_handlers
 from cv_lib.event_handlers.logging_handlers import Evaluator
 from cv_lib.event_handlers.tensorboard_handlers import create_image_writer, create_summary_writer
@@ -108,7 +107,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.PATCH_SIZE,
                 min_width=config.TRAIN.PATCH_SIZE,
-                border_mode=OPENCV_BORDER_CONSTANT,
+                border_mode=config.OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=255,
             ),
@@ -118,7 +117,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
                 min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                border_mode=OPENCV_BORDER_CONSTANT,
+                border_mode=config.OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=255,
             ),

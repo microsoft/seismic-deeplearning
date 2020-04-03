@@ -30,7 +30,6 @@ from toolz import compose, tail, take
 from toolz.sandbox.core import unzip
 from torch.utils import data
 
-from cv_lib import OPENCV_BORDER_CONSTANT
 from cv_lib.event_handlers import logging_handlers, tensorboard_handlers
 from cv_lib.event_handlers.tensorboard_handlers import create_image_writer, create_summary_writer
 from cv_lib.segmentation import models
@@ -125,7 +124,7 @@ def run(*options, cfg=None, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.PATCH_SIZE,
                 min_width=config.TRAIN.PATCH_SIZE,
-                border_mode=OPENCV_BORDER_CONSTANT,
+                border_mode=config.OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=mask_value,
                 value=0,
@@ -136,7 +135,7 @@ def run(*options, cfg=None, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
                 min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                border_mode=OPENCV_BORDER_CONSTANT,
+                border_mode=config.OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=mask_value,
                 value=0,
