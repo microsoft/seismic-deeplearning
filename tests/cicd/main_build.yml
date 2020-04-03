@@ -20,7 +20,7 @@ jobs:
 ###################################################################################################
 
 - job: docker_image_build_job
-  timeoutInMinutes: 10
+  timeoutInMinutes: 15
   displayName: docker image build
   pool:
     name: deepseismicagentpool
