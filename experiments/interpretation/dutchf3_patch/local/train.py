@@ -27,7 +27,6 @@ from ignite.engine import Events
 from ignite.metrics import Loss
 from ignite.utils import convert_tensor
 
-from cv_lib import OPENCV_BORDER_CONSTANT
 from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard_handlers
 from cv_lib.event_handlers.tensorboard_handlers import create_summary_writer, log_results
 from cv_lib.segmentation import extract_metric_from, models
