@@ -14,6 +14,29 @@ trigger:
 - contrib
 
 jobs:
+
+###################################################################################################
+# Docker test
+###################################################################################################
+
+- job: docker_image_build_job
+  timeoutInMinutes: 15
+  displayName: docker image build
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      echo "cleaning up old Docker image"
+      if [[ "$(docker images -q seismic-deeplearning:latest 2> /dev/null)" == "" ]]; then
+        echo "no previous image found"
+      else
+        echo "removing previous image"
+        docker rmi seismic-deeplearning
+      fi
+      # test building the image
+      cd docker
+      docker build -t seismic-deeplearning .
+
 - job: setup
   timeoutInMinutes: 10
   displayName: Setup
@@ -40,6 +63,9 @@ jobs:
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
 
+###################################################################################################
+# Unit Test JOBS
+###################################################################################################
 
 - job: cv_lib_unit_tests_job
   dependsOn: setup
