@@ -102,10 +102,10 @@ jobs:
 # Stage 3: Dutch F3 patch models: deconvnet, unet, HRNet patch depth, HRNet section depth
 ###################################################################################################
 
-- job: hrnet_dutchf3_patch
+- job: dutchf3_patch
   dependsOn: dutchf3_unit_tests_job
   timeoutInMinutes: 20
-  displayName: hrnet dutchf3 patch
+  displayName: dutchf3 patch
   pool:
     name: deepseismicagentpool
   steps:
@@ -188,10 +188,10 @@ jobs:
 # Stage 4: DISTRIBUTED PATCH JOBS (in pairs, 2 GPUs at a time per model)
 ###################################################################################################
 
-- job: hrnet_dutchf3_dist
-  dependsOn: hrnet_dutchf3_patch
+- job: dutchf3_patch_dist
+  dependsOn: dutchf3_patch
   timeoutInMinutes: 25
-  displayName: hrnet dutchf3 distributed
+  displayName: dutchf3 patch distributed
   pool:
     name: deepseismicagentpool
   steps:
@@ -253,7 +253,7 @@ jobs:
 ###################################################################################################
 
 - job: docker_image_build_job
-  dependsOn: hrnet_dutchf3_dist
+  dependsOn: dutchf3_patch_dist
   timeoutInMinutes: 15
   displayName: docker image build
   pool:
@@ -275,10 +275,10 @@ jobs:
 # Stage 6: remaining code - Penobscot, section and deconvnet_skip model for F3
 ###################################################################################################
 
-- job: hrnet_penobscot
+- job: penobscot et al
   dependsOn: docker_image_build_job
   timeoutInMinutes: 20
-  displayName: hrnet penobscot
+  displayName: penobscot_et_al
   pool:
     name: deepseismicagentpool
   steps:
