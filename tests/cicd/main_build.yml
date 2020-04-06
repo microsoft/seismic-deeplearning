@@ -27,7 +27,7 @@ jobs:
 # Stage 1: Setup
 ###################################################################################################
 
-  - job: setup
+- job: setup
   timeoutInMinutes: 10
   displayName: Setup
   pool:
