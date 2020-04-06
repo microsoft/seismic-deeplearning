@@ -197,7 +197,7 @@ jobs:
   steps:
   - bash: |
       
-  source activate seismic-interpretation
+      source activate seismic-interpretation
 
       # terminate as soon as any internal script fails
       set -e
