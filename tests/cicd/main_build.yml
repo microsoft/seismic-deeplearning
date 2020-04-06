@@ -275,10 +275,10 @@ jobs:
 # Stage 6: remaining code - Penobscot, section and deconvnet_skip model for F3
 ###################################################################################################
 
-- job: penobscot et al
+- job: penobscot_et_al
   dependsOn: docker_image_build_job
   timeoutInMinutes: 20
-  displayName: penobscot_et_al
+  displayName: penobscot et al
   pool:
     name: deepseismicagentpool
   steps:
