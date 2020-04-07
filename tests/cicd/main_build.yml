@@ -291,7 +291,7 @@ jobs:
       set -e
       NGPU=4
       export CUDA_VISIBLE_DEVICES=0,1,2,3
-      python -m torch.distributed.launch --master_port 6000 --nproc_per_node=NGPU train.py \
+      python -m torch.distributed.launch --master_port 6000 --nproc_per_node=$NGPU train.py \
                       'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
@@ -403,7 +403,7 @@ jobs:
       pids=
       export CUDA_VISIBLE_DEVICES=0
       # find the latest model which we just trained
-      model=$(ls -td output/seresnet_unet/section_depth/* | head -1)      
+      model=$(ls -td output/seresnet_unet/section_depth/* | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/penobscot' \
                      'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth \
