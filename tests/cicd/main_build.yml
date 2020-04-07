@@ -116,6 +116,8 @@ jobs:
       # terminate as soon as any internal script fails
       set -e
 
+      cd experiments/interpretation/dutchf3_patch/distributed
+
       export CUDA_VISIBLE_DEVICES=0
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'none' \
@@ -141,7 +143,7 @@ jobs:
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
                       --cfg=configs/hrnet.yaml --debug 2>&1 | tee hrnet_section.log &
 
-      wait
+      wait -n
 
       echo "All models finished training - start scoring"
 
@@ -180,7 +182,7 @@ jobs:
                      --cfg=configs/hrnet.yaml --debug 2>&1 | tee hrnet_section_test.log &
 
       # wait for completion
-      wait
+      wait -n
       
       echo "PASSED"
 
@@ -221,7 +223,7 @@ jobs:
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
                       --cfg=configs/patch_deconvnet_skip.yaml --debug 2>&1 | tee patch_deconvnet_skip.log &
 
-      wait
+      wait -n
 
       export CUDA_VISIBLE_DEVICES=0,1
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py \
@@ -237,7 +239,7 @@ jobs:
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
                       --cfg=configs/seresnet_unet.yaml --debug 2>&1 | tee seresnet_unet_section.log &
 
-      wait
+      wait -n
 
       # we only have 5 models, so just let the last most important one use all remaining GPUs
       export CUDA_VISIBLE_DEVICES=0,1,2,3
@@ -318,7 +320,7 @@ jobs:
                       --cfg=configs/section_deconvnet_skip.yaml --debug 2>&1 | tee section_deconvnet_skip.log &
                       
       cd ../../../../
-      wait
+      wait -n
 
       echo "Models finished training"
 
@@ -361,4 +363,4 @@ jobs:
                      --cfg=configs/section_deconvnet_skip.yaml --debug 2>&1 | tee section_deconvnet_skip_test.log &
 
       cd ../../../../
-      wait
+      wait -n
