@@ -118,34 +118,39 @@ jobs:
 
       cd experiments/interpretation/dutchf3_patch/local
 
+      pids=
+
       export CUDA_VISIBLE_DEVICES=0
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'none' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
                       --cfg=configs/patch_deconvnet.yaml --debug 2>&1 | tee patch_deconvnet.log &
-      
+      pids+=" $!"
       export CUDA_VISIBLE_DEVICES=1
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
                       --cfg=configs/unet.yaml --debug 2>&1 | tee unet.log &
-
+      pids+=" $!"
       export CUDA_VISIBLE_DEVICES=2
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
                       --cfg=configs/seresnet_unet.yaml --debug 2>&1 | tee seresnet_unet_section.log &
-
+      pids+=" $!"
       export CUDA_VISIBLE_DEVICES=3
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
                       --cfg=configs/hrnet.yaml --debug 2>&1 | tee hrnet_section.log &
-
-      wait -n || exit 1
+      pids+=" $!"
+      # wait -n || exit 1
+      wait $pids || { echo "there were errors in training" >&2; exit 1; }
 
       echo "All models finished training - start scoring"
+
+      pids=
 
       export CUDA_VISIBLE_DEVICES=0
       # find the latest model which we just trained
@@ -154,7 +159,7 @@ jobs:
       python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                      'TEST.MODEL_PATH' ${model}/patch_deconvnet_running_model_1.pth \
                      --cfg=configs/patch_deconvnet.yaml --debug 2>&1 | tee patch_deconvnet_test.log &
-
+      pids+=" $!"
       export CUDA_VISIBLE_DEVICES=1
       # find the latest model which we just trained
       model=$(ls -td output/unet/section_depth/* | head -1)      
@@ -162,7 +167,7 @@ jobs:
       python test.py  'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                       'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth \
                       --cfg=configs/unet.yaml --debug 2>&1 | tee unet_test.log &
-
+      pids+=" $!"
       export CUDA_VISIBLE_DEVICES=2
       # find the latest model which we just trained
       model=$(ls -td output/seresnet_unet/section_depth/* | head -1)
@@ -170,7 +175,7 @@ jobs:
       python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                      'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth \
                      --cfg=configs/seresnet_unet.yaml --debug 2>&1 | tee seresnet_unet_section_test.log &
-
+      pids+=" $!"
       export CUDA_VISIBLE_DEVICES=3
       # find the latest model which we just trained
       model=$(ls -td output/hrnet/section_depth/* | head -1)
@@ -180,9 +185,10 @@ jobs:
                      'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                      'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth \
                      --cfg=configs/hrnet.yaml --debug 2>&1 | tee hrnet_section_test.log &
-
+      pids+=" $!"
       # wait for completion
-      wait -n || exit 1
+      # wait -n || exit 1
+      wait $pids || { echo "there were errors in testing" >&2; exit 1; }
       
       echo "PASSED"
 
