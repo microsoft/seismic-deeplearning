@@ -76,7 +76,7 @@ TRAIN:
   AUGMENTATION: True
   DEPTH: "section" # Options are: none, patch, and section
   STRIDE: 50
-  PATCH_SIZE: 256
+  PATCH_SIZE: 100
   AUGMENTATIONS:
     RESIZE:
       HEIGHT: 200
