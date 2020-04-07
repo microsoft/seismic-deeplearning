@@ -102,80 +102,106 @@ jobs:
 
       source activate seismic-interpretation
 
-      # terminate as soon as any internal script fails
-      set -e
+      # disable auto error handling as we flag it manually
+      set +e
 
       cd experiments/interpretation/dutchf3_patch/local
 
+      # Create a temporary directory to store the statuses
+      dir=$(mktemp -d)
+
       pids=
       export CUDA_VISIBLE_DEVICES=0
-      python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'none' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
-                      --cfg=configs/patch_deconvnet.yaml --debug 2>&1 | tee patch_deconvnet.log &
+                      --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=1
-      python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/unet.yaml --debug 2>&1 | tee unet.log &
+                      --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=2
-      python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/seresnet_unet.yaml --debug 2>&1 | tee seresnet_unet_section.log &
+                      --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=3
-      python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/hrnet.yaml --debug 2>&1 | tee hrnet_section.log &
+                      --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
 
-      wait $pids || { echo "there were errors in training" >&2; exit 1; }
+      wait $pids || exit 1
+
+      # check if any of the models had an error during execution
+      # Get return information for each pid
+      for file in "$dir"/*; do
+        printf 'PID %d returned %d\n' "${file##*/}" "$(<"$file")"
+        [[ "$(<"$file")" -ne "0" ]] && exit 1 || echo "pass"
+      done
+
+      # Remove the temporary directory
+      rm -r "$dir"
 
       echo "All models finished training - start scoring"
+
+      # Create a temporary directory to store the statuses
+      dir=$(mktemp -d)
 
       pids=
       export CUDA_VISIBLE_DEVICES=0
       # find the latest model which we just trained
       model=$(ls -td output/patch_deconvnet/no_depth/* | head -1)
       # try running the test script
-      python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
+      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                      'TEST.MODEL_PATH' ${model}/patch_deconvnet_running_model_1.pth \
-                     --cfg=configs/patch_deconvnet.yaml --debug 2>&1 | tee patch_deconvnet_test.log &
+                     --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=1
       # find the latest model which we just trained
       model=$(ls -td output/unet/section_depth/* | head -1)      
       # try running the test script
-      python test.py  'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
+      { python test.py  'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                       'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth \
-                      --cfg=configs/unet.yaml --debug 2>&1 | tee unet_test.log &
+                      --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=2
       # find the latest model which we just trained
       model=$(ls -td output/seresnet_unet/section_depth/* | head -1)
       # try running the test script
-      python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
+      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                      'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth \
-                     --cfg=configs/seresnet_unet.yaml --debug 2>&1 | tee seresnet_unet_section_test.log &
+                     --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=3
       # find the latest model which we just trained
       model=$(ls -td output/hrnet/section_depth/* | head -1)      
       # try running the test script
-      python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
+      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                      'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                      'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth \
-                     --cfg=configs/hrnet.yaml --debug 2>&1 | tee hrnet_section_test.log &
+                     --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
 
       # wait for completion
-      wait $pids || { echo "there were errors in testing" >&2; exit 1; }
-      
+      wait $pids || exit 1
+
+      # check if any of the models had an error during execution
+      # Get return information for each pid
+      for file in "$dir"/*; do
+        printf 'PID %d returned %d\n' "${file##*/}" "$(<"$file")"
+        [[ "$(<"$file")" -ne "0" ]] && exit 1 || echo "pass"
+      done
+
+      # Remove the temporary directory
+      rm -r "$dir"
+
       echo "PASSED"
 
 ###################################################################################################
@@ -190,62 +216,86 @@ jobs:
     name: deepseismicagentpool
   steps:
   - bash: |
-      
+
       source activate seismic-interpretation
 
-      # terminate as soon as any internal script fails
-      set -e
+      # we're manually collecting and re-throwing process run exit codes
+      set +e
 
       # run the tests      
       cd experiments/interpretation/dutchf3_patch/distributed
 
-      pids=
-      export CUDA_VISIBLE_DEVICES=0,1
-      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py \
-                      'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
-                      'TRAIN.DEPTH' 'none' \
-                      'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
-                      --cfg=configs/patch_deconvnet.yaml --debug 2>&1 | tee patch_deconvnet.log &
-      pids+=" $!"
-
-      export CUDA_VISIBLE_DEVICES=2,3
-      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py \
-                      'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
-                      'TRAIN.DEPTH' 'none' \
-                      'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
-                      --cfg=configs/patch_deconvnet_skip.yaml --debug 2>&1 | tee patch_deconvnet_skip.log &
-      pids+=" $!"
-
-      wait $pids || { echo "there were errors in training deconvnet models" >&2; exit 1; }
+      # Create a temporary directory to store the statuses
+      dir=$(mktemp -d)
 
       pids=
       export CUDA_VISIBLE_DEVICES=0,1
-      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py \
+      { python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py \
                       'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
-                      'TRAIN.DEPTH' 'section' \
-                      'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/unet.yaml --debug 2>&1 | tee unet.log &
+                      'TRAIN.DEPTH' 'none' \
+                      'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
+                      --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
 
       export CUDA_VISIBLE_DEVICES=2,3
-      python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py \
+      { python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py \
+                      'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+                      'TRAIN.DEPTH' 'none' \
+                      'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
+                      --cfg=configs/patch_deconvnet_skip.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+      pids+=" $!"
+
+      wait $pids || exit 1
+
+      # check if any of the models had an error during execution
+      # Get return information for each pid
+      for file in "$dir"/*; do
+        printf 'PID %d returned %d\n' "${file##*/}" "$(<"$file")"
+        [[ "$(<"$file")" -ne "0" ]] && exit 1 || echo "pass"
+      done
+
+      pids=
+      export CUDA_VISIBLE_DEVICES=0,1
+      { python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py \
                       'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/seresnet_unet.yaml --debug 2>&1 | tee seresnet_unet_section.log &
+                      --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
 
-      wait $pids || { echo "there were errors in training unet models" >&2; exit 1; }
+      export CUDA_VISIBLE_DEVICES=2,3
+      { python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py \
+                      'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+                      'TRAIN.DEPTH' 'section' \
+                      'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
+                      --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+      pids+=" $!"
+
+      wait $pids || exit 1
+
+      # check if any of the models had an error during execution
+      # Get return information for each pid
+      for file in "$dir"/*; do
+        printf 'PID %d returned %d\n' "${file##*/}" "$(<"$file")"
+        [[ "$(<"$file")" -ne "0" ]] && exit 1 || echo "pass"
+      done
+
+      # Remove the temporary directory
+      rm -r "$dir" 
 
       # we only have 5 models, so just let the last most important one use all remaining GPUs
+      # re-enable error code flagging
+      set -e
       export CUDA_VISIBLE_DEVICES=0,1,2,3
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py \
                       'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/hrnet.yaml --debug 2>&1 | tee hrnet_section.log
+                      --cfg=configs/hrnet.yaml --debug
+
       echo "PASSED"
+
 
 ###################################################################################################
 # Stage 5: Docker container
