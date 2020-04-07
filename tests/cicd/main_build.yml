@@ -61,7 +61,7 @@ jobs:
 - job: scripts_unit_tests_job
   dependsOn: setup
   timeoutInMinutes: 5
-  displayName: Unit Tests Job
+  displayName: Unit Tests
   pool:
     name: deepseismicagentpool
   steps:
@@ -74,7 +74,7 @@ jobs:
 - job: cv_lib_unit_tests_job
   dependsOn: scripts_unit_tests_job
   timeoutInMinutes: 5
-  displayName: cv_lib Unit Tests Job
+  displayName: cv_lib Unit Tests
   pool:
     name: deepseismicagentpool
   steps:
@@ -87,7 +87,7 @@ jobs:
 - job: dutchf3_unit_tests_job
   dependsOn: cv_lib_unit_tests_job
   timeoutInMinutes: 5
-  displayName: DutchF3 Unit Tests Job
+  displayName: Dutch F3 Unit Tests
   pool:
     name: deepseismicagentpool
   steps:
@@ -105,7 +105,7 @@ jobs:
 - job: dutchf3_patch
   dependsOn: dutchf3_unit_tests_job
   timeoutInMinutes: 20
-  displayName: dutchf3 patch
+  displayName: Dutch F3 patch local
   pool:
     name: deepseismicagentpool
   steps:
@@ -120,26 +120,26 @@ jobs:
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'none' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
-                      --cfg=configs/patch_deconvnet.yaml --debug > patch_deconvnet.log 2>&1 &
+                      --cfg=configs/patch_deconvnet.yaml --debug 2>&1 | tee patch_deconvnet.log &
       
       export CUDA_VISIBLE_DEVICES=1
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/unet.yaml --debug > unet.log 2>&1 &
+                      --cfg=configs/unet.yaml --debug 2>&1 | tee unet.log &
 
       export CUDA_VISIBLE_DEVICES=2
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/seresnet_unet.yaml --debug > seresnet_unet_section.log 2>&1 &
+                      --cfg=configs/seresnet_unet.yaml --debug 2>&1 | tee seresnet_unet_section.log &
 
       export CUDA_VISIBLE_DEVICES=3
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/hrnet.yaml --debug > hrnet_section.log 2>&1 &
+                      --cfg=configs/hrnet.yaml --debug 2>&1 | tee hrnet_section.log &
 
       wait
 
@@ -151,7 +151,7 @@ jobs:
       # try running the test script
       python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                      'TEST.MODEL_PATH' ${model}/patch_deconvnet_running_model_1.pth \
-                     --cfg=configs/patch_deconvnet.yaml --debug > patch_deconvnet_test.log 2>&1 &
+                     --cfg=configs/patch_deconvnet.yaml --debug 2>&1 | tee patch_deconvnet_test.log &
 
       export CUDA_VISIBLE_DEVICES=1
       # find the latest model which we just trained
@@ -159,7 +159,7 @@ jobs:
       # try running the test script
       python test.py  'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                       'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth \
-                      --cfg=configs/unet.yaml --debug > unet_test.log 2>&1 &
+                      --cfg=configs/unet.yaml --debug 2>&1 | tee unet_test.log &
 
       export CUDA_VISIBLE_DEVICES=2
       # find the latest model which we just trained
@@ -167,7 +167,7 @@ jobs:
       # try running the test script
       python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                      'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth \
-                     --cfg=configs/seresnet_unet.yaml --debug  > seresnet_unet_section_test.log 2>&1 &
+                     --cfg=configs/seresnet_unet.yaml --debug 2>&1 | tee seresnet_unet_section_test.log &
 
       export CUDA_VISIBLE_DEVICES=3
       # find the latest model which we just trained
@@ -177,7 +177,7 @@ jobs:
       python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                      'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                      'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth \
-                     --cfg=configs/hrnet.yaml --debug > hrnet_section_test.log 2>&1 &
+                     --cfg=configs/hrnet.yaml --debug 2>&1 | tee hrnet_section_test.log &
 
       # wait for completion
       wait
@@ -191,7 +191,7 @@ jobs:
 - job: dutchf3_patch_dist
   dependsOn: dutchf3_patch
   timeoutInMinutes: 25
-  displayName: dutchf3 patch distributed
+  displayName: Dutch F3 patch distributed
   pool:
     name: deepseismicagentpool
   steps:
@@ -211,7 +211,7 @@ jobs:
                       'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'none' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
-                      --cfg=configs/patch_deconvnet.yaml --debug > patch_deconvnet.log 2>&1 &
+                      --cfg=configs/patch_deconvnet.yaml --debug 2>&1 | tee patch_deconvnet.log &
 
       export CUDA_VISIBLE_DEVICES=2,3
 
@@ -219,7 +219,7 @@ jobs:
                       'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'none' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
-                      --cfg=configs/patch_deconvnet_skip.yaml --debug > patch_deconvnet_skip.log 2>&1 &
+                      --cfg=configs/patch_deconvnet_skip.yaml --debug 2>&1 | tee patch_deconvnet_skip.log &
 
       wait
 
@@ -228,14 +228,14 @@ jobs:
                       'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/unet.yaml --debug > unet.log 2>&1 &
+                      --cfg=configs/unet.yaml --debug 2>&1 | tee unet.log &
 
       export CUDA_VISIBLE_DEVICES=2,3
       python -m torch.distributed.launch --nproc_per_node=$(nproc) train.py \
                       'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/seresnet_unet.yaml --debug > seresnet_unet_section.log 2>&1 &
+                      --cfg=configs/seresnet_unet.yaml --debug 2>&1 | tee seresnet_unet_section.log &
 
       wait
 
@@ -246,7 +246,7 @@ jobs:
                       'TRAIN.DEPTH' 'section' \
                       'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/hrnet.yaml --debug > hrnet_section.log 2>&1
+                      --cfg=configs/hrnet.yaml --debug 2>&1 | tee hrnet_section.log
 
 ###################################################################################################
 # Stage 5: Docker container
@@ -255,7 +255,7 @@ jobs:
 - job: docker_image_build_job
   dependsOn: dutchf3_patch_dist
   timeoutInMinutes: 15
-  displayName: docker image build
+  displayName: Docker image build
   pool:
     name: deepseismicagentpool
   steps:
@@ -278,7 +278,7 @@ jobs:
 - job: penobscot_et_al
   dependsOn: docker_image_build_job
   timeoutInMinutes: 20
-  displayName: penobscot et al
+  displayName: Penobscot et al
   pool:
     name: deepseismicagentpool
   steps:
@@ -294,28 +294,28 @@ jobs:
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/seresnet_unet.yaml --debug > seresnet_unet_section.log 2>&1 &
+                      --cfg=configs/seresnet_unet.yaml --debug 2>&1 | tee seresnet_unet_section.log &
 
       export CUDA_VISIBLE_DEVICES=1
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'section' \
                       'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/hrnet.yaml --debug > hrnet_section.log 2>&1 &      
+                      --cfg=configs/hrnet.yaml --debug 2>&1 | tee hrnet_section.log &      
       
       export CUDA_VISIBLE_DEVICES=2
       cd ../../../../experiments/interpretation/dutchf3_patch/local
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'none' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
-                      --cfg=configs/patch_deconvnet_skip.yaml --debug > patch_deconvnet_skip.log 2>&1 &
+                      --cfg=configs/patch_deconvnet_skip.yaml --debug 2>&1 | tee patch_deconvnet_skip.log &
 
       export CUDA_VISIBLE_DEVICES=3
       cd ../../../../experiments/interpretation/dutchf3_section/local
       python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                       'TRAIN.DEPTH' 'none' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
-                      --cfg=configs/section_deconvnet_skip.yaml --debug > section_deconvnet_skip.log 2>&1 &
+                      --cfg=configs/section_deconvnet_skip.yaml --debug 2>&1 | tee section_deconvnet_skip.log &
                       
       cd ../../../../
       wait
@@ -329,7 +329,7 @@ jobs:
       # try running the test script
       python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/penobscot' \
                      'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth \
-                     --cfg=configs/seresnet_unet.yaml --debug > seresnet_unet_section_test.log 2>&1 &
+                     --cfg=configs/seresnet_unet.yaml --debug 2>&1 | tee seresnet_unet_section_test.log &
 
       export CUDA_VISIBLE_DEVICES=1
       # find the latest model which we just trained
@@ -339,7 +339,7 @@ jobs:
       python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/penobscot' \
                      'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                      'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth \
-                     --cfg=configs/hrnet.yaml  --debug > hrnet_section_test.log 2>&1 &
+                     --cfg=configs/hrnet.yaml  --debug 2>&1 | tee hrnet_section_test.log &
 
       export CUDA_VISIBLE_DEVICES=2
       cd ../../../../experiments/interpretation/dutchf3_patch/local
@@ -348,7 +348,7 @@ jobs:
       # try running the test script
       python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                      'TEST.MODEL_PATH' ${model}/patch_deconvnet_skip_running_model_1.pth \
-                     --cfg=configs/patch_deconvnet_skip.yaml --debug > patch_deconvnet_skip_test.log 2>&1 &
+                     --cfg=configs/patch_deconvnet_skip.yaml --debug 2>&1 | tee patch_deconvnet_skip_test.log &
 
       export CUDA_VISIBLE_DEVICES=3
       cd ../../../../experiments/interpretation/dutchf3_section/local
@@ -358,7 +358,7 @@ jobs:
       # try running the test script
       python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                      'TEST.MODEL_PATH' ${model}/section_deconvnet_skip_running_model_1.pth \
-                     --cfg=configs/section_deconvnet_skip.yaml --debug > section_deconvnet_skip_test.log 2>&1 &
+                     --cfg=configs/section_deconvnet_skip.yaml --debug 2>&1 | tee section_deconvnet_skip_test.log &
 
       cd ../../../../
       wait
