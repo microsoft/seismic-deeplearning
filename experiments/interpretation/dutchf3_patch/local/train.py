@@ -128,6 +128,7 @@ def run(*options, cfg=None, debug=False):
         augmentations=train_aug,
     )
     logger.info(train_set)
+    n_classes = train_set.n_classes
     val_set = TrainPatchLoader(
         config.DATASET.ROOT,
         split="val",
