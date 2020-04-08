@@ -263,7 +263,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
     if local_rank == 0:  # Run only on master process
 
         trainer.add_event_handler(
-            Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
+            Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.TRAIN.BATCH_SIZE_PER_GPU),
         )
         trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))    
 
@@ -338,7 +338,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         logger.info("Starting training")
     
     if debug:
-        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = config.TRAIN.BATCH_SIZE_PER_GPU*2, seed = config.SEED)
+        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = config.TRAIN.BATCH_SIZE_PER_GPU, seed = config.SEED)
     else:
         trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = len(train_loader), seed = config.SEED)
 
