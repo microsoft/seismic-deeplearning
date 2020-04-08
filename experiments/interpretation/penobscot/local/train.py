@@ -181,7 +181,7 @@ def run(*options, cfg=None, debug=False):
 
     val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,)
 
-    model = getattr(models, config.MODEL.NAME).get_seg_model(config)d
+    model = getattr(models, config.MODEL.NAME).get_seg_model(config)
 
     model = model.to(device)  # Send to GPU
 
