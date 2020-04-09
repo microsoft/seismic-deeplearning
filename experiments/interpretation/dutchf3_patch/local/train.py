@@ -26,6 +26,7 @@ from ignite.contrib.handlers import CosineAnnealingScheduler
 from ignite.engine import Events
 from ignite.metrics import Loss
 from ignite.utils import convert_tensor
+from toolz import take
 
 from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard_handlers
 from cv_lib.event_handlers.tensorboard_handlers import create_summary_writer, log_results
@@ -146,8 +147,8 @@ def run(*options, cfg=None, debug=False):
 
     if debug:
         logger.info("Running in Debug Mode")
-        train_set = data.Subset(train_set, list(range(config.TRAIN.BATCH_SIZE_PER_GPU)))
-        val_set = data.Subset(val_set, list(range(config.TRAIN.BATCH_SIZE_PER_GPU)))
+        train_set = take(config.TRAIN.BATCH_SIZE_PER_GPU, train_set)
+        val_set = take(config.TRAIN.BATCH_SIZE_PER_GPU, val_set)
 
     train_loader = data.DataLoader(
         train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True,
