@@ -341,10 +341,10 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
         logger.info("Starting training")
     
-    if debug:
-        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = config.TRAIN.BATCH_SIZE_PER_GPU, seed = config.SEED)
-    else:
-        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = len(train_loader), seed = config.SEED)
+        if debug:
+            trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = config.TRAIN.BATCH_SIZE_PER_GPU, seed = config.SEED)
+        else:
+            trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = len(train_loader), seed = config.SEED)
 
 
 if __name__ == "__main__":
