@@ -166,6 +166,10 @@ def run(*options, cfg=None, debug=False):
         num_workers=config.WORKERS,
         shuffle=True,
     )
+
+    if debug:
+        val_set = data.Subset(val_set, range(3))
+
     val_loader = data.DataLoader(
         val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,
     )
