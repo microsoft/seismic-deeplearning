@@ -178,6 +178,10 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=val_aug,
     )
+
+    if debug:
+        val_set = data.Subset(val_set, range(3))
+
     logger.info(f"Validation examples {len(val_set)}")
     n_classes = train_set.n_classes
 

@@ -131,6 +131,9 @@ def run(*options, cfg=None, debug=False):
         shuffle=False,
     )
 
+    if debug:
+        val_set = data.Subset(val_set, range(3))
+
     val_loader = data.DataLoader(
         val_set,
         batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU,

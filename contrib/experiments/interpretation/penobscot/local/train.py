@@ -179,7 +179,10 @@ def run(*options, cfg=None, debug=False):
         train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True,
     )
 
-    val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,)
+    if debug:
+        val_set = data.Subset(val_set, range(3))
+
+    val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS)    
 
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
 
@@ -241,7 +244,7 @@ def run(*options, cfg=None, debug=False):
         device=device,
     )
 
-    # Set the validation run to start on the epoch completion of the training run    
+    # Set the validation run to start on the epoch completion of the training run
     trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
     evaluator.add_event_handler(
@@ -306,7 +309,6 @@ def run(*options, cfg=None, debug=False):
         trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = config.TRAIN.BATCH_SIZE_PER_GPU, seed = config.SEED)
     else:
         trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = len(train_loader), seed = config.SEED)
-
 
 if __name__ == "__main__":
     fire.Fire(run)
