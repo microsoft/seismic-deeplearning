@@ -26,6 +26,7 @@ from ignite.contrib.handlers import CosineAnnealingScheduler
 from ignite.engine import Events
 from ignite.metrics import Loss
 from ignite.utils import convert_tensor
+from toolz import take
 
 from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard_handlers
 from cv_lib.event_handlers.tensorboard_handlers import create_summary_writer, log_results
