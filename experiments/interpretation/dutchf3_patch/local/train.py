@@ -140,15 +140,15 @@ def run(*options, cfg=None, debug=False):
     )
     logger.info(val_set)
 
-    if debug:
-        logger.info("Running in Debug Mode")
-        train_loader = take(2 * config.TRAIN.BATCH_SIZE_PER_GPU, train_loader)
-        val_loader = take(2 * config.TRAIN.BATCH_SIZE_PER_GPU, val_loader)
-
     train_loader = data.DataLoader(
         train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True,
     )
     val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,)
+
+    if debug:
+        logger.info("Running in Debug Mode")
+        train_loader = take(2 * config.TRAIN.BATCH_SIZE_PER_GPU, train_loader)
+        val_loader = take(2 * config.TRAIN.BATCH_SIZE_PER_GPU, val_loader)
 
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
