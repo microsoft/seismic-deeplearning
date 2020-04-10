@@ -172,7 +172,7 @@ def run(*options, cfg=None, debug=False):
     )
 
     epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
-    snapshot_duration = epochs_per_cycle * len(train_loader)
+    snapshot_duration = min(epochs_per_cycle * len(train_loader), 2)
     scheduler = CosineAnnealingScheduler(
         optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration
     )
