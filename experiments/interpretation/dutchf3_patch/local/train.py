@@ -26,7 +26,6 @@ from ignite.contrib.handlers import CosineAnnealingScheduler
 from ignite.engine import Events
 from ignite.metrics import Loss
 from ignite.utils import convert_tensor
-from toolz import take
 
 from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard_handlers
 from cv_lib.event_handlers.tensorboard_handlers import create_summary_writer, log_results
@@ -159,12 +158,6 @@ def run(*options, cfg=None, debug=False):
         val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, sampler=sampler
     )
 
-    # debug = 1
-    # if debug:
-    #     logger.info("Running in Debug Mode")
-    #     train_loader = take(2 * config.TRAIN.BATCH_SIZE_PER_GPU, train_loader)
-    #     val_loader = take(2 * config.TRAIN.BATCH_SIZE_PER_GPU, val_loader)
-
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -179,10 +172,7 @@ def run(*options, cfg=None, debug=False):
     )
 
     epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
-    # if not debug:
-    # snapshot_duration = epochs_per_cycle * len(train_loader)
-    # else:
-    snapshot_duration = 16000  # TODO: remove this
+    snapshot_duration = epochs_per_cycle * len(train_loader)
     scheduler = CosineAnnealingScheduler(
         optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration
     )
