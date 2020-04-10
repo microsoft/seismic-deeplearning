@@ -167,7 +167,7 @@ def run(*options, cfg=None, debug=False):
     if not debug:
         snapshot_duration = epochs_per_cycle * len(train_loader)
     else:
-        snapshot_duration = 2
+        snapshot_duration = 240
     scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration)
 
     # Tensorboard writer:
