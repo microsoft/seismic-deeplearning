@@ -147,7 +147,10 @@ def run(*options, cfg=None, debug=False):
     train_loader = data.DataLoader(
         train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True,
     )
+<<<<<<< HEAD
     val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS)
+=======
+>>>>>>> bug fix
 
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
@@ -163,7 +166,11 @@ def run(*options, cfg=None, debug=False):
     )
 
     epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
+<<<<<<< HEAD
     snapshot_duration = min(epochs_per_cycle * len(train_loader), 2)
+=======
+    snapshot_duration = epochs_per_cycle * len(train_loader)
+>>>>>>> bug fix
     scheduler = CosineAnnealingScheduler(
         optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration
     )
