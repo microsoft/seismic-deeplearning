@@ -145,18 +145,7 @@ def run(*options, cfg=None, debug=False):
         val_set = data.Subset(val_set, list(range(4)))
 
     train_loader = data.DataLoader(
-        train_set,
-        batch_size=config.TRAIN.BATCH_SIZE_PER_GPU,
-        num_workers=config.WORKERS,
-        shuffle=shuffle,
-        sampler=sampler,
-    )
-    val_loader = data.DataLoader(
-        val_set,
-        batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU,
-        num_workers=config.WORKERS,
-        shuffle=shuffle,
-        sampler=sampler,
+        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True,
     )
     val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS)
 
