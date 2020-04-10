@@ -18,7 +18,7 @@ trigger:
 ###################################################################################################
 # The pre-requisite for these jobs is to have 4 GPUs on your virtual machine (K80 or better)
 # Jobs are daisy-chained by stages - more relevant stages come first (the ones we're currently 
-# working on): 
+# working on):
 #    - if they fail no point in running anything else
 #    - each stage _can_ have parallel jobs but that's not always needed for fast execution
 ###################################################################################################
