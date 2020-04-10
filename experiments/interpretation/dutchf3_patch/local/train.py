@@ -142,7 +142,7 @@ def run(*options, cfg=None, debug=False):
 
     if debug:
         logger.info("Running in Debug Mode")
-        sampler = data.sampler.SubsetRandomSampler(list(range(config.TRAIN.BATCH_SIZE_PER_GPU)))
+        sampler = data.sampler.SubsetRandomSampler(list(range(4)))
         shuffle = False
     else:
         sampler = None
@@ -182,7 +182,7 @@ def run(*options, cfg=None, debug=False):
     # if not debug:
     # snapshot_duration = epochs_per_cycle * len(train_loader)
     # else:
-    snapshot_duration = 16000
+    snapshot_duration = 16000  # TODO: remove this
     scheduler = CosineAnnealingScheduler(
         optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration
     )
