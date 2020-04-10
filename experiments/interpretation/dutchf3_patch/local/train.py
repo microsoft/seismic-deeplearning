@@ -140,15 +140,30 @@ def run(*options, cfg=None, debug=False):
     )
     logger.info(val_set)
 
-    train_loader = data.DataLoader(
-        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True,
-    )
-    val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,)
-
     if debug:
         logger.info("Running in Debug Mode")
-        train_loader = take(2 * config.TRAIN.BATCH_SIZE_PER_GPU, train_loader)
-        val_loader = take(2 * config.TRAIN.BATCH_SIZE_PER_GPU, val_loader)
+        sampler = data.sampler.SubsetRandomSampler(list(range(config.TRAIN.BATCH_SIZE_PER_GPU)))
+        shuffle = False
+    else:
+        sampler = None
+        shuffle = True
+
+    train_loader = data.DataLoader(
+        train_set,
+        batch_size=config.TRAIN.BATCH_SIZE_PER_GPU,
+        num_workers=config.WORKERS,
+        shuffle=shuffle,
+        sampler=sampler,
+    )
+    val_loader = data.DataLoader(
+        val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, sampler=sampler
+    )
+
+    # debug = 1
+    # if debug:
+    #     logger.info("Running in Debug Mode")
+    #     train_loader = take(2 * config.TRAIN.BATCH_SIZE_PER_GPU, train_loader)
+    #     val_loader = take(2 * config.TRAIN.BATCH_SIZE_PER_GPU, val_loader)
 
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
@@ -164,11 +179,13 @@ def run(*options, cfg=None, debug=False):
     )
 
     epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
-    if not debug:
-        snapshot_duration = epochs_per_cycle * len(train_loader)
-    else:
-        snapshot_duration = 240
-    scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration)
+    # if not debug:
+    snapshot_duration = epochs_per_cycle * len(train_loader)
+    # else:
+    #     snapshot_duration = 240
+    scheduler = CosineAnnealingScheduler(
+        optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration
+    )
 
     # Tensorboard writer:
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, "logs"))
