@@ -29,7 +29,7 @@ from ignite.contrib.handlers import ConcatScheduler, CosineAnnealingScheduler, L
 from ignite.engine import Events
 from ignite.metrics import Loss
 from ignite.utils import convert_tensor
-from toolz import compose, curry, take
+from toolz import compose, curry
 from torch.utils import data
 
 from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard_handlers
@@ -292,9 +292,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
             return pred_tensor.squeeze().cpu().numpy()
 
         transform_func = compose(np_to_tb, decode_segmap(n_classes=n_classes), _tensor_to_numpy)
-
         transform_pred = compose(transform_func, _select_max)
-
         evaluator.add_event_handler(
             Events.EPOCH_COMPLETED, create_image_writer(summary_writer, "Validation/Image", "image"),
         )
@@ -314,9 +312,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
             output_dir, config.MODEL.NAME, extract_metric_from("mIoU"), snapshot_function,
         )
         evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
-
         logger.info("Starting training")
-
         trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
 
 

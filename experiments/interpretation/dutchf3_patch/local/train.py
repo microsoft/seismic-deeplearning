@@ -148,9 +148,13 @@ def run(*options, cfg=None, debug=False):
         train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True,
     )
 <<<<<<< HEAD
+<<<<<<< HEAD
     val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS)
 =======
 >>>>>>> bug fix
+=======
+    val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS)
+>>>>>>> reverting back to Subset()
 
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
