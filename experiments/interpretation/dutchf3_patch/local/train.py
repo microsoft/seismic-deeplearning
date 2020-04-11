@@ -140,23 +140,14 @@ def run(*options, cfg=None, debug=False):
     logger.info(val_set)
 
     if debug:
-        logger.info("Running in Debug Mode")
-        sampler = data.sampler.SubsetRandomSampler(list(range(4)))
-        shuffle = False
-    else:
-        sampler = None
-        shuffle = True
+        logger.info("Running in debug mode..")
+        train_set = data.Subset(train_set, list(range(4)))
+        val_set = data.Subset(val_set, list(range(4)))
 
     train_loader = data.DataLoader(
-        train_set,
-        batch_size=config.TRAIN.BATCH_SIZE_PER_GPU,
-        num_workers=config.WORKERS,
-        shuffle=shuffle,
-        sampler=sampler,
+        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True,
     )
-    val_loader = data.DataLoader(
-        val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, sampler=sampler
-    )
+    val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS)
 
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
