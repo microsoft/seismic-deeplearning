@@ -6,17 +6,19 @@ pr:
 - master
 - staging
 - contrib
+- correctness
 
 # Any commit to this branch will trigger the build.
 trigger:
 - master
 - staging
 - contrib
+- correctness
 
 ###################################################################################################
 # The pre-requisite for these jobs is to have 4 GPUs on your virtual machine (K80 or better)
 # Jobs are daisy-chained by stages - more relevant stages come first (the ones we're currently 
-# working on): 
+# working on):
 #    - if they fail no point in running anything else
 #    - each stage _can_ have parallel jobs but that's not always needed for fast execution
 ###################################################################################################
@@ -297,158 +299,5 @@ jobs:
                       'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                       'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
                       --cfg=configs/hrnet.yaml --debug
-
-      echo "PASSED"
-
-###################################################################################################
-# Stage 5: Docker container
-###################################################################################################
-
-- job: docker_image_build_job
-  dependsOn: dutchf3_patch_dist
-  timeoutInMinutes: 15
-  displayName: Docker image build
-  pool:
-    name: deepseismicagentpool
-  steps:
-  - bash: |
-      # terminate as soon as any internal script fails
-      set -e
-
-      echo "cleaning up old Docker image"
-      if [[ "$(docker images -q seismic-deeplearning:latest 2> /dev/null)" == "" ]]; then
-        echo "no previous image found"
-      else
-        echo "removing previous image"
-        docker rmi seismic-deeplearning
-      fi
-      # test building the image
-      cd docker
-      docker build -t seismic-deeplearning .
-
-###################################################################################################
-# Stage 6: remaining code - Penobscot, section and deconvnet_skip model for F3
-###################################################################################################
-
-- job: penobscot_et_al
-  dependsOn: docker_image_build_job
-  timeoutInMinutes: 20
-  displayName: Penobscot et al
-  pool:
-    name: deepseismicagentpool
-  steps:
-  - bash: |
-      
-      source activate seismic-interpretation
-
-      # disable auto error handling as we flag it manually
-      set +e
-      
-      cd experiments/interpretation/penobscot/local
-
-      # Create a temporary directory to store the statuses
-      dir=$(mktemp -d)
-
-      pids=
-      export CUDA_VISIBLE_DEVICES=0
-      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
-                      'TRAIN.DEPTH' 'section' \
-                      'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
-      pids+=" $!"
-
-      export CUDA_VISIBLE_DEVICES=1
-      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/penobscot' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
-                      'TRAIN.DEPTH' 'section' \
-                      'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
-                      'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                      --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
-      pids+=" $!"
-
-      export CUDA_VISIBLE_DEVICES=2
-      cd ../../../../experiments/interpretation/dutchf3_patch/local
-      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
-                      'TRAIN.DEPTH' 'none' \
-                      'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
-                      --cfg=configs/patch_deconvnet_skip.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
-      pids+=" $!"
-
-      export CUDA_VISIBLE_DEVICES=3
-      cd ../../../../experiments/interpretation/dutchf3_section/local
-      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
-                      'TRAIN.DEPTH' 'none' \
-                      'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
-                      --cfg=configs/section_deconvnet_skip.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
-      pids+=" $!"
-      cd ../../../../
-
-      wait $pids || exit 1
-
-      # check if any of the models had an error during execution
-      # Get return information for each pid
-      for file in "$dir"/*; do
-        printf 'PID %d returned %d\n' "${file##*/}" "$(<"$file")"
-        [[ "$(<"$file")" -ne "0" ]] && exit 1 || echo "pass"
-      done
-
-      # Remove the temporary directory
-      rm -r "$dir"
-
-      echo "Models finished training"
-
-      # Create a temporary directory to store the statuses
-      dir=$(mktemp -d)
-
-      cd experiments/interpretation/penobscot/local
-      pids=
-      export CUDA_VISIBLE_DEVICES=0
-      # find the latest model which we just trained
-      model=$(ls -td output/seresnet_unet/section_depth/* | head -1)
-      # try running the test script
-      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/penobscot' \
-                     'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth \
-                     --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
-      pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=1
-      # find the latest model which we just trained
-      model=$(ls -td output/hrnet/section_depth/* | head -1)
-      echo ${model}
-      # # try running the test script
-      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/penobscot' \
-                     'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
-                     'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth \
-                     --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
-      pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=2
-      cd ../../../../experiments/interpretation/dutchf3_patch/local
-      # find the latest model which we just trained
-      model=$(ls -td output/patch_deconvnet_skip/no_depth/* | head -1)
-      # try running the test script
-      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
-                     'TEST.MODEL_PATH' ${model}/patch_deconvnet_skip_running_model_1.pth \
-                     --cfg=configs/patch_deconvnet_skip.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
-      pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=3
-      cd ../../../../experiments/interpretation/dutchf3_section/local
-      # find the latest model which we just trained
-      model=$(ls -td output/section_deconvnet_skip/no_depth/* | head -1)
-      echo ${model}
-      # try running the test script
-      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
-                     'TEST.MODEL_PATH' ${model}/section_deconvnet_skip_running_model_1.pth \
-                     --cfg=configs/section_deconvnet_skip.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
-      pids+=" $!"
-      cd ../../../../
-      wait $pids || exit 1
-
-      # check if any of the models had an error during execution
-      # Get return information for each pid
-      for file in "$dir"/*; do
-        printf 'PID %d returned %d\n' "${file##*/}" "$(<"$file")"
-        [[ "$(<"$file")" -ne "0" ]] && exit 1 || echo "pass"
-      done
-
-      # Remove the temporary directory
-      rm -r "$dir"
 
       echo "PASSED"
