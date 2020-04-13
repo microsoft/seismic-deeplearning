@@ -317,7 +317,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
         logger.info("Starting training")
 
-    trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
+        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
 
 
 if __name__ == "__main__":
