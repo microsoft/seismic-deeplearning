@@ -34,17 +34,29 @@ def _write_split_files(splits_path, train_list, val_list, loader_type):
 
 
 def _get_aline_range(aline, per_val, slice_steps):
+    """.
+
+    Args:
+        aline (int): number of seismic sections in the inline or 
+            crossline directions
+        per_val (float):  the fraction of the volume to use for
+            validation. Defaults to 0.2.
+        slice_steps (int): increment to the slices count.
+            If slice_steps > 1 the function will skip:
+                slice_steps - 1 slice.
+            Defaults to 1, do not skip any slice.
+    """
     try:
         if slice_steps < 1:
-            raise ValueError('slice_steps cannot be zero or a negative number')
-        # Inline and Crossline sections
-        val_aline = math.floor(aline * per_val / 2)
-        val_aline_range = itertools.chain(range(0, val_aline),
-                                          range(aline - val_aline, aline))
+            raise ValueError("slice_steps cannot be zero or a negative number")
+
+        if per_val < 0 or per_val >= 1:
+            raise ValueError("Validation percentage (per_val) should be a number in the range [0,1).")
+
+        val_aline = math.floor(aline * per_val /2)
+        val_aline_range = itertools.chain(range(0, val_aline), range(aline - val_aline, aline))
         train_aline_range = range(val_aline, aline - val_aline, slice_steps)
 
-        print("aline: ", aline)
-        print("val_aline: ", val_aline)
         return train_aline_range, val_aline_range
     except (Exception, ValueError):
         raise
