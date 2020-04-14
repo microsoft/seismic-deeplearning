@@ -162,7 +162,7 @@ def run(*options, cfg=None, debug=False):
 
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
 
-    snapshot_duration = epochs_per_cycle * len(train_loader)
+    snapshot_duration = min(epochs_per_cycle * len(train_loader), 2)
     scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration)
 
     # weights are inversely proportional to the frequency of the classes in
