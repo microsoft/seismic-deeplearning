@@ -11,11 +11,13 @@ pr:
 - master
 - staging
 - contrib
+- correctness
 
 trigger:
 - master
 - staging
 - contrib
+- correctness
 
 pool:
   name: deepseismicagentpool
