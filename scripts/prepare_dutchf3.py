@@ -19,16 +19,13 @@ from sklearn.model_selection import train_test_split
 def _write_split_files(splits_path, train_list, val_list, loader_type):
     if not path.isdir(splits_path):
         mkdir(splits_path)
-    file_object = open(path.join(splits_path,
-                       loader_type + "_train_val.txt"), "w")
+    file_object = open(path.join(splits_path, loader_type + "_train_val.txt"), "w")
     file_object.write("\n".join(train_list + val_list))
     file_object.close()
-    file_object = open(path.join(splits_path,
-                       loader_type + "_train.txt"), "w")
+    file_object = open(path.join(splits_path, loader_type + "_train.txt"), "w")
     file_object.write("\n".join(train_list))
     file_object.close()
-    file_object = open(path.join(splits_path,
-                       loader_type + "_val.txt"), "w")
+    file_object = open(path.join(splits_path, loader_type + "_val.txt"), "w")
     file_object.write("\n".join(val_list))
     file_object.close()
 
