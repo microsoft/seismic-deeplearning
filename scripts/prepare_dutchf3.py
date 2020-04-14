@@ -332,11 +332,17 @@ def split_alaudah_et_al_19(data_dir, stride, patch_size, fraction_validation=0.2
     _write_split_files(splits_path, train_list, val_list, loader_type)
 
 
-# TODO: Try https://github.com/Chilipp/docrep for doscstring reuse
 class SplitTrainValCLI(object):
-    def section(self, data_dir, label_file, per_val=0.2,
-                log_config="logging.conf", output_dir=None,
-                slice_steps=1):
+    def section(
+        self,
+        data_dir,
+        label_file,
+        split_direction,
+        per_val=0.2,
+        log_config="logging.conf",
+        output_dir=None,
+        slice_steps=1,
+    ):
         """Generate section based train and validation files for Netherlands F3
         dataset.
 
@@ -344,6 +350,8 @@ class SplitTrainValCLI(object):
             data_dir (str): data directory path
             output_dir (str): directory under data_dir to store the split files
             label_file (str): npy files with labels. Stored in data_dir
+            split_direction (int):  Direction in which to split the data into 
+                train & val. Use "inline" or "crossline".
             per_val (float, optional):  the fraction of the volume to use for
                 validation. Defaults to 0.2.
             log_config (str): path to log configurations
@@ -362,9 +370,18 @@ class SplitTrainValCLI(object):
                                        per_val=per_val, 
                                        log_config=log_config)
 
-    def patch(self, label_file, stride, patch_size,
-              per_val=0.2, log_config="logging.conf",
-              data_dir=None, output_dir=None, slice_steps=1):
+    def patch(
+        self,
+        label_file,
+        stride,
+        patch_size,
+        split_direction,
+        per_val=0.2,
+        log_config="logging.conf",
+        data_dir=None,
+        output_dir=None,
+        slice_steps=1,
+    ):
         """Generate train and validation files for Netherlands F3 dataset.
 
         Args:
@@ -376,6 +393,8 @@ class SplitTrainValCLI(object):
             per_val (float, optional):  the fraction of the volume to use for
                 validation. Defaults to 0.2.
             log_config (str): path to log configurations
+            split_direction (int):  Direction in which to split the data into 
+                train & val. Use "inline" or "crossline".
             slice_steps (int): increment to the slices count.
                 If slice_steps > 1 the function will skip:
                     slice_steps - 1 slice.
@@ -390,6 +409,7 @@ class SplitTrainValCLI(object):
                                      label_file=label_file,
                                      stride=stride, 
                                      patch_size=patch_size,
+                                     split_direction=split_direction,
                                      slice_steps=slice_steps,
                                      per_val=per_val,
                                      log_config=log_config)
@@ -398,11 +418,11 @@ class SplitTrainValCLI(object):
 if __name__ == "__main__":
     """Example:
     python prepare_data.py split_train_val section --data_dir=data \
-        --label_file=label_file.npy --output_dir=splits --slice_steps=2
+        --label_file=label_file.npy --output_dir=splits --split_direction=crossline --slice_steps=2
     or
     python prepare_dutchf3.py split_train_val patch --data_dir=data \
         --label_file=label_file.npy --output_dir=splits --stride=50 \
-        --patch_size=100 --slice_steps=2
+        --patch_size=100 --split_direction=crossline --slice_steps=2
     """
     fire.Fire(
         {"split_train_val": SplitTrainValCLI}
