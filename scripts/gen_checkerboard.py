@@ -6,12 +6,15 @@
 import numpy as np
 import sys
 import os
+
 np.set_printoptions(linewidth=200)
 import logging
+
 # toggle to WARNING when running in production, or use CLI
 logging.getLogger().setLevel(logging.DEBUG)
-#logging.getLogger().setLevel(logging.WARNING)
+# logging.getLogger().setLevel(logging.WARNING)
 import argparse
+
 parser = argparse.ArgumentParser()
 
 """ useful information when running from a GIT folder."""
@@ -30,11 +33,11 @@ def make_box(n_inlines, n_crosslines, n_depth, box_size):
     :return: numpy array
     """
     # inline by crossline by depth
-    zero_patch = np.ones(box_size) * WHITE
-    one_patch = np.ones(box_size) * BLACK
+    zero_patch = np.ones((box_size, box_size)) * WHITE
+    one_patch = np.ones((box_size, box_size)) * BLACK
 
     # multiplying by one flips the sign
-    stride = np.hstrack((zero_patch, one_patch))
+    stride = np.hstack((zero_patch, one_patch))
     neg_stride = -1 * stride
 
     # come up with a 2D inline image
@@ -57,73 +60,120 @@ def make_box(n_inlines, n_crosslines, n_depth, box_size):
 
     # now make a box with alternating checkers
     checker_box = np.ones((n_inlines, n_crosslines, box_size * 2))
-    checker_box[:, :, 0:box_size] = checker_image
+    checker_box[:, :, 0:box_size] = checker_image[:,:,np.newaxis]
     # now invert the colors
-    checker_box[:, :, box_size:] = -1 * checker_image
+    checker_box[:, :, box_size:] = -1 * checker_image[:,:,np.newaxis]
 
     # stack boxes depth wise
     step_depth = int(np.ceil(n_depth / float(box_size) / 2))
     final_box = np.concatenate((checker_box,) * step_depth, axis=2)
 
+    return final_box
+
+def mkdir(path):
+    """
+  Create a directory helper function
+  """
+    if not os.path.isdir(path):
+        os.mkdir(path)
+
 
 def main(args):
     """
 
-    TODO
+    Generates checkerboard dataset based on Dutch F3 in Alaudah format.
 
     TODO: please see the TODO statements in the code
 
     """
 
-    logging.info('loading data')
+    logging.info("loading data")
 
     train_seismic = np.load(os.path.join(args.dataroot, "train", "train_seismic.npy"))
     train_labels = np.load(os.path.join(args.dataroot, "train", "train_labels.npy"))
-    test1_seismic = np.load(path.join(data_dir, "test_once", "test1_seismic.npy"))
-    test1_labels = np.load(path.join(data_dir, "test_once", "test1_labels.npy"))
-    test2_seismic = np.load(path.join(data_dir, "test_once", "test2_seismic.npy"))
-    test2_labels = np.load(path.join(data_dir, "test_once", "test2_labels.npy"))
+    test1_seismic = np.load(os.path.join(args.dataroot, "test_once", "test1_seismic.npy"))
+    test1_labels = np.load(os.path.join(args.dataroot, "test_once", "test1_labels.npy"))
+    test2_seismic = np.load(os.path.join(args.dataroot, "test_once", "test2_seismic.npy"))
+    test2_labels = np.load(os.path.join(args.dataroot, "test_once", "test2_labels.npy"))
 
     assert train_seismic.shape == train_labels.shape
     assert train_seismic.min() == WHITE
     assert train_seismic.max() == BLACK
+    assert train_labels.min() == 0
+    assert train_labels.max() == 5
 
+    assert test1_seismic.shape == test1_labels.shape
+    assert test1_seismic.min() == WHITE
+    assert test1_seismic.max() == BLACK
+    assert test1_labels.min() == 0
+    assert test1_labels.max() == 5
+
+    assert test2_seismic.shape == test2_labels.shape
+    assert test2_seismic.min() == WHITE
+    assert test2_seismic.max() == BLACK
+    assert test2_labels.min() == 0
+    assert test2_labels.max() == 5
+
+    logging.info("train checkerbox")
     n_inlines, n_crosslines, n_depth = train_seismic.shape
-
-    logging.info('train checkerbox')
     checkerboard_train_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
     checkerboard_train_seismic = checkerboard_train_seismic.astype(train_seismic.dtype)
     checkerboard_train_labels = checkerboard_train_seismic.astype(train_labels.dtype)
+    # labels are integers and start from zero
+    checkerboard_train_labels[checkerboard_train_labels < WHITE_LABEL] = WHITE_LABEL
 
     # create checkerbox
-    logging.info('test1 checkerbox')
-    n_inlines, n_crosslines, n_depth = train_seismic.shape
-    checkerboard_train_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
-    checkerboard_train_seismic = checkerboard_train_seismic.astype(train_seismic.dtype)
-    checkerboard_train_labels = checkerboard_train_seismic.astype(train_labels.dtype)
+    logging.info("test1 checkerbox")
+    n_inlines, n_crosslines, n_depth = test1_seismic.shape
+    checkerboard_test1_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
+    checkerboard_test1_seismic = checkerboard_test1_seismic.astype(test1_seismic.dtype)
+    checkerboard_test1_labels = checkerboard_test1_seismic.astype(test1_labels.dtype)
+    # labels are integers and start from zero
+    checkerboard_test1_labels[checkerboard_test1_labels < WHITE_LABEL] = WHITE_LABEL
 
-    logging.info('test2 checkerbox')
-    n_inlines, n_crosslines, n_depth = train_seismic.shape
-    checkerboard_train_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
-    checkerboard_train_seismic = checkerboard_train_seismic.astype(train_seismic.dtype)
-    checkerboard_train_labels = checkerboard_train_seismic.astype(train_labels.dtype)
-   
-    logging.info('all done')
+    logging.info("test2 checkerbox")
+    n_inlines, n_crosslines, n_depth = test2_seismic.shape
+    checkerboard_test2_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
+    checkerboard_test2_seismic = checkerboard_test2_seismic.astype(test2_seismic.dtype)
+    checkerboard_test2_labels = checkerboard_test2_seismic.astype(test2_labels.dtype)
+    # labels are integers and start from zero
+    checkerboard_test2_labels[checkerboard_test2_labels < WHITE_LABEL] = WHITE_LABEL
+
+    logging.info("writing data to disk")
+    mkdir(args.dataout)
+    mkdir(os.path.join(args.dataout, "data"))
+    mkdir(os.path.join(args.dataout, "data", "splits"))
+    mkdir(os.path.join(args.dataout, "data", "train"))
+    mkdir(os.path.join(args.dataout, "data", "test_once"))
+    
+    np.save(os.path.join(args.dataout, "data", "train", "train_seismic.npy"), checkerboard_train_seismic)
+    np.save(os.path.join(args.dataout, "data", "train", "train_labels.npy"), checkerboard_train_labels)
+
+    np.save(os.path.join(args.dataout, "data", "test_once", "test1_seismic.npy"), checkerboard_test1_seismic)
+    np.save(os.path.join(args.dataout, "data", "test_once", "test1_labels.npy"), checkerboard_test1_labels)
+
+    np.save(os.path.join(args.dataout, "data", "test_once", "test2_seismic.npy"), checkerboard_test2_seismic)
+    np.save(os.path.join(args.dataout, "data", "test_once", "test2_labels.npy"), checkerboard_test2_labels)
+
+    logging.info("all done")
+
 
 """ GLOBAL VARIABLES """
 WHITE = -1
 BLACK = 1
+WHITE_LABEL = 0
 
-parser.add_argument("--dataroot", help="Root location of the input data", type=str, required = True, default = None)
-parser.add_argument("--dataout", help="Root location of the output data", type=str, required = True, default = None)
-parser.add_argument("--box_size", help="Size of the bounding box", type=int, required = False, default = 100)
+parser.add_argument("--dataroot", help="Root location of the input data", type=str, required=True, default=None)
+parser.add_argument("--dataout", help="Root location of the output data", type=str, required=True, default=None)
+parser.add_argument("--box_size", help="Size of the bounding box", type=int, required=False, default=100)
+parser.add_argument("--debug", help="Turn on debug mode", type=int, required=False, default=100)
 
 """ main wrapper with profiler """
 if __name__ == "__main__":
-  main(parser.parse_args())
-  
+    main(parser.parse_args())
+
 # pretty printing of the stack
-'''
+"""
   try:
     logging.info('before main')
     main(parser.parse_args())
@@ -132,7 +182,7 @@ if __name__ == "__main__":
     for frame in traceback.extract_tb(sys.exc_info()[2]):
       fname,lineno,fn,text = frame
       print ("Error in %s on line %d" % (fname, lineno))
-'''
+"""
 # optionally enable profiling information
 #  import cProfile
 #  name = <insert_name_here>
