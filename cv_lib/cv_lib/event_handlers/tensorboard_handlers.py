@@ -67,7 +67,9 @@ def log_results(engine, evaluator, summary_writer, n_classes, stage):
 
 
 @curry
-def log_metrics(summary_writer, train_engine, log_interval, engine, metrics_dict=_DEFAULT_METRICS):
+def log_metrics(
+    summary_writer, train_engine, log_interval, engine, metrics_dict={"pixacc": "Avg accuracy :", "nll": "Avg loss :"}
+):
     metrics = engine.state.metrics
     for m in metrics_dict:
         summary_writer.add_scalar(metrics_dict[m], metrics[m], getattr(train_engine.state, log_interval))
