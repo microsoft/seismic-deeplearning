@@ -50,14 +50,17 @@ def _get_aline_range(aline, per_val, slice_steps):
         raise
 
 
-def split_section_train_val(data_dir, output_dir, label_file, per_val=0.2,
-                            log_config=None, slice_steps=1):
+def split_section_train_val(
+    data_dir, output_dir, label_file, split_direction, per_val=0.2, log_config=None, slice_steps=1
+):
     """Generate train and validation files for Netherlands F3 dataset.
 
     Args:
         data_dir (str): data directory path
         output_dir (str): directory under data_dir to store the split files
         label_file (str): npy files with labels. Stored in data_dir
+        split_direction (int):  Direction in which to split the data into 
+            train & val. Use "inline" or "crossline".
         per_val (float, optional):  the fraction of the volume to use for
             validation. Defaults to 0.2.
         log_config (str): path to log configurations
@@ -79,26 +82,24 @@ def split_section_train_val(data_dir, output_dir, label_file, per_val=0.2,
     labels = np.load(label_file)
     logger.debug(f"Data shape [iline|xline|depth] {labels.shape}")
 
-    iline, xline, _ = labels.shape
-    # Inline sections
-    train_iline_range, val_iline_range = _get_aline_range(iline,
-                                                           per_val,
-                                                           slice_steps)
-    train_i_list = ["i_" + str(i) for i in train_iline_range]
-    val_i_list = ["i_" + str(i) for i in val_iline_range]
+    iline, xline, _ = labels.shape #TODO: Must make sure in the future, all new datasets conform to this order.
+    logger.info(f"Splitting in {split_direction} direction.. ")
 
-    # Xline sections
-    train_xline_range, val_xline_range = _get_aline_range(xline,
-                                                           per_val,
-                                                           slice_steps)
-    train_x_list = ["x_" + str(x) for x in train_xline_range]
-    val_x_list = ["x_" + str(x) for x in val_xline_range]
+    if split_direction.lower() == "inline":
+        num_sections = iline
+        index = 'i'
+    elif split_direction.lower() == "crossline":
+        num_sections = xline
+        index = 'x'
+    else:
+        raise ValueError(f"Unknown split_direction {split_direction}")
 
-    train_list = train_x_list + train_i_list
-    val_list = val_x_list + val_i_list
+    train_range, val_range = _get_aline_range(num_sections, per_val, slice_steps)
+    train_list = [f"{index}_" + str(section) for section in train_range]
+    val_list = [f"{index}_" + str(section) for section in val_range]
 
     # write to files to disk
-    logger.info(f"Writing {output_dir}")
+    logger.info(f"Writing to: {output_dir}")
     _write_split_files(output_dir, train_list, val_list, "section")
 
 
