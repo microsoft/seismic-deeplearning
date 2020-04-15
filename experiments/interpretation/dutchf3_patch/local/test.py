@@ -267,7 +267,9 @@ def _evaluate_split(
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
-    test_set = TestSectionLoader(config.DATASET.ROOT, split=split, is_transform=True, augmentations=section_aug,)
+    test_set = TestSectionLoader(
+        config.DATASET.ROOT, split=split, is_transform=True, augmentations=section_aug, n_classes = config.DATASET.NUM_CLASSES
+    )
 
     n_classes = test_set.n_classes
 

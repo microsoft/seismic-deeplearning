@@ -81,7 +81,16 @@ def run(*options, cfg=None, debug=False):
     # Set CUDNN benchmark mode:
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
-    # Fix random seeds:
+    # modify number of classes to 2 if running in debug mode - checkerboard dataset
+    if debug:
+        # check that we're running the checkerboard experiment
+        logger.info("We need to debug on checkerboard dataset - assuming it's loaded")
+        assert "checkerboard" in config.DATASET.ROOT
+        config.merge_from_list(["DATASET.NUM_CLASSES", 2, "DATASET.CLASS_WEIGHTS", [1, 1]])
+
+    # we will write the model under outputs / config_file_name / model_dir
+    config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
+
     torch.manual_seed(config.SEED)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(config.SEED)
@@ -126,6 +135,7 @@ def run(*options, cfg=None, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=train_aug,
+        n_classes = config.DATASET.NUM_CLASSES
     )
     logger.info(train_set)
     n_classes = train_set.n_classes

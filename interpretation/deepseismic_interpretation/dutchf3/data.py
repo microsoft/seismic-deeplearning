@@ -123,12 +123,12 @@ class SectionLoader(data.Dataset):
     :param str label_path: Override file path for label data
     """
     def __init__(self, data_dir, split="train", is_transform=True, augmentations=None,
-                 seismic_path=None, label_path=None):
+                 seismic_path=None, label_path=None, n_classes=None):
         self.split = split
         self.data_dir = data_dir
         self.is_transform = is_transform
         self.augmentations = augmentations
-        self.n_classes = 6
+        self.n_classes = n_classes
         self.sections = list()
 
     def __len__(self):
@@ -352,11 +352,11 @@ class PatchLoader(data.Dataset):
     :param str label_path: Override file path for label data
     """
     def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None,
-                 seismic_path=None, label_path=None):
+                 seismic_path=None, label_path=None, n_classes=None):
         self.data_dir = data_dir
         self.is_transform = is_transform
         self.augmentations = augmentations
-        self.n_classes = 6
+        self.n_classes = n_classes
         self.patches = list()
         self.patch_size = patch_size
         self.stride = stride
@@ -453,11 +453,11 @@ class TrainPatchLoader(PatchLoader):
     """
     def __init__(
         self, data_dir, split="train", stride=30, patch_size=99, is_transform=True, augmentations=None,
-        seismic_path=None, label_path=None
+        seismic_path=None, label_path=None, n_classes=None
     ):
         super(TrainPatchLoader, self).__init__(
             data_dir, stride=stride, patch_size=patch_size, is_transform=is_transform, augmentations=augmentations,
-            seismic_path=seismic_path, label_path=label_path
+            seismic_path=seismic_path, label_path=label_path, n_classes=n_classes
         )
         # self.seismic = self.pad_volume(np.load(seismic_path))
         # self.labels = self.pad_volume(np.load(labels_path))
@@ -695,7 +695,7 @@ def get_seismic_labels():
 
 
 @curry
-def decode_segmap(label_mask, n_classes, label_colours=get_seismic_labels()):
+def decode_segmap(label_mask, n_classes=None, label_colours=get_seismic_labels()):
     """Decode segmentation class labels into a colour image
     Args:
         label_mask (np.ndarray): an (N,H,W) array of integer values denoting
