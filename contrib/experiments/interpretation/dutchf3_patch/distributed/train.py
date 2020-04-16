@@ -196,6 +196,13 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
     snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*len(train_loader)
 
+<<<<<<< 7e7acca4d9e21d1961cb9fd5ac0157d9f30c91dc
+=======
+    snapshot_duration = scheduler_step * len(train_loader)
+    if debug:
+        snapshot_duration = 2
+
+>>>>>>> resolved merge conflict
     warmup_duration = 5 * len(train_loader)
 
     warmup_scheduler = LinearCyclicalScheduler(
