@@ -64,7 +64,6 @@ from cv_lib.segmentation.dutchf3.utils import (
 
 from default import _C as config
 from default import update_config
-from toolz import take
 
 
 mask_value = 255
@@ -182,7 +181,7 @@ def run(*options, cfg=None, debug=False):
 
     val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,)
 
-    model = getattr(models, config.MODEL.NAME).get_seg_model(config)
+    model = getattr(models, config.MODEL.NAME).get_seg_model(config)d
 
     model = model.to(device)  # Send to GPU
 
@@ -242,10 +241,7 @@ def run(*options, cfg=None, debug=False):
         device=device,
     )
 
-    # Set the validation run to start on the epoch completion of the training run
-    if debug:
-        logger.info("Running Validation in Debug/Test mode")
-        val_loader = take(3, val_loader)
+    # Set the validation run to start on the epoch completion of the training run    
     trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
     evaluator.add_event_handler(
@@ -307,9 +303,9 @@ def run(*options, cfg=None, debug=False):
 
     logger.info("Starting training")
     if debug:
-        logger.info("Running Training in Debug/Test mode")
-        train_loader = take(3, train_loader)
-    trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
+        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = config.TRAIN.BATCH_SIZE_PER_GPU*2)
+    else:
+        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = len(train_loader))
 
 
 if __name__ == "__main__":

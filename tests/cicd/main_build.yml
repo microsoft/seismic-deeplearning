@@ -162,7 +162,7 @@ jobs:
       model=$(ls -td output/patch_deconvnet/no_depth/* | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
-                     'TEST.MODEL_PATH' ${model}/patch_deconvnet_running_model_1.pth \
+                     'TEST.MODEL_PATH' ${model}/patch_deconvnet_running_model_0.*.pth \
                      --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=1
@@ -170,7 +170,7 @@ jobs:
       model=$(ls -td output/unet/section_depth/* | head -1)      
       # try running the test script
       { python test.py  'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
-                      'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth \
+                      'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_0.*.pth \
                       --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=2
@@ -178,7 +178,7 @@ jobs:
       model=$(ls -td output/seresnet_unet/section_depth/* | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
-                     'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_1.pth \
+                     'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_0.*.pth \
                      --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=3
@@ -187,7 +187,7 @@ jobs:
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                      'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
-                     'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_1.pth \
+                     'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_0.*.pth \
                      --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
 

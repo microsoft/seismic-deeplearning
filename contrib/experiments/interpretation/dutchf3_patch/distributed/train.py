@@ -72,7 +72,6 @@ from ignite.engine import Events
 from ignite.utils import convert_tensor
 from toolz import compose, curry
 from torch.utils import data
-from toolz import take
 
 
 def prepare_batch(batch, device=None, non_blocking=False):
@@ -258,10 +257,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         device=device,
     )
 
-    # Set the validation run to start on the epoch completion of the training run
-    if debug:
-        logger.info("Running Validation in Debug/Test mode")
-        val_loader = take(3, val_loader)
+    # Set the validation run to start on the epoch completion of the training run    
     trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
     if local_rank == 0:  # Run only on master process
@@ -340,12 +336,11 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
         logger.info("Starting training")
-
+    
     if debug:
-        logger.info("Running Training in Debug/Test mode")
-        train_loader = take(3, train_loader)
-
-    trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
+        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = config.TRAIN.BATCH_SIZE_PER_GPU*2)
+    else:
+        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = len(train_loader))
 
 
 if __name__ == "__main__":
