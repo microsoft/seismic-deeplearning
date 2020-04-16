@@ -153,10 +153,22 @@ def run(*options, cfg=None, local_rank=0, debug=False):
     logger.info(f"Validation examples {len(val_set)}")
     n_classes = train_set.n_classes
 
+<<<<<<< 6a5bf95464e846b1ddb60633038ebfa77698b2f8
     if debug:
         val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
         train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*2))
     
+=======
+    #if debug:
+        #val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
+        #train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*2))
+    
+    logger.info(f"Training examples {len(train_set)}")
+    logger.info(f"Validation examples {len(val_set)}")    
+
+    train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
+
+>>>>>>> resolved merge conflict
     logger.info(f"Training examples {len(train_set)}")
     logger.info(f"Validation examples {len(val_set)}")    
 
