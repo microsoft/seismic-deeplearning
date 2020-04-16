@@ -156,7 +156,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
     #if debug:
         #val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
         #train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*2))
-    
+
     logger.info(f"Training examples {len(train_set)}")
     logger.info(f"Validation examples {len(val_set)}")    
 
