@@ -156,6 +156,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
     logger.info(f"Validation examples {len(val_set)}")
     n_classes = train_set.n_classes
 
+<<<<<<< 19abb244a5256feef0edac1ffd89d43f792dcc17
 <<<<<<< 5641445480aa16692917020bbab5e56e4cb61930
     if debug:
         logger.info("Running in debug mode..")
@@ -166,12 +167,20 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         #val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
         #train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*2))
 >>>>>>> resolved merge conflict
+=======
+    #if debug:
+        #val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
+        #train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*2))
+>>>>>>> resolved merge conflict
     
     logger.info(f"Training examples {len(train_set)}")
     logger.info(f"Validation examples {len(val_set)}")    
 
+<<<<<<< 19abb244a5256feef0edac1ffd89d43f792dcc17
 <<<<<<< 5641445480aa16692917020bbab5e56e4cb61930
 =======
+=======
+>>>>>>> resolved merge conflict
     train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
 >>>>>>> resolved merge conflict
 
@@ -214,6 +223,9 @@ def run(*options, cfg=None, local_rank=0, debug=False):
     snapshot_duration = scheduler_step * len(train_loader)
     if debug:
         snapshot_duration = 2
+<<<<<<< 19abb244a5256feef0edac1ffd89d43f792dcc17
+>>>>>>> resolved merge conflict
+=======
 >>>>>>> resolved merge conflict
     warmup_duration = 5 * len(train_loader)
     warmup_scheduler = LinearCyclicalScheduler(
