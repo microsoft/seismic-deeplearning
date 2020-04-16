@@ -139,7 +139,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=train_aug,
-    )
+    )    
 
     val_set = TrainPatchLoader(
         config.DATASET.ROOT,
@@ -156,10 +156,14 @@ def run(*options, cfg=None, local_rank=0, debug=False):
     logger.info(f"Validation examples {len(val_set)}")
     n_classes = train_set.n_classes
 
-    if debug:
-        logger.info("Running in debug mode..")
-        train_set = data.Subset(train_set, list(range(4)))
-        val_set = data.Subset(val_set, list(range(4)))
+    #if debug:
+        #val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
+        #train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*2))
+    
+    logger.info(f"Training examples {len(train_set)}")
+    logger.info(f"Validation examples {len(val_set)}")    
+
+    train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
 
     logger.info(f"Training examples {len(train_set)}")
     logger.info(f"Validation examples {len(val_set)}")
