@@ -6,12 +6,14 @@ pr:
 - master
 - staging
 - contrib
+- correctness
 
 # Any commit to this branch will trigger the build.
 trigger:
 - master
 - staging
 - contrib
+- correctness
 
 jobs:
 
