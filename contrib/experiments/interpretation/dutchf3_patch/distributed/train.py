@@ -168,10 +168,13 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
 
+<<<<<<< 110d771d9decaab24a1afa8eb79067471c9ec000
 >>>>>>> resolved merge conflict
     logger.info(f"Training examples {len(train_set)}")
     logger.info(f"Validation examples {len(val_set)}")    
 
+=======
+>>>>>>> resolved merge conflict
     train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
 
     train_loader = data.DataLoader(
@@ -208,6 +211,13 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
     snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*len(train_loader)
 
+<<<<<<< 110d771d9decaab24a1afa8eb79067471c9ec000
+=======
+    snapshot_duration = scheduler_step * len(train_loader)
+    if debug:
+        snapshot_duration = 2
+
+>>>>>>> resolved merge conflict
     warmup_duration = 5 * len(train_loader)
 
     warmup_scheduler = LinearCyclicalScheduler(
