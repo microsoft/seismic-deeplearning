@@ -217,7 +217,11 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
     snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*len(train_loader)
 
+<<<<<<< 3a27af538fcb170e60af5c7f359606ec0f5c6514
 <<<<<<< 110d771d9decaab24a1afa8eb79067471c9ec000
+=======
+<<<<<<< 7e7acca4d9e21d1961cb9fd5ac0157d9f30c91dc
+>>>>>>> resolved merge conflict
 =======
     snapshot_duration = scheduler_step * len(train_loader)
     if debug:
