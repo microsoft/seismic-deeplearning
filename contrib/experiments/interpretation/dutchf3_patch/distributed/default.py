@@ -20,6 +20,7 @@ _C.AUTO_RESUME = False
 _C.PIN_MEMORY = True
 _C.LOG_CONFIG = "logging.conf"
 _C.SEED = 42
+_C.OPENCV_BORDER_CONSTANT = 0
 
 # Cudnn related params
 _C.CUDNN = CN()
@@ -58,7 +59,7 @@ _C.TRAIN.STRIDE = 50
 _C.TRAIN.PATCH_SIZE = 99
 _C.TRAIN.MEAN = 0.0009997  # 0.0009996710808862074
 _C.TRAIN.STD = 0.21  # 0.20976548783479299
-_C.TRAIN.DEPTH = "None"  # Options are None, Patch and Section
+_C.TRAIN.DEPTH = "none"  # Options are: none, patch, and section
 # None adds no depth information and the num of channels remains at 1
 # Patch adds depth per patch so is simply the height of that patch from 0 to 1, channels=3
 # Section adds depth per section so contains depth information for the whole section, channels=3

@@ -21,6 +21,7 @@ _C.AUTO_RESUME = False
 _C.PIN_MEMORY = True
 _C.LOG_CONFIG = "./logging.conf"  # Logging config file relative to the experiment
 _C.SEED = 42
+_C.OPENCV_BORDER_CONSTANT = 0
 
 # Cudnn related params
 _C.CUDNN = CN()
@@ -55,7 +56,7 @@ _C.TRAIN.MODEL_DIR = "models"  # This will be a subdirectory inside OUTPUT_DIR
 _C.TRAIN.AUGMENTATION = True
 _C.TRAIN.MEAN = 0.0009997  # 0.0009996710808862074
 _C.TRAIN.STD = 0.20977  # 0.20976548783479299
-_C.TRAIN.DEPTH = "none"  # Options are 'none', 'patch' and 'section'
+_C.TRAIN.DEPTH = "none"  # Options are: none, patch, and section
 # None adds no depth information and the num of channels remains at 1
 # Patch adds depth per patch so is simply the height of that patch from 0 to 1, channels=3
 # Section adds depth per section so contains depth information for the whole section, channels=3

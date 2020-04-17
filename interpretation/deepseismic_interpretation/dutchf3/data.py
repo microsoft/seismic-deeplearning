@@ -824,11 +824,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
         patch_name = self.patches[index]
         direction, idx, xdx, ddx = patch_name.split(sep="_")
 
-        # Shift offsets the padding that is added in training
-        # shift = self.patch_size if "test" not in self.split else 0
-        # TODO: Remember we are cancelling the shift since we no longer pad
-        shift = 0
-        idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
+        idx, xdx, ddx = int(idx), int(xdx), int(ddx)
         if direction == "i":
             im = self.seismic[idx, :, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size]
             lbl = self.labels[idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size]
@@ -848,11 +844,11 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
         if self.is_transform:
             im, lbl = self.transform(im, lbl)
         return im, lbl
-    
+
     def __repr__(self):
         unique, counts = np.unique(self.labels, return_counts=True)
-        ratio = counts/np.sum(counts)
-        return "\n".join(f"{lbl}: {cnt} [{rat}]"for lbl, cnt, rat in zip(unique, counts, ratio))
+        ratio = counts / np.sum(counts)
+        return "\n".join(f"{lbl}: {cnt} [{rat}]" for lbl, cnt, rat in zip(unique, counts, ratio))
 
 
 _TRAIN_PATCH_LOADERS = {
@@ -866,7 +862,7 @@ _TRAIN_VOXEL_LOADERS = {"voxel": TrainVoxelLoaderWithDepth}
 
 
 def get_patch_loader(cfg):
-    assert cfg.TRAIN.DEPTH in [
+    assert str(cfg.TRAIN.DEPTH).lower() in [
         "section",
         "patch",
         "none",
@@ -876,7 +872,7 @@ def get_patch_loader(cfg):
 
 
 def get_section_loader(cfg):
-    assert cfg.TRAIN.DEPTH in [
+    assert str(cfg.TRAIN.DEPTH).lower() in [
         "section",
         "none",
     ], f"Depth {cfg.TRAIN.DEPTH} not supported for section data. \
@@ -885,7 +881,7 @@ def get_section_loader(cfg):
 
 
 def get_voxel_loader(cfg):
-    assert cfg.TRAIN.DEPTH in [
+    assert str(cfg.TRAIN.DEPTH).lower() in [
         "voxel",
         "none",
     ], f"Depth {cfg.TRAIN.DEPTH} not supported for section data. \
@@ -949,7 +945,7 @@ def get_seismic_labels():
 
 
 @curry
-def decode_segmap(label_mask, n_classes=6, label_colours=get_seismic_labels()):
+def decode_segmap(label_mask, n_classes, label_colours=get_seismic_labels()):
     """Decode segmentation class labels into a colour image
     Args:
         label_mask (np.ndarray): an (N,H,W) array of integer values denoting
