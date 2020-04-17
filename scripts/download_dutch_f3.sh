@@ -13,7 +13,7 @@ fi;
 echo "Extracting to $1"
 # Download the files:  
 temp_file=$(mktemp -d)/data.zip
-wget -o /dev/null -O $temp_file https://www.dropbox.com/s/p6cbgbocxwj04sw/data.zip?dl=1
+wget -o /dev/null -O $temp_file https://zenodo.org/record/3755060/files/data.zip
 
 # Check that the md5 checksum matches to varify file integrity
 echo "Expected output: MD5(data.zip)= bc5932279831a95c0b244fd765376d85"
