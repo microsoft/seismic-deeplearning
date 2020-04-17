@@ -56,7 +56,6 @@ _CLASS_NAMES = [
     "zechstein",
 ]
 
-
 class runningScore(object):
     def __init__(self, n_classes):
         self.n_classes = n_classes

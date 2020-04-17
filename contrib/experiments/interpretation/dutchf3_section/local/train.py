@@ -50,7 +50,6 @@ from ignite.utils import convert_tensor
 from ignite.metrics import Loss
 from toolz import compose
 from torch.utils import data
-from toolz import take
 
 
 def prepare_batch(batch, device="cuda", non_blocking=False):
@@ -132,6 +131,9 @@ def run(*options, cfg=None, debug=False):
         shuffle=False,
     )
 
+    if debug:
+        val_set = data.Subset(val_set, range(3))
+
     val_loader = data.DataLoader(
         val_set,
         batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU,
@@ -176,7 +178,7 @@ def run(*options, cfg=None, debug=False):
     trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
 
     trainer.add_event_handler(
-        Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
+        Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.TRAIN.BATCH_SIZE_PER_GPU),
     )
 
     trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
@@ -206,9 +208,6 @@ def run(*options, cfg=None, debug=False):
         device=device,
     )
 
-    if debug:
-        logger.info("Running Validation in Debug/Test mode")
-        val_loader = take(3, val_loader)
     trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
     evaluator.add_event_handler(
@@ -279,9 +278,9 @@ def run(*options, cfg=None, debug=False):
 
     logger.info("Starting training")
     if debug:
-        logger.info("Running Validation in Debug/Test mode")
-        train_loader = take(3, train_loader)
-    trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
+        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = config.TRAIN.BATCH_SIZE_PER_GPU, seed = config.SEED)
+    else:
+        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = len(train_loader), seed = config.SEED)
 
 
 if __name__ == "__main__":

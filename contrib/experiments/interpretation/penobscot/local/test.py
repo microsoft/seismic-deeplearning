@@ -283,10 +283,9 @@ def run(*options, cfg=None, debug=False):
 
     logger.info("Starting training")
     if debug:
-        logger.info("Running in Debug/Test mode")
-        test_loader = take(3, test_loader)
-
-    evaluator.run(test_loader, max_epochs=1)
+        evaluator.run(test_loader, max_epochs=1, epoch_length = 1)
+    else:
+        evaluator.run(test_loader, max_epochs=1, epoch_length = len(test_loader))
 
     # Log top N and bottom N inlines in terms of IoU to tensorboard
     inline_ious = inline_mean_iou.iou_per_inline()
