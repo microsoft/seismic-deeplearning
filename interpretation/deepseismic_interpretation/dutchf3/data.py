@@ -18,11 +18,7 @@ from deepseismic_interpretation.dutchf3.utils.batch import (
     interpolate_to_fit_data,
     parse_labels_in_image,
     get_coordinates_for_slice,
-    get_grid,
-    augment_flip,
-    augment_rot_xy,
-    augment_rot_z,
-    augment_stretch,
+    get_grid,    
     rand_int,
     trilinear_interpolation,
 )
@@ -115,95 +111,6 @@ def read_labels(fname, data_info):
     label_imgs.append([label_img, slice_type, slice_no])
 
     return label_imgs, label_coordinates
-
-
-def get_random_batch(
-    data_cube,
-    label_coordinates,
-    im_size,
-    batch_size,
-    index,
-    random_flip=False,
-    random_stretch=None,
-    random_rot_xy=None,
-    random_rot_z=None,
-):
-    """
-    Returns a batch of augmented samples with center pixels randomly drawn from label_coordinates
-
-    Args:
-        data_cube: 3D numpy array with floating point velocity values
-        label_coordinates: 3D coordinates of the labeled training slice
-        im_size: size of the 3D voxel which we're cutting out around each label_coordinate
-        batch_size: size of the batch
-        index: element index of this element in a batch
-        random_flip: bool to perform random voxel flip
-        random_stretch: bool to enable random stretch
-        random_rot_xy: bool to enable random rotation of the voxel around dim-0 and dim-1
-        random_rot_z: bool to enable random rotation around dim-2
-
-    Returns:
-        a tuple of batch numpy array array of data with dimension
-        (batch, 1, data_cube.shape[0], data_cube.shape[1], data_cube.shape[2]) and the associated labels as an array
-        of size (batch).
-    """
-
-    # always generate only one datapoint - batch_size controls class balance
-    num_batch_size = 1
-
-    # Make 3 im_size elements
-    if isinstance(im_size, int):
-        im_size = [im_size, im_size, im_size]
-
-    # Output arrays
-    batch = np.zeros([num_batch_size, 1, im_size[0], im_size[1], im_size[2]])
-    ret_labels = np.zeros([num_batch_size])
-
-    class_keys = list(label_coordinates)
-    n_classes = len(class_keys)
-
-    # We seek to have a balanced batch with equally many samples from each class.
-    # get total number of samples per class
-    samples_per_class = batch_size // n_classes
-    # figure out index relative to zero (not sequentially counting points)
-    index = index - batch_size * (index // batch_size)
-    # figure out which class to sample for this datapoint
-    class_ind = index // samples_per_class
-
-    # Start by getting a grid centered around (0,0,0)
-    grid = get_grid(im_size)
-
-    # Apply random flip
-    if random_flip:
-        grid = augment_flip(grid)
-
-    # Apply random rotations
-    if random_rot_xy:
-        grid = augment_rot_xy(grid, random_rot_xy)
-    if random_rot_z:
-        grid = augment_rot_z(grid, random_rot_z)
-
-    # Apply random stretch
-    if random_stretch:
-        grid = augment_stretch(grid, random_stretch)
-
-    # Pick random location from the label_coordinates for this class:
-    coords_for_class = label_coordinates[class_keys[class_ind]]
-    random_index = rand_int(0, coords_for_class.shape[1])
-    coord = coords_for_class[:, random_index : random_index + 1]
-
-    # Move grid to be centered around this location
-    grid += coord
-
-    # Interpolate samples at grid from the data:
-    sample = trilinear_interpolation(data_cube, grid)
-
-    # Insert in output arrays
-    ret_labels[0] = class_ind
-    batch[0, 0, :, :, :] = np.reshape(sample, (im_size[0], im_size[1], im_size[2]))
-
-    return batch, ret_labels
-
 
 class SectionLoader(data.Dataset):
     """
@@ -341,43 +248,6 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
         return im, lbl
 
 
-class TrainVoxelWaldelandLoader(VoxelLoader):
-    def __init__(
-        self, root_path, filename, split="train", window_size=65, batch_size=None, len=None,
-    ):
-        super(TrainVoxelWaldelandLoader, self).__init__(
-            root_path, filename, split=split, window_size=window_size, len=len
-        )
-
-        label_fname = None
-        if split == "train":
-            label_fname = path.join(self.root_path, "inline_339.png")
-        elif split == "val":
-            label_fname = path.join(self.root_path, "inline_405.png")
-        else:
-            raise Exception("undefined split")
-
-        self.class_imgs, self.coordinates = read_labels(label_fname, self.data_info)
-
-        self.batch_size = batch_size if batch_size else 1
-
-    def __getitem__(self, index):
-        # print(index)
-        batch, labels = get_random_batch(
-            self.data,
-            self.coordinates,
-            self.window_size,
-            self.batch_size,
-            index,
-            random_flip=True,
-            random_stretch=0.2,
-            random_rot_xy=180,
-            random_rot_z=15,
-        )
-
-        return batch, labels
-
-
 class TestSectionLoader(SectionLoader):
     """
     Test data loader for sections
@@ -462,11 +332,6 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
             im, lbl = self.transform(im, lbl)
 
         return im, lbl
-
-
-class TestVoxelWaldelandLoader(VoxelLoader):
-    def __init__(self, data_dir, split="test"):
-        super(TestVoxelWaldelandLoader, self).__init__(data_dir, split=split)
 
 
 def _transform_WH_to_HW(numpy_array):
@@ -753,9 +618,6 @@ _TRAIN_PATCH_LOADERS = {
 
 _TRAIN_SECTION_LOADERS = {"section": TrainSectionLoaderWithDepth}
 
-_TRAIN_VOXEL_LOADERS = {"voxel": TrainVoxelLoaderWithDepth}
-
-
 def get_patch_loader(cfg):
     assert cfg.TRAIN.DEPTH in [
         "section",
@@ -773,15 +635,6 @@ def get_section_loader(cfg):
     ], f"Depth {cfg.TRAIN.DEPTH} not supported for section data. \
         Valid values: section, none."
     return _TRAIN_SECTION_LOADERS.get(cfg.TRAIN.DEPTH, TrainSectionLoader)
-
-
-def get_voxel_loader(cfg):
-    assert cfg.TRAIN.DEPTH in [
-        "voxel",
-        "none",
-    ], f"Depth {cfg.TRAIN.DEPTH} not supported for section data. \
-        Valid values: voxel, none."
-    return _TRAIN_SECTION_LOADERS.get(cfg.TRAIN.DEPTH, TrainVoxelWaldelandLoader)
 
 
 _TEST_LOADERS = {"section": TestSectionLoaderWithDepth}
