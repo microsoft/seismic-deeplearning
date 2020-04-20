@@ -52,46 +52,6 @@ def _test2_labels_for(data_dir):
     return path.join(data_dir, "test_once", "test2_labels.npy")
 
 
-def readSEGY(filename):
-    """[summary]
-    Read the segy file and return the data as a numpy array and a dictionary describing what has been read in.
-
-    Arguments:
-        filename {str} -- .segy file location.
-    
-    Returns:
-        [type] -- 3D segy data as numy array and a dictionary with metadata information
-    """
-
-    # TODO: we really need to add logging to this repo
-    print("Loading data cube from", filename, "with:")
-
-    # Read full data cube
-    data = segyio.tools.cube(filename)
-
-    # Put temporal axis first
-    data = np.moveaxis(data, -1, 0)
-
-    # Make data cube fast to acess
-    data = np.ascontiguousarray(data, "float32")
-
-    # Read meta data
-    segyfile = segyio.open(filename, "r")
-    print("  Crosslines: ", segyfile.xlines[0], ":", segyfile.xlines[-1])
-    print("  Inlines:    ", segyfile.ilines[0], ":", segyfile.ilines[-1])
-    print("  Timeslices: ", "1", ":", data.shape[0])
-
-    # Make dict with cube-info
-    data_info = {}
-    data_info["crossline_start"] = segyfile.xlines[0]
-    data_info["inline_start"] = segyfile.ilines[0]
-    data_info["timeslice_start"] = 1  # Todo: read this from segy
-    data_info["shape"] = data.shape
-    # Read dt and other params needed to do create a new
-
-    return data, data_info
-
-
 def read_labels(fname, data_info):
     """
     Read labels from an image.
@@ -298,72 +258,6 @@ class SectionLoader(data.Dataset):
         return torch.from_numpy(img).float(), torch.from_numpy(lbl).long()
 
 
-class VoxelLoader(data.Dataset):
-    def __init__(
-        self, root_path, filename, window_size=65, split="train", n_classes=2, gen_coord_list=False, len=None,
-    ):
-
-        assert split == "train" or split == "val"
-
-        # location of the file
-        self.root_path = root_path
-        self.split = split
-        self.n_classes = n_classes
-        self.window_size = window_size
-        self.coord_list = None
-        self.filename = filename
-        self.full_filename = path.join(root_path, filename)
-
-        # Read 3D cube
-        # NOTE: we cannot pass this data manually as serialization of data into each python process is costly,
-        # so each worker has to load the data on its own.
-        self.data, self.data_info = readSEGY(self.full_filename)
-        if len:
-            self.len = len
-        else:
-            self.len = self.data.size
-        self.labels = None
-
-        if gen_coord_list:
-            # generate a list of coordinates to index the entire voxel
-            # memory footprint of this isn't large yet, so not need to wrap as a generator
-            nx, ny, nz = self.data.shape
-            x_list = range(self.window_size, nx - self.window_size)
-            y_list = range(self.window_size, ny - self.window_size)
-            z_list = range(self.window_size, nz - self.window_size)
-
-            print("-- generating coord list --")
-            # TODO: is there any way to use a generator with pyTorch data loader?
-            self.coord_list = list(itertools.product(x_list, y_list, z_list))
-
-    def __len__(self):
-        return self.len
-
-    def __getitem__(self, index):
-
-        # TODO: can we specify a pixel mathematically by index?
-        pixel = self.coord_list[index]
-        x, y, z = pixel
-        # TODO: current bottleneck - can we slice out voxels any faster
-        small_cube = self.data[
-            x - self.window : x + self.window + 1,
-            y - self.window : y + self.window + 1,
-            z - self.window : z + self.window + 1,
-        ]
-
-        return small_cube[np.newaxis, :, :, :], pixel
-
-    # TODO: do we need a transformer for voxels?
-    """
-    def transform(self, img, lbl):
-        # to be in the BxCxHxW that PyTorch uses:
-        lbl = np.expand_dims(lbl, 0)
-        if len(img.shape) == 2:
-            img = np.expand_dims(img, 0)
-        return torch.from_numpy(img).float(), torch.from_numpy(lbl).long()
-    """
-
-
 class TrainSectionLoader(SectionLoader):
     """
     Training data loader for sections
@@ -484,10 +378,6 @@ class TrainVoxelWaldelandLoader(VoxelLoader):
         return batch, labels
 
 
-# TODO: write TrainVoxelLoaderWithDepth
-TrainVoxelLoaderWithDepth = TrainVoxelWaldelandLoader
-
-
 class TestSectionLoader(SectionLoader):
     """
     Test data loader for sections
@@ -579,10 +469,6 @@ class TestVoxelWaldelandLoader(VoxelLoader):
         super(TestVoxelWaldelandLoader, self).__init__(data_dir, split=split)
 
 
-# TODO: write TestVoxelLoaderWithDepth
-TestVoxelLoaderWithDepth = TestVoxelWaldelandLoader
-
-
 def _transform_WH_to_HW(numpy_array):
     assert len(numpy_array.shape) >= 2, "This method needs at least 2D arrays"
     return np.swapaxes(numpy_array, -2, -1)
@@ -627,6 +513,7 @@ class PatchLoader(data.Dataset):
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
         # TODO: Remember we are cancelling the shift since we no longer pad
+        # issue: https://github.com/microsoft/seismic-deeplearning/issues/273
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
 
@@ -680,6 +567,7 @@ class TestPatchLoader(PatchLoader):
         # loading txt file and create patches.
         if not txt_path:
             self.split = "test1"  # TODO: Fix this can also be test2
+            #                     issue: https://github.com/microsoft/seismic-deeplearning/issues/274
             txt_path = path.join(self.data_dir, "splits", "patch_" + self.split + ".txt")
         patch_list = tuple(open(txt_path, "r"))
         patch_list = [id_.rstrip() for id_ in patch_list]
@@ -760,6 +648,7 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
         # TODO: Remember we are cancelling the shift since we no longer pad
+        # issue https://github.com/microsoft/seismic-deeplearning/issues/273
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
 
@@ -772,6 +661,7 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
         im, lbl = _transform_WH_to_HW(im), _transform_WH_to_HW(lbl)
 
         # TODO: Add check for rotation augmentations and raise warning if found
+        # issue: https://github.com/microsoft/seismic-deeplearning/issues/275
         if self.augmentations is not None:
             augmented_dict = self.augmentations(image=im, mask=lbl)
             im, lbl = augmented_dict["image"], augmented_dict["mask"]
@@ -827,6 +717,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
         # TODO: Remember we are cancelling the shift since we no longer pad
+        # issue: https://github.com/microsoft/seismic-deeplearning/issues/273
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
         if direction == "i":

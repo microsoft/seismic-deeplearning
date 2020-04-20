@@ -7,6 +7,7 @@
 Modified version of the Alaudah testing script
 # TODO: Needs to be improved. Needs to be able to run across multiple GPUs and better
 #       factoring around the loader
+# issue: https://github.com/microsoft/seismic-deeplearning/issues/268
 """
 
 import logging
