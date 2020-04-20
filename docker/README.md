@@ -8,19 +8,7 @@ If you are using an Azure Virtual Machine to run this code, you can download the
 ```bash
 scp hrnetv2_w48_imagenet_pretrained.pth <azureuser>@<azurehost>:/home/<azureuser>/seismic-deeplearning/docker/hrnetv2_w48_imagenet_pretrained.pth
 ```
-
 Once you have the model downloaded (ideally under the `docker` directory), you can process to build the Docker image. 
-
-# Install `nvidia-docker`
-In order to give the Docker container access to the GPU, we need to install [`nvidia-docker`](https://github.com/NVIDIA/nvidia-docker). Please follow the instructions [here](https://github.com/NVIDIA/nvidia-docker#quickstart). For an Ubuntu 16.04/18.04 based system, run the following commands: 
-
-```bash
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-
-sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
-sudo systemctl restart docker
-```
 
 # Build the Docker image:
 
@@ -34,8 +22,7 @@ This process will take a few minutes to complete.
 # Run the Docker image:
 Once the Docker image is built, you can run it anytime using the following command:
 ```bash
-sudo nvidia-docker run --rm -it -p 9000:9000 -p 9001:9001 --shm-size 11G --mount type=bind,source=$PWD/hrnetv2_w48_imagenet_pretrained.pth,target=/home/username/models/hrnetv2_w48_imagenet_pretrained.pth seismic-deeplearning
+sudo docker run --rm -it -p 9000:9000 -p 9001:9001 --gpus=all --shm-size 11G --mount type=bind,source=$PWD/hrnetv2_w48_imagenet_pretrained.pth,target=/home/username/models/hrnetv2_w48_imagenet_pretrained.pth seismic-deeplearning
 ```
-
 If you have saved the pretrained model in a different directory, make sure you replace `$PWD/hrnetv2_w48_imagenet_pretrained.pth` with the **absolute** path to the pretrained HRNet model. The command above will run a jupyter notebook server that you can access by clicking on the link in your terminal. You can then navigate to the notebook that you would like to run.  
 

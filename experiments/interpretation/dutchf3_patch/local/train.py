@@ -65,7 +65,6 @@ from cv_lib.segmentation.dutchf3.utils import (
 
 from default import _C as config
 from default import update_config
-from toolz import take
 
 
 def prepare_batch(batch, device=None, non_blocking=False):
@@ -167,6 +166,10 @@ def run(*options, cfg=None, debug=False):
         num_workers=config.WORKERS,
         shuffle=True,
     )
+
+    if debug:
+        val_set = data.Subset(val_set, range(3))
+
     val_loader = data.DataLoader(
         val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,
     )
@@ -224,7 +227,7 @@ def run(*options, cfg=None, debug=False):
     # log all training output
     trainer.add_event_handler(
         Events.ITERATION_COMPLETED,
-        logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
+        logging_handlers.log_training_output(log_interval=config.TRAIN.BATCH_SIZE_PER_GPU),
     )
 
     # add logging of learning rate
@@ -269,12 +272,7 @@ def run(*options, cfg=None, debug=False):
         },
         device=device,
     )
-
-    # Set the validation run to start on the epoch completion of the training run
-    if debug:
-        logger.info("Running Validation in Debug/Test mode")
-        val_loader = take(3, val_loader)
-
+    
     trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
     evaluator.add_event_handler(
@@ -330,12 +328,11 @@ def run(*options, cfg=None, debug=False):
     )
     evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
-    logger.info("Starting training")
+    logger.info("Starting training")    
     if debug:
-        logger.info("Running Training in Debug/Test mode")
-        train_loader = take(3, train_loader)
-
-    trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH)
+        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = config.TRAIN.BATCH_SIZE_PER_GPU, seed = config.SEED)
+    else:
+        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = len(train_loader), seed = config.SEED)
 
 
 if __name__ == "__main__":
