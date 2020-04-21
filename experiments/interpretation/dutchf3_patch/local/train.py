@@ -163,7 +163,7 @@ def run(*options, cfg=None, debug=False):
     )
 
     epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
-    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2
+    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*config.TRAIN.BATCH_SIZE_PER_GPU
     scheduler = CosineAnnealingScheduler(
         optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration
     )
@@ -197,7 +197,7 @@ def run(*options, cfg=None, debug=False):
 
     # Logging:
     trainer.add_event_handler(
-        Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
+        Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.TRAIN.BATCH_SIZE_PER_GPU),
     )
     trainer.add_event_handler(Events.EPOCH_COMPLETED, logging_handlers.log_lr(optimizer))
 
