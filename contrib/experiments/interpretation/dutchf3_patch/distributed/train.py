@@ -198,7 +198,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[device], find_unused_parameters=True)
 
-    snapshot_duration = min(epochs_per_cycle * len(train_loader), 2)
+    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2
     warmup_duration = 5 * len(train_loader)
     warmup_scheduler = LinearCyclicalScheduler(
         optimizer,
@@ -208,7 +208,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         cycle_size=10 * len(train_loader),
     )
     cosine_scheduler = CosineAnnealingScheduler(
-        optimizer, "lr", config.TRAIN.MAX_LR * world_size, config.TRAIN.MIN_LR * world_size, snapshot_duration,
+        optimizer, "lr", config.TRAIN.MAX_LR * world_size, config.TRAIN.MIN_LR * world_size, cycle_size=snapshot_duration,
     )
 
     scheduler = ConcatScheduler(schedulers=[warmup_scheduler, cosine_scheduler], durations=[warmup_duration])
