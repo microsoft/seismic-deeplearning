@@ -163,7 +163,7 @@ jobs:
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
-                     'TEST.MODEL_PATH' ${model_dir}/${model} \
+                     'TEST.MODEL_PATH' ${model} \
                      --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=1
@@ -173,7 +173,7 @@ jobs:
 
       # try running the test script
       { python test.py  'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
-                      'TEST.MODEL_PATH' ${model_dir}/${model} \
+                      'TEST.MODEL_PATH' ${model} \
                       --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=2
@@ -183,7 +183,7 @@ jobs:
 
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
-                     'TEST.MODEL_PATH'  ${model_dir}/${model} \
+                     'TEST.MODEL_PATH'  ${model} \
                      --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=3
@@ -194,7 +194,7 @@ jobs:
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                      'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
-                     'TEST.MODEL_PATH'  ${model_dir}/${model} \
+                     'TEST.MODEL_PATH'  ${model} \
                      --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
 
