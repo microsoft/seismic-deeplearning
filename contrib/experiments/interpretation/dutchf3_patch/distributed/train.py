@@ -23,6 +23,7 @@ from os import path
 
 import fire
 import numpy as np
+import toolz
 import torch
 from albumentations import Compose, HorizontalFlip, Normalize, PadIfNeeded, Resize
 from ignite.contrib.handlers import ConcatScheduler, CosineAnnealingScheduler, LinearCyclicalScheduler
@@ -138,8 +139,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=train_aug,
-    )
-    logger.info(f"Training examples {len(train_set)}")
+    )    
 
     val_set = TrainPatchLoader(
         config.DATASET.ROOT,
@@ -160,6 +160,10 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         logger.info("Running in debug mode..")
         train_set = data.Subset(train_set, list(range(4)))
         val_set = data.Subset(val_set, list(range(4)))
+    
+    logger.info(f"Training examples {len(train_set)}")
+    logger.info(f"Validation examples {len(val_set)}")    
+
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
     train_loader = data.DataLoader(

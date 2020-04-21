@@ -182,63 +182,6 @@ def augment_flip(grid):
     return grid
 
 
-def augment_stretch(grid, stretch_factor):
-    """
-    Random stretch/scale
-
-    Args:
-        grid: 3D coordinate grid of the voxel
-        stretch_factor: this is actually a boolean which triggers stretching
-        TODO: change this to just call the function and not do -1,1 in rand_float
-
-    Returns:
-        stretched grid coordinates
-    """
-    stretch = rand_float(-stretch_factor, stretch_factor)
-    grid *= 1 + stretch
-    return grid
-
-
-def augment_rot_xy(grid, random_rot_xy):
-    """
-    Random rotation
-
-    Args:
-        grid: coordinate grid list  of 3D points
-        random_rot_xy: this is actually a boolean which triggers rotation
-        TODO: change this to just call the function and not do -1,1 in rand_float
-
-    Returns:
-        randomly rotated grid
-    """
-    theta = np.deg2rad(rand_float(-random_rot_xy, random_rot_xy))
-    x = grid[2, :] * np.cos(theta) - grid[1, :] * np.sin(theta)
-    y = grid[2, :] * np.sin(theta) + grid[1, :] * np.cos(theta)
-    grid[1, :] = x
-    grid[2, :] = y
-    return grid
-
-
-def augment_rot_z(grid, random_rot_z):
-    """
-    Random tilt around z-axis (dim-2)
-
-    Args:
-        grid: coordinate grid list of 3D points
-        random_rot_z: this is actually a boolean which triggers rotation
-        TODO: change this to just call the function and not do -1,1 in rand_float
-
-    Returns:
-        randomly tilted coordinate grid
-    """
-    theta = np.deg2rad(rand_float(-random_rot_z, random_rot_z))
-    z = grid[0, :] * np.cos(theta) - grid[1, :] * np.sin(theta)
-    x = grid[0, :] * np.sin(theta) + grid[1, :] * np.cos(theta)
-    grid[0, :] = z
-    grid[1, :] = x
-    return grid
-
-
 def trilinear_interpolation(input_array, indices):
     """
     Linear interpolation
@@ -341,63 +284,6 @@ def rand_bool():
         Random boolean
     """
     return bool(np.random.randint(0, 2))
-
-
-def augment_stretch(grid, stretch_factor):
-    """
-    Random stretch/scale
-
-    Args:
-        grid: 3D coordinate grid of the voxel
-        stretch_factor: this is actually a boolean which triggers stretching
-        TODO: change this to just call the function and not do -1,1 in rand_float
-
-    Returns:
-        stretched grid coordinates
-    """
-    stretch = rand_float(-stretch_factor, stretch_factor)
-    grid *= 1 + stretch
-    return grid
-
-
-def augment_rot_xy(grid, random_rot_xy):
-    """
-    Random rotation
-
-    Args:
-        grid: coordinate grid list  of 3D points
-        random_rot_xy: this is actually a boolean which triggers rotation
-        TODO: change this to just call the function and not do -1,1 in rand_float
-
-    Returns:
-        randomly rotated grid
-    """
-    theta = np.deg2rad(rand_float(-random_rot_xy, random_rot_xy))
-    x = grid[2, :] * np.cos(theta) - grid[1, :] * np.sin(theta)
-    y = grid[2, :] * np.sin(theta) + grid[1, :] * np.cos(theta)
-    grid[1, :] = x
-    grid[2, :] = y
-    return grid
-
-
-def augment_rot_z(grid, random_rot_z):
-    """
-    Random tilt around z-axis (dim-2)
-
-    Args:
-        grid: coordinate grid list of 3D points
-        random_rot_z: this is actually a boolean which triggers rotation
-        TODO: change this to just call the function and not do -1,1 in rand_float
-
-    Returns:
-        randomly tilted coordinate grid
-    """
-    theta = np.deg2rad(rand_float(-random_rot_z, random_rot_z))
-    z = grid[0, :] * np.cos(theta) - grid[1, :] * np.sin(theta)
-    x = grid[0, :] * np.sin(theta) + grid[1, :] * np.cos(theta)
-    grid[0, :] = z
-    grid[1, :] = x
-    return grid
 
 
 def trilinear_interpolation(input_array, indices):
