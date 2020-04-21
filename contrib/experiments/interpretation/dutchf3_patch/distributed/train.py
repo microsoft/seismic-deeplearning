@@ -198,7 +198,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[device], find_unused_parameters=True)
 
-    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2
+    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else config.TRAIN.BATCH_SIZE_PER_GPU
     warmup_duration = 5 * len(train_loader)
     warmup_scheduler = LinearCyclicalScheduler(
         optimizer,
