@@ -18,11 +18,7 @@ from deepseismic_interpretation.dutchf3.utils.batch import (
     interpolate_to_fit_data,
     parse_labels_in_image,
     get_coordinates_for_slice,
-    get_grid,
-    augment_flip,
-    augment_rot_xy,
-    augment_rot_z,
-    augment_stretch,
+    get_grid,    
     rand_int,
     trilinear_interpolation,
 )
@@ -50,46 +46,6 @@ def _test2_data_for(data_dir):
 
 def _test2_labels_for(data_dir):
     return path.join(data_dir, "test_once", "test2_labels.npy")
-
-
-def readSEGY(filename):
-    """[summary]
-    Read the segy file and return the data as a numpy array and a dictionary describing what has been read in.
-
-    Arguments:
-        filename {str} -- .segy file location.
-    
-    Returns:
-        [type] -- 3D segy data as numy array and a dictionary with metadata information
-    """
-
-    # TODO: we really need to add logging to this repo
-    print("Loading data cube from", filename, "with:")
-
-    # Read full data cube
-    data = segyio.tools.cube(filename)
-
-    # Put temporal axis first
-    data = np.moveaxis(data, -1, 0)
-
-    # Make data cube fast to acess
-    data = np.ascontiguousarray(data, "float32")
-
-    # Read meta data
-    segyfile = segyio.open(filename, "r")
-    print("  Crosslines: ", segyfile.xlines[0], ":", segyfile.xlines[-1])
-    print("  Inlines:    ", segyfile.ilines[0], ":", segyfile.ilines[-1])
-    print("  Timeslices: ", "1", ":", data.shape[0])
-
-    # Make dict with cube-info
-    data_info = {}
-    data_info["crossline_start"] = segyfile.xlines[0]
-    data_info["inline_start"] = segyfile.ilines[0]
-    data_info["timeslice_start"] = 1  # Todo: read this from segy
-    data_info["shape"] = data.shape
-    # Read dt and other params needed to do create a new
-
-    return data, data_info
 
 
 def read_labels(fname, data_info):
@@ -156,95 +112,6 @@ def read_labels(fname, data_info):
 
     return label_imgs, label_coordinates
 
-
-def get_random_batch(
-    data_cube,
-    label_coordinates,
-    im_size,
-    batch_size,
-    index,
-    random_flip=False,
-    random_stretch=None,
-    random_rot_xy=None,
-    random_rot_z=None,
-):
-    """
-    Returns a batch of augmented samples with center pixels randomly drawn from label_coordinates
-
-    Args:
-        data_cube: 3D numpy array with floating point velocity values
-        label_coordinates: 3D coordinates of the labeled training slice
-        im_size: size of the 3D voxel which we're cutting out around each label_coordinate
-        batch_size: size of the batch
-        index: element index of this element in a batch
-        random_flip: bool to perform random voxel flip
-        random_stretch: bool to enable random stretch
-        random_rot_xy: bool to enable random rotation of the voxel around dim-0 and dim-1
-        random_rot_z: bool to enable random rotation around dim-2
-
-    Returns:
-        a tuple of batch numpy array array of data with dimension
-        (batch, 1, data_cube.shape[0], data_cube.shape[1], data_cube.shape[2]) and the associated labels as an array
-        of size (batch).
-    """
-
-    # always generate only one datapoint - batch_size controls class balance
-    num_batch_size = 1
-
-    # Make 3 im_size elements
-    if isinstance(im_size, int):
-        im_size = [im_size, im_size, im_size]
-
-    # Output arrays
-    batch = np.zeros([num_batch_size, 1, im_size[0], im_size[1], im_size[2]])
-    ret_labels = np.zeros([num_batch_size])
-
-    class_keys = list(label_coordinates)
-    n_classes = len(class_keys)
-
-    # We seek to have a balanced batch with equally many samples from each class.
-    # get total number of samples per class
-    samples_per_class = batch_size // n_classes
-    # figure out index relative to zero (not sequentially counting points)
-    index = index - batch_size * (index // batch_size)
-    # figure out which class to sample for this datapoint
-    class_ind = index // samples_per_class
-
-    # Start by getting a grid centered around (0,0,0)
-    grid = get_grid(im_size)
-
-    # Apply random flip
-    if random_flip:
-        grid = augment_flip(grid)
-
-    # Apply random rotations
-    if random_rot_xy:
-        grid = augment_rot_xy(grid, random_rot_xy)
-    if random_rot_z:
-        grid = augment_rot_z(grid, random_rot_z)
-
-    # Apply random stretch
-    if random_stretch:
-        grid = augment_stretch(grid, random_stretch)
-
-    # Pick random location from the label_coordinates for this class:
-    coords_for_class = label_coordinates[class_keys[class_ind]]
-    random_index = rand_int(0, coords_for_class.shape[1])
-    coord = coords_for_class[:, random_index : random_index + 1]
-
-    # Move grid to be centered around this location
-    grid += coord
-
-    # Interpolate samples at grid from the data:
-    sample = trilinear_interpolation(data_cube, grid)
-
-    # Insert in output arrays
-    ret_labels[0] = class_ind
-    batch[0, 0, :, :, :] = np.reshape(sample, (im_size[0], im_size[1], im_size[2]))
-
-    return batch, ret_labels
-
-
 class SectionLoader(data.Dataset):
     """
     Base class for section data loader
@@ -296,72 +163,6 @@ class SectionLoader(data.Dataset):
         if len(img.shape) == 2:
             img = np.expand_dims(img, 0)
         return torch.from_numpy(img).float(), torch.from_numpy(lbl).long()
-
-
-class VoxelLoader(data.Dataset):
-    def __init__(
-        self, root_path, filename, window_size=65, split="train", n_classes=2, gen_coord_list=False, len=None,
-    ):
-
-        assert split == "train" or split == "val"
-
-        # location of the file
-        self.root_path = root_path
-        self.split = split
-        self.n_classes = n_classes
-        self.window_size = window_size
-        self.coord_list = None
-        self.filename = filename
-        self.full_filename = path.join(root_path, filename)
-
-        # Read 3D cube
-        # NOTE: we cannot pass this data manually as serialization of data into each python process is costly,
-        # so each worker has to load the data on its own.
-        self.data, self.data_info = readSEGY(self.full_filename)
-        if len:
-            self.len = len
-        else:
-            self.len = self.data.size
-        self.labels = None
-
-        if gen_coord_list:
-            # generate a list of coordinates to index the entire voxel
-            # memory footprint of this isn't large yet, so not need to wrap as a generator
-            nx, ny, nz = self.data.shape
-            x_list = range(self.window_size, nx - self.window_size)
-            y_list = range(self.window_size, ny - self.window_size)
-            z_list = range(self.window_size, nz - self.window_size)
-
-            print("-- generating coord list --")
-            # TODO: is there any way to use a generator with pyTorch data loader?
-            self.coord_list = list(itertools.product(x_list, y_list, z_list))
-
-    def __len__(self):
-        return self.len
-
-    def __getitem__(self, index):
-
-        # TODO: can we specify a pixel mathematically by index?
-        pixel = self.coord_list[index]
-        x, y, z = pixel
-        # TODO: current bottleneck - can we slice out voxels any faster
-        small_cube = self.data[
-            x - self.window : x + self.window + 1,
-            y - self.window : y + self.window + 1,
-            z - self.window : z + self.window + 1,
-        ]
-
-        return small_cube[np.newaxis, :, :, :], pixel
-
-    # TODO: do we need a transformer for voxels?
-    """
-    def transform(self, img, lbl):
-        # to be in the BxCxHxW that PyTorch uses:
-        lbl = np.expand_dims(lbl, 0)
-        if len(img.shape) == 2:
-            img = np.expand_dims(img, 0)
-        return torch.from_numpy(img).float(), torch.from_numpy(lbl).long()
-    """
 
 
 class TrainSectionLoader(SectionLoader):
@@ -445,47 +246,6 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
             im, lbl = self.transform(im, lbl)
 
         return im, lbl
-
-
-class TrainVoxelWaldelandLoader(VoxelLoader):
-    def __init__(
-        self, root_path, filename, split="train", window_size=65, batch_size=None, len=None,
-    ):
-        super(TrainVoxelWaldelandLoader, self).__init__(
-            root_path, filename, split=split, window_size=window_size, len=len
-        )
-
-        label_fname = None
-        if split == "train":
-            label_fname = path.join(self.root_path, "inline_339.png")
-        elif split == "val":
-            label_fname = path.join(self.root_path, "inline_405.png")
-        else:
-            raise Exception("undefined split")
-
-        self.class_imgs, self.coordinates = read_labels(label_fname, self.data_info)
-
-        self.batch_size = batch_size if batch_size else 1
-
-    def __getitem__(self, index):
-        # print(index)
-        batch, labels = get_random_batch(
-            self.data,
-            self.coordinates,
-            self.window_size,
-            self.batch_size,
-            index,
-            random_flip=True,
-            random_stretch=0.2,
-            random_rot_xy=180,
-            random_rot_z=15,
-        )
-
-        return batch, labels
-
-
-# TODO: write TrainVoxelLoaderWithDepth
-TrainVoxelLoaderWithDepth = TrainVoxelWaldelandLoader
 
 
 class TestSectionLoader(SectionLoader):
@@ -574,15 +334,6 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
         return im, lbl
 
 
-class TestVoxelWaldelandLoader(VoxelLoader):
-    def __init__(self, data_dir, split="test"):
-        super(TestVoxelWaldelandLoader, self).__init__(data_dir, split=split)
-
-
-# TODO: write TestVoxelLoaderWithDepth
-TestVoxelLoaderWithDepth = TestVoxelWaldelandLoader
-
-
 def _transform_WH_to_HW(numpy_array):
     assert len(numpy_array.shape) >= 2, "This method needs at least 2D arrays"
     return np.swapaxes(numpy_array, -2, -1)
@@ -627,6 +378,7 @@ class PatchLoader(data.Dataset):
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
         # TODO: Remember we are cancelling the shift since we no longer pad
+        # issue: https://github.com/microsoft/seismic-deeplearning/issues/273
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
 
@@ -680,6 +432,7 @@ class TestPatchLoader(PatchLoader):
         # loading txt file and create patches.
         if not txt_path:
             self.split = "test1"  # TODO: Fix this can also be test2
+            #                     issue: https://github.com/microsoft/seismic-deeplearning/issues/274
             txt_path = path.join(self.data_dir, "splits", "patch_" + self.split + ".txt")
         patch_list = tuple(open(txt_path, "r"))
         patch_list = [id_.rstrip() for id_ in patch_list]
@@ -760,6 +513,7 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
         # TODO: Remember we are cancelling the shift since we no longer pad
+        # issue https://github.com/microsoft/seismic-deeplearning/issues/273
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
 
@@ -772,6 +526,7 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
         im, lbl = _transform_WH_to_HW(im), _transform_WH_to_HW(lbl)
 
         # TODO: Add check for rotation augmentations and raise warning if found
+        # issue: https://github.com/microsoft/seismic-deeplearning/issues/275
         if self.augmentations is not None:
             augmented_dict = self.augmentations(image=im, mask=lbl)
             im, lbl = augmented_dict["image"], augmented_dict["mask"]
@@ -827,6 +582,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
         # TODO: Remember we are cancelling the shift since we no longer pad
+        # issue: https://github.com/microsoft/seismic-deeplearning/issues/273
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
         if direction == "i":
@@ -862,9 +618,6 @@ _TRAIN_PATCH_LOADERS = {
 
 _TRAIN_SECTION_LOADERS = {"section": TrainSectionLoaderWithDepth}
 
-_TRAIN_VOXEL_LOADERS = {"voxel": TrainVoxelLoaderWithDepth}
-
-
 def get_patch_loader(cfg):
     assert cfg.TRAIN.DEPTH in [
         "section",
@@ -882,15 +635,6 @@ def get_section_loader(cfg):
     ], f"Depth {cfg.TRAIN.DEPTH} not supported for section data. \
         Valid values: section, none."
     return _TRAIN_SECTION_LOADERS.get(cfg.TRAIN.DEPTH, TrainSectionLoader)
-
-
-def get_voxel_loader(cfg):
-    assert cfg.TRAIN.DEPTH in [
-        "voxel",
-        "none",
-    ], f"Depth {cfg.TRAIN.DEPTH} not supported for section data. \
-        Valid values: voxel, none."
-    return _TRAIN_SECTION_LOADERS.get(cfg.TRAIN.DEPTH, TrainVoxelWaldelandLoader)
 
 
 _TEST_LOADERS = {"section": TestSectionLoaderWithDepth}

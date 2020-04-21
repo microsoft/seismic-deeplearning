@@ -420,6 +420,7 @@ def test(*options, cfg=None, debug=False):
     )
 
     # TODO: make sure that this is consistent with how normalization and agumentation for train.py
+    # issue: https://github.com/microsoft/seismic-deeplearning/issues/270
     patch_aug = Compose(
         [
             Resize(

@@ -58,6 +58,7 @@ _C.TRAIN.STRIDE = 50
 _C.TRAIN.PATCH_SIZE = 99
 _C.TRAIN.MEAN = 0.0009997  # 0.0009996710808862074
 _C.TRAIN.STD = 0.20977  # 0.20976548783479299  # TODO: Should we apply std scaling?
+#                          issue: https://github.com/microsoft/seismic-deeplearning/issues/269
 _C.TRAIN.DEPTH = "no"  # Options are None, Patch and Section
 # None adds no depth information and the num of channels remains at 1
 # Patch adds depth per patch so is simply the height of that patch from 0 to 1, channels=3

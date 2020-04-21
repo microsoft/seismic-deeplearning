@@ -266,6 +266,7 @@ def plot_aline(aline, labels, xlabel, ylabel="depth"):
 def validate_config_paths(config):
     """Checks that all paths in the config file are valid"""
     # TODO: this is currently hardcoded, in the future, its better to have a more generic solution.
+    # issue https://github.com/microsoft/seismic-deeplearning/issues/265
 
     # Make sure DATASET.ROOT directory exist:
     assert os.path.isdir(config.DATASET.ROOT), (
@@ -351,6 +352,7 @@ def download_pretrained_model(config):
         if dataset == "penobscot":
             if model == "hrnet":
                 # TODO: the code should check if the model uses patches or sections.
+                # issue: https://github.com/microsoft/seismic-deeplearning/issues/266
                 url = "https://deepseismicsharedstore.blob.core.windows.net/master-public-models/penobscot_hrnet_patch_section_depth.pth"
             else:
                 raise NotImplementedError(
@@ -421,6 +423,7 @@ def download_pretrained_model(config):
 
     # Update config MODEL.PRETRAINED
     # TODO: Only HRNet uses a pretrained model currently.
+    # issue https://github.com/microsoft/seismic-deeplearning/issues/267
     opts = [
         "MODEL.PRETRAINED",
         pretrained_model_path,

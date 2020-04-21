@@ -331,7 +331,6 @@ def split_alaudah_et_al_19(data_dir, stride, patch_size, fraction_validation=0.2
     _write_split_files(splits_path, train_list, val_list, loader_type)
 
 
-# TODO: Try https://github.com/Chilipp/docrep for doscstring reuse
 class SplitTrainValCLI(object):
     def section(self, data_dir, label_file, per_val=0.2,
                 log_config="logging.conf", output_dir=None,
