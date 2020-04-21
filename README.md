@@ -321,7 +321,7 @@ A typical output will be:
 someusername@somevm:/projects/DeepSeismic$ which python
 /anaconda/envs/py35/bin/python
 ```
-which will indicate that anaconda folder is __/anaconda__. We'll refer to this location in the instructions below, but you should update the commands according to your local anaconda folder.
+which will indicate that anaconda folder is `__/anaconda__`. We'll refer to this location in the instructions below, but you should update the commands according to your local anaconda folder.
 
 <details>
   <summary><b>Data Science Virtual Machine conda package installation errors</b></summary>
@@ -339,7 +339,7 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
 <details>
   <summary><b>Data Science Virtual Machine conda package installation warnings</b></summary>
 
-  It could happen that while creating the conda environment defined by environment/anaconda/local/environment.yml on an Ubuntu DSVM, one can get multiple warnings like so:
+  It could happen that while creating the conda environment defined by `environment/anaconda/local/environment.yml` on an Ubuntu DSVM, one can get multiple warnings like so:
   ```
   WARNING conda.gateways.disk.delete:unlink_or_rename_to_trash(140): Could not remove or rename /anaconda/pkgs/ipywidgets-7.5.1-py_0/site-packages/ipywidgets-7.5.1.dist-info/LICENSE.  Please remove this file manually (you may need to reboot to free file handles)  
   ```
@@ -350,7 +350,7 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
   sudo chown -R $USER /anaconda
   ```
 
-  After these command completes, try creating the conda environment in __environment/anaconda/local/environment.yml__ again.
+  After these command completes, try creating the conda environment in `__environment/anaconda/local/environment.yml__` again.
 
 </details>
 
