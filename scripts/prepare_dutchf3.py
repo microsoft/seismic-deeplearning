@@ -149,33 +149,38 @@ def split_patch_train_val(
 
     iline, xline, depth = labels.shape
 
-    if split_direction.lower() == "inline":
+    split_direction = split_direction.lower()
+    if split_direction == "inline":
         num_sections, section_length = iline, xline
-        index = "i"
-    elif split_direction.lower() == "crossline":
+    elif split_direction == "crossline":
         num_sections, section_length = xline, iline
-        index = "x"
     else:
-        raise ValueError(f"Unknown split_direction {split_direction}")
+        raise ValueError(f"Unknown split_direction: {split_direction}")
 
     train_range, val_range = _get_aline_range(num_sections, per_val, section_stride)
-
     vert_locations = range(0, depth, patch_stride)  # TODO: without padding (or small patches), we're losing data here.
     horz_locations = range(0, section_length, patch_stride)
     logger.debug(vert_locations)
     logger.debug(horz_locations)
 
     # Process sections:
-    def _extract_patches(sections_range, horz_locations, vert_locations):
-        locations = ([j, k] for j in horz_locations for k in vert_locations)
-        for section in sections_range:
-            for j, k in locations:
-                yield f"{index}_" + str(section) + "_" + str(j) + "_" + str(k)
+    def _extract_patches(sections_range, direction, horz_locations, vert_locations):
+        locations = list([j, k] for j in horz_locations for k in vert_locations)
+        if direction == "inline":
+            for s in sections_range:
+                for j, k in locations:
+                    #             iline          xline          depth
+                    yield "i_" + str(s) + "_" + str(j) + "_" + str(k)
+        elif direction == "crossline":
+            for s in sections_range:
+                for j, k in locations:
+                    #             iline          xline          depth
+                    yield "x_" + str(j) + "_" + str(s) + "_" + str(k)
 
     # Process sections - train
-    logger.debug("Generating patches")
-    train_list = list(_extract_patches(train_range, horz_locations, vert_locations))
-    val_list = list(_extract_patches(val_range, horz_locations, vert_locations))
+    logger.debug("Generating patches..")
+    train_list = list(_extract_patches(train_range, split_direction, horz_locations, vert_locations))
+    val_list = list(_extract_patches(val_range, split_direction, horz_locations, vert_locations))
 
     logger.debug(train_range)
     logger.debug(val_range)
@@ -184,6 +189,7 @@ def split_patch_train_val(
 
     # write to files to disk:
     logger.info(f"Writing to: {output_dir}")
+    print(f"Successfully created the splits files in {output_dir}")
     _write_split_files(output_dir, train_list, val_list, "patch")
 
 
@@ -318,10 +324,10 @@ class SplitTrainValCLI(object):
         output_dir = path.join(data_dir, output_dir)
         return split_section_train_val(
             data_dir=data_dir,
-                                       output_dir=output_dir, 
-                                       label_file=label_file,
+            output_dir=output_dir,
+            label_file=label_file,
             section_stride=section_stride,
-                                       per_val=per_val, 
+            per_val=per_val,
             log_config=log_config,
         )
 
@@ -360,13 +366,13 @@ class SplitTrainValCLI(object):
 
         return split_patch_train_val(
             data_dir=data_dir,
-                                     output_dir=output_dir, 
-                                     label_file=label_file,
+            output_dir=output_dir,
+            label_file=label_file,
             patch_stride=stride,
-                                     patch_size=patch_size,
-                                     split_direction=split_direction,
+            patch_size=patch_size,
+            split_direction=split_direction,
             section_stride=section_stride,
-                                     per_val=per_val,
+            per_val=per_val,
             log_config=log_config,
         )
 
@@ -382,7 +388,7 @@ if __name__ == "__main__":
     """
     fire.Fire(
         {"split_train_val": SplitTrainValCLI}
-         # commenting the following line as this was not updated with
-         # the new parameters names
-         # "split_alaudah_et_al_19": split_alaudah_et_al_19}
+        # commenting the following line as this was not updated with
+        # the new parameters names
+        # "split_alaudah_et_al_19": split_alaudah_et_al_19}
     )
