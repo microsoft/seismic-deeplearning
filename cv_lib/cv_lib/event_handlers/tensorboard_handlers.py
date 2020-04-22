@@ -64,12 +64,6 @@ def log_metrics(
     for m in metrics_dict:
         summary_writer.add_scalar(metrics_dict[m], metrics[m], getattr(train_engine.state, log_interval))
 
-    # Log Images:
-    image = outputs["image"]
-    mask = outputs["mask"]
-    y_pred = outputs["y_pred"].max(1, keepdim=True)[1]
-    VISUALIZATION_LIMIT = 16
-
 
 # TODO: This is deprecated, and will be removed in the future.
 def create_image_writer(summary_writer, label, output_variable, normalize=False, transform_func=lambda x: x):

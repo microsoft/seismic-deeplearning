@@ -158,7 +158,7 @@ def split_patch_train_val(
         raise ValueError(f"Unknown split_direction: {split_direction}")
 
     train_range, val_range = _get_aline_range(num_sections, per_val, section_stride)
-    vert_locations = range(0, depth, patch_stride)  # TODO: without padding (or small patches), we're losing data here.
+    vert_locations = range(0, depth, patch_stride)
     horz_locations = range(0, section_length, patch_stride)
     logger.debug(vert_locations)
     logger.debug(horz_locations)
