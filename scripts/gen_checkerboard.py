@@ -60,15 +60,16 @@ def make_box(n_inlines, n_crosslines, n_depth, box_size):
 
     # now make a box with alternating checkers
     checker_box = np.ones((n_inlines, n_crosslines, box_size * 2))
-    checker_box[:, :, 0:box_size] = checker_image[:,:,np.newaxis]
+    checker_box[:, :, 0:box_size] = checker_image[:, :, np.newaxis]
     # now invert the colors
-    checker_box[:, :, box_size:] = -1 * checker_image[:,:,np.newaxis]
+    checker_box[:, :, box_size:] = -1 * checker_image[:, :, np.newaxis]
 
     # stack boxes depth wise
     step_depth = int(np.ceil(n_depth / float(box_size) / 2))
     final_box = np.concatenate((checker_box,) * step_depth, axis=2)
 
     return final_box
+
 
 def mkdir(path):
     """
@@ -145,7 +146,7 @@ def main(args):
     mkdir(os.path.join(args.dataout, "data", "splits"))
     mkdir(os.path.join(args.dataout, "data", "train"))
     mkdir(os.path.join(args.dataout, "data", "test_once"))
-    
+
     np.save(os.path.join(args.dataout, "data", "train", "train_seismic.npy"), checkerboard_train_seismic)
     np.save(os.path.join(args.dataout, "data", "train", "train_labels.npy"), checkerboard_train_labels)
 
@@ -163,10 +164,10 @@ WHITE = -1
 BLACK = 1
 WHITE_LABEL = 0
 
-parser.add_argument("--dataroot", help="Root location of the input data", type=str, required=True, default=None)
-parser.add_argument("--dataout", help="Root location of the output data", type=str, required=True, default=None)
+parser.add_argument("--dataroot", help="Root location of the input data", type=str, required=True)
+parser.add_argument("--dataout", help="Root location of the output data", type=str, required=True)
 parser.add_argument("--box_size", help="Size of the bounding box", type=int, required=False, default=100)
-parser.add_argument("--debug", help="Turn on debug mode", type=int, required=False, default=100)
+parser.add_argument("--debug", help="Turn on debug mode", type=bool, required=False, default=False)
 
 """ main wrapper with profiler """
 if __name__ == "__main__":

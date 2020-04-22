@@ -37,7 +37,7 @@ wait
 DATA_F3="${DATA_F3}/data"
 
 cd scripts
-python ./scripts/gen_checkerboard.py --dataroot ${DATA_F3} --dataout ${DATA_CHECKERBOARD}
+python gen_checkerboard.py --dataroot ${DATA_F3} --dataout ${DATA_CHECKERBOARD}
 
 # finished data download and generation
 
