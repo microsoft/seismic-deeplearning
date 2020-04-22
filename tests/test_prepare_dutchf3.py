@@ -298,6 +298,7 @@ def test_prepare_dutchf3_section_step_1():
             output_dir=output,
             label_file=label_file,
             section_stride=SECTION_STRIDE,
+            split_direction=DIRECTION,
             per_val=PER_VAL,
             log_config=LOG_CONFIG,
         )
@@ -341,6 +342,7 @@ def test_prepare_dutchf3_section_step_2():
             output_dir=output,
             label_file=label_file,
             section_stride=SECTION_STRIDE,
+            split_direction=DIRECTION,
             per_val=PER_VAL,
             log_config=LOG_CONFIG,
         )
