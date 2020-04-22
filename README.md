@@ -395,7 +395,7 @@ which will indicate that anaconda folder is `__/anaconda__`. We'll refer to this
 <details>
   <summary><b>GPU out of memory errors</b></summary>
 
-  You should be able to see how much GPU memory your process is using by running
+  You should be able to see how much GPU memory your process is using by running:
   ```bash
   nvidia-smi
   ```
