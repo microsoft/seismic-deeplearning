@@ -44,6 +44,7 @@ _CLASS_NAMES = [
     "zechstein",
 ]
 
+
 class runningScore(object):
     def __init__(self, n_classes):
         self.n_classes = n_classes
@@ -268,7 +269,11 @@ def _evaluate_split(
 
     TestSectionLoader = get_test_loader(config)
     test_set = TestSectionLoader(
-        config.DATASET.ROOT, split=split, is_transform=True, augmentations=section_aug, n_classes = config.DATASET.NUM_CLASSES
+        config.DATASET.ROOT,
+        split=split,
+        is_transform=True,
+        augmentations=section_aug,
+        n_classes=config.DATASET.NUM_CLASSES,
     )
 
     n_classes = test_set.n_classes
@@ -425,6 +430,12 @@ def test(*options, cfg=None, debug=False):
     # Save confusion matrix:
     confusion = score["confusion_matrix"]
     np.savetxt(path.join(log_dir, "confusion.csv"), confusion, delimiter=" ")
+
+    if debug:
+        config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
+        fname = f"metrics_test_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
+        with open(fname, "w") as fid:
+            json.dump(score, fid)
 
 
 if __name__ == "__main__":
