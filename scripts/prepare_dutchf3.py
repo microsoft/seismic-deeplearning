@@ -30,37 +30,35 @@ def _write_split_files(splits_path, train_list, val_list, loader_type):
     file_object.close()
 
 
-def _get_aline_range(aline, per_val, slice_steps):
-    """.
-
+def _get_aline_range(aline, per_val, section_stride=1):
+    """
     Args:
         aline (int): number of seismic sections in the inline or 
             crossline directions
         per_val (float):  the fraction of the volume to use for
             validation. Defaults to 0.2.
-        slice_steps (int): increment to the slices count.
-            If slice_steps > 1 the function will skip:
-                slice_steps - 1 slice.
-            Defaults to 1, do not skip any slice.
+        section_stride (int): the stride of the sections in the training data.
+            If greater than 1, this function will skip (section_stride-1) between each section 
+            Defaults to 1, do not skip any section.
     """
     try:
-        if slice_steps < 1:
-            raise ValueError("slice_steps cannot be zero or a negative number")
+        if section_stride < 1:
+            raise ValueError("section_stride must be an integer >= to 1.")
 
         if per_val < 0 or per_val >= 1:
             raise ValueError("Validation percentage (per_val) should be a number in the range [0,1).")
 
-        val_aline = math.floor(aline * per_val /2)
-        val_aline_range = itertools.chain(range(0, val_aline), range(aline - val_aline, aline))
-        train_aline_range = range(val_aline, aline - val_aline, slice_steps)
+        val_aline = math.floor(aline * per_val / 2)
+        val_range = itertools.chain(range(0, val_aline), range(aline - val_aline, aline))
+        train_range = range(val_aline, aline - val_aline, section_stride)
 
-        return train_aline_range, val_aline_range
+        return train_range, val_range
     except (Exception, ValueError):
         raise
 
 
 def split_section_train_val(
-    data_dir, output_dir, label_file, split_direction, per_val=0.2, log_config=None, slice_steps=1
+    data_dir, output_dir, label_file, split_direction, per_val=0.2, log_config=None, section_stride=1
 ):
     """Generate train and validation files for Netherlands F3 dataset.
 
@@ -73,37 +71,34 @@ def split_section_train_val(
         per_val (float, optional):  the fraction of the volume to use for
             validation. Defaults to 0.2.
         log_config (str): path to log configurations
-        slice_steps (int): increment to the slices count.
-            If slice_steps > 1 the function will skip:
-                slice_steps - 1 slice.
-            Defaults to 1, do not skip any slice.
+        section_stride (int): the stride of the sections in the training data.
+            If greater than 1, this function will skip (section_stride-1) between each section 
+            Defaults to 1, do not skip any section.
     """
 
     if log_config is not None:
         logging.config.fileConfig(log_config)
 
     logger = logging.getLogger(__name__)
-
     logger.info("Splitting data into sections .... ")
     logger.info(f"Reading data from {data_dir}")
-
     logger.info(f"Loading {label_file}")
+
     labels = np.load(label_file)
     logger.debug(f"Data shape [iline|xline|depth] {labels.shape}")
+    iline, xline, _ = labels.shape  # TODO: Must make sure in the future, all new datasets conform to this order.
 
-    iline, xline, _ = labels.shape #TODO: Must make sure in the future, all new datasets conform to this order.
     logger.info(f"Splitting in {split_direction} direction.. ")
-
     if split_direction.lower() == "inline":
         num_sections = iline
-        index = 'i'
+        index = "i"
     elif split_direction.lower() == "crossline":
         num_sections = xline
-        index = 'x'
+        index = "x"
     else:
         raise ValueError(f"Unknown split_direction {split_direction}")
 
-    train_range, val_range = _get_aline_range(num_sections, per_val, slice_steps)
+    train_range, val_range = _get_aline_range(num_sections, per_val, section_stride)
     train_list = [f"{index}_" + str(section) for section in train_range]
     val_list = [f"{index}_" + str(section) for section in val_range]
 
@@ -113,7 +108,15 @@ def split_section_train_val(
 
 
 def split_patch_train_val(
-    data_dir, output_dir, label_file, stride, patch_size, split_direction, slice_steps=1, per_val=0.2, log_config=None
+    data_dir,
+    output_dir,
+    label_file,
+    patch_stride,
+    patch_size,
+    split_direction,
+    section_stride=1,
+    per_val=0.2,
+    log_config=None,
 ):
     """Generate train and validation files for Netherlands F3 dataset.
 
@@ -121,16 +124,16 @@ def split_patch_train_val(
         data_dir (str): data directory path
         output_dir (str): directory under data_dir to store the split files
         label_file (str): npy files with labels. Stored in data_dir
-        stride (int): stride to use when sectioning of the volume
+        patch_stride (int): stride to use when sampling patches
         patch_size (int): size of patch to extract
         split_direction (int):  Direction in which to split the data into 
             train & val. Use "inline" or "crossline".
         per_val (float, optional):  the fraction of the volume to use for
             validation. Defaults to 0.2.
         log_config (str): path to log configurations
-        slice_steps (int): increment to the slices count.
-            If slice_steps > 1 the function will skip:
-                slice_steps - 1 slice.
+        section_stride (int): increment to the slices count.
+            If section_stride > 1 the function will skip:
+                section_stride - 1 sections in the training data.
             Defaults to 1, do not skip any slice.
     """
 
@@ -148,18 +151,18 @@ def split_patch_train_val(
 
     if split_direction.lower() == "inline":
         num_sections, section_length = iline, xline
-        index = 'i'
+        index = "i"
     elif split_direction.lower() == "crossline":
         num_sections, section_length = xline, iline
-        index = 'x'
+        index = "x"
     else:
         raise ValueError(f"Unknown split_direction {split_direction}")
 
-    train_range, val_range = _get_aline_range(num_sections, per_val, slice_steps)
+    train_range, val_range = _get_aline_range(num_sections, per_val, section_stride)
 
-    vert_locations = range(0, depth - patch_size, stride) # TODO: without padding (or small patches), we're losing data here. 
+    vert_locations = range(0, depth, patch_stride)  # TODO: without padding (or small patches), we're losing data here.
+    horz_locations = range(0, section_length, patch_stride)
     logger.debug(vert_locations)
-    horz_locations = range(0, section_length, stride)
     logger.debug(horz_locations)
 
     # Process sections:
@@ -196,14 +199,16 @@ def run_split_func(loader_type, *args, **kwargs):
     split_func(*args, **kwargs)
 
 
-def split_alaudah_et_al_19(data_dir, stride, patch_size, fraction_validation=0.2, loader_type="patch", log_config=None):
+def split_alaudah_et_al_19(
+    data_dir, patch_stride, patch_size, fraction_validation=0.2, loader_type="patch", log_config=None
+):
     """Generate train and validation files (with overlap) for Netherlands F3 dataset.
-    The original split method from https://github.com/olivesgatech/facies_classification_benchmark
+    The original split method from https://github.com/yalaudah/facies_classification_benchmark
     DON'T USE, SEE NOTES BELOW
 
     Args:
         data_dir (str): data directory path
-        stride (int): stride to use when sectioning of the volume
+        patch_stride (int): stride to use when sampling patches
         patch_size (int): size of patch to extract
         fraction_validation (float, optional): the fraction of the volume to use for validation.
             Defaults to 0.2.
@@ -243,8 +248,8 @@ def split_alaudah_et_al_19(data_dir, stride, patch_size, fraction_validation=0.2
         x_list = ["x_" + str(x) for x in range(xline)]
     elif loader_type == "patch":
         i_list = []
-        horz_locations = range(0, xline - patch_size + 1, stride)
-        vert_locations = range(0, depth - patch_size + 1, stride)
+        horz_locations = range(0, xline - patch_size + 1, patch_stride)
+        vert_locations = range(0, depth - patch_size + 1, patch_stride)
         logger.debug("Generating Inline patches")
         logger.debug(horz_locations)
         logger.debug(vert_locations)
@@ -259,8 +264,8 @@ def split_alaudah_et_al_19(data_dir, stride, patch_size, fraction_validation=0.2
         i_list = list(itertools.chain(*i_list))
 
         x_list = []
-        horz_locations = range(0, iline - patch_size + 1, stride)
-        vert_locations = range(0, depth - patch_size + 1, stride)
+        horz_locations = range(0, iline - patch_size + 1, patch_stride)
+        vert_locations = range(0, depth - patch_size + 1, patch_stride)
         for j in range(xline):
             # for every xline:
             # images are references by top-left corner:
@@ -290,7 +295,7 @@ class SplitTrainValCLI(object):
         per_val=0.2,
         log_config="logging.conf",
         output_dir=None,
-        slice_steps=1,
+        section_stride=1,
     ):
         """Generate section based train and validation files for Netherlands F3
         dataset.
@@ -304,20 +309,21 @@ class SplitTrainValCLI(object):
             per_val (float, optional):  the fraction of the volume to use for
                 validation. Defaults to 0.2.
             log_config (str): path to log configurations
-            slice_steps (int): increment to the slices count.
-                If slice_steps > 1 the function will skip:
-                    slice_steps - 1 slice.
-                Defaults to 1, do not skip any slice.
+            section_stride (int): the stride of the sections in the training data.
+                If greater than 1, this function will skip (section_stride-1) between each section 
+                Defaults to 1, do not skip any section.
         """
         if data_dir is not None:
             label_file = path.join(data_dir, label_file)
         output_dir = path.join(data_dir, output_dir)
-        return split_section_train_val(data_dir=data_dir, 
+        return split_section_train_val(
+            data_dir=data_dir,
                                        output_dir=output_dir, 
                                        label_file=label_file,
-                                       slice_steps=slice_steps, 
+            section_stride=section_stride,
                                        per_val=per_val, 
-                                       log_config=log_config)
+            log_config=log_config,
+        )
 
     def patch(
         self,
@@ -329,7 +335,7 @@ class SplitTrainValCLI(object):
         log_config="logging.conf",
         data_dir=None,
         output_dir=None,
-        slice_steps=1,
+        section_stride=1,
     ):
         """Generate train and validation files for Netherlands F3 dataset.
 
@@ -337,41 +343,42 @@ class SplitTrainValCLI(object):
             data_dir (str): data directory path
             output_dir (str): directory under data_dir to store the split files
             label_file (str): npy files with labels. Stored in data_dir
-            stride (int): stride to use when sectioning of the volume
+            stride (int): stride to use when sampling patches
             patch_size (int): size of patch to extract
             per_val (float, optional):  the fraction of the volume to use for
                 validation. Defaults to 0.2.
             log_config (str): path to log configurations
             split_direction (int):  Direction in which to split the data into 
                 train & val. Use "inline" or "crossline".
-            slice_steps (int): increment to the slices count.
-                If slice_steps > 1 the function will skip:
-                    slice_steps - 1 slice.
-                Defaults to 1, do not skip any slice.
+            section_stride (int): the stride of the sections in the training data.
+                If greater than 1, this function will skip (section_stride-1) between each section 
+                Defaults to 1, do not skip any section.
         """
         if data_dir is not None:
             label_file = path.join(data_dir, label_file)
         output_dir = path.join(data_dir, output_dir)
 
-        return split_patch_train_val(data_dir=data_dir, 
+        return split_patch_train_val(
+            data_dir=data_dir,
                                      output_dir=output_dir, 
                                      label_file=label_file,
-                                     stride=stride, 
+            patch_stride=stride,
                                      patch_size=patch_size,
                                      split_direction=split_direction,
-                                     slice_steps=slice_steps,
+            section_stride=section_stride,
                                      per_val=per_val,
-                                     log_config=log_config)
+            log_config=log_config,
+        )
 
 
 if __name__ == "__main__":
     """Example:
     python prepare_data.py split_train_val section --data_dir=data \
-        --label_file=label_file.npy --output_dir=splits --split_direction=crossline --slice_steps=2
+        --label_file=label_file.npy --output_dir=splits --split_direction=crossline --section_stride=2
     or
     python prepare_dutchf3.py split_train_val patch --data_dir=data \
         --label_file=label_file.npy --output_dir=splits --stride=50 \
-        --patch_size=100 --split_direction=crossline --slice_steps=2
+        --patch_size=100 --split_direction=crossline --section_stride=2
     """
     fire.Fire(
         {"split_train_val": SplitTrainValCLI}
