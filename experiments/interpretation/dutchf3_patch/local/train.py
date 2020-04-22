@@ -89,6 +89,7 @@ def run(*options, cfg=None, override=None, debug=False):
     # we will write the model under outputs / config_file_name / model_dir
     config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
 
+    # Fix random seeds:
     torch.manual_seed(config.SEED)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(config.SEED)
@@ -147,26 +148,15 @@ def run(*options, cfg=None, override=None, debug=False):
     )
     logger.info(val_set)
 
-<<<<<<< 3a739be5c0a150e963a9ac130e82986bf6281765
-=======
-    train_loader = data.DataLoader(
-        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True,
-    )
-
->>>>>>> finished first implementation mockup - commit before rebase
     if debug:
         logger.info("Running in debug mode..")
         train_set = data.Subset(train_set, list(range(4)))
         val_set = data.Subset(val_set, list(range(4)))
 
-<<<<<<< 3a739be5c0a150e963a9ac130e82986bf6281765
     train_loader = data.DataLoader(
         train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True
     )
     val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS)
-=======
-    val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS,)
->>>>>>> finished first implementation mockup - commit before rebase
 
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
@@ -181,18 +171,11 @@ def run(*options, cfg=None, override=None, debug=False):
         weight_decay=config.TRAIN.WEIGHT_DECAY,
     )
 
-<<<<<<< 3a739be5c0a150e963a9ac130e82986bf6281765
     epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*len(train_loader)
     scheduler = CosineAnnealingScheduler(
         optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration
     )
-=======
-    # learning rate scheduler
-    scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
-    snapshot_duration = scheduler_step * len(train_loader)
-    scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration)
->>>>>>> finished first implementation mockup - commit before rebase
 
     # Tensorboard writer:
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, "logs"))
@@ -205,62 +188,11 @@ def run(*options, cfg=None, override=None, debug=False):
 
     # Ignite trainer and evaluator:
     trainer = create_supervised_trainer(model, optimizer, criterion, prepare_batch, device=device)
-<<<<<<< 3a739be5c0a150e963a9ac130e82986bf6281765
     transform_fn = lambda output_dict: (output_dict["y_pred"].squeeze(), output_dict["mask"].squeeze())
-=======
-
-    trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
-
-    #########################
-    # Logging setup below
-
-    try:
-        output_dir = generate_path(
-            config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),
-        )
-    except TypeError:
-        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
-
-    summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
-
-    # log all training output
-    trainer.add_event_handler(
-        Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.TRAIN.BATCH_SIZE_PER_GPU),
-    )
-
-    # add logging of learning rate
-    trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
-
-    # log LR to tensorboard
-    trainer.add_event_handler(
-        Events.EPOCH_STARTED, tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"),
-    )
-
-    # log training summary to tensorboard as well
-    trainer.add_event_handler(
-        Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer),
-    )
-
-    def _select_pred_and_mask(model_out_dict):
-        return (model_out_dict["y_pred"].squeeze(), model_out_dict["mask"].squeeze())
-
-    def _select_max(pred_tensor):
-        return pred_tensor.max(1)[1]
-
-    def _tensor_to_numpy(pred_tensor):
-        return pred_tensor.squeeze().cpu().numpy()
-
-    def snapshot_function():
-        return (trainer.state.iteration % snapshot_duration) == 0
-
-    n_classes = train_set.n_classes
-
->>>>>>> finished first implementation mockup - commit before rebase
     evaluator = create_supervised_evaluator(
         model,
         prepare_batch,
         metrics={
-<<<<<<< 3a739be5c0a150e963a9ac130e82986bf6281765
             "nll": Loss(criterion, output_transform=transform_fn),
             "pixacc": pixelwise_accuracy(n_classes, output_transform=transform_fn, device=device),
             "cacc": class_accuracy(n_classes, output_transform=transform_fn),
@@ -277,19 +209,6 @@ def run(*options, cfg=None, override=None, debug=False):
         Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.TRAIN.BATCH_SIZE_PER_GPU),
     )
     trainer.add_event_handler(Events.EPOCH_COMPLETED, logging_handlers.log_lr(optimizer))
-=======
-            "nll": Loss(criterion, output_transform=_select_pred_and_mask),
-            "pixacc": pixelwise_accuracy(n_classes, output_transform=_select_pred_and_mask, device=device),
-            "cacc": class_accuracy(n_classes, output_transform=_select_pred_and_mask),
-            "mca": mean_class_accuracy(n_classes, output_transform=_select_pred_and_mask),
-            "ciou": class_iou(n_classes, output_transform=_select_pred_and_mask),
-            "mIoU": mean_iou(n_classes, output_transform=_select_pred_and_mask),
-        },
-        device=device,
-    )
-
-    trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
->>>>>>> finished first implementation mockup - commit before rebase
 
     fname = f"metrics_{config_file_name}_{config.TRAIN.MODEL_DIR}.json" if debug else None
     evaluator.add_event_handler(
@@ -315,7 +234,6 @@ def run(*options, cfg=None, override=None, debug=False):
         evaluator.run(train_loader)
         log_results(engine, evaluator, summary_writer, n_classes, stage="Training")
 
-<<<<<<< 3a739be5c0a150e963a9ac130e82986bf6281765
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
         evaluator.run(val_loader)
@@ -328,21 +246,6 @@ def run(*options, cfg=None, override=None, debug=False):
         extract_metric_from("mIoU"),
         lambda: (trainer.state.iteration % snapshot_duration) == 0,
     )
-=======
-    evaluator.add_event_handler(
-        Events.EPOCH_COMPLETED, create_image_writer(summary_writer, "Validation/Image", "image"),
-    )
-    evaluator.add_event_handler(
-        Events.EPOCH_COMPLETED,
-        create_image_writer(summary_writer, "Validation/Mask", "mask", transform_func=transform_func),
-    )
-    evaluator.add_event_handler(
-        Events.EPOCH_COMPLETED,
-        create_image_writer(summary_writer, "Validation/Pred", "y_pred", transform_func=transform_pred),
-    )
-
-    checkpoint_handler = SnapshotHandler(output_dir, config.MODEL.NAME, extract_metric_from("mIoU"), snapshot_function,)
->>>>>>> finished first implementation mockup - commit before rebase
     evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
     logger.info("Starting training")
@@ -355,10 +258,7 @@ def run(*options, cfg=None, override=None, debug=False):
         )
     else:
         trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length=len(train_loader), seed=config.SEED)
-<<<<<<< 3a739be5c0a150e963a9ac130e82986bf6281765
     summary_writer.close()
-=======
->>>>>>> finished first implementation mockup - commit before rebase
 
 
 if __name__ == "__main__":

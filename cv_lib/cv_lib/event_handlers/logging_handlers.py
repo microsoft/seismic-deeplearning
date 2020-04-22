@@ -29,7 +29,7 @@ def log_lr(optimizer, engine):
 def log_metrics(log_msg, engine, metrics_dict={"pixacc": "Avg accuracy :", "nll": "Avg loss :"}):
     logger = logging.getLogger(__name__)
     metrics = engine.state.metrics
-    metrics_msg = "|".join([f"{metrics_dict[k]}:{metrics[k]:.4f}" for k in metrics_dict])
+    metrics_msg = " ".join([f"{metrics_dict[k]} {metrics[k]:.4f}" for k in metrics_dict])
     if fname:
         with open(fname, "w") as fid:
             output_dict = {metrics_dict[k]:metrics[k] for k in metrics_dict}
