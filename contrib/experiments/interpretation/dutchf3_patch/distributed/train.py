@@ -156,24 +156,12 @@ def run(*options, cfg=None, local_rank=0, debug=False):
     logger.info(f"Validation examples {len(val_set)}")
     n_classes = train_set.n_classes
 
-<<<<<<< 5641445480aa16692917020bbab5e56e4cb61930
-    if debug:
-        logger.info("Running in debug mode..")
-        train_set = data.Subset(train_set, list(range(4)))
-        val_set = data.Subset(val_set, list(range(4)))
-=======
     #if debug:
         #val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
         #train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*2))
->>>>>>> resolved merge conflict
     
     logger.info(f"Training examples {len(train_set)}")
     logger.info(f"Validation examples {len(val_set)}")    
-
-<<<<<<< 5641445480aa16692917020bbab5e56e4cb61930
-=======
-    train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
->>>>>>> resolved merge conflict
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
     train_loader = data.DataLoader(
@@ -208,13 +196,8 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[device], find_unused_parameters=True)
 
-<<<<<<< 5641445480aa16692917020bbab5e56e4cb61930
     snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*len(train_loader)
-=======
-    snapshot_duration = scheduler_step * len(train_loader)
-    if debug:
-        snapshot_duration = 2
->>>>>>> resolved merge conflict
+
     warmup_duration = 5 * len(train_loader)
     warmup_scheduler = LinearCyclicalScheduler(
         optimizer,
