@@ -25,26 +25,26 @@ def test_get_aline_range_step_one():
 
     """check if it includes the step in the range if step = 1
     """
-    SLICE_STEPS = 1
+    SECTION_STRIDE = 1
 
     # Test
-    output_iline = prep_dutchf3._get_aline_range(ILINE, PER_VAL, SLICE_STEPS)
-    output_xline = prep_dutchf3._get_aline_range(XLINE, PER_VAL, SLICE_STEPS)
+    output_iline = prep_dutchf3._get_aline_range(ILINE, PER_VAL, SECTION_STRIDE)
+    output_xline = prep_dutchf3._get_aline_range(XLINE, PER_VAL, SECTION_STRIDE)
 
-    assert str(output_iline[0].step) == str(SLICE_STEPS)
-    assert str(output_xline[0].step) == str(SLICE_STEPS)
+    assert str(output_iline[0].step) == str(SECTION_STRIDE)
+    assert str(output_xline[0].step) == str(SECTION_STRIDE)
 
 
 def test_get_aline_range_step_zero():
 
-    """check if a ValueError exception is raised when slice_steps = 0
+    """check if a ValueError exception is raised when section_stride = 0
     """
-    with pytest.raises(ValueError, match=r'slice_steps cannot be zero or a negative number'):
-        SLICE_STEPS = 0
+    with pytest.raises(ValueError, match=r'section_stride cannot be zero or a negative number'):
+        SECTION_STRIDE = 0
 
         # Test
-        output_iline = prep_dutchf3._get_aline_range(ILINE, PER_VAL, SLICE_STEPS)
-        output_xline = prep_dutchf3._get_aline_range(XLINE, PER_VAL, SLICE_STEPS)
+        output_iline = prep_dutchf3._get_aline_range(ILINE, PER_VAL, SECTION_STRIDE)
+        output_xline = prep_dutchf3._get_aline_range(XLINE, PER_VAL, SECTION_STRIDE)
 
         assert output_iline
         assert output_xline
@@ -52,14 +52,14 @@ def test_get_aline_range_step_zero():
 
 def test_get_aline_range_negative_step():
 
-    """check if a ValueError exception is raised when slice_steps = -1
+    """check if a ValueError exception is raised when section_stride = -1
     """
-    with pytest.raises(ValueError, match='slice_steps cannot be zero or a negative number'):
-        SLICE_STEPS = -1
+    with pytest.raises(ValueError, match='section_stride cannot be zero or a negative number'):
+        SECTION_STRIDE = -1
 
         # Test
-        output_iline = prep_dutchf3._get_aline_range(ILINE, PER_VAL, SLICE_STEPS)
-        output_xline = prep_dutchf3._get_aline_range(XLINE, PER_VAL, SLICE_STEPS)
+        output_iline = prep_dutchf3._get_aline_range(ILINE, PER_VAL, SECTION_STRIDE)
+        output_xline = prep_dutchf3._get_aline_range(XLINE, PER_VAL, SECTION_STRIDE)
 
         assert output_iline
         assert output_xline
@@ -67,14 +67,14 @@ def test_get_aline_range_negative_step():
 
 def test_get_aline_range_float_step():
 
-    """check if a ValueError exception is raised when slice_steps = 1.1
+    """check if a ValueError exception is raised when section_stride = 1.1
     """
     with pytest.raises(TypeError, match="'float' object cannot be interpreted as an integer"):
-        SLICE_STEPS = 1.
+        SECTION_STRIDE = 1.
 
         # Test
-        output_iline = prep_dutchf3._get_aline_range(ILINE, PER_VAL, SLICE_STEPS)
-        output_xline = prep_dutchf3._get_aline_range(XLINE, PER_VAL, SLICE_STEPS)
+        output_iline = prep_dutchf3._get_aline_range(ILINE, PER_VAL, SECTION_STRIDE)
+        output_xline = prep_dutchf3._get_aline_range(XLINE, PER_VAL, SECTION_STRIDE)
 
         assert output_iline
         assert output_xline
@@ -84,34 +84,34 @@ def test_get_aline_range_single_digit_step():
 
     """check if it includes the step in the range if 1 < step < 10
     """
-    SLICE_STEPS = 1
+    SECTION_STRIDE = 1
     # Test
-    output_iline = prep_dutchf3._get_aline_range(ILINE, PER_VAL, SLICE_STEPS)
-    output_xline = prep_dutchf3._get_aline_range(XLINE, PER_VAL, SLICE_STEPS)
+    output_iline = prep_dutchf3._get_aline_range(ILINE, PER_VAL, SECTION_STRIDE)
+    output_xline = prep_dutchf3._get_aline_range(XLINE, PER_VAL, SECTION_STRIDE)
 
-    assert str(output_iline[0].step) == str(SLICE_STEPS)
-    assert str(output_xline[0].step) == str(SLICE_STEPS)
+    assert str(output_iline[0].step) == str(SECTION_STRIDE)
+    assert str(output_xline[0].step) == str(SECTION_STRIDE)
 
 
 def test_get_aline_range_double_digit_step():
 
     """check if it includes the step in the range if step > 10
     """
-    SLICE_STEPS = 17
+    SECTION_STRIDE = 17
     # Test
-    output_iline = prep_dutchf3._get_aline_range(ILINE, PER_VAL, SLICE_STEPS)
-    output_xline = prep_dutchf3._get_aline_range(XLINE, PER_VAL, SLICE_STEPS)
+    output_iline = prep_dutchf3._get_aline_range(ILINE, PER_VAL, SECTION_STRIDE)
+    output_xline = prep_dutchf3._get_aline_range(XLINE, PER_VAL, SECTION_STRIDE)
 
-    assert str(output_iline[0].step) == str(SLICE_STEPS)
-    assert str(output_xline[0].step) == str(SLICE_STEPS)
+    assert str(output_iline[0].step) == str(SECTION_STRIDE)
+    assert str(output_xline[0].step) == str(SECTION_STRIDE)
 
 
 def test_prepare_dutchf3_patch_step_1():
 
     """check a complete run for the script in case further changes are needed
     """
-    # setting a value to SLICE_STEPS as needed to test the values
-    SLICE_STEPS = 1
+    # setting a value to SECTION_STRIDE as needed to test the values
+    SECTION_STRIDE = 1
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -123,29 +123,29 @@ def test_prepare_dutchf3_patch_step_1():
         # stting the output directory to be used by the script
         output = tmpdirname + '/split'
 
-        # calling the main function of the script without SLICE_STEPS, to check default value
+        # calling the main function of the script without SECTION_STRIDE, to check default value
         prep_dutchf3.split_patch_train_val(data_dir=tmpdirname, output_dir=output, label_file=label_file, 
-        slice_steps=SLICE_STEPS, stride=STRIDE, patch_size=PATCH, per_val=PER_VAL,log_config=LOG_CONFIG)
+        section_stride=SECTION_STRIDE, stride=STRIDE, patch_size=PATCH, per_val=PER_VAL,log_config=LOG_CONFIG)
 
         # reading the file and splitting the data
         patch_train = pd.read_csv(output + '/patch_train.txt', header=None, names=['row', 'a', 'b'])
         patch_train = pd.DataFrame(patch_train.row.str.split('_').tolist(), columns=['aline', 'x', 'y', 'z'])
 
-        # test patch_train and slice_steps=2
+        # test patch_train and section_stride=2
         y = list(sorted(set(patch_train.y.astype(int))))
         x = list(sorted(set(patch_train.x.astype(int))))
-        assert (int(y[1]) - int(y[0])) == SLICE_STEPS
-        assert (int(x[1]) - int(x[0])) == SLICE_STEPS
+        assert (int(y[1]) - int(y[0])) == SECTION_STRIDE
+        assert (int(x[1]) - int(x[0])) == SECTION_STRIDE
 
         # reading the file and splitting the data
         patch_val = pd.read_csv(output + '/patch_val.txt', header=None, names=['row', 'a', 'b'])
         patch_val = pd.DataFrame(patch_val.row.str.split('_').tolist(), columns=['aline', 'x', 'y', 'z'])
 
-        # test patch_val and slice_steps=2
+        # test patch_val and section_stride=2
         y = list(sorted(set(patch_val.y.astype(int))))
         x = list(sorted(set(patch_val.x.astype(int))))
-        assert (int(y[1]) - int(y[0])) != SLICE_STEPS
-        assert (int(x[1]) - int(x[0])) != SLICE_STEPS
+        assert (int(y[1]) - int(y[0])) != SECTION_STRIDE
+        assert (int(x[1]) - int(x[0])) != SECTION_STRIDE
 
         # test validation set is, at least, PER_VAL
         PER_VAL_CHK = len(set(patch_train.y))/(len(set(patch_train.y))+len(set(patch_val.y))) * 100
@@ -158,8 +158,8 @@ def test_prepare_dutchf3_patch_step_2():
 
     """check a complete run for the script in case further changes are needed
     """
-    # setting a value to SLICE_STEPS as needed to test the values
-    SLICE_STEPS = 2
+    # setting a value to SECTION_STRIDE as needed to test the values
+    SECTION_STRIDE = 2
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -171,29 +171,29 @@ def test_prepare_dutchf3_patch_step_2():
         # stting the output directory to be used by the script
         output = tmpdirname + '/split'
 
-        # calling the main function of the script without SLICE_STEPS, to check default value
+        # calling the main function of the script without SECTION_STRIDE, to check default value
         prep_dutchf3.split_patch_train_val(data_dir=tmpdirname, output_dir=output, label_file=label_file, 
-        slice_steps=SLICE_STEPS, stride=STRIDE, patch_size=PATCH, per_val=PER_VAL,log_config=LOG_CONFIG)
+        section_stride=SECTION_STRIDE, stride=STRIDE, patch_size=PATCH, per_val=PER_VAL,log_config=LOG_CONFIG)
 
         # reading the file and splitting the data
         patch_train = pd.read_csv(output + '/patch_train.txt', header=None, names=['row', 'a', 'b'])
         patch_train = pd.DataFrame(patch_train.row.str.split('_').tolist(), columns=['aline', 'x', 'y', 'z'])
 
-        # test patch_train and slice_steps=2
+        # test patch_train and section_stride=2
         y = list(sorted(set(patch_train.y.astype(int))))
         x = list(sorted(set(patch_train.x.astype(int))))
-        assert (int(y[1]) - int(y[0])) == SLICE_STEPS
-        assert (int(x[1]) - int(x[0])) == SLICE_STEPS
+        assert (int(y[1]) - int(y[0])) == SECTION_STRIDE
+        assert (int(x[1]) - int(x[0])) == SECTION_STRIDE
 
         # reading the file and splitting the data
         patch_val = pd.read_csv(output + '/patch_val.txt', header=None, names=['row', 'a', 'b'])
         patch_val = pd.DataFrame(patch_val.row.str.split('_').tolist(), columns=['aline', 'x', 'y', 'z'])
 
-        # test patch_val and slice_steps=2
+        # test patch_val and section_stride=2
         y = list(sorted(set(patch_val.y.astype(int))))
         x = list(sorted(set(patch_val.x.astype(int))))
-        assert (int(y[1]) - int(y[0])) != SLICE_STEPS
-        assert (int(x[1]) - int(x[0])) != SLICE_STEPS
+        assert (int(y[1]) - int(y[0])) != SECTION_STRIDE
+        assert (int(x[1]) - int(x[0])) != SECTION_STRIDE
 
         # test validation set is, at least, PER_VAL
         PER_VAL_CHK = len(set(patch_train.y))/(len(set(patch_train.y))+len(set(patch_val.y))) * 100
@@ -206,8 +206,8 @@ def test_prepare_dutchf3_patch_train_and_test_sets():
 
     """check a complete run for the script in case further changes are needed
     """
-    # setting a value to SLICE_STEPS as needed to test the values
-    SLICE_STEPS = 1
+    # setting a value to SECTION_STRIDE as needed to test the values
+    SECTION_STRIDE = 1
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -219,9 +219,9 @@ def test_prepare_dutchf3_patch_train_and_test_sets():
         # stting the output directory to be used by the script
         output = tmpdirname + '/split'
 
-        # calling the main function of the script without SLICE_STEPS, to check default value
+        # calling the main function of the script without SECTION_STRIDE, to check default value
         prep_dutchf3.split_patch_train_val(data_dir=tmpdirname, output_dir=output, label_file=label_file, 
-        slice_steps=SLICE_STEPS, stride=STRIDE, patch_size=PATCH, per_val=PER_VAL,log_config=LOG_CONFIG)
+        section_stride=SECTION_STRIDE, stride=STRIDE, patch_size=PATCH, per_val=PER_VAL,log_config=LOG_CONFIG)
 
         # reading the file and splitting the data
         patch_train = pd.read_csv(output + '/patch_train.txt', header=None, names=['row', 'a', 'b'])
@@ -250,8 +250,8 @@ def test_prepare_dutchf3_section_step_1():
 
     """check a complete run for the script in case further changes are needed
     """
-    # setting a value to SLICE_STEPS as needed to test the values
-    SLICE_STEPS = 1
+    # setting a value to SECTION_STRIDE as needed to test the values
+    SECTION_STRIDE = 1
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -263,8 +263,8 @@ def test_prepare_dutchf3_section_step_1():
         # stting the output directory to be used by the script
         output = tmpdirname + '/split'
 
-        # calling the main function of the script without SLICE_STEPS, to check default value
-        prep_dutchf3.split_section_train_val(data_dir=tmpdirname, output_dir=output, label_file=label_file,slice_steps=SLICE_STEPS, per_val=PER_VAL, log_config=LOG_CONFIG)
+        # calling the main function of the script without SECTION_STRIDE, to check default value
+        prep_dutchf3.split_section_train_val(data_dir=tmpdirname, output_dir=output, label_file=label_file,section_stride=SECTION_STRIDE, per_val=PER_VAL, log_config=LOG_CONFIG)
 
         # reading the file and splitting the data
         section_train = pd.read_csv(output + '/section_train.txt', header=None, names=['row'])
@@ -274,8 +274,8 @@ def test_prepare_dutchf3_section_step_1():
         section_val = pd.DataFrame(section_val.row.str.split('_').tolist(), columns=['aline', 'section'])
 
         # test
-        assert (float(section_train.section[1]) - float(section_train.section[0])) % float(SLICE_STEPS) == 0.0
-        assert (float(section_val.section[1]) - float(section_val.section[0])) % float(SLICE_STEPS) == 0.0
+        assert (float(section_train.section[1]) - float(section_train.section[0])) % float(SECTION_STRIDE) == 0.0
+        assert (float(section_val.section[1]) - float(section_val.section[0])) % float(SECTION_STRIDE) == 0.0
 
         # test validation set is, at least, PER_VAL
         PER_VAL_CHK = len(section_val)/(len(section_val)+len(section_train)) * 100
@@ -285,8 +285,8 @@ def test_prepare_dutchf3_section_step_2():
 
     """check a complete run for the script in case further changes are needed
     """
-    # setting a value to SLICE_STEPS as needed to test the values
-    SLICE_STEPS = 2
+    # setting a value to SECTION_STRIDE as needed to test the values
+    SECTION_STRIDE = 2
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -298,9 +298,9 @@ def test_prepare_dutchf3_section_step_2():
         # stting the output directory to be used by the script
         output = tmpdirname + '/split'
 
-        # calling the main function of the script without SLICE_STEPS, to check default value
+        # calling the main function of the script without SECTION_STRIDE, to check default value
         prep_dutchf3.split_section_train_val(data_dir=tmpdirname, output_dir=output, label_file=label_file,
-                                                slice_steps=SLICE_STEPS, per_val=PER_VAL, log_config=LOG_CONFIG)
+                                                section_stride=SECTION_STRIDE, per_val=PER_VAL, log_config=LOG_CONFIG)
 
         # reading the file and splitting the data
         section_train = pd.read_csv(output + '/section_train.txt', header=None, names=['row'])
@@ -310,8 +310,8 @@ def test_prepare_dutchf3_section_step_2():
         section_val = pd.DataFrame(section_val.row.str.split('_').tolist(), columns=['aline', 'section'])
 
         # test
-        assert (float(section_train.section[1]) - float(section_train.section[0])) % float(SLICE_STEPS) == 0.0
-        assert (float(section_val.section[1]) - float(section_val.section[0])) % float(SLICE_STEPS) > 0.0
+        assert (float(section_train.section[1]) - float(section_train.section[0])) % float(SECTION_STRIDE) == 0.0
+        assert (float(section_val.section[1]) - float(section_val.section[0])) % float(SECTION_STRIDE) > 0.0
 
         # test validation set is, at least, PER_VAL
         PER_VAL_CHK = len(section_val)/(len(section_val)+len(section_train)) * 100
