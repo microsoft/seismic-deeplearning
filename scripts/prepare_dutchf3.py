@@ -157,38 +157,20 @@ def split_patch_train_val(
 
     train_range, val_range = _get_aline_range(num_sections, per_val, slice_steps)
 
-    # Generate patches from sections
-    # Vertical locations are common to all patches processed
-    vert_locations = range(0, depth - patch_size, patch_size) # TODO: without padding (or small patches), we're losing data here. 
+    vert_locations = range(0, depth - patch_size, stride) # TODO: without padding (or small patches), we're losing data here. 
     logger.debug(vert_locations)
+    horz_locations = range(0, section_length, stride)
+    logger.debug(horz_locations)
 
     # Process sections:
     def _extract_patches(sections_range, horz_locations, vert_locations):
+        locations = ([j, k] for j in horz_locations for k in vert_locations)
         for section in sections_range:
-            locations = ([j, k] for j in horz_locations for k in vert_locations)
             for j, k in locations:
                 yield f"{index}_" + str(section) + "_" + str(j) + "_" + str(k)
 
     # Process sections - train
     logger.debug("Generating patches")
-    
-    # val_aline = math.floor(num_sections * per_val / 2)
-    # logger.debug(val_aline)
-
-    # horz_locations_train = range(val_aline, ? - val_aline, max(1, patch_size))
-    # logger.debug(horz_locations_train)
-    # train_list = list(_extract_patches(train_range, horz_locations_train, vert_locations))
-
-    # # Process sections - validation
-    # logger.debug("Generating patches - Validation")
-    # horz_locations_val = itertools.chain(
-    #     range(0, val_aline, max(1, patch_size)), range(? - val_aline, num_sections, max(1, patch_size))
-    # )
-    # val_list = list(_extract_patches(val_range, horz_locations_val, vert_locations))
-
-    horz_locations = range(0, section_length, max(1, patch_size))
-    logger.debug(horz_locations)
-
     train_list = list(_extract_patches(train_range, horz_locations, vert_locations))
     val_list = list(_extract_patches(val_range, horz_locations, vert_locations))
 
