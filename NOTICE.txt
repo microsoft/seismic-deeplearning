@@ -1949,7 +1949,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 -------------------------------------------------------------------
 
-olivesgatech/facies_classification_benchmark 12102683a1ae78f8fbc953823c35a43b151194b3 - MIT
+yalaudah/facies_classification_benchmark 12102683a1ae78f8fbc953823c35a43b151194b3 - MIT
 Copyright (c) 2017 Meet Pragnesh Shah
 
 Copyright (c) 2010-2018 Benjamin Peterson
