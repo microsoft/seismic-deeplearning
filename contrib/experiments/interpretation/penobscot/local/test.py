@@ -18,45 +18,30 @@ import logging.config
 from itertools import chain
 from os import path
 
-import cv2
 import fire
 import numpy as np
 import torch
 import torchvision
 from albumentations import Compose, Normalize, PadIfNeeded, Resize
-from cv_lib.utils import load_log_configuration
-from cv_lib.event_handlers import logging_handlers, tensorboard_handlers
-from cv_lib.event_handlers.tensorboard_handlers import (
-    create_image_writer,
-    create_summary_writer,
-)
-from cv_lib.segmentation import models
-from cv_lib.segmentation.metrics import (
-    pixelwise_accuracy,
-    class_accuracy,
-    mean_class_accuracy,
-    class_iou,
-    mean_iou,
-)
-from cv_lib.segmentation.dutchf3.utils import (
-    current_datetime,
-    generate_path,
-    git_branch,
-    git_hash,
-    np_to_tb,
-)
-from cv_lib.segmentation.penobscot.engine import create_supervised_evaluator
-from deepseismic_interpretation.dutchf3.data import decode_segmap
-from deepseismic_interpretation.penobscot.data import get_patch_dataset
-from deepseismic_interpretation.penobscot.metrics import InlineMeanIoU
-from default import _C as config
-from default import update_config
 from ignite.engine import Events
 from ignite.metrics import Loss
 from ignite.utils import convert_tensor
 from toolz import compose, tail, take
 from toolz.sandbox.core import unzip
 from torch.utils import data
+
+from cv_lib.event_handlers import logging_handlers, tensorboard_handlers
+from cv_lib.event_handlers.tensorboard_handlers import create_image_writer, create_summary_writer
+from cv_lib.segmentation import models
+from cv_lib.segmentation.dutchf3.utils import current_datetime, generate_path, git_branch, git_hash, np_to_tb
+from cv_lib.segmentation.metrics import class_accuracy, class_iou, mean_class_accuracy, mean_iou, pixelwise_accuracy
+from cv_lib.segmentation.penobscot.engine import create_supervised_evaluator
+from cv_lib.utils import load_log_configuration
+from deepseismic_interpretation.dutchf3.data import decode_segmap
+from deepseismic_interpretation.penobscot.data import get_patch_dataset
+from deepseismic_interpretation.penobscot.metrics import InlineMeanIoU
+from default import _C as config
+from default import update_config
 
 
 def _prepare_batch(batch, device=None, non_blocking=False):
@@ -139,7 +124,7 @@ def run(*options, cfg=None, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.PATCH_SIZE,
                 min_width=config.TRAIN.PATCH_SIZE,
-                border_mode=cv2.BORDER_CONSTANT,
+                border_mode=config.OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=mask_value,
                 value=0,
@@ -150,7 +135,7 @@ def run(*options, cfg=None, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
                 min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                border_mode=cv2.BORDER_CONSTANT,
+                border_mode=config.OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=mask_value,
                 value=0,

@@ -21,58 +21,29 @@ import logging.config
 import os
 from os import path
 
-import cv2
 import fire
 import numpy as np
 import toolz
 import torch
-from albumentations import Compose, HorizontalFlip, Normalize, Resize, PadIfNeeded
-from cv_lib.utils import load_log_configuration
-from cv_lib.event_handlers import (
-    SnapshotHandler,
-    logging_handlers,
-    tensorboard_handlers,
-)
-from cv_lib.event_handlers.logging_handlers import Evaluator
-from cv_lib.event_handlers.tensorboard_handlers import (
-    create_image_writer,
-    create_summary_writer,
-)
-from cv_lib.segmentation import models
-from cv_lib.segmentation import extract_metric_from
-from deepseismic_interpretation.dutchf3.data import get_patch_loader, decode_segmap
-from cv_lib.segmentation.dutchf3.engine import (
-    create_supervised_evaluator,
-    create_supervised_trainer,
-)
-
-from ignite.metrics import Loss
-from cv_lib.segmentation.metrics import (
-    pixelwise_accuracy,
-    class_accuracy,
-    mean_class_accuracy,
-    class_iou,
-    mean_iou,
-)
-
-from cv_lib.segmentation.dutchf3.utils import (
-    current_datetime,
-    generate_path,
-    git_branch,
-    git_hash,
-    np_to_tb,
-)
-from default import _C as config
-from default import update_config
-from ignite.contrib.handlers import (
-    ConcatScheduler,
-    CosineAnnealingScheduler,
-    LinearCyclicalScheduler,
-)
+from albumentations import Compose, HorizontalFlip, Normalize, PadIfNeeded, Resize
+from ignite.contrib.handlers import ConcatScheduler, CosineAnnealingScheduler, LinearCyclicalScheduler
 from ignite.engine import Events
+from ignite.metrics import Loss
 from ignite.utils import convert_tensor
 from toolz import compose, curry
 from torch.utils import data
+
+from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard_handlers
+from cv_lib.event_handlers.logging_handlers import Evaluator
+from cv_lib.event_handlers.tensorboard_handlers import create_image_writer, create_summary_writer
+from cv_lib.segmentation import extract_metric_from, models
+from cv_lib.segmentation.dutchf3.engine import create_supervised_evaluator, create_supervised_trainer
+from cv_lib.segmentation.dutchf3.utils import current_datetime, generate_path, git_branch, git_hash, np_to_tb
+from cv_lib.segmentation.metrics import class_accuracy, class_iou, mean_class_accuracy, mean_iou, pixelwise_accuracy
+from cv_lib.utils import load_log_configuration
+from deepseismic_interpretation.dutchf3.data import decode_segmap, get_patch_loader
+from default import _C as config
+from default import update_config
 
 
 def prepare_batch(batch, device=None, non_blocking=False):
@@ -123,7 +94,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         # provide environment variables, and requires that you use init_method=`env://`.
         torch.distributed.init_process_group(backend="nccl", init_method="env://")
 
-    scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
+    epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
     torch.manual_seed(config.SEED)
@@ -137,7 +108,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.PATCH_SIZE,
                 min_width=config.TRAIN.PATCH_SIZE,
-                border_mode=cv2.BORDER_CONSTANT,
+                border_mode=config.OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=255,
             ),
@@ -147,7 +118,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
                 min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                border_mode=cv2.BORDER_CONSTANT,
+                border_mode=config.OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=255,
             ),
@@ -185,15 +156,16 @@ def run(*options, cfg=None, local_rank=0, debug=False):
     logger.info(f"Validation examples {len(val_set)}")
     n_classes = train_set.n_classes
 
-    #if debug:
-        #val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
-        #train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*2))
+    if debug:
+        logger.info("Running in debug mode..")
+        train_set = data.Subset(train_set, list(range(4)))
+        val_set = data.Subset(val_set, list(range(4)))
     
     logger.info(f"Training examples {len(train_set)}")
     logger.info(f"Validation examples {len(val_set)}")    
 
-    train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
 
+    train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
     train_loader = data.DataLoader(
         train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, sampler=train_sampler,
     )
@@ -226,9 +198,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[device], find_unused_parameters=True)
 
-    snapshot_duration = scheduler_step * len(train_loader)
-    if debug:
-        snapshot_duration = 2
+    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*len(train_loader)
     warmup_duration = 5 * len(train_loader)
     warmup_scheduler = LinearCyclicalScheduler(
         optimizer,
@@ -238,7 +208,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         cycle_size=10 * len(train_loader),
     )
     cosine_scheduler = CosineAnnealingScheduler(
-        optimizer, "lr", config.TRAIN.MAX_LR * world_size, config.TRAIN.MIN_LR * world_size, snapshot_duration,
+        optimizer, "lr", config.TRAIN.MAX_LR * world_size, config.TRAIN.MIN_LR * world_size, cycle_size=snapshot_duration,
     )
 
     scheduler = ConcatScheduler(schedulers=[warmup_scheduler, cosine_scheduler], durations=[warmup_duration])
@@ -270,18 +240,27 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         device=device,
     )
 
-    # Set the validation run to start on the epoch completion of the training run    
+    # Set the validation run to start on the epoch completion of the training run
+
     trainer.add_event_handler(Events.EPOCH_COMPLETED, Evaluator(evaluator, val_loader))
 
     if local_rank == 0:  # Run only on master process
 
         trainer.add_event_handler(
-            Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.TRAIN.BATCH_SIZE_PER_GPU),
+            Events.ITERATION_COMPLETED,
+            logging_handlers.log_training_output(log_interval=config.TRAIN.BATCH_SIZE_PER_GPU),
         )
-        trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))    
+        trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
 
         try:
-            output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
+            output_dir = generate_path(
+                config.OUTPUT_DIR,
+                git_branch(),
+                git_hash(),
+                config_file_name,
+                config.TRAIN.MODEL_DIR,
+                current_datetime(),
+            )
         except TypeError:
             output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
@@ -322,9 +301,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
             return pred_tensor.squeeze().cpu().numpy()
 
         transform_func = compose(np_to_tb, decode_segmap(n_classes=n_classes), _tensor_to_numpy)
-
         transform_pred = compose(transform_func, _select_max)
-
         evaluator.add_event_handler(
             Events.EPOCH_COMPLETED, create_image_writer(summary_writer, "Validation/Image", "image"),
         )
@@ -341,19 +318,22 @@ def run(*options, cfg=None, local_rank=0, debug=False):
             return (trainer.state.iteration % snapshot_duration) == 0
 
         checkpoint_handler = SnapshotHandler(
-            output_dir,
-            config.MODEL.NAME,
-            extract_metric_from("mIoU"),
-            snapshot_function,
+            output_dir, config.MODEL.NAME, extract_metric_from("mIoU"), snapshot_function,
         )
         evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
-
         logger.info("Starting training")
-    
+
         if debug:
-            trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = config.TRAIN.BATCH_SIZE_PER_GPU*2, seed = config.SEED)
+            trainer.run(
+                train_loader,
+                max_epochs=config.TRAIN.END_EPOCH,
+                epoch_length=config.TRAIN.BATCH_SIZE_PER_GPU * 2,
+                seed=config.SEED,
+            )
         else:
-            trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = len(train_loader), seed = config.SEED)
+            trainer.run(
+                train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length=len(train_loader), seed=config.SEED
+            )
 
 
 if __name__ == "__main__":

@@ -9,14 +9,15 @@ Contributors  (sorted alphabetically)
 -------------------------------------
 To contributors: please add your name to the list when you submit a patch to the project.
 
+* Yazeed Alaudah
 * Ashish Bhatia
+* Sharat Chikkerur
 * Daniel Ciborowski
 * George Iordanescu
 * Ilia Karmanov
 * Max Kaznady
 * Vanja Paunic
 * Mathew Salvaris
-* Sharat Chikkerur
 * Wee Hyong Tok
 
 ## How to be a contributor to the repository

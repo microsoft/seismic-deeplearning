@@ -84,7 +84,7 @@ def run(*options, cfg=None, debug=False):
     load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
-    scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
+    epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
     torch.manual_seed(config.SEED)
@@ -164,8 +164,8 @@ def run(*options, cfg=None, debug=False):
 
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
 
-    snapshot_duration = scheduler_step * len(train_loader)
-    scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration)
+    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*len(train_loader)
+    scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration)
 
     # weights are inversely proportional to the frequency of the classes in
     # the training set

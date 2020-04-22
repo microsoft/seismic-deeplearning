@@ -21,6 +21,7 @@ _C.AUTO_RESUME = False
 _C.PIN_MEMORY = True
 _C.LOG_CONFIG = "logging.conf"
 _C.SEED = 42
+_C.OPENCV_BORDER_CONSTANT = 0
 
 # size of voxel cube: WINDOW_SIZE x WINDOW_SIZE x WINDOW_SIZE; used for 3D models only
 _C.WINDOW_SIZE = 65
@@ -72,7 +73,7 @@ _C.TRAIN.PATCH_SIZE = 128
 _C.TRAIN.MEAN = [-0.0001777, 0.49, -0.0000688]  # 0.0009996710808862074
 _C.TRAIN.STD = [0.14076, 0.2717, 0.06286]  # 0.20976548783479299
 _C.TRAIN.MAX = 1
-_C.TRAIN.DEPTH = "patch"  # Options are none, patch and section
+_C.TRAIN.DEPTH = "patch"  # Options are none, patch, and section
 # None adds no depth information and the num of channels remains at 1
 # Patch adds depth per patch so is simply the height of that patch from 0 to 1, channels=3
 # Section adds depth per section so contains depth information for the whole section, channels=3

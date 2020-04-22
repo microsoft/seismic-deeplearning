@@ -18,34 +18,22 @@ import logging.config
 import os
 from os import path
 
-import cv2
 import fire
 import numpy as np
 import torch
 import torch.nn.functional as F
-from PIL import Image
 from albumentations import Compose, Normalize, PadIfNeeded, Resize
-from cv_lib.utils import load_log_configuration
+from matplotlib import cm
+from PIL import Image
+from toolz import compose, curry, itertoolz, pipe, take
+from torch.utils import data
+
 from cv_lib.segmentation import models
-from cv_lib.segmentation.dutchf3.utils import (
-    current_datetime,
-    generate_path,
-    git_branch,
-    git_hash,
-)
-from deepseismic_interpretation.dutchf3.data import (
-    add_patch_depth_channels,
-    get_seismic_labels,
-    get_test_loader,
-)
+from cv_lib.segmentation.dutchf3.utils import current_datetime, generate_path, git_branch, git_hash
+from cv_lib.utils import load_log_configuration
+from deepseismic_interpretation.dutchf3.data import add_patch_depth_channels, get_seismic_labels, get_test_loader
 from default import _C as config
 from default import update_config
-from toolz import compose, curry, itertoolz, pipe
-from torch.utils import data
-from toolz import take
-
-from matplotlib import cm
-
 
 _CLASS_NAMES = [
     "upper_ns",
@@ -63,9 +51,9 @@ class runningScore(object):
 
     def _fast_hist(self, label_true, label_pred, n_class):
         mask = (label_true >= 0) & (label_true < n_class)
-        hist = np.bincount(
-            n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,
-        ).reshape(n_class, n_class)
+        hist = np.bincount(n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,).reshape(
+            n_class, n_class
+        )
         return hist
 
     def update(self, label_trues, label_preds):
@@ -201,9 +189,7 @@ def _compose_processing_pipeline(depth, aug=None):
 
 
 def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
-    hdc_wdx_generator = itertools.product(
-        range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride),
-    )
+    hdc_wdx_generator = itertools.product(range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride),)
     for batch_indexes in itertoolz.partition_all(batch_size, hdc_wdx_generator):
         yield batch_indexes
 
@@ -214,9 +200,7 @@ def _output_processing_pipeline(config, output):
     _, _, h, w = output.shape
     if config.TEST.POST_PROCESSING.SIZE != h or config.TEST.POST_PROCESSING.SIZE != w:
         output = F.interpolate(
-            output,
-            size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE,),
-            mode="bilinear",
+            output, size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE,), mode="bilinear",
         )
 
     if config.TEST.POST_PROCESSING.CROP_PIXELS > 0:
@@ -231,15 +215,7 @@ def _output_processing_pipeline(config, output):
 
 
 def _patch_label_2d(
-    model,
-    img,
-    pre_processing,
-    output_processing,
-    patch_size,
-    stride,
-    batch_size,
-    device,
-    num_classes,
+    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes,
 ):
     """Processes a whole section
     """
@@ -254,19 +230,14 @@ def _patch_label_2d(
     # generate output:
     for batch_indexes in _generate_batches(h, w, ps, patch_size, stride, batch_size=batch_size):
         batch = torch.stack(
-            [
-                pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing,)
-                for hdx, wdx in batch_indexes
-            ],
+            [pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing,) for hdx, wdx in batch_indexes],
             dim=0,
         )
 
         model_output = model(batch.to(device))
         for (hdx, wdx), output in zip(batch_indexes, model_output.detach().cpu()):
             output = output_processing(output)
-            output_p[
-                :, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size,
-            ] += output
+            output_p[:, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size,] += output
 
     # crop the output_p in the middle
     output = output_p[:, :, ps:-ps, ps:-ps]
@@ -291,22 +262,12 @@ def to_image(label_mask, n_classes=6):
 
 
 def _evaluate_split(
-    split,
-    section_aug,
-    model,
-    pre_processing,
-    output_processing,
-    device,
-    running_metrics_overall,
-    config,
-    debug=False,
+    split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config, debug=False,
 ):
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
-    test_set = TestSectionLoader(
-        config.DATASET.ROOT, split=split, is_transform=True, augmentations=section_aug,
-    )
+    test_set = TestSectionLoader(config.DATASET.ROOT, split=split, is_transform=True, augmentations=section_aug,)
 
     n_classes = test_set.n_classes
 
@@ -318,16 +279,10 @@ def _evaluate_split(
 
     try:
         output_dir = generate_path(
-            config.OUTPUT_DIR + "_test",
-            git_branch(),
-            git_hash(),
-            config.MODEL.NAME,
-            current_datetime(),
+            config.OUTPUT_DIR + "_test", git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
         )
     except TypeError:
-        output_dir = generate_path(
-            config.OUTPUT_DIR + "_test", config.MODEL.NAME, current_datetime(),
-        )
+        output_dir = generate_path(config.OUTPUT_DIR + "_test", config.MODEL.NAME, current_datetime(),)
 
     running_metrics_split = runningScore(n_classes)
 
@@ -415,23 +370,19 @@ def test(*options, cfg=None, debug=False):
     running_metrics_overall = runningScore(n_classes)
 
     # Augmentation
-    section_aug = Compose(
-        [Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,)]
-    )
+    section_aug = Compose([Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,)])
 
     # TODO: make sure that this is consistent with how normalization and agumentation for train.py
     # issue: https://github.com/microsoft/seismic-deeplearning/issues/270
     patch_aug = Compose(
         [
             Resize(
-                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-                always_apply=True,
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
             ),
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
                 min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                border_mode=cv2.BORDER_CONSTANT,
+                border_mode=config.OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=255,
             ),

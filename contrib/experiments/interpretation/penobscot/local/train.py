@@ -17,7 +17,6 @@ import logging
 import logging.config
 from os import path
 
-import cv2
 import fire
 import numpy as np
 import torch
@@ -29,42 +28,18 @@ from ignite.utils import convert_tensor
 from toolz import compose
 from torch.utils import data
 
+from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard_handlers
+from cv_lib.event_handlers.logging_handlers import Evaluator
+from cv_lib.event_handlers.tensorboard_handlers import create_image_writer, create_summary_writer
+from cv_lib.segmentation import extract_metric_from, models
+from cv_lib.segmentation.dutchf3.utils import current_datetime, generate_path, git_branch, git_hash, np_to_tb
+from cv_lib.segmentation.metrics import class_accuracy, class_iou, mean_class_accuracy, mean_iou, pixelwise_accuracy
+from cv_lib.segmentation.penobscot.engine import create_supervised_evaluator, create_supervised_trainer
+from cv_lib.utils import load_log_configuration
 from deepseismic_interpretation.dutchf3.data import decode_segmap
 from deepseismic_interpretation.penobscot.data import get_patch_dataset
-from cv_lib.utils import load_log_configuration
-from cv_lib.event_handlers import (
-    SnapshotHandler,
-    logging_handlers,
-    tensorboard_handlers,
-)
-from cv_lib.event_handlers.logging_handlers import Evaluator
-from cv_lib.event_handlers.tensorboard_handlers import (
-    create_image_writer,
-    create_summary_writer,
-)
-from cv_lib.segmentation import models, extract_metric_from
-from cv_lib.segmentation.penobscot.engine import (
-    create_supervised_evaluator,
-    create_supervised_trainer,
-)
-from cv_lib.segmentation.metrics import (
-    pixelwise_accuracy,
-    class_accuracy,
-    mean_class_accuracy,
-    class_iou,
-    mean_iou,
-)
-from cv_lib.segmentation.dutchf3.utils import (
-    current_datetime,
-    generate_path,
-    git_branch,
-    git_hash,
-    np_to_tb,
-)
-
 from default import _C as config
 from default import update_config
-
 
 mask_value = 255
 _SEG_COLOURS = np.asarray(
@@ -107,7 +82,7 @@ def run(*options, cfg=None, debug=False):
     load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
-    scheduler_step = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
+    epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
     torch.manual_seed(config.SEED)
@@ -126,7 +101,7 @@ def run(*options, cfg=None, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.PATCH_SIZE,
                 min_width=config.TRAIN.PATCH_SIZE,
-                border_mode=cv2.BORDER_CONSTANT,
+                border_mode=config.OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=mask_value,
                 value=0,
@@ -137,7 +112,7 @@ def run(*options, cfg=None, debug=False):
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
                 min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                border_mode=cv2.BORDER_CONSTANT,
+                border_mode=config.OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=mask_value,
                 value=0,
@@ -182,7 +157,7 @@ def run(*options, cfg=None, debug=False):
     if debug:
         val_set = data.Subset(val_set, range(3))
 
-    val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS)    
+    val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS)
 
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
 
@@ -203,8 +178,8 @@ def run(*options, cfg=None, debug=False):
         output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
-    snapshot_duration = scheduler_step * len(train_loader)
-    scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, snapshot_duration)
+    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*len(train_loader)
+    scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration)
 
     # weights are inversely proportional to the frequency of the classes in
     # the training set
@@ -306,9 +281,15 @@ def run(*options, cfg=None, debug=False):
 
     logger.info("Starting training")
     if debug:
-        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = config.TRAIN.BATCH_SIZE_PER_GPU, seed = config.SEED)
+        trainer.run(
+            train_loader,
+            max_epochs=config.TRAIN.END_EPOCH,
+            epoch_length=config.TRAIN.BATCH_SIZE_PER_GPU,
+            seed=config.SEED,
+        )
     else:
-        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = len(train_loader), seed = config.SEED)
+        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length=len(train_loader), seed=config.SEED)
+
 
 if __name__ == "__main__":
     fire.Fire(run)

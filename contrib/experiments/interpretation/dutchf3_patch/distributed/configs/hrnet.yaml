@@ -9,6 +9,7 @@ WORKERS: 4
 PRINT_FREQ: 10
 LOG_CONFIG: logging.conf
 SEED: 2019
+OPENCV_BORDER_CONSTANT: 0
 
 
 DATASET:
@@ -73,7 +74,7 @@ TRAIN:
   WEIGHT_DECAY: 0.0001
   SNAPSHOTS: 5
   AUGMENTATION: True
-  DEPTH: "section" #"patch" # Options are No, Patch and Section
+  DEPTH: "section" #"patch" # Options are none, patch, and section
   STRIDE: 50
   PATCH_SIZE: 100
   AUGMENTATIONS:
