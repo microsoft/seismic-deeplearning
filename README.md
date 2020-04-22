@@ -142,12 +142,12 @@ To prepare the data for the experiments (e.g. split into train/val/test), please
 cd scripts
 
 # For section-based experiments
-python prepare_dutchf3.py split_train_val section --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits
+python prepare_dutchf3.py split_train_val section --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits  --split_direction=crossline
 
 
 # For patch-based experiments
 python prepare_dutchf3.py split_train_val patch --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits \
---stride=50 --patch_size=100
+--stride=50 --patch_size=100 --split_direction=crossline
 
 # go back to repo root
 cd ..
