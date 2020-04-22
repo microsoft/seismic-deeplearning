@@ -19,6 +19,7 @@ STRIDE = 100
 PATCH = 50
 PER_VAL = 0.2
 LOG_CONFIG = None
+DIRECTION = "crossline"
 
 
 def test_get_aline_range_step_one():
@@ -39,7 +40,7 @@ def test_get_aline_range_step_zero():
 
     """check if a ValueError exception is raised when section_stride = 0
     """
-    with pytest.raises(ValueError, match=r'section_stride cannot be zero or a negative number'):
+    with pytest.raises(ValueError, match=r"section_stride cannot be zero or a negative number"):
         SECTION_STRIDE = 0
 
         # Test
@@ -54,7 +55,7 @@ def test_get_aline_range_negative_step():
 
     """check if a ValueError exception is raised when section_stride = -1
     """
-    with pytest.raises(ValueError, match='section_stride cannot be zero or a negative number'):
+    with pytest.raises(ValueError, match="section_stride cannot be zero or a negative number"):
         SECTION_STRIDE = -1
 
         # Test
@@ -70,7 +71,7 @@ def test_get_aline_range_float_step():
     """check if a ValueError exception is raised when section_stride = 1.1
     """
     with pytest.raises(TypeError, match="'float' object cannot be interpreted as an integer"):
-        SECTION_STRIDE = 1.
+        SECTION_STRIDE = 1.0
 
         # Test
         output_iline = prep_dutchf3._get_aline_range(ILINE, PER_VAL, SECTION_STRIDE)
@@ -117,19 +118,28 @@ def test_prepare_dutchf3_patch_step_1():
     with tempfile.TemporaryDirectory() as tmpdirname:
 
         # saving the file to be used by the script
-        label_file = tmpdirname + '/label_file.npy'
+        label_file = tmpdirname + "/label_file.npy"
         np.save(label_file, ALINE)
 
         # stting the output directory to be used by the script
-        output = tmpdirname + '/split'
+        output = tmpdirname + "/split"
 
         # calling the main function of the script without SECTION_STRIDE, to check default value
-        prep_dutchf3.split_patch_train_val(data_dir=tmpdirname, output_dir=output, label_file=label_file, 
-        section_stride=SECTION_STRIDE, stride=STRIDE, patch_size=PATCH, per_val=PER_VAL,log_config=LOG_CONFIG)
+        prep_dutchf3.split_patch_train_val(
+            data_dir=tmpdirname,
+            output_dir=output,
+            label_file=label_file,
+            section_stride=SECTION_STRIDE,
+            stride=STRIDE,
+            split_direction=DIRECTION,
+            patch_size=PATCH,
+            per_val=PER_VAL,
+            log_config=LOG_CONFIG,
+        )
 
         # reading the file and splitting the data
-        patch_train = pd.read_csv(output + '/patch_train.txt', header=None, names=['row', 'a', 'b'])
-        patch_train = pd.DataFrame(patch_train.row.str.split('_').tolist(), columns=['aline', 'x', 'y', 'z'])
+        patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row", "a", "b"])
+        patch_train = pd.DataFrame(patch_train.row.str.split("_").tolist(), columns=["aline", "x", "y", "z"])
 
         # test patch_train and section_stride=2
         y = list(sorted(set(patch_train.y.astype(int))))
@@ -138,8 +148,8 @@ def test_prepare_dutchf3_patch_step_1():
         assert (int(x[1]) - int(x[0])) == SECTION_STRIDE
 
         # reading the file and splitting the data
-        patch_val = pd.read_csv(output + '/patch_val.txt', header=None, names=['row', 'a', 'b'])
-        patch_val = pd.DataFrame(patch_val.row.str.split('_').tolist(), columns=['aline', 'x', 'y', 'z'])
+        patch_val = pd.read_csv(output + "/patch_val.txt", header=None, names=["row", "a", "b"])
+        patch_val = pd.DataFrame(patch_val.row.str.split("_").tolist(), columns=["aline", "x", "y", "z"])
 
         # test patch_val and section_stride=2
         y = list(sorted(set(patch_val.y.astype(int))))
@@ -148,10 +158,10 @@ def test_prepare_dutchf3_patch_step_1():
         assert (int(x[1]) - int(x[0])) != SECTION_STRIDE
 
         # test validation set is, at least, PER_VAL
-        PER_VAL_CHK = len(set(patch_train.y))/(len(set(patch_train.y))+len(set(patch_val.y))) * 100
-        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
-        PER_VAL_CHK = len(set(patch_train.x))/(len(set(patch_train.x))+len(set(patch_val.x))) * 100
-        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = len(set(patch_train.y)) / (len(set(patch_train.y)) + len(set(patch_val.y))) * 100
+        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = len(set(patch_train.x)) / (len(set(patch_train.x)) + len(set(patch_val.x))) * 100
+        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
 
 
 def test_prepare_dutchf3_patch_step_2():
@@ -165,19 +175,28 @@ def test_prepare_dutchf3_patch_step_2():
     with tempfile.TemporaryDirectory() as tmpdirname:
 
         # saving the file to be used by the script
-        label_file = tmpdirname + '/label_file.npy'
+        label_file = tmpdirname + "/label_file.npy"
         np.save(label_file, ALINE)
 
         # stting the output directory to be used by the script
-        output = tmpdirname + '/split'
+        output = tmpdirname + "/split"
 
         # calling the main function of the script without SECTION_STRIDE, to check default value
-        prep_dutchf3.split_patch_train_val(data_dir=tmpdirname, output_dir=output, label_file=label_file, 
-        section_stride=SECTION_STRIDE, stride=STRIDE, patch_size=PATCH, per_val=PER_VAL,log_config=LOG_CONFIG)
+        prep_dutchf3.split_patch_train_val(
+            data_dir=tmpdirname,
+            output_dir=output,
+            label_file=label_file,
+            section_stride=SECTION_STRIDE,
+            stride=STRIDE,
+            split_direction=DIRECTION,
+            patch_size=PATCH,
+            per_val=PER_VAL,
+            log_config=LOG_CONFIG,
+        )
 
         # reading the file and splitting the data
-        patch_train = pd.read_csv(output + '/patch_train.txt', header=None, names=['row', 'a', 'b'])
-        patch_train = pd.DataFrame(patch_train.row.str.split('_').tolist(), columns=['aline', 'x', 'y', 'z'])
+        patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row", "a", "b"])
+        patch_train = pd.DataFrame(patch_train.row.str.split("_").tolist(), columns=["aline", "x", "y", "z"])
 
         # test patch_train and section_stride=2
         y = list(sorted(set(patch_train.y.astype(int))))
@@ -186,8 +205,8 @@ def test_prepare_dutchf3_patch_step_2():
         assert (int(x[1]) - int(x[0])) == SECTION_STRIDE
 
         # reading the file and splitting the data
-        patch_val = pd.read_csv(output + '/patch_val.txt', header=None, names=['row', 'a', 'b'])
-        patch_val = pd.DataFrame(patch_val.row.str.split('_').tolist(), columns=['aline', 'x', 'y', 'z'])
+        patch_val = pd.read_csv(output + "/patch_val.txt", header=None, names=["row", "a", "b"])
+        patch_val = pd.DataFrame(patch_val.row.str.split("_").tolist(), columns=["aline", "x", "y", "z"])
 
         # test patch_val and section_stride=2
         y = list(sorted(set(patch_val.y.astype(int))))
@@ -196,10 +215,10 @@ def test_prepare_dutchf3_patch_step_2():
         assert (int(x[1]) - int(x[0])) != SECTION_STRIDE
 
         # test validation set is, at least, PER_VAL
-        PER_VAL_CHK = len(set(patch_train.y))/(len(set(patch_train.y))+len(set(patch_val.y))) * 100
-        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
-        PER_VAL_CHK = len(set(patch_train.x))/(len(set(patch_train.x))+len(set(patch_val.x))) * 100
-        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = len(set(patch_train.y)) / (len(set(patch_train.y)) + len(set(patch_val.y))) * 100
+        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = len(set(patch_train.x)) / (len(set(patch_train.x)) + len(set(patch_val.x))) * 100
+        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
 
 
 def test_prepare_dutchf3_patch_train_and_test_sets():
@@ -213,23 +232,32 @@ def test_prepare_dutchf3_patch_train_and_test_sets():
     with tempfile.TemporaryDirectory() as tmpdirname:
 
         # saving the file to be used by the script
-        label_file = tmpdirname + '/label_file.npy'
+        label_file = tmpdirname + "/label_file.npy"
         np.save(label_file, ALINE)
 
         # stting the output directory to be used by the script
-        output = tmpdirname + '/split'
+        output = tmpdirname + "/split"
 
         # calling the main function of the script without SECTION_STRIDE, to check default value
-        prep_dutchf3.split_patch_train_val(data_dir=tmpdirname, output_dir=output, label_file=label_file, 
-        section_stride=SECTION_STRIDE, stride=STRIDE, patch_size=PATCH, per_val=PER_VAL,log_config=LOG_CONFIG)
+        prep_dutchf3.split_patch_train_val(
+            data_dir=tmpdirname,
+            output_dir=output,
+            label_file=label_file,
+            section_stride=SECTION_STRIDE,
+            stride=STRIDE,
+            split_direction=DIRECTION,
+            patch_size=PATCH,
+            per_val=PER_VAL,
+            log_config=LOG_CONFIG,
+        )
 
         # reading the file and splitting the data
-        patch_train = pd.read_csv(output + '/patch_train.txt', header=None, names=['row', 'a', 'b'])
-        patch_train = pd.DataFrame(patch_train.row.str.split('_').tolist(), columns=['aline', 'x', 'y', 'z'])
+        patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row", "a", "b"])
+        patch_train = pd.DataFrame(patch_train.row.str.split("_").tolist(), columns=["aline", "x", "y", "z"])
 
         # reading the file and splitting the data
-        patch_val = pd.read_csv(output + '/patch_val.txt', header=None, names=['row', 'a', 'b'])
-        patch_val = pd.DataFrame(patch_val.row.str.split('_').tolist(), columns=['aline', 'x', 'y', 'z'])
+        patch_val = pd.read_csv(output + "/patch_val.txt", header=None, names=["row", "a", "b"])
+        patch_val = pd.DataFrame(patch_val.row.str.split("_").tolist(), columns=["aline", "x", "y", "z"])
 
         y_train = set(patch_train.y)
         x_train = set(patch_train.x)
@@ -241,10 +269,11 @@ def test_prepare_dutchf3_patch_train_and_test_sets():
         assert x_train & x_val == set()
 
         # test validation set is, at least, PER_VAL
-        PER_VAL_CHK = len(set(patch_train.y))/(len(set(patch_train.y))+len(set(patch_val.y))) * 100
-        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
-        PER_VAL_CHK = len(set(patch_train.x))/(len(set(patch_train.x))+len(set(patch_val.x))) * 100
-        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = len(set(patch_train.y)) / (len(set(patch_train.y)) + len(set(patch_val.y))) * 100
+        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = len(set(patch_train.x)) / (len(set(patch_train.x)) + len(set(patch_val.x))) * 100
+        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
+
 
 def test_prepare_dutchf3_section_step_1():
 
@@ -257,29 +286,37 @@ def test_prepare_dutchf3_section_step_1():
     with tempfile.TemporaryDirectory() as tmpdirname:
 
         # saving the file to be used by the script
-        label_file = tmpdirname + '/label_file.npy'
+        label_file = tmpdirname + "/label_file.npy"
         np.save(label_file, ALINE)
 
         # stting the output directory to be used by the script
-        output = tmpdirname + '/split'
+        output = tmpdirname + "/split"
 
         # calling the main function of the script without SECTION_STRIDE, to check default value
-        prep_dutchf3.split_section_train_val(data_dir=tmpdirname, output_dir=output, label_file=label_file,section_stride=SECTION_STRIDE, per_val=PER_VAL, log_config=LOG_CONFIG)
+        prep_dutchf3.split_section_train_val(
+            data_dir=tmpdirname,
+            output_dir=output,
+            label_file=label_file,
+            section_stride=SECTION_STRIDE,
+            per_val=PER_VAL,
+            log_config=LOG_CONFIG,
+        )
 
         # reading the file and splitting the data
-        section_train = pd.read_csv(output + '/section_train.txt', header=None, names=['row'])
-        section_train = pd.DataFrame(section_train.row.str.split('_').tolist(), columns=['aline', 'section'])
+        section_train = pd.read_csv(output + "/section_train.txt", header=None, names=["row"])
+        section_train = pd.DataFrame(section_train.row.str.split("_").tolist(), columns=["aline", "section"])
 
-        section_val = pd.read_csv(output + '/section_val.txt', header=None, names=['row'])
-        section_val = pd.DataFrame(section_val.row.str.split('_').tolist(), columns=['aline', 'section'])
+        section_val = pd.read_csv(output + "/section_val.txt", header=None, names=["row"])
+        section_val = pd.DataFrame(section_val.row.str.split("_").tolist(), columns=["aline", "section"])
 
         # test
         assert (float(section_train.section[1]) - float(section_train.section[0])) % float(SECTION_STRIDE) == 0.0
         assert (float(section_val.section[1]) - float(section_val.section[0])) % float(SECTION_STRIDE) == 0.0
 
         # test validation set is, at least, PER_VAL
-        PER_VAL_CHK = len(section_val)/(len(section_val)+len(section_train)) * 100
-        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = len(section_val) / (len(section_val) + len(section_train)) * 100
+        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
+
 
 def test_prepare_dutchf3_section_step_2():
 
@@ -292,27 +329,33 @@ def test_prepare_dutchf3_section_step_2():
     with tempfile.TemporaryDirectory() as tmpdirname:
 
         # saving the file to be used by the script
-        label_file = tmpdirname + '/label_file.npy'
+        label_file = tmpdirname + "/label_file.npy"
         np.save(label_file, ALINE)
 
         # stting the output directory to be used by the script
-        output = tmpdirname + '/split'
+        output = tmpdirname + "/split"
 
         # calling the main function of the script without SECTION_STRIDE, to check default value
-        prep_dutchf3.split_section_train_val(data_dir=tmpdirname, output_dir=output, label_file=label_file,
-                                                section_stride=SECTION_STRIDE, per_val=PER_VAL, log_config=LOG_CONFIG)
+        prep_dutchf3.split_section_train_val(
+            data_dir=tmpdirname,
+            output_dir=output,
+            label_file=label_file,
+            section_stride=SECTION_STRIDE,
+            per_val=PER_VAL,
+            log_config=LOG_CONFIG,
+        )
 
         # reading the file and splitting the data
-        section_train = pd.read_csv(output + '/section_train.txt', header=None, names=['row'])
-        section_train = pd.DataFrame(section_train.row.str.split('_').tolist(), columns=['aline', 'section'])
+        section_train = pd.read_csv(output + "/section_train.txt", header=None, names=["row"])
+        section_train = pd.DataFrame(section_train.row.str.split("_").tolist(), columns=["aline", "section"])
 
-        section_val = pd.read_csv(output + '/section_val.txt', header=None, names=['row'])
-        section_val = pd.DataFrame(section_val.row.str.split('_').tolist(), columns=['aline', 'section'])
+        section_val = pd.read_csv(output + "/section_val.txt", header=None, names=["row"])
+        section_val = pd.DataFrame(section_val.row.str.split("_").tolist(), columns=["aline", "section"])
 
         # test
         assert (float(section_train.section[1]) - float(section_train.section[0])) % float(SECTION_STRIDE) == 0.0
         assert (float(section_val.section[1]) - float(section_val.section[0])) % float(SECTION_STRIDE) > 0.0
 
         # test validation set is, at least, PER_VAL
-        PER_VAL_CHK = len(section_val)/(len(section_val)+len(section_train)) * 100
-        assert round(PER_VAL_CHK,0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = len(section_val) / (len(section_val) + len(section_train)) * 100
+        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
