@@ -252,26 +252,20 @@ def test_prepare_dutchf3_patch_train_and_test_sets():
         )
 
         # reading the file and splitting the data
-        patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row", "a", "b"])
-        patch_train = pd.DataFrame(patch_train.row.str.split("_").tolist(), columns=["aline", "x", "y", "z"])
+        patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row"])
+        patch_train = patch_train.row.tolist()
 
         # reading the file and splitting the data
-        patch_val = pd.read_csv(output + "/patch_val.txt", header=None, names=["row", "a", "b"])
-        patch_val = pd.DataFrame(patch_val.row.str.split("_").tolist(), columns=["aline", "x", "y", "z"])
+        patch_val = pd.read_csv(output + "/patch_val.txt", header=None, names=["row"])
+        patch_val = patch_val.row.tolist()
 
-        y_train = set(patch_train.y)
-        x_train = set(patch_train.x)
-        y_val = set(patch_val.y)
-        x_val = set(patch_val.x)
-
-        # The sets must not contain values common to both
-        assert y_train & y_val == set()
-        assert x_train & x_val == set()
+        # assert patches are unique
+        assert set(patch_train) & set(patch_val) == set()
 
         # test validation set is, at least, PER_VAL
-        PER_VAL_CHK = len(set(patch_train.y)) / (len(set(patch_train.y)) + len(set(patch_val.y))) * 100
+        PER_VAL_CHK = 100 * len(set(patch_train.x)) / (len(set(patch_train.x)) + len(set(patch_val.x)))
         assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
-        PER_VAL_CHK = len(set(patch_train.x)) / (len(set(patch_train.x)) + len(set(patch_val.x))) * 100
+        PER_VAL_CHK = 100 * len(set(patch_train.i)) / (len(set(patch_train.i)) + len(set(patch_val.i)))
         assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
 
 
