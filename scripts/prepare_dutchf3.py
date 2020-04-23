@@ -165,17 +165,16 @@ def split_patch_train_val(
 
     # Process sections:
     def _extract_patches(sections_range, direction, horz_locations, vert_locations):
-        locations = list([j, k] for j in horz_locations for k in vert_locations)
+        locations = itertools.product(sections_range, horz_locations, vert_locations)
         if direction == "inline":
-            for s in sections_range:
-                for j, k in locations:
-                    #             iline          xline          depth
-                    yield "i_" + str(s) + "_" + str(j) + "_" + str(k)
+            idx, xdx, ddx = 0, 1, 2
+            dir = "i"
         elif direction == "crossline":
-            for s in sections_range:
-                for j, k in locations:
-                    #             iline          xline          depth
-                    yield "x_" + str(j) + "_" + str(s) + "_" + str(k)
+            idx, xdx, ddx = 1, 0, 2
+            dir = "x"
+
+        for loc in locations:  #      iline               xline                 depth
+            yield f"{dir}_" + str(loc[idx]) + "_" + str(loc[xdx]) + "_" + str(loc[ddx])
 
     # Process sections - train
     logger.debug("Generating patches..")
