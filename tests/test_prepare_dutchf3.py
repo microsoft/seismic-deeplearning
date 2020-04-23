@@ -263,9 +263,9 @@ def test_prepare_dutchf3_patch_train_and_test_sets():
         assert set(patch_train) & set(patch_val) == set()
 
         # test validation set is, at least, PER_VAL
-        PER_VAL_CHK = 100 * len(set(patch_train.x)) / (len(set(patch_train.x)) + len(set(patch_val.x)))
+        PER_VAL_CHK = 100 * len(patch_train) / (len(patch_train) + len(patch_val))
         assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
-        PER_VAL_CHK = 100 * len(set(patch_train.i)) / (len(set(patch_train.i)) + len(set(patch_val.i)))
+        PER_VAL_CHK = 100 * len(patch_train) / (len(patch_train) + len(patch_val))
         assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
 
 
