@@ -15,8 +15,8 @@ ILINE = 551
 XLINE = 1008
 DEPTH = 351
 ALINE = np.zeros((ILINE, XLINE, DEPTH))
-STRIDE = 100
-PATCH = 50
+STRIDE = 50
+PATCH = 100
 PER_VAL = 0.2
 LOG_CONFIG = None
 DIRECTION = "crossline"
@@ -138,29 +138,39 @@ def test_prepare_dutchf3_patch_step_1():
         )
 
         # reading the file and splitting the data
-        patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row", "a", "b"])
-        patch_train = pd.DataFrame(patch_train.row.str.split("_").tolist(), columns=["aline", "x", "y", "z"])
+        patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row"])
+        patch_train = pd.DataFrame(patch_train.row.str.split("_").tolist(), columns=["dir", "i", "x", "d"])
 
         # test patch_train and section_stride=2
-        y = list(sorted(set(patch_train.y.astype(int))))
         x = list(sorted(set(patch_train.x.astype(int))))
-        assert (int(y[1]) - int(y[0])) == SECTION_STRIDE
-        assert (int(x[1]) - int(x[0])) == SECTION_STRIDE
+        i = list(sorted(set(patch_train.i.astype(int))))
+
+        if DIRECTION == "crossline":
+            assert x[1] - x[0] == SECTION_STRIDE
+            assert i[1] - i[0] == STRIDE
+        elif DIRECTION == "inline":
+            assert x[1] - x[0] == STRIDE
+            assert i[1] - i[0] == SECTION_STRIDE
 
         # reading the file and splitting the data
-        patch_val = pd.read_csv(output + "/patch_val.txt", header=None, names=["row", "a", "b"])
-        patch_val = pd.DataFrame(patch_val.row.str.split("_").tolist(), columns=["aline", "x", "y", "z"])
+        patch_val = pd.read_csv(output + "/patch_val.txt", header=None, names=["row"])
+        patch_val = pd.DataFrame(patch_val.row.str.split("_").tolist(), columns=["dir", "i", "x", "d"])
 
         # test patch_val and section_stride=2
-        y = list(sorted(set(patch_val.y.astype(int))))
         x = list(sorted(set(patch_val.x.astype(int))))
-        assert (int(y[1]) - int(y[0])) != SECTION_STRIDE
-        assert (int(x[1]) - int(x[0])) != SECTION_STRIDE
+        i = list(sorted(set(patch_val.i.astype(int))))
+
+        if DIRECTION == "crossline":
+            assert x[1] - x[0] == SECTION_STRIDE
+            assert i[1] - i[0] == STRIDE
+        elif DIRECTION == "inline":
+            assert x[1] - x[0] == STRIDE
+            assert i[1] - i[0] == SECTION_STRIDE
 
         # test validation set is, at least, PER_VAL
-        PER_VAL_CHK = len(set(patch_train.y)) / (len(set(patch_train.y)) + len(set(patch_val.y))) * 100
-        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
         PER_VAL_CHK = len(set(patch_train.x)) / (len(set(patch_train.x)) + len(set(patch_val.x))) * 100
+        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = len(set(patch_train.i)) / (len(set(patch_train.i)) + len(set(patch_val.i))) * 100
         assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
 
 
@@ -195,29 +205,39 @@ def test_prepare_dutchf3_patch_step_2():
         )
 
         # reading the file and splitting the data
-        patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row", "a", "b"])
-        patch_train = pd.DataFrame(patch_train.row.str.split("_").tolist(), columns=["aline", "x", "y", "z"])
+        patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row"])
+        patch_train = pd.DataFrame(patch_train.row.str.split("_").tolist(), columns=["dir", "i", "x", "d"])
 
         # test patch_train and section_stride=2
-        y = list(sorted(set(patch_train.y.astype(int))))
         x = list(sorted(set(patch_train.x.astype(int))))
-        assert (int(y[1]) - int(y[0])) == SECTION_STRIDE
-        assert (int(x[1]) - int(x[0])) == SECTION_STRIDE
+        i = list(sorted(set(patch_train.i.astype(int))))
+
+        if DIRECTION == "crossline":
+            assert x[1] - x[0] == SECTION_STRIDE
+            assert i[1] - i[0] == STRIDE
+        elif DIRECTION == "inline":
+            assert x[1] - x[0] == STRIDE
+            assert i[1] - i[0] == SECTION_STRIDE
 
         # reading the file and splitting the data
-        patch_val = pd.read_csv(output + "/patch_val.txt", header=None, names=["row", "a", "b"])
-        patch_val = pd.DataFrame(patch_val.row.str.split("_").tolist(), columns=["aline", "x", "y", "z"])
+        patch_val = pd.read_csv(output + "/patch_val.txt", header=None, names=["row"])
+        patch_val = pd.DataFrame(patch_val.row.str.split("_").tolist(), columns=["dir", "i", "x", "d"])
 
         # test patch_val and section_stride=2
-        y = list(sorted(set(patch_val.y.astype(int))))
         x = list(sorted(set(patch_val.x.astype(int))))
-        assert (int(y[1]) - int(y[0])) != SECTION_STRIDE
-        assert (int(x[1]) - int(x[0])) != SECTION_STRIDE
+        i = list(sorted(set(patch_val.i.astype(int))))
+
+        if DIRECTION == "crossline":
+            assert x[1] - x[0] == SECTION_STRIDE
+            assert i[1] - i[0] == STRIDE
+        elif DIRECTION == "inline":
+            assert x[1] - x[0] == STRIDE
+            assert i[1] - i[0] == SECTION_STRIDE
 
         # test validation set is, at least, PER_VAL
-        PER_VAL_CHK = len(set(patch_train.y)) / (len(set(patch_train.y)) + len(set(patch_val.y))) * 100
-        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
         PER_VAL_CHK = len(set(patch_train.x)) / (len(set(patch_train.x)) + len(set(patch_val.x))) * 100
+        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = len(set(patch_train.i)) / (len(set(patch_train.i)) + len(set(patch_val.i))) * 100
         assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
 
 
@@ -299,10 +319,10 @@ def test_prepare_dutchf3_section_step_1():
 
         # reading the file and splitting the data
         section_train = pd.read_csv(output + "/section_train.txt", header=None, names=["row"])
-        section_train = pd.DataFrame(section_train.row.str.split("_").tolist(), columns=["aline", "section"])
+        section_train = pd.DataFrame(section_train.row.str.split("_").tolist(), columns=["dir", "section"])
 
         section_val = pd.read_csv(output + "/section_val.txt", header=None, names=["row"])
-        section_val = pd.DataFrame(section_val.row.str.split("_").tolist(), columns=["aline", "section"])
+        section_val = pd.DataFrame(section_val.row.str.split("_").tolist(), columns=["dir", "section"])
 
         # test
         assert (float(section_train.section[1]) - float(section_train.section[0])) % float(SECTION_STRIDE) == 0.0
@@ -343,10 +363,10 @@ def test_prepare_dutchf3_section_step_2():
 
         # reading the file and splitting the data
         section_train = pd.read_csv(output + "/section_train.txt", header=None, names=["row"])
-        section_train = pd.DataFrame(section_train.row.str.split("_").tolist(), columns=["aline", "section"])
+        section_train = pd.DataFrame(section_train.row.str.split("_").tolist(), columns=["dir", "section"])
 
         section_val = pd.read_csv(output + "/section_val.txt", header=None, names=["row"])
-        section_val = pd.DataFrame(section_val.row.str.split("_").tolist(), columns=["aline", "section"])
+        section_val = pd.DataFrame(section_val.row.str.split("_").tolist(), columns=["dir", "section"])
 
         # test
         assert (float(section_train.section[1]) - float(section_train.section[0])) % float(SECTION_STRIDE) == 0.0
