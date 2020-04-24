@@ -156,6 +156,11 @@ def run(*options, cfg=None, local_rank=0, debug=False):
     logger.info(f"Validation examples {len(val_set)}")
     n_classes = train_set.n_classes
   
+    if debug:
+        logger.info("Running in debug mode..")
+        train_set = data.Subset(train_set, list(range(4)))
+        val_set = data.Subset(val_set, list(range(4)))
+
     logger.info(f"Training examples {len(train_set)}")
     logger.info(f"Validation examples {len(val_set)}")    
 

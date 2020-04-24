@@ -47,7 +47,7 @@ def prepare_batch(batch, device=None, non_blocking=False):
     )
 
 
-def run(*options, cfg=None, override=None, debug=False):
+def run(*options, cfg=None, debug=False):
     """Run training and validation of model
 
     Notes:
@@ -59,15 +59,11 @@ def run(*options, cfg=None, override=None, debug=False):
         *options (str,int ,optional): Options used to overide what is loaded from the
                                       config. To see what options are available consult
                                       default.py
-        cfg (str, optional): Location of config file to load. Defaults to None.
-        override (str, optional): Location of config file which loads updates to config file
-                                  loaded by the cfg parameter above, e.g. say you want to train
-                                  model on a reduced or test dataset
+        cfg (str, optional): Location of config file to load. Defaults to None.        
         debug (bool): Places scripts in debug/test mode and only executes a few iterations
     """
     # Configuration:
-    update_config(config, options=options, config_file=cfg)
-    update_config(config, options=[], config_file=override)
+    update_config(config, options=options, config_file=cfg)    
 
     # The model will be saved under: outputs/<config_file_name>/<model_dir>
     config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]

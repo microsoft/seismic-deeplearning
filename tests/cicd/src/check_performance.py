@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """ Please see the def main() function for code description."""
+import json
 
 """ libraries """
 
@@ -36,15 +37,21 @@ def main(args):
     logging.info("loading data")
 
     with open(args.infile, 'r') as fp:
-      data = json.load(fp)
+        data = json.load(fp)
 
     if args.test:
-      # process training set results
-
+        # process training set results
+        assert data["Pixel Acc: "] == 1.0
+        assert data["Mean Class Acc: "] == 1.0
+        assert data["Freq Weighted IoU: "] == 1.0
+        assert data["Mean IoU: "] == 1.0
 
     else:
-      # process validation results
-      
+        # process validation results
+        assert data['Avg loss :'] < 1e-3
+        assert data['Pixelwise Accuracy :'] == 1.0
+        # TODO: add more tests as we fix performance
+
 
     logging.info("all done")
 

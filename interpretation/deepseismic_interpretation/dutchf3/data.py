@@ -259,9 +259,9 @@ class TestSectionLoader(SectionLoader):
     :param str label_path: Override file path for label data
     """
     def __init__(self, data_dir, split = "test1", is_transform = True, augmentations = None,
-                 seismic_path = None, label_path = None):
+                 seismic_path = None, label_path = None, n_classes=None):
         super(TestSectionLoader, self).__init__(
-           data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
+           data_dir, split=split, is_transform=is_transform, augmentations=augmentations, n_classes=n_classes
         )
 
         if "test1" in self.split:
