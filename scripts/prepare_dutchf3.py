@@ -43,7 +43,7 @@ def _get_aline_range(aline, per_val, section_stride=1):
     """
     try:
         if section_stride < 1:
-            raise ValueError("section_stride must be an integer >= to 1.")
+            raise ValueError("section_stride cannot be zero or a negative number")
 
         if per_val < 0 or per_val >= 1:
             raise ValueError("Validation percentage (per_val) should be a number in the range [0,1).")

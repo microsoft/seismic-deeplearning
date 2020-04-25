@@ -40,7 +40,7 @@ def test_get_aline_range_step_zero():
 
     """check if a ValueError exception is raised when section_stride = 0
     """
-    with pytest.raises(ValueError, match=r"section_stride cannot be zero or a negative number"):
+    with pytest.raises(ValueError, match="section_stride cannot be zero or a negative number"):
         SECTION_STRIDE = 0
 
         # Test
