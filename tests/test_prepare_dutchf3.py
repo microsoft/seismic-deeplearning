@@ -161,11 +161,11 @@ def test_prepare_dutchf3_patch_step_1():
         i = list(sorted(set(patch_val.i.astype(int))))
 
         if DIRECTION == "crossline":
-            assert x[1] - x[0] == SECTION_STRIDE
+            assert x[1] - x[0] == 1  # SECTION_STRIDE is only used in training.
             assert i[1] - i[0] == STRIDE
         elif DIRECTION == "inline":
             assert x[1] - x[0] == STRIDE
-            assert i[1] - i[0] == SECTION_STRIDE
+            assert i[1] - i[0] == 1
 
         # test validation set is, at least, PER_VAL
         PER_VAL_CHK = len(set(patch_train.x)) / (len(set(patch_train.x)) + len(set(patch_val.x))) * 100
@@ -228,11 +228,11 @@ def test_prepare_dutchf3_patch_step_2():
         i = list(sorted(set(patch_val.i.astype(int))))
 
         if DIRECTION == "crossline":
-            assert x[1] - x[0] == SECTION_STRIDE
+            assert x[1] - x[0] == 1  # SECTION_STRIDE is only used in training.
             assert i[1] - i[0] == STRIDE
         elif DIRECTION == "inline":
             assert x[1] - x[0] == STRIDE
-            assert i[1] - i[0] == SECTION_STRIDE
+            assert i[1] - i[0] == 1
 
         # test validation set is, at least, PER_VAL
         PER_VAL_CHK = len(set(patch_train.x)) / (len(set(patch_train.x)) + len(set(patch_val.x))) * 100
