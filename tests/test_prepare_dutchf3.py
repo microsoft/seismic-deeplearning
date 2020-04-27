@@ -2,12 +2,15 @@
 # Licensed under the MIT License.
 """Test the extract functions against a variety of SEGY files and trace_header scenarioes
 """
-import pytest
+import math
+import os.path as path
+import tempfile
+
 import numpy as np
 import pandas as pd
-import tempfile
+import pytest
+
 import scripts.prepare_dutchf3 as prep_dutchf3
-import math
 
 # Setup
 OUTPUT = None
@@ -359,15 +362,14 @@ def test_prepare_dutchf3_section_step_1():
         output = tmpdirname + "/split"
 
         # calling the main function of the script without SECTION_STRIDE, to check default value
-        prep_dutchf3.split_section_train_val(
-            data_dir=tmpdirname,
-            output_dir=output,
+        train_list, val_list = prep_dutchf3.split_section_train_val(
             label_file=label_file,
             section_stride=SECTION_STRIDE,
             split_direction=DIRECTION,
             per_val=PER_VAL,
             log_config=LOG_CONFIG,
         )
+        prep_dutchf3._write_split_files(path.join(tmpdirname, output), train_list, val_list, "section")
 
         # reading the file and splitting the data
         section_train = pd.read_csv(output + "/section_train.txt", header=None, names=["row"])
@@ -404,15 +406,14 @@ def test_prepare_dutchf3_section_step_2():
         output = tmpdirname + "/split"
 
         # calling the main function of the script without SECTION_STRIDE, to check default value
-        prep_dutchf3.split_section_train_val(
-            data_dir=tmpdirname,
-            output_dir=output,
+        train_list, val_list = prep_dutchf3.split_section_train_val(
             label_file=label_file,
             section_stride=SECTION_STRIDE,
             split_direction=DIRECTION,
             per_val=PER_VAL,
             log_config=LOG_CONFIG,
         )
+        prep_dutchf3._write_split_files(path.join(tmpdirname, output), train_list, val_list, "patch")
 
         # reading the file and splitting the data
         section_train = pd.read_csv(output + "/section_train.txt", header=None, names=["row"])
