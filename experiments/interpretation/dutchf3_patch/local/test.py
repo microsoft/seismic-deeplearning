@@ -271,10 +271,10 @@ def _evaluate_split(
     TestSectionLoader = get_test_loader(config)
     test_set = TestSectionLoader(
         config.DATASET.ROOT,
+        config.DATASET.NUM_CLASSES,
         split=split,
         is_transform=True,
-        augmentations=section_aug,
-        n_classes=config.DATASET.NUM_CLASSES,
+        augmentations=section_aug
     )
 
     n_classes = test_set.n_classes

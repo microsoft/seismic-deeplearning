@@ -125,17 +125,18 @@ def run(*options, cfg=None, debug=False):
     TrainPatchLoader = get_patch_loader(config)
     train_set = TrainPatchLoader(
         config.DATASET.ROOT,
+        config.DATASET.NUM_CLASSES,
         split="train",
         is_transform=True,
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
-        augmentations=train_aug,
-        n_classes=config.DATASET.NUM_CLASSES,
+        augmentations=train_aug
     )
     logger.info(train_set)
     n_classes = train_set.n_classes
     val_set = TrainPatchLoader(
         config.DATASET.ROOT,
+        config.DATASET.NUM_CLASSES,
         split="val",
         is_transform=True,
         stride=config.TRAIN.STRIDE,
