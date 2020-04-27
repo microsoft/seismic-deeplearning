@@ -181,11 +181,11 @@ jobs:
       # find the latest model which we just trained
       model=$(ls -td output/unet/section_depth/* | head -1)      
       # try running the test script
-      { python test.py  'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
-                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
-                        'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
-                        'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_0.*.pth \
-                        --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
+                       'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
+                       'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
+                       'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_0.*.pth \
+                       --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=2
       # find the latest model which we just trained
@@ -315,10 +315,10 @@ jobs:
       model=$(ls -t ${model_dir}/*.pth | head -1)
 
       # try running the test script
-      { python test.py  'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
-                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
-                        'TEST.MODEL_PATH' ${model} \
-                        --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
+                       'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
+                       'TEST.MODEL_PATH' ${model} \
+                       --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
       pids+=" $!"
       export CUDA_VISIBLE_DEVICES=2
       # find the latest model which we just trained
