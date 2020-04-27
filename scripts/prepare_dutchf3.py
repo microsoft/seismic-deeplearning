@@ -15,8 +15,7 @@ import fire
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-_LOADER_TYPES = {"section": split_section_train_val, "patch": split_patch_train_val}
-
+ 
 
 def _get_splits_path(data_dir):
     return path.join(data_dir, "splits")
@@ -379,6 +378,7 @@ class SplitTrainValCLI(object):
         _write_split_files(output_dir, train_list, val_list, "patch")
         print(f"Successfully created the splits files in {output_dir}")
 
+_LOADER_TYPES = {"section": split_section_train_val, "patch": split_patch_train_val}
 
 if __name__ == "__main__":
     """Example:
