@@ -306,7 +306,7 @@ class SplitTrainValCLI(object):
             label_file = path.join(data_dir, label_file)
             output_dir = path.join(data_dir, output_dir)
 
-        if split_direction.lower() is "both":
+        if split_direction.lower() == "both":
             train_list_i, val_list_i = split_section_train_val(
                 label_file, "inline", per_val, log_config, section_stride
             )
@@ -358,7 +358,7 @@ class SplitTrainValCLI(object):
             label_file = path.join(data_dir, label_file)
             output_dir = path.join(data_dir, output_dir)
 
-        if split_direction.lower() is "both":
+        if split_direction.lower() == "both":
             train_list_i, val_list_i = split_patch_train_val(
                 label_file, stride, patch_size, "inline", section_stride, per_val, log_config
             )
