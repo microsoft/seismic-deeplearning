@@ -15,7 +15,6 @@ import fire
 import numpy as np
 from sklearn.model_selection import train_test_split
 
- 
 
 def _get_splits_path(data_dir):
     return path.join(data_dir, "splits")
@@ -317,11 +316,12 @@ class SplitTrainValCLI(object):
             # concatenate the two lists:
             train_list = train_list_i + train_list_x
             val_list = val_list_i + val_list_x
-        else:
+        elif split_direction.lower() in ["inline", "crossline"]:
             train_list, val_list = split_section_train_val(
                 label_file, split_direction, per_val, log_config, section_stride
             )
-
+        else:
+            raise ValueError(f"Unknown split_direction: {split_direction}")
         # write to files to disk
         _write_split_files(output_dir, train_list, val_list, "section")
 
@@ -369,14 +369,17 @@ class SplitTrainValCLI(object):
             # concatenate the two lists:
             train_list = train_list_i + train_list_x
             val_list = val_list_i + val_list_x
-        else:
+        elif split_direction.lower() in ["inline", "crossline"]:
             train_list, val_list = split_patch_train_val(
                 label_file, stride, patch_size, split_direction, section_stride, per_val, log_config
             )
+        else:
+            raise ValueError(f"Unknown split_direction: {split_direction}")
 
         # write to files to disk:
         _write_split_files(output_dir, train_list, val_list, "patch")
         print(f"Successfully created the splits files in {output_dir}")
+
 
 _LOADER_TYPES = {"section": split_section_train_val, "patch": split_patch_train_val}
 

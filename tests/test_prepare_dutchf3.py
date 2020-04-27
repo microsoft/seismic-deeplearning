@@ -242,13 +242,62 @@ def test_prepare_dutchf3_patch_step_2():
         assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
 
 
-def test_prepare_dutchf3_patch_train_and_test_sets():
+def test_prepare_dutchf3_patch_train_and_test_sets_inline():
 
     """check a complete run for the script in case further changes are needed
     """
     # setting a value to SECTION_STRIDE as needed to test the values
     SECTION_STRIDE = 1
-    DIRECTION = "both"
+    DIRECTION = "inline"
+
+    # use a temp dir that will be discarded at the end of the execution
+    with tempfile.TemporaryDirectory() as tmpdirname:
+
+        # saving the file to be used by the script
+        label_file = tmpdirname + "/label_file.npy"
+        np.save(label_file, ALINE)
+
+        # stting the output directory to be used by the script
+        output = tmpdirname + "/split"
+
+        # calling the main function of the script without SECTION_STRIDE, to check default value
+        prep_dutchf3.split_patch_train_val(
+            data_dir=tmpdirname,
+            output_dir=output,
+            label_file=label_file,
+            section_stride=SECTION_STRIDE,
+            patch_stride=STRIDE,
+            split_direction=DIRECTION,
+            patch_size=PATCH,
+            per_val=PER_VAL,
+            log_config=LOG_CONFIG,
+        )
+
+        # reading the file and splitting the data
+        patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row"])
+        patch_train = patch_train.row.tolist()
+
+        # reading the file and splitting the data
+        patch_val = pd.read_csv(output + "/patch_val.txt", header=None, names=["row"])
+        patch_val = patch_val.row.tolist()
+
+        # assert patches are unique
+        assert set(patch_train) & set(patch_val) == set()
+
+        # test validation set is, at least, PER_VAL
+        PER_VAL_CHK = 100 * len(patch_train) / (len(patch_train) + len(patch_val))
+        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
+        PER_VAL_CHK = 100 * len(patch_train) / (len(patch_train) + len(patch_val))
+        assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
+
+
+def test_prepare_dutchf3_patch_train_and_test_sets_crossline():
+
+    """check a complete run for the script in case further changes are needed
+    """
+    # setting a value to SECTION_STRIDE as needed to test the values
+    SECTION_STRIDE = 1
+    DIRECTION = "crossline"
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
