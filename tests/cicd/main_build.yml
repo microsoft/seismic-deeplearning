@@ -156,11 +156,12 @@ jobs:
       rm -r "$dir"
 
       # check validation set performance
+      set -e
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_patch_deconvnet_no_depth.json
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_unet_section_depth.json
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_seresnet_unet_section_depth.json
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_hrnet_section_depth.json
-
+      set +e
       echo "All models finished training - start scoring"
 
       # Create a temporary directory to store the statuses
@@ -223,10 +224,12 @@ jobs:
       rm -r "$dir"
 
       # check test set performance
+      set -e
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_patch_deconvnet_no_depth.json --test
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_unet_section_depth.json --test
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_seresnet_unet_section_depth.json --test
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_hrnet_section_depth.json --test
+      set +e
 
       echo "PASSED"
 
@@ -304,7 +307,7 @@ jobs:
       model_dir=$(ls -td output/patch_deconvnet/no_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
-      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \                     
+      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'no_depth' \
                        'TEST.MODEL_PATH' ${model} \
                        --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
