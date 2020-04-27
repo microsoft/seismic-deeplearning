@@ -34,7 +34,6 @@ _C.DATASET = CN()
 _C.DATASET.ROOT = ""
 _C.DATASET.NUM_CLASSES = 6
 _C.DATASET.CLASS_WEIGHTS = [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
-_C.DATASET.TRAIN_VAL_SPLIT_DIRECTION = "crossline" # Direction in which to split the data into train & val. Use "inline" or "crossline".
 
 # common params for NETWORK
 _C.MODEL = CN()

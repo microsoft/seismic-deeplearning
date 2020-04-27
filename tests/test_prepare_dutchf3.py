@@ -19,7 +19,6 @@ STRIDE = 50
 PATCH = 100
 PER_VAL = 0.2
 LOG_CONFIG = None
-DIRECTION = "crossline"
 
 
 def test_get_aline_range_step_one():
@@ -113,6 +112,7 @@ def test_prepare_dutchf3_patch_step_1():
     """
     # setting a value to SECTION_STRIDE as needed to test the values
     SECTION_STRIDE = 1
+    DIRECTION = "inline"
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -180,6 +180,7 @@ def test_prepare_dutchf3_patch_step_2():
     """
     # setting a value to SECTION_STRIDE as needed to test the values
     SECTION_STRIDE = 2
+    DIRECTION = "crossline"
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -247,6 +248,7 @@ def test_prepare_dutchf3_patch_train_and_test_sets():
     """
     # setting a value to SECTION_STRIDE as needed to test the values
     SECTION_STRIDE = 1
+    DIRECTION = "both"
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -295,6 +297,7 @@ def test_prepare_dutchf3_section_step_1():
     """
     # setting a value to SECTION_STRIDE as needed to test the values
     SECTION_STRIDE = 1
+    DIRECTION = "both"
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -339,6 +342,7 @@ def test_prepare_dutchf3_section_step_2():
     """
     # setting a value to SECTION_STRIDE as needed to test the values
     SECTION_STRIDE = 2
+    DIRECTION = "both"
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
