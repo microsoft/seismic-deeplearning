@@ -361,3 +361,21 @@ jobs:
       rm -r "$dir"
 
       echo "PASSED"
+
+###################################################################################################
+# Stage 5: Notebook tests
+###################################################################################################
+
+- job: F3_block_training_and_evaluation_local_notebook
+  dependsOn: dutchf3_patch
+  timeoutInMinutes: 5
+  displayName: F3 block training and evaluation local notebook
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      source activate seismic-interpretation
+      pytest -s tests/cicd/src/notebook_integration_tests.py \
+        --nbname examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb \
+        --dataset_root /home/alfred/data_dynamic/dutch_f3/data \
+        --model_pretrained download
