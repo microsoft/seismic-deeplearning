@@ -103,7 +103,6 @@ def main(args):
     assert train_labels.min() == 0
     # this is the number of classes in Alaudah's Dutch F3 dataset
     assert train_labels.max() == 5
-    assert train_labels.dtype == type(WHITE_LABEL)
 
     assert test1_seismic.shape == test1_labels.shape
     assert test1_seismic.min() == WHITE
@@ -111,7 +110,6 @@ def main(args):
     assert test1_labels.min() == 0
     # this is the number of classes in Alaudah's Dutch F3 dataset
     assert test1_labels.max() == 5
-    assert test1_labels.dtype == type(WHITE_LABEL)
 
     assert test2_seismic.shape == test2_labels.shape
     assert test2_seismic.min() == WHITE
@@ -119,7 +117,6 @@ def main(args):
     assert test2_labels.min() == 0
     # this is the number of classes in Alaudah's Dutch F3 dataset
     assert test2_labels.max() == 5
-    assert test2_labels.dtype == type(WHITE_LABEL)
 
     logging.info("train checkerbox")
     n_inlines, n_crosslines, n_depth = train_seismic.shape
@@ -127,7 +124,7 @@ def main(args):
     checkerboard_train_seismic = checkerboard_train_seismic.astype(train_seismic.dtype)
     checkerboard_train_labels = checkerboard_train_seismic.astype(train_labels.dtype)
     # labels are integers and start from zero
-    checkerboard_train_labels[checkerboard_train_labels < WHITE_LABEL] = WHITE_LABEL
+    checkerboard_train_labels[checkerboard_train_seismic < WHITE_LABEL] = WHITE_LABEL
 
     # create checkerbox
     logging.info("test1 checkerbox")
@@ -136,7 +133,7 @@ def main(args):
     checkerboard_test1_seismic = checkerboard_test1_seismic.astype(test1_seismic.dtype)
     checkerboard_test1_labels = checkerboard_test1_seismic.astype(test1_labels.dtype)
     # labels are integers and start from zero
-    checkerboard_test1_labels[checkerboard_test1_labels < WHITE_LABEL] = WHITE_LABEL
+    checkerboard_test1_labels[checkerboard_test1_seismic < WHITE_LABEL] = WHITE_LABEL
 
     logging.info("test2 checkerbox")
     n_inlines, n_crosslines, n_depth = test2_seismic.shape
@@ -144,7 +141,7 @@ def main(args):
     checkerboard_test2_seismic = checkerboard_test2_seismic.astype(test2_seismic.dtype)
     checkerboard_test2_labels = checkerboard_test2_seismic.astype(test2_labels.dtype)
     # labels are integers and start from zero
-    checkerboard_test2_labels[checkerboard_test2_labels < WHITE_LABEL] = WHITE_LABEL
+    checkerboard_test2_labels[checkerboard_test2_seismic < WHITE_LABEL] = WHITE_LABEL
 
     logging.info("writing data to disk")
     mkdir(args.dataout)
