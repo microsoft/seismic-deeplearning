@@ -376,7 +376,7 @@ def test_prepare_dutchf3_section_step_1_crossline():
 
         # test
         assert (float(section_train.section[1]) - float(section_train.section[0])) % float(SECTION_STRIDE) == 0.0
-        assert (float(section_val.section[1]) - float(section_val.section[0])) % float(SECTION_STRIDE) == 0.0
+        assert (float(section_val.section[1]) - float(section_val.section[0])) % float(SECTION_STRIDE) > 0.0
 
         # test validation set is, at least, PER_VAL
         PER_VAL_CHK = len(section_val) / (len(section_val) + len(section_train)) * 100
@@ -420,7 +420,7 @@ def test_prepare_dutchf3_section_step_2_inline():
 
         # test
         assert (float(section_train.section[1]) - float(section_train.section[0])) % float(SECTION_STRIDE) == 0.0
-        assert (float(section_val.section[1]) - float(section_val.section[0])) % float(SECTION_STRIDE) > 0.0
+        assert (float(section_val.section[1]) - float(section_val.section[0])) % float(SECTION_STRIDE) == 0.0
 
         # test validation set is, at least, PER_VAL
         PER_VAL_CHK = len(section_val) / (len(section_val) + len(section_train)) * 100
