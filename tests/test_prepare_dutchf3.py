@@ -343,13 +343,13 @@ def test_prepare_dutchf3_patch_train_and_test_sets_crossline():
         assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
 
 
-def test_prepare_dutchf3_section_step_1():
+def test_prepare_dutchf3_section_step_1_crossline():
 
     """check a complete run for the script in case further changes are needed
     """
     # setting a value to SECTION_STRIDE as needed to test the values
-    SECTION_STRIDE = 1
-    DIRECTION = "both"
+    SECTION_STRIDE = 2
+    DIRECTION = "crossline"
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -387,13 +387,13 @@ def test_prepare_dutchf3_section_step_1():
         assert round(PER_VAL_CHK, 0) >= int(PER_VAL * 100)
 
 
-def test_prepare_dutchf3_section_step_2():
+def test_prepare_dutchf3_section_step_2_inline():
 
     """check a complete run for the script in case further changes are needed
     """
     # setting a value to SECTION_STRIDE as needed to test the values
-    SECTION_STRIDE = 2
-    DIRECTION = "both"
+    SECTION_STRIDE = 1
+    DIRECTION = "inline"
 
     # use a temp dir that will be discarded at the end of the execution
     with tempfile.TemporaryDirectory() as tmpdirname:
