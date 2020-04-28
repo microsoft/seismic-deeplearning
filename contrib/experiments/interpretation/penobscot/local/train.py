@@ -178,8 +178,10 @@ def run(*options, cfg=None, debug=False):
         output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
-    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*len(train_loader)
-    scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration)
+    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2 * len(train_loader)
+    scheduler = CosineAnnealingScheduler(
+        optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration
+    )
 
     # weights are inversely proportional to the frequency of the classes in
     # the training set

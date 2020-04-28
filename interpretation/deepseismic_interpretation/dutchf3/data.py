@@ -18,7 +18,7 @@ from deepseismic_interpretation.dutchf3.utils.batch import (
     interpolate_to_fit_data,
     parse_labels_in_image,
     get_coordinates_for_slice,
-    get_grid,    
+    get_grid,
     rand_int,
     trilinear_interpolation,
 )
@@ -112,6 +112,7 @@ def read_labels(fname, data_info):
 
     return label_imgs, label_coordinates
 
+
 class SectionLoader(data.Dataset):
     """
     Base class for section data loader
@@ -122,8 +123,10 @@ class SectionLoader(data.Dataset):
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
     """
-    def __init__(self, data_dir, split="train", is_transform=True, augmentations=None,
-                 seismic_path=None, label_path=None):
+
+    def __init__(
+        self, data_dir, split="train", is_transform=True, augmentations=None, seismic_path=None, label_path=None
+    ):
         self.split = split
         self.data_dir = data_dir
         self.is_transform = is_transform
@@ -175,11 +178,17 @@ class TrainSectionLoader(SectionLoader):
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
     """
-    def __init__(self, data_dir, split="train", is_transform=True, augmentations=None,
-                 seismic_path=None, label_path=None):
+
+    def __init__(
+        self, data_dir, split="train", is_transform=True, augmentations=None, seismic_path=None, label_path=None
+    ):
         super(TrainSectionLoader, self).__init__(
-            data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
-            seismic_path=seismic_path, label_path=label_path
+            data_dir,
+            split=split,
+            is_transform=is_transform,
+            augmentations=augmentations,
+            seismic_path=seismic_path,
+            label_path=label_path,
         )
 
         if seismic_path is not None and label_path is not None:
@@ -212,11 +221,17 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
     """
-    def __init__(self, data_dir, split="train", is_transform=True, augmentations=None,
-                 seismic_path=None, label_path=None):
+
+    def __init__(
+        self, data_dir, split="train", is_transform=True, augmentations=None, seismic_path=None, label_path=None
+    ):
         super(TrainSectionLoaderWithDepth, self).__init__(
-            data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
-            seismic_path=seismic_path, label_path=label_path
+            data_dir,
+            split=split,
+            is_transform=is_transform,
+            augmentations=augmentations,
+            seismic_path=seismic_path,
+            label_path=label_path,
         )
         self.seismic = add_section_depth_channels(self.seismic)  # NCWH
 
@@ -258,10 +273,12 @@ class TestSectionLoader(SectionLoader):
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
     """
-    def __init__(self, data_dir, split = "test1", is_transform = True, augmentations = None,
-                 seismic_path = None, label_path = None):
+
+    def __init__(
+        self, data_dir, split="test1", is_transform=True, augmentations=None, seismic_path=None, label_path=None
+    ):
         super(TestSectionLoader, self).__init__(
-           data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
+            data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
         )
 
         if "test1" in self.split:
@@ -298,11 +315,17 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
     """
-    def __init__(self, data_dir, split="test1", is_transform=True, augmentations=None,
-                 seismic_path = None, label_path = None):
+
+    def __init__(
+        self, data_dir, split="test1", is_transform=True, augmentations=None, seismic_path=None, label_path=None
+    ):
         super(TestSectionLoaderWithDepth, self).__init__(
-            data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
-            seismic_path = seismic_path, label_path = label_path
+            data_dir,
+            split=split,
+            is_transform=is_transform,
+            augmentations=augmentations,
+            seismic_path=seismic_path,
+            label_path=label_path,
         )
         self.seismic = add_section_depth_channels(self.seismic)  # NCWH
 
@@ -351,8 +374,17 @@ class PatchLoader(data.Dataset):
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
     """
-    def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None,
-                 seismic_path=None, label_path=None):
+
+    def __init__(
+        self,
+        data_dir,
+        stride=30,
+        patch_size=99,
+        is_transform=True,
+        augmentations=None,
+        seismic_path=None,
+        label_path=None,
+    ):
         self.data_dir = data_dir
         self.is_transform = is_transform
         self.augmentations = augmentations
@@ -416,8 +448,8 @@ class TestPatchLoader(PatchLoader):
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
     """
-    def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None,
-                 txt_path=None):
+
+    def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None, txt_path=None):
         super(TestPatchLoader, self).__init__(
             data_dir, stride=stride, patch_size=patch_size, is_transform=is_transform, augmentations=augmentations,
         )
@@ -428,7 +460,7 @@ class TestPatchLoader(PatchLoader):
 
         # We are in test mode. Only read the given split. The other one might not
         # be available.
-        # If txt_path is not provided, it will be assumed as below. Otherwise, provided path will be used for 
+        # If txt_path is not provided, it will be assumed as below. Otherwise, provided path will be used for
         # loading txt file and create patches.
         if not txt_path:
             self.split = "test1"  # TODO: Fix this can also be test2
@@ -451,13 +483,26 @@ class TrainPatchLoader(PatchLoader):
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
     """
+
     def __init__(
-        self, data_dir, split="train", stride=30, patch_size=99, is_transform=True, augmentations=None,
-        seismic_path=None, label_path=None
+        self,
+        data_dir,
+        split="train",
+        stride=30,
+        patch_size=99,
+        is_transform=True,
+        augmentations=None,
+        seismic_path=None,
+        label_path=None,
     ):
         super(TrainPatchLoader, self).__init__(
-            data_dir, stride=stride, patch_size=patch_size, is_transform=is_transform, augmentations=augmentations,
-            seismic_path=seismic_path, label_path=label_path
+            data_dir,
+            stride=stride,
+            patch_size=patch_size,
+            is_transform=is_transform,
+            augmentations=augmentations,
+            seismic_path=seismic_path,
+            label_path=label_path,
         )
         # self.seismic = self.pad_volume(np.load(seismic_path))
         # self.labels = self.pad_volume(np.load(labels_path))
@@ -496,13 +541,27 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
     """
+
     def __init__(
-        self, data_dir, split="train", stride=30, patch_size=99, is_transform=True, augmentations=None,
-        seismic_path=None, label_path=None
+        self,
+        data_dir,
+        split="train",
+        stride=30,
+        patch_size=99,
+        is_transform=True,
+        augmentations=None,
+        seismic_path=None,
+        label_path=None,
     ):
         super(TrainPatchLoaderWithDepth, self).__init__(
-            data_dir, split=split, stride=stride, patch_size=patch_size, is_transform=is_transform, augmentations=augmentations,
-            seismic_path=seismic_path, label_path=label_path
+            data_dir,
+            split=split,
+            stride=stride,
+            patch_size=patch_size,
+            is_transform=is_transform,
+            augmentations=augmentations,
+            seismic_path=seismic_path,
+            label_path=label_path,
         )
 
     def __getitem__(self, index):
@@ -558,9 +617,17 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
     """
+
     def __init__(
-        self, data_dir, split="train", stride=30, patch_size=99, is_transform=True, augmentations=None,
-        seismic_path=None, label_path=None
+        self,
+        data_dir,
+        split="train",
+        stride=30,
+        patch_size=99,
+        is_transform=True,
+        augmentations=None,
+        seismic_path=None,
+        label_path=None,
     ):
         super(TrainPatchLoaderWithSectionDepth, self).__init__(
             data_dir,
@@ -569,8 +636,8 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             patch_size=patch_size,
             is_transform=is_transform,
             augmentations=augmentations,
-            seismic_path = seismic_path,
-            label_path = label_path
+            seismic_path=seismic_path,
+            label_path=label_path,
         )
         self.seismic = add_section_depth_channels(self.seismic)
 
@@ -578,7 +645,6 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
 
         patch_name = self.patches[index]
         direction, idx, xdx, ddx = patch_name.split(sep="_")
-
 
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
@@ -619,6 +685,7 @@ _TRAIN_PATCH_LOADERS = {
 }
 
 _TRAIN_SECTION_LOADERS = {"section": TrainSectionLoaderWithDepth}
+
 
 def get_patch_loader(cfg):
     assert str(cfg.TRAIN.DEPTH).lower() in [

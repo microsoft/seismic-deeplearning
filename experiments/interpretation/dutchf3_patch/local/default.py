@@ -59,7 +59,6 @@ _C.TRAIN.PATCH_SIZE = 99
 _C.TRAIN.MEAN = 0.0009997  # 0.0009996710808862074
 _C.TRAIN.STD = 0.20977  # 0.20976548783479299  # TODO: Should we apply std scaling?
 _C.TRAIN.DEPTH = "none"  # Options are: none, patch, and section
-
 # None adds no depth information and the num of channels remains at 1
 # Patch adds depth per patch so is simply the height of that patch from 0 to 1, channels=3
 # Section adds depth per section so contains depth information for the whole section, channels=3

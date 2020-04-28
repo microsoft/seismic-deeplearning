@@ -57,7 +57,9 @@ def log_lr(summary_writer, optimizer, log_interval, engine):
 
 # TODO: This is deprecated, and will be removed in the future.
 @curry
-def log_metrics(summary_writer, train_engine, log_interval, engine, metrics_dict={"pixacc": "Avg accuracy :", "nll": "Avg loss :"}):
+def log_metrics(
+    summary_writer, train_engine, log_interval, engine, metrics_dict={"pixacc": "Avg accuracy :", "nll": "Avg loss :"}
+):
     metrics = engine.state.metrics
     for m in metrics_dict:
         summary_writer.add_scalar(metrics_dict[m], metrics[m], getattr(train_engine.state, log_interval))
