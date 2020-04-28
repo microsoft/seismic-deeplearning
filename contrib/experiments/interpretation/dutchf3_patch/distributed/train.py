@@ -139,7 +139,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=train_aug,
-    )    
+    )
 
     val_set = TrainPatchLoader(
         config.DATASET.ROOT,
@@ -162,7 +162,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         val_set = data.Subset(val_set, list(range(4)))
 
     logger.info(f"Training examples {len(train_set)}")
-    logger.info(f"Validation examples {len(val_set)}")    
+    logger.info(f"Validation examples {len(val_set)}")
 
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
@@ -198,8 +198,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[device], find_unused_parameters=True)
 
-    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*len(train_loader)
-
+    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2 * len(train_loader)
     warmup_duration = 5 * len(train_loader)
     warmup_scheduler = LinearCyclicalScheduler(
         optimizer,
@@ -209,7 +208,11 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         cycle_size=10 * len(train_loader),
     )
     cosine_scheduler = CosineAnnealingScheduler(
-        optimizer, "lr", config.TRAIN.MAX_LR * world_size, config.TRAIN.MIN_LR * world_size, cycle_size=snapshot_duration,
+        optimizer,
+        "lr",
+        config.TRAIN.MAX_LR * world_size,
+        config.TRAIN.MIN_LR * world_size,
+        cycle_size=snapshot_duration,
     )
 
     scheduler = ConcatScheduler(schedulers=[warmup_scheduler, cosine_scheduler], durations=[warmup_duration])

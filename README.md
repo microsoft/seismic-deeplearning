@@ -79,7 +79,7 @@ from the root of DeepSeismic repo.
 
 ### Dataset download and preparation
 
-This repository provides examples on how to run seismic interpretation on two publicly available annotated seismic datasets: [Penobscot](https://zenodo.org/record/1341774) and [F3 Netherlands](https://github.com/olivesgatech/facies_classification_benchmark). Their respective sizes (uncompressed on disk in your folder after downloading and pre-processing) are:
+This repository provides examples on how to run seismic interpretation on two publicly available annotated seismic datasets: [Penobscot](https://zenodo.org/record/1341774) and [F3 Netherlands](https://github.com/yalaudah/facies_classification_benchmark). Their respective sizes (uncompressed on disk in your folder after downloading and pre-processing) are:
 - **Penobscot**: 7.9 GB
 - **Dutch F3**: 2.2 GB
 
@@ -142,12 +142,12 @@ To prepare the data for the experiments (e.g. split into train/val/test), please
 cd scripts
 
 # For section-based experiments
-python prepare_dutchf3.py split_train_val section --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits
+python prepare_dutchf3.py split_train_val section --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits  --split_direction=both
 
 
 # For patch-based experiments
 python prepare_dutchf3.py split_train_val patch --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits \
---stride=50 --patch_size=100
+--stride=50 --patch_size=100 --split_direction=both
 
 # go back to repo root
 cd ..
@@ -244,24 +244,24 @@ Below are the results from the models contained in this repo. To run them check 
 
 #### Netherlands F3
 
-|    Source        |    Experiment                     |    PA       |    FW IoU    |    MCA     |   V100 (16GB) training time |
-|------------------|-----------------------------------|-------------|--------------|------------|-----------------------------|
-|    Alaudah et al.|    Section-based                  |    0.905    |    0.817     |    .832    |              N/A            |
-|                  |    Patch-based                    |    0.852    |    0.743     |    .689    |              N/A            |
-|    DeepSeismic   |    Patch-based+fixed              |    .875     |    .784      |    .740    |            08h 54min        |
-|                  |    SEResNet UNet+section depth    |    .910     |    .841      |    .809    |            55h 02min        |
-|                  |    HRNet(patch)+patch_depth       |    .884     |    .795      |    .739    |            67h 41min        |
-|                  |    HRNet(patch)+section_depth     |    .900     |    .820      |    .767    |            55h 08min        |
+| Source         | Experiment                  | PA    | FW IoU | MCA  | V100 (16GB) training time |
+| -------------- | --------------------------- | ----- | ------ | ---- | ------------------------- |
+| Alaudah et al. | Section-based               | 0.905 | 0.817  | .832 | N/A                       |
+|                | Patch-based                 | 0.852 | 0.743  | .689 | N/A                       |
+| DeepSeismic    | Patch-based+fixed           | .875  | .784   | .740 | 08h 54min                 |
+|                | SEResNet UNet+section depth | .910  | .841   | .809 | 55h 02min                 |
+|                | HRNet(patch)+patch_depth    | .884  | .795   | .739 | 67h 41min                 |
+|                | HRNet(patch)+section_depth  | .900  | .820   | .767 | 55h 08min                 |
 
 #### Penobscot
 
 Trained and tested on the full dataset. Inlines with artifacts were left in for training, validation and testing.
 The dataset was split 70% training, 10% validation and 20% test. The results below are from the test set
 
-|    Source        |    Experiment                       |    PA       |    mIoU      |    MCA     |   V100 (16GB) training time |
-|------------------|-------------------------------------|-------------|--------------|------------|-----------------------------|
-|    DeepSeismic   |    SEResNet UNet + section depth    |    0.72     |    .35       |    .47     |          92h 59min          |
-|                  |    HRNet(patch) + section depth     |    0.91     |    .75       |    .85     |          80h 50min          |
+| Source      | Experiment                    | PA   | mIoU | MCA | V100 (16GB) training time |
+| ----------- | ----------------------------- | ---- | ---- | --- | ------------------------- |
+| DeepSeismic | SEResNet UNet + section depth | 0.72 | .35  | .47 | 92h 59min                 |
+|             | HRNet(patch) + section depth  | 0.91 | .75  | .85 | 80h 50min                 |
 
 ![Best Penobscot SEResNet](assets/penobscot_seresnet_best.png "Best performing inlines, Mask and Predictions from SEResNet")
 ![Worst Penobscot SEResNet](assets/penobscot_seresnet_worst.png "Worst performing inlines  Mask and Predictions from SEResNet")
@@ -298,16 +298,16 @@ When you submit a pull request, a CLA bot will automatically determine whether y
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
 ## Build Status
-| Build | Branch | Status |
-| --- | --- | --- |
+| Build                | Branch  | Status                                                                                                                                                                                                                                                               |
+| -------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Legal Compliance** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=124&branchName=staging) |
-| **Legal Compliance** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=124&branchName=master) |
-| **Core Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=staging) |
-| **Core Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=master) |
-| **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=staging) |
-| **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=master) |
-| **Azure ML Tests** | staging | TODO add badge link |
-| **Azure ML Tests** | master | TODO add badge link |
+| **Legal Compliance** | master  | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=124&branchName=master)   |
+| **Core Tests**       | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=staging)               |
+| **Core Tests**       | master  | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=master)                 |
+| **Notebook Tests**   | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=staging)           |
+| **Notebook Tests**   | master  | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=master)             |
+| **Azure ML Tests**   | staging | TODO add badge link                                                                                                                                                                                                                                                  |
+| **Azure ML Tests**   | master  | TODO add badge link                                                                                                                                                                                                                                                  |
 
 
 # Troubleshooting
