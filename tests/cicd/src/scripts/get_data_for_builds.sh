@@ -29,7 +29,7 @@ mkdir -p "${DATA_F3}"
 mkdir -p "${DATA_PENOBSCOT}"
 
 # test download scripts in parallel
-./scripts/download_penobscot.sh "${DATA_PENOBSCOT}" & 
+./scripts/download_penobscot.sh "${DATA_PENOBSCOT}" &
 ./scripts/download_dutch_f3.sh "${DATA_F3}" &
 wait
 

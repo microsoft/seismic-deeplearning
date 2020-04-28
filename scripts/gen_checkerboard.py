@@ -36,9 +36,7 @@ def make_box(n_inlines, n_crosslines, n_depth, box_size):
     zero_patch = np.ones((box_size, box_size)) * WHITE
     one_patch = np.ones((box_size, box_size)) * BLACK
 
-    # multiplying by one flips the sign
     stride = np.hstack((zero_patch, one_patch))
-    neg_stride = -1 * stride
 
     # come up with a 2D inline image
     nx, ny = stride.shape
@@ -48,11 +46,12 @@ def make_box(n_inlines, n_crosslines, n_depth, box_size):
 
     # move in the crossline direction
     crossline_band = np.hstack((stride,) * step_col)
+    # multiplying by negative one flips the sign
     neg_crossline_band = -1 * crossline_band
 
     checker_stripe = np.vstack((crossline_band, neg_crossline_band))
 
-    # move down, alternative
+    # move down a section
     checker_image = np.vstack((checker_stripe,) * step_row)
 
     # trim excess
@@ -68,7 +67,8 @@ def make_box(n_inlines, n_crosslines, n_depth, box_size):
     step_depth = int(np.ceil(n_depth / float(box_size) / 2))
     final_box = np.concatenate((checker_box,) * step_depth, axis=2)
 
-    return final_box
+    # trim excess again
+    return final_box[0:n_inlines, 0:n_crosslines, 0:n_depth]
 
 
 def mkdir(path):
@@ -84,7 +84,7 @@ def main(args):
 
     Generates checkerboard dataset based on Dutch F3 in Alaudah format.
 
-    TODO: please see the TODO statements in the code
+    Pre-requisite: valid Dutch F3 dataset in Alaudah format.
 
     """
 
@@ -101,19 +101,25 @@ def main(args):
     assert train_seismic.min() == WHITE
     assert train_seismic.max() == BLACK
     assert train_labels.min() == 0
+    # this is the number of classes in Alaudah's Dutch F3 dataset
     assert train_labels.max() == 5
+    assert train_labels.dtype == type(WHITE_LABEL)
 
     assert test1_seismic.shape == test1_labels.shape
     assert test1_seismic.min() == WHITE
     assert test1_seismic.max() == BLACK
     assert test1_labels.min() == 0
+    # this is the number of classes in Alaudah's Dutch F3 dataset
     assert test1_labels.max() == 5
+    assert test1_labels.dtype == type(WHITE_LABEL)
 
     assert test2_seismic.shape == test2_labels.shape
     assert test2_seismic.min() == WHITE
     assert test2_seismic.max() == BLACK
     assert test2_labels.min() == 0
+    # this is the number of classes in Alaudah's Dutch F3 dataset
     assert test2_labels.max() == 5
+    assert test2_labels.dtype == type(WHITE_LABEL)
 
     logging.info("train checkerbox")
     n_inlines, n_crosslines, n_depth = train_seismic.shape
