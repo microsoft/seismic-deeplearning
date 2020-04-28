@@ -365,7 +365,7 @@ def test_prepare_dutchf3_section_step_1_crossline():
             per_val=PER_VAL,
             log_config=LOG_CONFIG,
         )
-        prep_dutchf3._write_split_files(path.join(tmpdirname, output), train_list, val_list, "section")
+        prep_dutchf3._write_split_files(output, train_list, val_list, "section")
 
         # reading the file and splitting the data
         section_train = pd.read_csv(output + "/section_train.txt", header=None, names=["row"])
@@ -409,7 +409,7 @@ def test_prepare_dutchf3_section_step_2_inline():
             per_val=PER_VAL,
             log_config=LOG_CONFIG,
         )
-        prep_dutchf3._write_split_files(path.join(tmpdirname, output), train_list, val_list, "patch")
+        prep_dutchf3._write_split_files(output, train_list, val_list, "section")
 
         # reading the file and splitting the data
         section_train = pd.read_csv(output + "/section_train.txt", header=None, names=["row"])
