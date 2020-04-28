@@ -128,9 +128,7 @@ def test_prepare_dutchf3_patch_step_1():
         output = tmpdirname + "/split"
 
         # calling the main function of the script without SECTION_STRIDE, to check default value
-        prep_dutchf3.split_patch_train_val(
-            data_dir=tmpdirname,
-            output_dir=output,
+        train_list, val_list = prep_dutchf3.split_patch_train_val(
             label_file=label_file,
             section_stride=SECTION_STRIDE,
             patch_stride=STRIDE,
@@ -139,6 +137,7 @@ def test_prepare_dutchf3_patch_step_1():
             per_val=PER_VAL,
             log_config=LOG_CONFIG,
         )
+        prep_dutchf3._write_split_files(output, train_list, val_list, "patch")
 
         # reading the file and splitting the data
         patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row"])
@@ -196,9 +195,7 @@ def test_prepare_dutchf3_patch_step_2():
         output = tmpdirname + "/split"
 
         # calling the main function of the script without SECTION_STRIDE, to check default value
-        prep_dutchf3.split_patch_train_val(
-            data_dir=tmpdirname,
-            output_dir=output,
+        train_list, val_list = prep_dutchf3.split_patch_train_val(
             label_file=label_file,
             section_stride=SECTION_STRIDE,
             patch_stride=STRIDE,
@@ -207,6 +204,7 @@ def test_prepare_dutchf3_patch_step_2():
             per_val=PER_VAL,
             log_config=LOG_CONFIG,
         )
+        prep_dutchf3._write_split_files(output, train_list, val_list, "patch")
 
         # reading the file and splitting the data
         patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row"])
@@ -264,9 +262,7 @@ def test_prepare_dutchf3_patch_train_and_test_sets_inline():
         output = tmpdirname + "/split"
 
         # calling the main function of the script without SECTION_STRIDE, to check default value
-        prep_dutchf3.split_patch_train_val(
-            data_dir=tmpdirname,
-            output_dir=output,
+        train_list, val_list = prep_dutchf3.split_patch_train_val(
             label_file=label_file,
             section_stride=SECTION_STRIDE,
             patch_stride=STRIDE,
@@ -275,6 +271,7 @@ def test_prepare_dutchf3_patch_train_and_test_sets_inline():
             per_val=PER_VAL,
             log_config=LOG_CONFIG,
         )
+        prep_dutchf3._write_split_files(output, train_list, val_list, "patch")
 
         # reading the file and splitting the data
         patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row"])
@@ -313,9 +310,7 @@ def test_prepare_dutchf3_patch_train_and_test_sets_crossline():
         output = tmpdirname + "/split"
 
         # calling the main function of the script without SECTION_STRIDE, to check default value
-        prep_dutchf3.split_patch_train_val(
-            data_dir=tmpdirname,
-            output_dir=output,
+        train_list, val_list = prep_dutchf3.split_patch_train_val(
             label_file=label_file,
             section_stride=SECTION_STRIDE,
             patch_stride=STRIDE,
@@ -324,6 +319,7 @@ def test_prepare_dutchf3_patch_train_and_test_sets_crossline():
             per_val=PER_VAL,
             log_config=LOG_CONFIG,
         )
+        prep_dutchf3._write_split_files(output, train_list, val_list, "patch")
 
         # reading the file and splitting the data
         patch_train = pd.read_csv(output + "/patch_train.txt", header=None, names=["row"])
