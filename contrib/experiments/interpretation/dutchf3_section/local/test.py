@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # commitHash: c76bf579a0d5090ebd32426907d051d499f3e847
-# url: https://github.com/olivesgatech/facies_classification_benchmark
+# url: https://github.com/yalaudah/facies_classification_benchmark
 
 """
 Modified version of the Alaudah testing script

@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 # commitHash: c76bf579a0d5090ebd32426907d051d499f3e847
-# url: https://github.com/olivesgatech/facies_classification_benchmark
+# url: https://github.com/yalaudah/facies_classification_benchmark
 """Script to generate train and validation sets for Netherlands F3 dataset
 """
 import itertools

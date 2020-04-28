@@ -164,8 +164,10 @@ def run(*options, cfg=None, debug=False):
 
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
 
-    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*len(train_loader)
-    scheduler = CosineAnnealingScheduler(optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration)
+    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2 * len(train_loader)
+    scheduler = CosineAnnealingScheduler(
+        optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration
+    )
 
     # weights are inversely proportional to the frequency of the classes in
     # the training set
@@ -278,9 +280,14 @@ def run(*options, cfg=None, debug=False):
 
     logger.info("Starting training")
     if debug:
-        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = config.TRAIN.BATCH_SIZE_PER_GPU, seed = config.SEED)
+        trainer.run(
+            train_loader,
+            max_epochs=config.TRAIN.END_EPOCH,
+            epoch_length=config.TRAIN.BATCH_SIZE_PER_GPU,
+            seed=config.SEED,
+        )
     else:
-        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length = len(train_loader), seed = config.SEED)
+        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length=len(train_loader), seed=config.SEED)
 
 
 if __name__ == "__main__":

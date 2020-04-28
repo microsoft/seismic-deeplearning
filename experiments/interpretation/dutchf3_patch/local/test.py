@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 # commitHash: c76bf579a0d5090ebd32426907d051d499f3e847
-# url: https://github.com/olivesgatech/facies_classification_benchmark
+# url: https://github.com/yalaudah/facies_classification_benchmark
 #
 # To Test:
 # python test.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
@@ -43,6 +43,7 @@ _CLASS_NAMES = [
     "scruff",
     "zechstein",
 ]
+
 
 class runningScore(object):
     def __init__(self, n_classes):
