@@ -91,6 +91,7 @@ jobs:
 ###################################################################################################
 # Stage 3: Dutch F3 patch models on checkerboard test set: 
 #              deconvnet, unet, HRNet patch depth, HRNet section depth
+# CAUTION: reverted these builds to single-GPU leaving new multi-GPU code in to be reverted later
 ###################################################################################################
 
 - job: checkerboard_dutchf3_patch
@@ -113,34 +114,34 @@ jobs:
       dir=$(mktemp -d)
 
       pids=
-      export CUDA_VISIBLE_DEVICES=0
+      # export CUDA_VISIBLE_DEVICES=0
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'none' \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
-                        --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                        --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=1
+      # export CUDA_VISIBLE_DEVICES=1
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'section' \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                        --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                        --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=2
+      # export CUDA_VISIBLE_DEVICES=2
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'section' \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                        --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                        --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=3
+      # export CUDA_VISIBLE_DEVICES=3
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'section' \
                         'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                        --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                        --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
 
       wait $pids || exit 1
@@ -168,7 +169,7 @@ jobs:
       dir=$(mktemp -d)
 
       pids=
-      export CUDA_VISIBLE_DEVICES=0
+      # export CUDA_VISIBLE_DEVICES=0
       # find the latest model which we just trained
       model=$(ls -td output/patch_deconvnet/no_depth/* | head -1)
       # try running the test script
@@ -176,9 +177,9 @@ jobs:
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'no_depth' \
                        'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                        'TEST.MODEL_PATH' ${model}/patch_deconvnet_running_model_0.*.pth \
-                       --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                       --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=1
+      # export CUDA_VISIBLE_DEVICES=1
       # find the latest model which we just trained
       model=$(ls -td output/unet/section_depth/* | head -1)      
       # try running the test script
@@ -186,9 +187,9 @@ jobs:
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                        'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_0.*.pth \
-                       --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                       --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=2
+      # export CUDA_VISIBLE_DEVICES=2
       # find the latest model which we just trained
       model=$(ls -td output/seresnet_unet/section_depth/* | head -1)
       # try running the test script
@@ -196,9 +197,9 @@ jobs:
                        'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_0.*.pth \
-                       --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                       --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=3
+      # export CUDA_VISIBLE_DEVICES=3
       # find the latest model which we just trained
       model=$(ls -td output/hrnet/section_depth/* | head -1)      
       # try running the test script
@@ -207,7 +208,7 @@ jobs:
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                        'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_0.*.pth \
-                       --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                       --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
 
       # wait for completion
@@ -229,13 +230,13 @@ jobs:
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_unet_section_depth.json --test
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_seresnet_unet_section_depth.json --test
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_hrnet_section_depth.json --test
-      set +e
-
+      
       echo "PASSED"
 
 
 ###################################################################################################
-# Stage 4: Dutch F3 patch models: deconvnet, unet, HRNet patch depth, HRNet section depth
+# Stage 3: Dutch F3 patch models: deconvnet, unet, HRNet patch depth, HRNet section depth
+# CAUTION: reverted these builds to single-GPU leaving new multi-GPU code in to be reverted later
 ###################################################################################################
 
 - job: dutchf3_patch
@@ -258,30 +259,30 @@ jobs:
       dir=$(mktemp -d)
 
       pids=
-      export CUDA_VISIBLE_DEVICES=0
+      # export CUDA_VISIBLE_DEVICES=0
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'TRAIN.DEPTH' 'none' \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
-                        --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                        --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=1
+      # export CUDA_VISIBLE_DEVICES=1
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'TRAIN.DEPTH' 'section' \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                        --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                        --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=2
+      # export CUDA_VISIBLE_DEVICES=2
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'TRAIN.DEPTH' 'section' \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                        --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                        --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=3
+      # export CUDA_VISIBLE_DEVICES=3
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'TRAIN.DEPTH' 'section' \
                         'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                        --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                        --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
 
       wait $pids || exit 1
@@ -302,7 +303,7 @@ jobs:
       dir=$(mktemp -d)
 
       pids=
-      export CUDA_VISIBLE_DEVICES=0
+      # export CUDA_VISIBLE_DEVICES=0
       # find the latest model which we just trained
       model_dir=$(ls -td output/patch_deconvnet/no_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
@@ -310,9 +311,9 @@ jobs:
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'no_depth' \
                        'TEST.MODEL_PATH' ${model} \
-                       --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                       --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=1
+      # export CUDA_VISIBLE_DEVICES=1
       # find the latest model which we just trained
       model_dir=$(ls -td output/unet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
@@ -321,9 +322,9 @@ jobs:
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'TEST.MODEL_PATH' ${model} \
-                       --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                       --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=2
+      # export CUDA_VISIBLE_DEVICES=2
       # find the latest model which we just trained
       model_dir=$(ls -td output/seresnet_unet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
@@ -332,9 +333,9 @@ jobs:
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'TEST.MODEL_PATH' ${model} \
-                       --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                       --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
-      export CUDA_VISIBLE_DEVICES=3
+      # export CUDA_VISIBLE_DEVICES=3
       # find the latest model which we just trained
       model_dir=$(ls -td output/hrnet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
@@ -344,7 +345,7 @@ jobs:
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                        'TEST.MODEL_PATH' ${model} \
-                       --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; } &
+                       --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
 
       # wait for completion
