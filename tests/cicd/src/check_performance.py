@@ -30,8 +30,6 @@ def main(args):
     Check to see whether performance metrics are within range on both validation 
     and test sets.
 
-    TODO: please see the TODO statements in the code
-
     """
   
     logging.info("loading data")
@@ -41,10 +39,11 @@ def main(args):
 
     if args.test:
         # process training set results
-        # TODO make these into proper tests
         assert data["Pixel Acc: "] > 0.0
         assert data["Pixel Acc: "] <= 1.0
+        # TODO make these into proper tests
         # assert data["Pixel Acc: "] == 1.0
+        # TODO: add more tests as we fix performance
         # assert data["Mean Class Acc: "] == 1.0
         # assert data["Freq Weighted IoU: "] == 1.0
         # assert data["Mean IoU: "] == 1.0
