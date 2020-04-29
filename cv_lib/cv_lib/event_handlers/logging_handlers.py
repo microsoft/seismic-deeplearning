@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-
+import json
 import logging
 import logging.config
 from toolz import curry
@@ -26,10 +26,14 @@ def log_lr(optimizer, engine):
 
 
 @curry
-def log_metrics(log_msg, engine, metrics_dict={"pixacc": "Avg accuracy :", "nll": "Avg loss :"}):
+def log_metrics(log_msg, engine, metrics_dict={"pixacc": "Avg accuracy :", "nll": "Avg loss :"}, fname=None):
     logger = logging.getLogger(__name__)
     metrics = engine.state.metrics
-    metrics_msg = " ".join([f"{metrics_dict[k]} {metrics[k]:.2f}" for k in metrics_dict])
+    metrics_msg = " ".join([f"{metrics_dict[k]} {metrics[k]:.4f}" for k in metrics_dict])
+    if fname:
+        with open(fname, "w") as fid:
+            output_dict = {metrics_dict[k]: float(metrics[k]) for k in metrics_dict}
+            json.dump(output_dict, fid)
     logger.info(f"{log_msg} - Epoch {engine.state.epoch} [{engine.state.max_epochs}] " + metrics_msg)
 
 

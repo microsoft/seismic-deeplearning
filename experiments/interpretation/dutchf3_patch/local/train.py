@@ -59,11 +59,12 @@ def run(*options, cfg=None, debug=False):
         *options (str,int ,optional): Options used to overide what is loaded from the
                                       config. To see what options are available consult
                                       default.py
-        cfg (str, optional): Location of config file to load. Defaults to None.
+        cfg (str, optional): Location of config file to load. Defaults to None.        
         debug (bool): Places scripts in debug/test mode and only executes a few iterations
     """
     # Configuration:
-    update_config(config, options=options, config_file=cfg)
+    update_config(config, options=options, config_file=cfg)    
+
     # The model will be saved under: outputs/<config_file_name>/<model_dir>
     config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
     try:
@@ -71,7 +72,7 @@ def run(*options, cfg=None, debug=False):
             config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),
         )
     except TypeError:
-        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
+        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)    
 
     # Logging:
     load_log_configuration(config.LOG_CONFIG)
@@ -80,6 +81,9 @@ def run(*options, cfg=None, debug=False):
 
     # Set CUDNN benchmark mode:
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
+
+    # we will write the model under outputs / config_file_name / model_dir
+    config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
 
     # Fix random seeds:
     torch.manual_seed(config.SEED)
@@ -121,16 +125,18 @@ def run(*options, cfg=None, debug=False):
     TrainPatchLoader = get_patch_loader(config)
     train_set = TrainPatchLoader(
         config.DATASET.ROOT,
+        config.DATASET.NUM_CLASSES,
         split="train",
         is_transform=True,
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
-        augmentations=train_aug,
+        augmentations=train_aug
     )
     logger.info(train_set)
     n_classes = train_set.n_classes
     val_set = TrainPatchLoader(
         config.DATASET.ROOT,
+        config.DATASET.NUM_CLASSES,
         split="val",
         is_transform=True,
         stride=config.TRAIN.STRIDE,
@@ -201,6 +207,7 @@ def run(*options, cfg=None, debug=False):
     )
     trainer.add_event_handler(Events.EPOCH_COMPLETED, logging_handlers.log_lr(optimizer))
 
+    fname = f"metrics_{config_file_name}_{config.TRAIN.MODEL_DIR}.json" if debug else None
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
         logging_handlers.log_metrics(
@@ -211,6 +218,7 @@ def run(*options, cfg=None, debug=False):
                 "mca": "Avg Class Accuracy :",
                 "mIoU": "Avg Class IoU :",
             },
+            fname=fname,
         ),
     )
 

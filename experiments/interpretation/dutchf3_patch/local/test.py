@@ -13,6 +13,7 @@ Runs only on single GPU
 """
 
 import itertools
+import json
 import logging
 import logging.config
 import os
@@ -268,7 +269,13 @@ def _evaluate_split(
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
-    test_set = TestSectionLoader(config.DATASET.ROOT, split=split, is_transform=True, augmentations=section_aug,)
+    test_set = TestSectionLoader(
+        config.DATASET.ROOT,
+        config.DATASET.NUM_CLASSES,
+        split=split,
+        is_transform=True,
+        augmentations=section_aug
+    )
 
     n_classes = test_set.n_classes
 
@@ -276,7 +283,7 @@ def _evaluate_split(
 
     if debug:
         logger.info("Running in Debug/Test mode")
-        test_loader = take(1, test_loader)
+        test_loader = take(2, test_loader)
 
     try:
         output_dir = generate_path(
@@ -321,8 +328,12 @@ def _evaluate_split(
 
     # Log split results
     logger.info(f'Pixel Acc: {score["Pixel Acc: "]:.3f}')
-    for cdx, class_name in enumerate(_CLASS_NAMES):
-        logger.info(f'  {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
+    if debug:
+        for cdx in range(n_classes):
+            logger.info(f'  Class_{cdx}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
+    else:
+        for cdx, class_name in enumerate(_CLASS_NAMES):
+            logger.info(f'  {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
 
     logger.info(f'Mean Class Acc: {score["Mean Class Acc: "]:.3f}')
     logger.info(f'Freq Weighted IoU: {score["Freq Weighted IoU: "]:.3f}')
@@ -414,16 +425,34 @@ def test(*options, cfg=None, debug=False):
     score, class_iou = running_metrics_overall.get_scores()
 
     logger.info("--------------- FINAL RESULTS -----------------")
-    logger.info(f'Pixel Acc: {score["Pixel Acc: "]:.3f}')
-    for cdx, class_name in enumerate(_CLASS_NAMES):
-        logger.info(f'     {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
-    logger.info(f'Mean Class Acc: {score["Mean Class Acc: "]:.3f}')
-    logger.info(f'Freq Weighted IoU: {score["Freq Weighted IoU: "]:.3f}')
-    logger.info(f'Mean IoU: {score["Mean IoU: "]:0.3f}')
+    logger.info(f'Pixel Acc: {score["Pixel Acc: "]:.4f}')
+
+    if debug:
+        for cdx in range(n_classes):
+            logger.info(f'  Class_{cdx}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
+    else:
+        for cdx, class_name in enumerate(_CLASS_NAMES):
+            logger.info(f'     {class_name}_accuracy {score["Class Accuracy: "][cdx]:.4f}')
+
+    logger.info(f'Mean Class Acc: {score["Mean Class Acc: "]:.4f}')
+    logger.info(f'Freq Weighted IoU: {score["Freq Weighted IoU: "]:.4f}')
+    logger.info(f'Mean IoU: {score["Mean IoU: "]:0.4f}')
 
     # Save confusion matrix:
     confusion = score["confusion_matrix"]
     np.savetxt(path.join(log_dir, "confusion.csv"), confusion, delimiter=" ")
+
+    if debug:
+        config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
+        fname = f"metrics_test_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
+        with open(fname, "w") as fid:
+            json.dump(
+                {
+                    metric: score[metric]
+                    for metric in ["Pixel Acc: ", "Mean Class Acc: ", "Freq Weighted IoU: ", "Mean IoU: "]
+                },
+                fid,
+            )
 
 
 if __name__ == "__main__":

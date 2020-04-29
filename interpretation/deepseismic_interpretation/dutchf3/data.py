@@ -17,10 +17,7 @@ import logging
 from deepseismic_interpretation.dutchf3.utils.batch import (
     interpolate_to_fit_data,
     parse_labels_in_image,
-    get_coordinates_for_slice,
-    get_grid,
-    rand_int,
-    trilinear_interpolation,
+    get_coordinates_for_slice
 )
 
 
@@ -117,21 +114,25 @@ class SectionLoader(data.Dataset):
     """
     Base class for section data loader
     :param str data_dir: Root directory for training/test data
+    :param str n_classes: number of segmentation mask classes
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
-    :param str seismic_path: Override file path for seismic data
-    :param str label_path: Override file path for label data
     """
 
     def __init__(
-        self, data_dir, split="train", is_transform=True, augmentations=None, seismic_path=None, label_path=None
+        self,
+        data_dir,
+        n_classes,
+        split="train",
+        is_transform=True,
+        augmentations=None
     ):
         self.split = split
         self.data_dir = data_dir
         self.is_transform = is_transform
         self.augmentations = augmentations
-        self.n_classes = 6
+        self.n_classes = n_classes
         self.sections = list()
 
     def __len__(self):
@@ -172,6 +173,7 @@ class TrainSectionLoader(SectionLoader):
     """
     Training data loader for sections
     :param str data_dir: Root directory for training/test data
+    :param str n_classes: number of segmentation mask classes
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
@@ -180,10 +182,18 @@ class TrainSectionLoader(SectionLoader):
     """
 
     def __init__(
-        self, data_dir, split="train", is_transform=True, augmentations=None, seismic_path=None, label_path=None
+        self,
+        data_dir,
+        n_classes,
+        split="train",
+        is_transform=True,
+        augmentations=None,
+        seismic_path=None,
+        label_path=None,
     ):
         super(TrainSectionLoader, self).__init__(
             data_dir,
+            n_classes,
             split=split,
             is_transform=is_transform,
             augmentations=augmentations,
@@ -215,6 +225,7 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
     """
     Section data loader that includes additional channel for depth
     :param str data_dir: Root directory for training/test data
+    :param str n_classes: number of segmentation mask classes
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
@@ -223,10 +234,18 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
     """
 
     def __init__(
-        self, data_dir, split="train", is_transform=True, augmentations=None, seismic_path=None, label_path=None
+        self,
+        data_dir,
+        n_classes,
+        split="train",
+        is_transform=True,
+        augmentations=None,
+        seismic_path=None,
+        label_path=None,
     ):
         super(TrainSectionLoaderWithDepth, self).__init__(
             data_dir,
+            n_classes,
             split=split,
             is_transform=is_transform,
             augmentations=augmentations,
@@ -267,6 +286,7 @@ class TestSectionLoader(SectionLoader):
     """
     Test data loader for sections
     :param str data_dir: Root directory for training/test data
+    :param str n_classes: number of segmentation mask classes
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
@@ -275,10 +295,17 @@ class TestSectionLoader(SectionLoader):
     """
 
     def __init__(
-        self, data_dir, split="test1", is_transform=True, augmentations=None, seismic_path=None, label_path=None
+        self,
+        data_dir,
+        n_classes,
+        split="test1",
+        is_transform=True,
+        augmentations=None,
+        seismic_path=None,
+        label_path=None,
     ):
         super(TestSectionLoader, self).__init__(
-            data_dir, split=split, is_transform=is_transform, augmentations=augmentations,
+            data_dir, n_classes, split=split, is_transform=is_transform, augmentations=augmentations
         )
 
         if "test1" in self.split:
@@ -309,6 +336,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
     """
     Test data loader for sections that includes additional channel for depth
     :param str data_dir: Root directory for training/test data
+    :param str n_classes: number of segmentation mask classes
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
@@ -317,10 +345,18 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
     """
 
     def __init__(
-        self, data_dir, split="test1", is_transform=True, augmentations=None, seismic_path=None, label_path=None
+        self,
+        data_dir,
+        n_classes,
+        split="test1",
+        is_transform=True,
+        augmentations=None,
+        seismic_path=None,
+        label_path=None,
     ):
         super(TestSectionLoaderWithDepth, self).__init__(
             data_dir,
+            n_classes,
             split=split,
             is_transform=is_transform,
             augmentations=augmentations,
@@ -366,6 +402,7 @@ class PatchLoader(data.Dataset):
     """
     Base Data loader for the patch-based deconvnet
     :param str data_dir: Root directory for training/test data
+    :param str n_classes: number of segmentation mask classes
     :param int stride: training data stride
     :param int patch_size: Size of patch for training
     :param str split: split file to use for loading patches
@@ -378,17 +415,16 @@ class PatchLoader(data.Dataset):
     def __init__(
         self,
         data_dir,
+        n_classes,
         stride=30,
         patch_size=99,
         is_transform=True,
-        augmentations=None,
-        seismic_path=None,
-        label_path=None,
+        augmentations=None
     ):
         self.data_dir = data_dir
         self.is_transform = is_transform
         self.augmentations = augmentations
-        self.n_classes = 6
+        self.n_classes = n_classes
         self.patches = list()
         self.patch_size = patch_size
         self.stride = stride
@@ -443,15 +479,21 @@ class TestPatchLoader(PatchLoader):
     """
     Test Data loader for the patch-based deconvnet
     :param str data_dir: Root directory for training/test data
+    :param str n_classes: number of segmentation mask classes
     :param int stride: training data stride
     :param int patch_size: Size of patch for training
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
     """
 
-    def __init__(self, data_dir, stride=30, patch_size=99, is_transform=True, augmentations=None, txt_path=None):
+    def __init__(self, data_dir, n_classes, stride=30, patch_size=99, is_transform=True, augmentations=None):
         super(TestPatchLoader, self).__init__(
-            data_dir, stride=stride, patch_size=patch_size, is_transform=is_transform, augmentations=augmentations,
+            data_dir,
+            n_classes,
+            stride=stride,
+            patch_size=patch_size,
+            is_transform=is_transform,
+            augmentations=augmentations,
         )
         ## Warning: this is not used or tested
         raise NotImplementedError("This class is not correctly implemented.")
@@ -487,6 +529,7 @@ class TrainPatchLoader(PatchLoader):
     def __init__(
         self,
         data_dir,
+        n_classes,
         split="train",
         stride=30,
         patch_size=99,
@@ -497,15 +540,13 @@ class TrainPatchLoader(PatchLoader):
     ):
         super(TrainPatchLoader, self).__init__(
             data_dir,
+            n_classes,
             stride=stride,
             patch_size=patch_size,
             is_transform=is_transform,
-            augmentations=augmentations,
-            seismic_path=seismic_path,
-            label_path=label_path,
+            augmentations=augmentations
         )
-        # self.seismic = self.pad_volume(np.load(seismic_path))
-        # self.labels = self.pad_volume(np.load(labels_path))
+
         warnings.warn("This no longer pads the volume")
         if seismic_path is not None and label_path is not None:
             # Load npy files (seismc and corresponding labels) from provided
@@ -621,6 +662,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
     def __init__(
         self,
         data_dir,
+        n_classes,
         split="train",
         stride=30,
         patch_size=99,
@@ -631,6 +673,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
     ):
         super(TrainPatchLoaderWithSectionDepth, self).__init__(
             data_dir,
+            n_classes,
             split=split,
             stride=stride,
             patch_size=patch_size,
@@ -762,7 +805,7 @@ def get_seismic_labels():
 
 
 @curry
-def decode_segmap(label_mask, n_classes, label_colours=get_seismic_labels()):
+def decode_segmap(label_mask, n_classes=None, label_colours=get_seismic_labels()):
     """Decode segmentation class labels into a colour image
     Args:
         label_mask (np.ndarray): an (N,H,W) array of integer values denoting
