@@ -43,11 +43,11 @@ python gen_checkerboard.py --dataroot ${DATA_F3} --dataout ${DATA_CHECKERBOARD}
 # finished data download and generation
 
 # test preprocessing scripts
-# python prepare_penobscot.py split_inline --data-dir=${DATA_PENOBSCOT} --val-ratio=.1 --test-ratio=.2
-# python prepare_dutchf3.py split_train_val section --data_dir=${DATA_F3} --label_file=train/train_labels.npy --output_dir=splits --split_direction=both
-python prepare_dutchf3.py split_train_val patch --data_dir=${DATA_F3} --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both
+python prepare_penobscot.py split_inline --data-dir=${DATA_PENOBSCOT} --val-ratio=.1 --test-ratio=.2
+python prepare_dutchf3.py split_train_val section --data_dir=${DATA_F3} --label_file=train/train_labels.npy --output_dir=splits --split_direction=both
+python prepare_dutchf3.py split_train_val patch   --data_dir=${DATA_F3} --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both
 
 DATA_CHECKERBOARD="${DATA_CHECKERBOARD}/data"
 # repeat for checkerboard dataset
-# python prepare_dutchf3.py split_train_val section --data_dir=${DATA_CHECKERBOARD} --label_file=train/train_labels.npy --output_dir=splits
-python prepare_dutchf3.py split_train_val patch --data_dir=${DATA_CHECKERBOARD} --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100
+python prepare_dutchf3.py split_train_val section --data_dir=${DATA_CHECKERBOARD} --label_file=train/train_labels.npy --output_dir=splits --split_direction=both
+python prepare_dutchf3.py split_train_val patch   --data_dir=${DATA_CHECKERBOARD} --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both
