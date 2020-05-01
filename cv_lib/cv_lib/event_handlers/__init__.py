@@ -32,7 +32,7 @@ class SnapshotHandler:
         self._checkpoint_handler(engine, to_save)
         if self._snapshot_function():
             files = glob.glob(os.path.join(self._model_save_location, self._running_model_prefix + "*"))
-            print(files)
+            # print(files)
             name_postfix = os.path.basename(files[0]).lstrip(self._running_model_prefix)
             copyfile(
                 files[0],

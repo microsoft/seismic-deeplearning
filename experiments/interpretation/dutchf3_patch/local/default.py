@@ -11,8 +11,10 @@ from yacs.config import CfgNode as CN
 
 _C = CN()
 
-_C.OUTPUT_DIR = "output"  # This will be the base directory for all output, such as logs and saved models
-_C.LOG_DIR = ""  # This will be a subdirectory inside OUTPUT_DIR
+# This will be the base directory for all output, such as logs and saved models
+_C.OUTPUT_DIR = "output"
+# This will be a subdirectory inside OUTPUT_DIR
+_C.LOG_DIR = ""
 _C.GPUS = (0,)
 _C.WORKERS = 4
 _C.PRINT_FREQ = 20
@@ -21,6 +23,8 @@ _C.PIN_MEMORY = True
 _C.LOG_CONFIG = "logging.conf"
 _C.SEED = 42
 _C.OPENCV_BORDER_CONSTANT = 0
+# number of batches to use in test/debug mode
+_C.NUM_DEBUG_BATCHES = 1
 
 # Cudnn related params
 _C.CUDNN = CN()

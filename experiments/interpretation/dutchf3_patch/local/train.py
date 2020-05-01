@@ -53,6 +53,7 @@ def run(*options, cfg=None, debug=False):
     Notes:
         Options can be passed in via the options argument and loaded from the cfg file
         Options from default.py will be overridden by options loaded from cfg file
+        Options from default.py will be overridden by options loaded from cfg file
         Options passed in via options argument will override option loaded from cfg file
     
     Args:
@@ -63,7 +64,7 @@ def run(*options, cfg=None, debug=False):
         debug (bool): Places scripts in debug/test mode and only executes a few iterations
     """
     # Configuration:
-    update_config(config, options=options, config_file=cfg)    
+    update_config(config, options=options, config_file=cfg)
 
     # The model will be saved under: outputs/<config_file_name>/<model_dir>
     config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
@@ -72,7 +73,7 @@ def run(*options, cfg=None, debug=False):
             config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),
         )
     except TypeError:
-        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)    
+        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
     # Logging:
     load_log_configuration(config.LOG_CONFIG)
@@ -130,7 +131,7 @@ def run(*options, cfg=None, debug=False):
         is_transform=True,
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
-        augmentations=train_aug
+        augmentations=train_aug,
     )
     logger.info(train_set)
     n_classes = train_set.n_classes
@@ -145,10 +146,17 @@ def run(*options, cfg=None, debug=False):
     )
     logger.info(val_set)
 
+    if debug:
+        logger.info("Running in debug mode..")
+        train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*config.NUM_DEBUG_BATCHES))
+        val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
+
     train_loader = data.DataLoader(
         train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True
     )
-    val_loader = data.DataLoader(val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS)
+    val_loader = data.DataLoader(
+        val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=1
+    )  # config.WORKERS)
 
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
@@ -202,45 +210,39 @@ def run(*options, cfg=None, debug=False):
     )
     trainer.add_event_handler(Events.EPOCH_COMPLETED, logging_handlers.log_lr(optimizer))
 
-    evaluator.add_event_handler(
-        Events.EPOCH_COMPLETED,
-        logging_handlers.log_metrics(
-            "Validation results",
-            metrics_dict={
-                "nll": "Avg loss :",
-                "pixacc": "Pixelwise Accuracy :",
-                "mca": "Avg Class Accuracy :",
-                "mIoU": "Avg Class IoU :",
-            },
-        ),
-    )
-
     # Tensorboard and Logging:
     trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer))
     trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_validation_output(summary_writer))
 
+    # add specific logger which also triggers printed metrics on test set
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
         evaluator.run(train_loader)
         log_results(engine, evaluator, summary_writer, n_classes, stage="Training")
+        logging_handlers.log_metrics(engine, evaluator, stage="Training")
 
+    # add specific logger which also triggers printed metrics on validation set
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
         evaluator.run(val_loader)
         log_results(engine, evaluator, summary_writer, n_classes, stage="Validation")
+        logging_handlers.log_metrics(engine, evaluator, stage="Validation")
 
+    # dump validation set metrics at the very end for debugging purposes
     if debug:
+        fname = f"metrics_test_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
+
         @trainer.on(Events.COMPLETED)
         def log_final_validation_results(engine):
             evaluator.run(val_loader)
-            # look into the following for more implementation ideas
-            # log_results(engine, evaluator, summary_writer, n_classes, stage="Validation")
             metrics = evaluator.state.metrics
-            out_dict = {x:metrics[x] for x in ["nll", "pixacc", "cacc", "mca", "ciou", "mIoU"]}
+            out_dict = {x: metrics[x] for x in ["nll", "pixacc", "mca", "mIoU"]}
             with open(fname, "w") as fid:
-                json.dump(metrics, fid)
+                json.dump(out_dict, fid)
+            log_msg = " ".join(f"{k}: {out_dict[k]}" for k in out_dict.keys())
+            logging.info(log_msg)
 
-    # Checkpointing:
+    # Checkpointing: snapshotting trained models to disk
     checkpoint_handler = SnapshotHandler(
         output_dir,
         config.MODEL.NAME,
@@ -248,19 +250,10 @@ def run(*options, cfg=None, debug=False):
         lambda: (trainer.state.iteration % snapshot_duration) == 0,
     )
     evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
-    evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
     logger.info("Starting training")
-    if debug:
-        fname = f"metrics_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
-        trainer.run(
-            train_loader,
-            max_epochs=config.TRAIN.END_EPOCH,
-            epoch_length=config.TRAIN.BATCH_SIZE_PER_GPU*1,
-            seed=config.SEED,
-        )
-    else:
-        trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length=len(train_loader), seed=config.SEED)
+    trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length=len(train_loader), seed=config.SEED)
+
     summary_writer.close()
 
 
