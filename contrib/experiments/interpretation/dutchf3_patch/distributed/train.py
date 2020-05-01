@@ -23,7 +23,6 @@ from os import path
 
 import fire
 import numpy as np
-import toolz
 import torch
 from albumentations import Compose, HorizontalFlip, Normalize, PadIfNeeded, Resize
 from ignite.contrib.handlers import ConcatScheduler, CosineAnnealingScheduler, LinearCyclicalScheduler
@@ -153,34 +152,10 @@ def run(*options, cfg=None, local_rank=0, debug=False):
     logger.info(f"Validation examples {len(val_set)}")
     n_classes = train_set.n_classes
 
-<<<<<<< dd67625cedf119e5ffd7278bd8584bb9bb764cee
-<<<<<<< 6a5bf95464e846b1ddb60633038ebfa77698b2f8
     if debug:
         val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
         train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*2))
-=======
-    #if debug:
-        #val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
-        #train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*2))
->>>>>>> resolved rebase 2
-    
-=======
-    #if debug:
-        #val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
-        #train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*2))
 
-    logger.info(f"Training examples {len(train_set)}")
-    logger.info(f"Validation examples {len(val_set)}")    
-
-    train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
-
-<<<<<<< 110d771d9decaab24a1afa8eb79067471c9ec000
->>>>>>> resolved merge conflict
-    logger.info(f"Training examples {len(train_set)}")
-    logger.info(f"Validation examples {len(val_set)}")    
-
-=======
->>>>>>> resolved merge conflict
     train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
 
     train_loader = data.DataLoader(
@@ -217,17 +192,6 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
     snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*len(train_loader)
 
-<<<<<<< 3a27af538fcb170e60af5c7f359606ec0f5c6514
-<<<<<<< 110d771d9decaab24a1afa8eb79067471c9ec000
-=======
-<<<<<<< 7e7acca4d9e21d1961cb9fd5ac0157d9f30c91dc
->>>>>>> resolved merge conflict
-=======
-    snapshot_duration = scheduler_step * len(train_loader)
-    if debug:
-        snapshot_duration = 2
-
->>>>>>> resolved merge conflict
     warmup_duration = 5 * len(train_loader)
 
     warmup_scheduler = LinearCyclicalScheduler(
