@@ -33,6 +33,7 @@ def _log_model_output(log_label, summary_writer, engine):
 
 @curry
 def log_training_output(summary_writer, engine):
+    #a=[]; a[5]
     _log_model_output("Training/loss", summary_writer, engine)
 
 
@@ -87,7 +88,8 @@ def log_results(engine, evaluator, summary_writer, n_classes, stage):
     epoch = engine.state.epoch
     metrics = evaluator.state.metrics
     outputs = evaluator.state.output
-
+    a=[]
+    a[5]
     # Log Metrics:
     summary_writer.add_scalar(f"{stage}/mIoU", metrics["mIoU"], epoch)
     summary_writer.add_scalar(f"{stage}/nll", metrics["nll"], epoch)

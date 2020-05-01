@@ -12,7 +12,7 @@ Uses a warmup schedule that then goes into a cyclic learning rate
 
 Time to run on single V100 for 300 epochs: 4.5 days
 """
-
+import json
 import logging
 import logging.config
 from os import path
@@ -145,11 +145,6 @@ def run(*options, cfg=None, debug=False):
     )
     logger.info(val_set)
 
-    if debug:
-        logger.info("Running in debug mode..")
-        train_set = data.Subset(train_set, list(range(4)))
-        val_set = data.Subset(val_set, list(range(4)))
-
     train_loader = data.DataLoader(
         train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True
     )
@@ -207,7 +202,6 @@ def run(*options, cfg=None, debug=False):
     )
     trainer.add_event_handler(Events.EPOCH_COMPLETED, logging_handlers.log_lr(optimizer))
 
-    fname = f"metrics_{config_file_name}_{config.TRAIN.MODEL_DIR}.json" if debug else None
     evaluator.add_event_handler(
         Events.EPOCH_COMPLETED,
         logging_handlers.log_metrics(
@@ -218,7 +212,6 @@ def run(*options, cfg=None, debug=False):
                 "mca": "Avg Class Accuracy :",
                 "mIoU": "Avg Class IoU :",
             },
-            fname=fname,
         ),
     )
 
@@ -236,6 +229,17 @@ def run(*options, cfg=None, debug=False):
         evaluator.run(val_loader)
         log_results(engine, evaluator, summary_writer, n_classes, stage="Validation")
 
+    if debug:
+        @trainer.on(Events.COMPLETED)
+        def log_final_validation_results(engine):
+            evaluator.run(val_loader)
+            # look into the following for more implementation ideas
+            # log_results(engine, evaluator, summary_writer, n_classes, stage="Validation")
+            metrics = evaluator.state.metrics
+            out_dict = {x:metrics[x] for x in ["nll", "pixacc", "cacc", "mca", "ciou", "mIoU"]}
+            with open(fname, "w") as fid:
+                json.dump(metrics, fid)
+
     # Checkpointing:
     checkpoint_handler = SnapshotHandler(
         output_dir,
@@ -244,13 +248,15 @@ def run(*options, cfg=None, debug=False):
         lambda: (trainer.state.iteration % snapshot_duration) == 0,
     )
     evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
+    evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
 
     logger.info("Starting training")
     if debug:
+        fname = f"metrics_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
         trainer.run(
             train_loader,
             max_epochs=config.TRAIN.END_EPOCH,
-            epoch_length=config.TRAIN.BATCH_SIZE_PER_GPU,
+            epoch_length=config.TRAIN.BATCH_SIZE_PER_GPU*1,
             seed=config.SEED,
         )
     else:
