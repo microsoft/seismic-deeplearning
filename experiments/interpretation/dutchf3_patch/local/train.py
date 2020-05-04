@@ -228,7 +228,7 @@ def run(*options, cfg=None, debug=False):
         tensorboard_handlers.log_results(engine, evaluator, summary_writer, n_classes, stage="Validation")
         logging_handlers.log_metrics(engine, evaluator, stage="Validation")
         # dump validation set metrics at the very end for debugging purposes
-        if debug:
+        if engine.state.epoch == config.TRAIN.END_EPOCH and debug:
             fname = f"metrics_test_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
             metrics = evaluator.state.metrics
             out_dict = {x: metrics[x] for x in ["nll", "pixacc", "mca", "mIoU"]}
