@@ -18,6 +18,7 @@ dependencies:
   - itkwidgets==0.23.1
   - pytest
   - papermill>=1.0.1
+  - jupyterlab
   - pip:
     - segyio==1.8.8
     - pytorch-ignite==0.3.0
