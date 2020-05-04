@@ -22,10 +22,10 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
     echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
     apt-get install -y zip && \
-    wget --quiet https://github.com/microsoft/seismic-deeplearning/archive/a16b0ee394aa9745437dc08f335e34e24a521c17.zip -O master.zip && \
+    wget --quiet https://github.com/microsoft/seismic-deeplearning/archive/ccc4c47eb6a9e97a493954ff0300e38063df2cb9.zip -O master.zip && \
     unzip master.zip && rm master.zip
 
-RUN cd seismic-deeplearning-a16b0ee394aa9745437dc08f335e34e24a521c17 && \
+RUN cd seismic-deeplearning-ccc4c47eb6a9e97a493954ff0300e38063df2cb9 && \
     conda env create -n seismic-interpretation --file environment/anaconda/local/environment.yml && \
     source activate seismic-interpretation && \
     python -m ipykernel install --user --name seismic-interpretation && \
@@ -33,14 +33,14 @@ RUN cd seismic-deeplearning-a16b0ee394aa9745437dc08f335e34e24a521c17 && \
     pip install -e cv_lib 
 
 # Download F3 dataset:
-RUN cd seismic-deeplearning-a16b0ee394aa9745437dc08f335e34e24a521c17 && \
+RUN cd seismic-deeplearning-ccc4c47eb6a9e97a493954ff0300e38063df2cb9 && \
     data_dir="/home/username/data/dutch" && \
     mkdir -p "$data_dir" && \
     ./scripts/download_dutch_f3.sh "$data_dir" && \
     cd scripts && \
     source activate seismic-interpretation && \
     python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data && \
-    python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --stride=50 --patch_size=100  && \
+    python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --stride=50 --patch=100  && \
     cd ..
 
 # Run notebook
