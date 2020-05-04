@@ -28,7 +28,7 @@ from ignite.metrics import Loss
 from ignite.utils import convert_tensor
 
 from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard_handlers
-from cv_lib.event_handlers.tensorboard_handlers import create_summary_writer, log_results
+from cv_lib.event_handlers.tensorboard_handlers import create_summary_writer
 from cv_lib.segmentation import extract_metric_from, models
 from cv_lib.segmentation.dutchf3.engine import create_supervised_evaluator, create_supervised_trainer
 from cv_lib.segmentation.dutchf3.utils import current_datetime, generate_path, git_branch, git_hash
@@ -214,27 +214,22 @@ def run(*options, cfg=None, debug=False):
     trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer))
     trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_validation_output(summary_writer))
 
-    # add specific logger which also triggers printed metrics on test set
+    # add specific logger which also triggers printed metrics on training set
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
         evaluator.run(train_loader)
-        log_results(engine, evaluator, summary_writer, n_classes, stage="Training")
+        tensorboard_handlers.log_results(engine, evaluator, summary_writer, n_classes, stage="Training")
         logging_handlers.log_metrics(engine, evaluator, stage="Training")
 
     # add specific logger which also triggers printed metrics on validation set
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
         evaluator.run(val_loader)
-        log_results(engine, evaluator, summary_writer, n_classes, stage="Validation")
+        tensorboard_handlers.log_results(engine, evaluator, summary_writer, n_classes, stage="Validation")
         logging_handlers.log_metrics(engine, evaluator, stage="Validation")
-
-    # dump validation set metrics at the very end for debugging purposes
-    if debug:
-        fname = f"metrics_test_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
-
-        @trainer.on(Events.COMPLETED)
-        def log_final_validation_results(engine):
-            evaluator.run(val_loader)
+        # dump validation set metrics at the very end for debugging purposes
+        if debug:
+            fname = f"metrics_test_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
             metrics = evaluator.state.metrics
             out_dict = {x: metrics[x] for x in ["nll", "pixacc", "mca", "mIoU"]}
             with open(fname, "w") as fid:
