@@ -43,6 +43,16 @@ RUN cd seismic-deeplearning-ccc4c47eb6a9e97a493954ff0300e38063df2cb9 && \
     python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --stride=50 --patch=100  && \
     cd ..
 
+# Download Penobscot dataset:
+RUN cd seismic-deeplearning-fcad0bf64f3bdff4e4ad51b60a41e081b8a75c8d && \
+    data_dir="/home/username/data/penobscot" && \
+    mkdir -p "$data_dir" && \
+    ./scripts/download_penobscot.sh "$data_dir"  && \
+    cd scripts  && \
+    source activate seismic-interpretation && \
+    python prepare_penobscot.py split_inline --data-dir=$data_dir --val-ratio=.1 --test-ratio=.2  && \
+    cd ..
+
 # Run notebook
 EXPOSE 9000/tcp
 # TensorBoard inside notebook
