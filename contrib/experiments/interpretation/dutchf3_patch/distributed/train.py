@@ -23,7 +23,6 @@ from os import path
 
 import fire
 import numpy as np
-import toolz
 import torch
 from albumentations import Compose, HorizontalFlip, Normalize, PadIfNeeded, Resize
 from ignite.contrib.handlers import ConcatScheduler, CosineAnnealingScheduler, LinearCyclicalScheduler
