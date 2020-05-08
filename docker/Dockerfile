@@ -13,8 +13,6 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 ENV PATH /opt/conda/bin:$PATH
 SHELL ["/bin/bash", "-c"] 
 
-WORKDIR /home/username
-
 # Set bash as the only shell 
 RUN rm /bin/sh && \
     ln -s /bin/bash /bin/sh
@@ -62,5 +60,6 @@ EXPOSE 9000/tcp
 # TensorBoard inside notebook
 EXPOSE 9001/tcp
 
-CMD source activate seismic-interpretation && \
+CMD cd /home/username && \
+    source activate seismic-interpretation && \
     jupyter lab --allow-root --ip 0.0.0.0 --port 9000
