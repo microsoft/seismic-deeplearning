@@ -50,12 +50,12 @@ def main(args):
 
     else:
         # process validation results
-        assert data['Pixelwise Accuracy :'] > 0.0
-        assert data['Pixelwise Accuracy :'] <= 1.0
+        assert data['pixacc'] > 0.0
+        assert data['pixacc'] <= 1.0
         # TODO make these into proper tests
-        # assert data['Pixelwise Accuracy :'] == 1.0
+        # assert data['pixacc'] == 1.0
         # TODO: add more tests as we fix performance
-        # assert data['Avg loss :'] < 1e-3
+        # assert data['mIoU'] < 1e-3
 
 
     logging.info("all done")

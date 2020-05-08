@@ -8,8 +8,7 @@ import logging.config
 from toolz import curry
 
 from cv_lib.segmentation.dutchf3.utils import np_to_tb
-from deepseismic_interpretation.dutchf3.data import decode_segmap
-
+from cv_lib.utils import decode_segmap
 
 def create_summary_writer(log_dir):
     writer = SummaryWriter(logdir=log_dir)
@@ -21,9 +20,9 @@ def _transform_image(output_tensor):
     return torchvision.utils.make_grid(output_tensor, normalize=True, scale_each=True)
 
 
-def _transform_pred(output_tensor, n_classes):
+def _transform_pred(output_tensor):
     output_tensor = output_tensor.squeeze().cpu().numpy()
-    decoded = decode_segmap(output_tensor, n_classes)
+    decoded = decode_segmap(output_tensor)
     return torchvision.utils.make_grid(np_to_tb(decoded), normalize=False, scale_each=False)
 
 
@@ -112,5 +111,5 @@ def log_results(engine, evaluator, summary_writer, n_classes, stage):
     y_pred[mask == 255] = 255
 
     summary_writer.add_image(f"{stage}/Image", _transform_image(image), epoch)
-    summary_writer.add_image(f"{stage}/Mask", _transform_pred(mask, n_classes), epoch)
-    summary_writer.add_image(f"{stage}/Pred", _transform_pred(y_pred, n_classes), epoch)
+    summary_writer.add_image(f"{stage}/Mask", _transform_pred(mask), epoch)
+    summary_writer.add_image(f"{stage}/Pred", _transform_pred(y_pred), epoch)

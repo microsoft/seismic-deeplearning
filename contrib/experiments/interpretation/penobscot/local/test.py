@@ -74,11 +74,6 @@ def _scale_from(config):
     return int(scale_height)
 
 
-_SEG_COLOURS = np.asarray(
-    [[241, 238, 246], [208, 209, 230], [166, 189, 219], [116, 169, 207], [54, 144, 192], [5, 112, 176], [3, 78, 123],]
-)
-
-
 def _log_tensor_to_tensorboard(images_tensor, identifier, summary_writer, evaluator):
     image_grid = torchvision.utils.make_grid(images_tensor, normalize=False, scale_each=False, nrow=2)
     summary_writer.add_image(identifier, image_grid, evaluator.state.epoch)
@@ -250,7 +245,7 @@ def run(*options, cfg=None, debug=False):
         return pred_tensor.squeeze().cpu().numpy()
 
     transform_func = compose(
-        np_to_tb, decode_segmap(n_classes=n_classes, label_colours=_SEG_COLOURS), _tensor_to_numpy,
+        np_to_tb, decode_segmap, _tensor_to_numpy,
     )
 
     transform_pred = compose(transform_func, _select_max)
