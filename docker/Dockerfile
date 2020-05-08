@@ -24,10 +24,10 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
     echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
     apt-get install -y zip && \
-    wget --quiet https://github.com/microsoft/seismic-deeplearning/archive/ccc4c47eb6a9e97a493954ff0300e38063df2cb9.zip -O master.zip && \
+    wget --quiet https://github.com/microsoft/seismic-deeplearning/archive/master.zip -O master.zip && \
     unzip master.zip && rm master.zip
 
-RUN cd seismic-deeplearning-ccc4c47eb6a9e97a493954ff0300e38063df2cb9 && \
+RUN cd seismic-deeplearning-master && \
     conda env create -n seismic-interpretation --file environment/anaconda/local/environment.yml && \
     source activate seismic-interpretation && \
     python -m ipykernel install --user --name seismic-interpretation && \
@@ -35,7 +35,7 @@ RUN cd seismic-deeplearning-ccc4c47eb6a9e97a493954ff0300e38063df2cb9 && \
     pip install -e cv_lib 
 
 # Download F3 dataset:
-RUN cd seismic-deeplearning-ccc4c47eb6a9e97a493954ff0300e38063df2cb9 && \
+RUN cd seismic-deeplearning-master && \
     data_dir="/home/username/data/dutch" && \
     mkdir -p "$data_dir" && \
     ./scripts/download_dutch_f3.sh "$data_dir" && \
@@ -46,7 +46,7 @@ RUN cd seismic-deeplearning-ccc4c47eb6a9e97a493954ff0300e38063df2cb9 && \
     cd ..
 
 # Download Penobscot dataset:
-RUN cd seismic-deeplearning-fcad0bf64f3bdff4e4ad51b60a41e081b8a75c8d && \
+RUN cd seismic-deeplearning-master && \
     data_dir="/home/username/data/penobscot" && \
     mkdir -p "$data_dir" && \
     ./scripts/download_penobscot.sh "$data_dir"  && \
