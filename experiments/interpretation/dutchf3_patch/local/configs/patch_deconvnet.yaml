@@ -13,7 +13,7 @@ SEED: 2019
 
 DATASET:
   NUM_CLASSES: 6
-  ROOT: /mnt/dutchf3
+  ROOT: /home/username/data/dutch/data
   CLASS_WEIGHTS: [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 MODEL:
