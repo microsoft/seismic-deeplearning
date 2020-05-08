@@ -136,11 +136,11 @@ To prepare the data for the experiments (e.g. split into train/val/test), please
 
 ```
 # For section-based experiments
-python scripts/prepare_dutchf3.py split_train_val section --data-dir=/mnt/dutchf3
+python scripts/prepare_dutchf3.py split_train_val section --data-dir=/data/dutchf3/data
 
 
 # For patch-based experiments
-python scripts/prepare_dutchf3.py split_train_val patch --data-dir=/mnt/dutchf3 --stride=50 --patch=100
+python scripts/prepare_dutchf3.py split_train_val patch --data-dir=/data/dutchf3/data --stride=50 --patch=100
 
 ```
 
@@ -180,7 +180,7 @@ We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manag
 - __command line__ - Finally, options can be passed in through `options` argument, and those will override arguments loaded from the configuration file. We created CLIs for all our scripts (using Python Fire library), so you can pass these options via command-line arguments, like so:
 
     ```
-    python train.py DATASET.ROOT "/mnt/dutchf3" TRAIN.END_EPOCH 10
+    python train.py DATASET.ROOT "/data/dutchf3/data" TRAIN.END_EPOCH 10
     ```
 
 
