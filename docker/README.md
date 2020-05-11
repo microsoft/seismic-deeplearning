@@ -22,7 +22,13 @@ This process will take a few minutes to complete.
 # Run the Docker image:
 Once the Docker image is built, you can run it anytime using the following command:
 ```bash
-sudo docker run --rm -it -p 9000:9000 -p 9001:9001 --gpus=all --shm-size 11G --mount type=bind,source=$PWD/hrnetv2_w48_imagenet_pretrained.pth,target=/home/models/hrnetv2_w48_imagenet_pretrained.pth -v ~/:/home/username seismic-deeplearning
+sudo docker run --rm -it -p 9000:9000 -p 9001:9001 --gpus=all --shm-size 11G --network host --mount type=bind,source=$PWD/hrnetv2_w48_imagenet_pretrained.pth,target=/home/models/hrnetv2_w48_imagenet_pretrained.pth -v ~/:/home/username seismic-deeplearning
 ```
-If you have saved the pretrained model in a different directory, make sure you replace `$PWD/hrnetv2_w48_imagenet_pretrained.pth` with the **absolute** path to the pretrained HRNet model. The command above will run a Jupyter Lab instance that you can access by clicking on the link in your terminal. You can then navigate to the notebook that you would like to run. By default, running the command above would mount your home directory to the Docker container, allowing you to access your files and data from within Jupyter Lab. 
+If you have saved the pretrained model in a different directory, make sure you replace `$PWD/hrnetv2_w48_imagenet_pretrained.pth` with the **absolute** path to the pretrained HRNet model. The command above will run a Jupyter Lab instance that you can access by clicking on the link in your terminal. You can then navigate to the notebook or script that you would like to run. By default, running the command above would mount your home directory to the Docker container, allowing you to access your files and data from within Jupyter Lab. 
 
+# Run TensorBoard:
+To run Tensorboard to visualize the logged metrics and results, open a terminal in Jupyter Lab, navigate to the parent of the `output` directory of your model, and run the following command: 
+```bash 
+tensorboard --logdir output/ --port 9001 --bind_all
+```
+Make sure your VM has the port 9001 allowed in the networking rules, and then you can open TensorBoard by navigating to `http://<vm_ip_address>:9001/` on your browser where `<vm_ip_address>` is your public VM IP address (or private VM IP address if you are using a VPN).
