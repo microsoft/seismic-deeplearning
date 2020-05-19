@@ -13,8 +13,6 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 ENV PATH /opt/conda/bin:$PATH
 SHELL ["/bin/bash", "-c"] 
 
-WORKDIR /home/username
-
 # Install Anaconda and download the seismic-deeplearning repo
 RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
