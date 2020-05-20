@@ -60,7 +60,7 @@ RUN pip install future typing
 RUN pip install numpy 
 RUN pip install https://download.pytorch.org/whl/cu100/torch-${PYTORCH_VERSION}-$(python -c "import wheel.pep425tags as w; print('-'.join(w.get_supported()[0]))").whl \
         https://download.pytorch.org/whl/cu100/torchvision-${TORCHVISION_VERSION}-$(python -c "import wheel.pep425tags as w; print('-'.join(w.get_supported()[0]))").whl
-RUN pip install --no-cache-dir torchvision h5py toolz pytorch-ignite pandas opencv-python fire tensorboardx scikit-learn tqdm yacs albumentations gitpython
+RUN pip install --no-cache-dir torchvision h5py toolz pytorch-ignite pandas fire tensorboardx scikit-learn tqdm yacs albumentations gitpython
 COPY ComputerVision_fork/contrib /contrib
 RUN pip install -e /contrib
 COPY DeepSeismic /DeepSeismic

@@ -23,9 +23,8 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     wget --quiet https://github.com/microsoft/seismic-deeplearning/archive/staging.zip -O staging.zip && \
     unzip staging.zip && rm staging.zip
 
-WORKDIR seismic-deeplearning-staging
-
-RUN conda env create -n seismic-interpretation --file environment/anaconda/local/environment.yml && \
+RUN cd seismic-deeplearning-staging && \
+    conda env create -n seismic-interpretation --file environment/anaconda/local/environment.yml && \
     source activate seismic-interpretation && \
     python -m ipykernel install --user --name seismic-interpretation && \
     pip install -e interpretation && \
@@ -33,7 +32,8 @@ RUN conda env create -n seismic-interpretation --file environment/anaconda/local
 
 # TODO: add back in later when Penobscot notebook is available
 # Download Penobscot dataset:
-# RUN data_dir="/home/username/data/penobscot" && \
+# RUN cd seismic-deeplearning-staging && \
+#    data_dir="/home/username/data/penobscot" && \
 #    mkdir -p "$data_dir" && \
 #    ./scripts/download_penobscot.sh "$data_dir"  && \
 #    cd scripts  && \
@@ -42,13 +42,14 @@ RUN conda env create -n seismic-interpretation --file environment/anaconda/local
 #    cd ..
 
 # Download F3 dataset:
-RUN data_dir="/home/username/data/dutch" && \
+RUN cd seismic-deeplearning-staging && \
+    data_dir="/home/username/data/dutch" && \
     mkdir -p "$data_dir" && \
     ./scripts/download_dutch_f3.sh "$data_dir" && \
     cd scripts && \
     source activate seismic-interpretation && \
-    python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits && \
-    python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 && \
+    python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits --split_direction=both && \
+    python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both && \
     cd ..
 
 # Run notebook
@@ -57,4 +58,4 @@ EXPOSE 9000/tcp
 EXPOSE 9001/tcp
 
 CMD source activate seismic-interpretation && \
-    jupyter notebook --allow-root --ip 0.0.0.0 --port 9000
+    jupyter lab --allow-root --ip 0.0.0.0 --port 9000

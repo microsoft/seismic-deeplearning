@@ -208,7 +208,7 @@ def run(*options, cfg=None):
 
     summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
 
-    snapshot_duration = 1
+    snapshot_duration = 2
 
     def snapshot_function():
         return (trainer.state.iteration % snapshot_duration) == 0

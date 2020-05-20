@@ -104,9 +104,6 @@ def run(*options, cfg=None, local_rank=0, debug=False):
     """
     update_config(config, options=options, config_file=cfg)
 
-    # we will write the model under outputs / config_file_name / model_dir
-    config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
-
     # Start logging
     load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
@@ -134,13 +131,6 @@ def run(*options, cfg=None, local_rank=0, debug=False):
     basic_aug = Compose(
         [
             Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1),
-            PadIfNeeded(
-                min_height=config.TRAIN.PATCH_SIZE,
-                min_width=config.TRAIN.PATCH_SIZE,
-                border_mode=cv2.BORDER_CONSTANT,
-                always_apply=True,
-                mask_value=255,
-            ),
             Resize(
                 config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
             ),
@@ -269,12 +259,14 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         trainer.add_event_handler(
             Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
         )
-        trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))    
+        trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
 
         try:
-            output_dir = generate_path(config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
+            output_dir = generate_path(
+                config.OUTPUT_DIR, git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
+            )
         except TypeError:
-            output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
+            output_dir = generate_path(config.OUTPUT_DIR, config.MODEL.NAME, current_datetime(),)
 
         summary_writer = create_summary_writer(log_dir=path.join(output_dir, config.LOG_DIR))
         logger.info(f"Logging Tensorboard to {path.join(output_dir, config.LOG_DIR)}")
@@ -332,7 +324,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
             return (trainer.state.iteration % snapshot_duration) == 0
 
         checkpoint_handler = SnapshotHandler(
-            output_dir,
+            path.join(output_dir, config.TRAIN.MODEL_DIR),
             config.MODEL.NAME,
             extract_metric_from("mIoU"),
             snapshot_function,

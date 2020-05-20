@@ -38,9 +38,3 @@ def git_hash():
     repo = Repo(search_parent_directories=True)
     return repo.active_branch.commit.hexsha
 
-
-def generate_path(base_path, *directories):
-    path = os.path.join(base_path, *directories)
-    if not os.path.exists(path):
-        os.makedirs(path)
-    return path

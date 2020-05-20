@@ -5,30 +5,31 @@ This repository shows you how to perform seismic imaging and interpretation on A
 
 The repository provides sample notebooks, data loaders for seismic data, utilities, and out-of-the-box ML pipelines, organized as follows:
 - **sample notebooks**: these can be found in the `examples` folder - they are standard Jupyter notebooks which highlight how to use the codebase by walking the user through a set of pre-made examples
-- **experiments**: the goal is to provide runnable Python scripts that train and test (score) our machine learning models in the `experiments` folder. The models themselves are swappable, meaning a single train script can be used to run a different model on the same dataset by simply swapping out the configuration file which defines the model. Experiments are organized by model types and datasets - for example, "2D segmentation on Dutch F3 dataset", "2D segmentation on Penobscot dataset" and "3D segmentation on Penobscot dataset" are all different experiments. As another example, if one is swapping 2D segmentation models on the Dutch F3 dataset, one would just point the train and test scripts to a different configuration file within the same experiment.
+- **experiments**: the goal is to provide runnable Python scripts that train and test (score) our machine learning models in the `experiments` folder. The models themselves are swappable, meaning a single train script can be used to run a different model on the same dataset by simply swapping out the configuration file which defines the model. 
 - **pip installable utilities**: we provide `cv_lib` and `deepseismic_interpretation` utilities (more info below) which are used by both sample notebooks and experiments mentioned above
 
-DeepSeismic currently focuses on Seismic Interpretation (3D segmentation aka facies classification) with experimental code provided around Seismic Imaging.
+DeepSeismic currently focuses on Seismic Interpretation (3D segmentation aka facies classification) with experimental code provided around Seismic Imaging in the contrib folder.
 
 ### Quick Start
 
+Our repo is Docker-enabled and we provide a Docker file which you can use to quickly demo our codebase. If you are in a hurry and just can't wait to run our code, follow the [Docker README](https://github.com/microsoft/seismic-deeplearning/blob/master/docker/README.md) to build and run our repo from [Dockerfile](https://github.com/microsoft/seismic-deeplearning/blob/master/docker/Dockerfile).
+
+For developers, we offer a more hands-on Quick Start below.
+
+#### Dev Quick Start
 There are two ways to get started with the DeepSeismic codebase, which currently focuses on Interpretation:
-- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/master/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb)
+- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb)
 - to run the code, you'll need to set up a compute environment (which includes setting up a GPU-enabled Linux VM and downloading the appropriate Anaconda Python packages) and download the datasets which you'd like to work with - detailed steps for doing this are provided in the next `Interpretation` section below.
 
 If you run into any problems, chances are your problem has already been solved in the [Troubleshooting](#troubleshooting) section.
 
-### Pre-run notebooks
-
-Notebooks stored in the repository have output intentionally displaced - you can find full auto-generated versions of the notebooks here:
-- **HRNet Penobscot demo**: [[HTML](https://deepseismicstore.blob.core.windows.net/shared/HRNet_Penobscot_demo_notebook.html)] [[.ipynb](https://deepseismicstore.blob.core.windows.net/shared/HRNet_Penobscot_demo_notebook.ipynb)]
-- **Dutch F3 dataset**: [[HTML](https://deepseismicstore.blob.core.windows.net/shared/F3_block_training_and_evaluation_local.html)] [[.ipynb](https://deepseismicstore.blob.core.windows.net/shared/F3_block_training_and_evaluation_local.ipynb)]
+The notebook is designed to be run in demo mode by default using a pre-trained model in under 5 minutes on any reasonable Deep Learning GPU such as nVidia K80/P40/P100/V100/TitanV.
 
 ### Azure Machine Learning
 [Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/) enables you to train and deploy your machine learning models and pipelines at scale, ane leverage open-source Python frameworks, such as PyTorch, TensorFlow, and scikit-learn. If you are looking at getting started with using the code in this repository with Azure Machine Learning, refer to [Azure Machine Learning How-to](https://github.com/Azure/MachineLearningNotebooks/tree/master/how-to-use-azureml) to get started.
 
 ## Interpretation
-For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-the-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation, and also benchmarking results from running these algorithms using various seismic datasets (Dutch F3, and Penobscot).
+For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-the-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation.
 
 To run examples available on the repo, please follow instructions below to:
 1) [Set up the environment](#setting-up-environment)
@@ -79,36 +80,13 @@ from the root of DeepSeismic repo.
 
 ### Dataset download and preparation
 
-This repository provides examples on how to run seismic interpretation on two publicly available annotated seismic datasets: [Penobscot](https://zenodo.org/record/1341774) and [F3 Netherlands](https://github.com/olivesgatech/facies_classification_benchmark). Their respective sizes (uncompressed on disk in your folder after downloading and pre-processing) are:
-- **Penobscot**: 7.9 GB
-- **Dutch F3**: 2.2 GB
+This repository provides examples on how to run seismic interpretation on Dutch F3 publicly available annotated seismic dataset [Dutch F3](https://github.com/yalaudah/facies_classification_benchmark), which is about 2.2GB in size.
 
 Please make sure you have enough disk space to download either dataset.
 
-We have experiments and notebooks which use either one dataset or the other. Depending on which experiment/notebook you want to run you'll need to download the corresponding dataset. We suggest you start by looking at [HRNet demo notebook](https://github.com/microsoft/DeepSeismic/blob/master/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb) which requires the Penobscot dataset.
+We have experiments and notebooks which use either one dataset or the other. Depending on which experiment/notebook you want to run you'll need to download the corresponding dataset. We suggest you start by looking at [HRNet demo notebook](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb) which requires the Dutch F3 dataset.
 
-#### Penobscot
-To download the Penobscot dataset run the [download_penobscot.sh](scripts/download_penobscot.sh) script, e.g.
-
-```
-data_dir="$HOME/data/penobscot"
-mkdir -p "$data_dir"
-./scripts/download_penobscot.sh "$data_dir"
-```
-
-Note that the specified download location should be configured with appropriate `write` permissions. On some Linux virtual machines, you may want to place the data into `/mnt` or `/data` folder so you have to make sure you have write access.
-
-To make things easier, we suggested you use your home directory where you might run out of space. If this happens on an [Azure Data Science Virtual Machine](https://azure.microsoft.com/en-us/services/virtual-machines/data-science-virtual-machines/) you can resize the disk quite easily from [Azure Portal](https://portal.azure.com) - please see the [Troubleshooting](#troubleshooting) section at the end of this README regarding [how to do this](#how-to-resize-data-science-virtual-machine-disk).
-
-To prepare the data for the experiments (e.g. split into train/val/test), please run the following script (modifying arguments as desired):
-
-```
-cd scripts
-python prepare_penobscot.py split_inline --data-dir=$data_dir --val-ratio=.1 --test-ratio=.2
-cd ..
-```
-
-#### F3 Netherlands
+#### Dutch F3 Netherlands dataset prep
 To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
 [this github repository](https://github.com/yalaudah/facies_classification_benchmark) (section Dataset). Atternatively, you can use the [download script](scripts/download_dutch_f3.sh)
 
@@ -141,13 +119,9 @@ To prepare the data for the experiments (e.g. split into train/val/test), please
 # change working directory to scripts folder
 cd scripts
 
-# For section-based experiments
-python prepare_dutchf3.py split_train_val section --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits
-
-
 # For patch-based experiments
 python prepare_dutchf3.py split_train_val patch --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits \
---stride=50 --patch_size=100
+--stride=50 --patch_size=100 --split_direction=both
 
 # go back to repo root
 cd ..
@@ -177,12 +151,10 @@ This will enable your notebook with a Black formatter button, which then clicked
 
 #### Experiments
 
-We also provide scripts for a number of experiments we conducted using different segmentation approaches. These experiments are available under `experiments/interpretation`, and can be used as examples. Within each experiment start from the `train.sh` and `test.sh` scripts under the `local/` (single GPU) and `distributed/` (multiple GPUs) directories, which invoke the corresponding python scripts, `train.py` and `test.py`. Take a look at the experiment configurations (see Experiment Configuration Files section below) for experiment options and modify if necessary.
+We also provide scripts for a number of experiments we conducted using different segmentation approaches. These experiments are available under `experiments/interpretation`, and can be used as examples. Within each experiment start from the `train.sh` and `test.sh` scripts under the `local/` directory, which invoke the corresponding python scripts, `train.py` and `test.py`. Take a look at the experiment configurations (see Experiment Configuration Files section below) for experiment options and modify if necessary.
 
-Please refer to individual experiment README files for more information.
-- [Penobscot](experiments/interpretation/penobscot/README.md)
+This release currently supports Dutch F3 local execution
 - [F3 Netherlands Patch](experiments/interpretation/dutchf3_patch/README.md)
-- [F3 Netherlands Section](experiments/interpretation/dutchf3_section/README.md)
 
 #### Configuration Files
 We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manage configuration options for the experiments. There are three ways to pass arguments to the experiment scripts (e.g. train.py or test.py):
@@ -198,15 +170,19 @@ We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manag
 - __command line__ - Finally, options can be passed in through `options` argument, and those will override arguments loaded from the configuration file. We created CLIs for all our scripts (using Python Fire library), so you can pass these options via command-line arguments, like so:
 
     ```
-    python train.py DATASET.ROOT "/mnt/dutchf3" TRAIN.END_EPOCH 10
+    python train.py DATASET.ROOT "/home/username/data/dutch/data" TRAIN.END_EPOCH 10
     ```
 
 
 ### Pretrained Models
 
-#### HRNet
+There are two types of pre-trained models used by this repo:
+1. pre-trained models trained on non-seismic Computer Vision datasets which we fine-tune for the seismic domain through re-training on seismic data
+2. models which we already trained on seismic data - these are downloaded automatically by our code if needed (again, please see the notebook for a demo above regarding how this is done).
 
-To achieve the same results as the benchmarks above you will need to download the HRNet model [pretrained](https://github.com/HRNet/HRNet-Image-Classification) on ImageNet. We are specifically using the [HRNet-W48-C](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk) pre-trained model; other  HRNet variants are also available [here](https://github.com/HRNet/HRNet-Image-Classification) - you can navigate to those from the [main HRNet landing page](https://github.com/HRNet/HRNet-Object-Detection) for object detection.
+#### HRNet ImageNet weights model
+
+To enable training from scratch on seismic data and to achieve the same results as the benchmarks quoted below you will need to download the HRNet model [pretrained](https://github.com/HRNet/HRNet-Image-Classification) on ImageNet. We are specifically using the [HRNet-W48-C](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk) pre-trained model; other  HRNet variants are also available [here](https://github.com/HRNet/HRNet-Image-Classification) - you can navigate to those from the [main HRNet landing page](https://github.com/HRNet/HRNet-Object-Detection) for object detection.
 
 Unfortunately, the OneDrive location which is used to host the model is using a temporary authentication token, so there is no way for us to script up model download. There are two ways to upload and use the pre-trained HRNet model on DS VM:
 - download the model to your local drive using a web browser of your choice and then upload the model to the DS VM using something like `scp`; navigate to Portal and copy DS VM's public IP from the Overview panel of your DS VM (you can search your DS VM by name in the search bar of the Portal) then use `scp local_model_location username@DS_VM_public_IP:./model/save/path` to upload
@@ -231,63 +207,35 @@ pip install segyviewer
 To visualize cross-sections of a 3D volume, you can run
 [segyviewer](https://github.com/equinor/segyviewer) like so:
 ```bash
-segyviewer "${HOME}/data/dutchf3/data.segy"
+segyviewer "${HOME}/home/username/data/dutch/data.segy"
 ```
 
 ### Benchmarks
 
 #### Dense Labels
 
-This section contains benchmarks of different algorithms for seismic interpretation on 3D seismic datasets with densely-annotated data.
+This section contains benchmarks of different algorithms for seismic interpretation on 3D seismic datasets with densely-annotated data. We currently only support single-GPU Dutch F3 dataset benchmarks with this release.
 
-Below are the results from the models contained in this repo. To run them check the instructions in <benchmarks> folder. Alternatively, take a look in <examples> for how to run them on your own dataset
+#### Dutch F3
 
-#### Netherlands F3
+| Source         | Experiment                  | PA    | FW IoU | MCA  | V100 (16GB) training time |
+| -------------- | --------------------------- | ----- | ------ | ---- | ------------------------- |
+| Alaudah et al. | Section-based               | 0.905 | 0.817  | .832 | N/A                       |
+|                | Patch-based                 | 0.852 | 0.743  | .689 | N/A                       |
+| DeepSeismic    | Patch-based+fixed           | .875  | .784   | .740 | 08h 54min                 |
+|                | SEResNet UNet+section depth | .910  | .841   | .809 | 55h 02min                 |
+|                | HRNet(patch)+patch_depth    | .884  | .795   | .739 | 67h 41min                 |
+|                | HRNet(patch)+section_depth  | .900  | .820   | .767 | 55h 08min                 |
 
-|    Source        |    Experiment                     |    PA       |    FW IoU    |    MCA     |   V100 (16GB) training time |
-|------------------|-----------------------------------|-------------|--------------|------------|-----------------------------|
-|    Alaudah et al.|    Section-based                  |    0.905    |    0.817     |    .832    |              N/A            |
-|                  |    Patch-based                    |    0.852    |    0.743     |    .689    |              N/A            |
-|    DeepSeismic   |    Patch-based+fixed              |    .875     |    .784      |    .740    |            08h 54min        |
-|                  |    SEResNet UNet+section depth    |    .910     |    .841      |    .809    |            55h 02min        |
-|                  |    HRNet(patch)+patch_depth       |    .884     |    .795      |    .739    |            67h 41min        |
-|                  |    HRNet(patch)+section_depth     |    .900     |    .820      |    .767    |            55h 08min        |
-
-#### Penobscot
-
-Trained and tested on the full dataset. Inlines with artifacts were left in for training, validation and testing.
-The dataset was split 70% training, 10% validation and 20% test. The results below are from the test set
-
-|    Source        |    Experiment                       |    PA       |    mIoU      |    MCA     |   V100 (16GB) training time |
-|------------------|-------------------------------------|-------------|--------------|------------|-----------------------------|
-|    DeepSeismic   |    SEResNet UNet + section depth    |    0.72     |    .35       |    .47     |          92h 59min          |
-|                  |    HRNet(patch) + section depth     |    0.91     |    .75       |    .85     |          80h 50min          |
-
-![Best Penobscot SEResNet](assets/penobscot_seresnet_best.png "Best performing inlines, Mask and Predictions from SEResNet")
-![Worst Penobscot SEResNet](assets/penobscot_seresnet_worst.png "Worst performing inlines  Mask and Predictions from SEResNet")
 
 #### Reproduce benchmarks
 In order to reproduce the benchmarks, you will need to navigate to the [experiments](experiments) folder. In there, each of the experiments are split into different folders. To run the Netherlands F3 experiment navigate to the [dutchf3_patch/local](experiments/dutchf3_patch/local) folder. In there is a training script [([train.sh](experiments/dutchf3_patch/local/train.sh))
 which will run the training for any configuration you pass in. Once you have run the training you will need to run the [test.sh](experiments/dutchf3_patch/local/test.sh) script. Make sure you specify
 the path to the best performing model from your training run, either by passing it in as an argument or altering the YACS config file. 
 
-To reproduce the benchmarks
-for the Penobscot dataset follow the same instructions but navigate to the [penobscot](penobscot) folder.
-
-#### Scripts
-- [parallel_training.sh](scripts/parallel_training.sh): Script to launch multiple jobs in parallel. Used mainly for local hyperparameter tuning. Look at the script for further instructions
-
-- [kill_windows.sh](scripts/kill_windows.sh): Script to kill multiple tmux windows. Used to kill jobs that parallel_training.sh might have started.
-
-- [run_all.sh](scripts/run_all.sh): similar to `parallel_training.sh` above, provides a multiprocess execution on an ND40 VM with 8 GPUs. Designed to work with `test_all.sh` script below. Trains 8 models concurrently.
-
-- [run_distributed.sh](scripts/run_distributed.sh): sequentially launches distributed training jobs, which should produce the same results on Dutch F3 dataset with patch based methods as the single-GPU training (just takes less time per model to train). Also designed to work with `test_all.sh` script below.
-
-- [test_all.sh](scripts/test_all.sh): after running `run_all.sh` and `run_distributed.sh` scripts above, this script scores single-GPU-trained and multi-GPU-trained models in the repo to reproduce the results given in the table.
-
 ## Contributing
 
-This project welcomes contributions and suggestions. Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+This project welcomes contributions and suggestions. Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit [https://cla.opensource.microsoft.com](https://cla.opensource.microsoft.com).
 
 ### Submitting a Pull Request
 
@@ -298,16 +246,12 @@ When you submit a pull request, a CLA bot will automatically determine whether y
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
 ## Build Status
-| Build | Branch | Status |
-| --- | --- | --- |
+| Build                | Branch  | Status                                                                                                                                                                                                                                                               |
+| -------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Legal Compliance** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=124&branchName=staging) |
-| **Legal Compliance** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=124&branchName=master) |
-| **Core Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=staging) |
-| **Core Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=master) |
-| **Notebook Tests** | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=staging) |
-| **Notebook Tests** | master | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Notebooks%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=125&branchName=master) |
-| **Azure ML Tests** | staging | TODO add badge link |
-| **Azure ML Tests** | master | TODO add badge link |
+| **Legal Compliance** | master  | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.ComponentGovernance%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=124&branchName=master)   |
+| **Core Tests**       | staging | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=staging)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=staging)               |
+| **Core Tests**       | master  | [![Build Status](https://dev.azure.com/best-practices/deepseismic/_apis/build/status/microsoft.Tests%20(seismic-deeplearning)?branchName=master)](https://dev.azure.com/best-practices/deepseismic/_build/latest?definitionId=126&branchName=master)                 |
 
 
 # Troubleshooting
@@ -321,7 +265,7 @@ A typical output will be:
 someusername@somevm:/projects/DeepSeismic$ which python
 /anaconda/envs/py35/bin/python
 ```
-which will indicate that anaconda folder is __/anaconda__. We'll refer to this location in the instructions below, but you should update the commands according to your local anaconda folder.
+which will indicate that anaconda folder is `__/anaconda__`. We'll refer to this location in the instructions below, but you should update the commands according to your local anaconda folder.
 
 <details>
   <summary><b>Data Science Virtual Machine conda package installation errors</b></summary>
@@ -339,7 +283,7 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
 <details>
   <summary><b>Data Science Virtual Machine conda package installation warnings</b></summary>
 
-  It could happen that while creating the conda environment defined by environment/anaconda/local/environment.yml on an Ubuntu DSVM, one can get multiple warnings like so:
+  It could happen that while creating the conda environment defined by `environment/anaconda/local/environment.yml` on an Ubuntu DSVM, one can get multiple warnings like so:
   ```
   WARNING conda.gateways.disk.delete:unlink_or_rename_to_trash(140): Could not remove or rename /anaconda/pkgs/ipywidgets-7.5.1-py_0/site-packages/ipywidgets-7.5.1.dist-info/LICENSE.  Please remove this file manually (you may need to reboot to free file handles)  
   ```
@@ -350,7 +294,7 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
   sudo chown -R $USER /anaconda
   ```
 
-  After these command completes, try creating the conda environment in __environment/anaconda/local/environment.yml__ again.
+  After these command completes, try creating the conda environment in `__environment/anaconda/local/environment.yml__` again.
 
 </details>
 
@@ -395,7 +339,7 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
 <details>
   <summary><b>GPU out of memory errors</b></summary>
 
-  You should be able to see how much GPU memory your process is using by running
+  You should be able to see how much GPU memory your process is using by running:
   ```bash
   nvidia-smi
   ```
@@ -419,7 +363,4 @@ which will indicate that anaconda folder is __/anaconda__. We'll refer to this l
   5. Navigate back to the Virtual Machine view in Step 2 and click the Start button to start the virtual machine.
 
 </details>
-
-
-
 

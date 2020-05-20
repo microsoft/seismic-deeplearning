@@ -12,7 +12,7 @@ SEED: 2019
 
 DATASET:
   NUM_CLASSES: 6
-  ROOT: /mnt/dutchf3
+  ROOT: /home/username/data/dutch/data
   CLASS_WEIGHTS: [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 MODEL:
@@ -29,7 +29,7 @@ TRAIN:
   WEIGHT_DECAY: 0.0001
   SNAPSHOTS: 5
   AUGMENTATION: True
-  DEPTH: "none" # Options are None, Patch and Section
+  DEPTH: "none" # Options are none, patch, and section
   STRIDE: 50
   PATCH_SIZE: 99
   AUGMENTATIONS:

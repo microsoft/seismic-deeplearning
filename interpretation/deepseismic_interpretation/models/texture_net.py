@@ -7,6 +7,7 @@ import torch
 from torch import nn
 
 # TODO; set chanels from yaml config file
+# issue: https://github.com/microsoft/seismic-deeplearning/issues/277
 class TextureNet(nn.Module):
     def __init__(self, n_classes=2):
         super(TextureNet, self).__init__()

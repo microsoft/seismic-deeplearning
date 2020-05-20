@@ -12,7 +12,7 @@ SEED: 2019
 
 DATASET:
   NUM_CLASSES: 6
-  ROOT: /mnt/dutchf3
+  ROOT: /home/username/data/dutch/data
   CLASS_WEIGHTS: [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 MODEL:
@@ -30,7 +30,7 @@ TRAIN:
   WEIGHT_DECAY: 0.0001
   SNAPSHOTS: 5
   AUGMENTATION: True
-  DEPTH: "none" #"patch" # Options are None, Patch and Section
+  DEPTH: "none" # Options are None, Patch and Section
   STRIDE: 50
   PATCH_SIZE: 99
   AUGMENTATIONS:
@@ -40,8 +40,8 @@ TRAIN:
     PAD:
       HEIGHT: 99
       WIDTH: 99
-  MEAN: 0.0009997 # 0.0009996710808862074
-  STD: 0.20977 # 0.20976548783479299 
+  MEAN: 0.0009997
+  STD: 0.20977
   MODEL_DIR: "models"
 
 VALIDATION:
@@ -54,6 +54,6 @@ TEST:
   INLINE: True
   CROSSLINE: True
   POST_PROCESSING: 
-    SIZE: 99 # 
+    SIZE: 99 
     CROP_PIXELS: 0 # Number of pixels to crop top, bottom, left and right
 

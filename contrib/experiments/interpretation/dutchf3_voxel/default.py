@@ -24,6 +24,8 @@ _C.WORKERS = 4
 _C.PRINT_FREQ = 20
 _C.LOG_CONFIG = "logging.conf"
 _C.SEED = 42
+_C.OPENCV_BORDER_CONSTANT = 0
+
 # size of voxel cube: WINDOW_SIZE x WINDOW_SIZE x WINDOW_SIZE; used for 3D models only
 _C.WINDOW_SIZE = 65
 
@@ -50,7 +52,7 @@ _C.TRAIN.END_EPOCH = 200
 _C.TRAIN.LR = 0.01
 _C.TRAIN.MOMENTUM = 0.9
 _C.TRAIN.WEIGHT_DECAY = 0.0001
-_C.TRAIN.DEPTH = "voxel"  # Options are None, Patch and Section
+_C.TRAIN.DEPTH = "voxel"  # Options are none, patch and section
 _C.TRAIN.MODEL_DIR = "models"  # This will be a subdirectory inside OUTPUT_DIR
 
 # validation
