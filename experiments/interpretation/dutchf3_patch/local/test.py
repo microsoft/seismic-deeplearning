@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 # commitHash: c76bf579a0d5090ebd32426907d051d499f3e847
-# url: https://github.com/olivesgatech/facies_classification_benchmark
+# url: https://github.com/yalaudah/facies_classification_benchmark
 #
 # To Test:
 # python test.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
@@ -13,39 +13,27 @@ Runs only on single GPU
 """
 
 import itertools
+import json
 import logging
 import logging.config
 import os
 from os import path
 
-import cv2
 import fire
 import numpy as np
 import torch
 import torch.nn.functional as F
-from PIL import Image
 from albumentations import Compose, Normalize, PadIfNeeded, Resize
-from cv_lib.utils import load_log_configuration
+from toolz import compose, curry, itertoolz, pipe, take
+from torch.utils import data
+
 from cv_lib.segmentation import models
-from cv_lib.segmentation.dutchf3.utils import (
-    current_datetime,
-    generate_path,
-    git_branch,
-    git_hash,
-)
-from deepseismic_interpretation.dutchf3.data import (
-    add_patch_depth_channels,
-    get_seismic_labels,
-    get_test_loader,
-)
+from cv_lib.segmentation.dutchf3.utils import current_datetime, git_branch, git_hash
+
+from cv_lib.utils import load_log_configuration, mask_to_disk, generate_path
+from deepseismic_interpretation.dutchf3.data import add_patch_depth_channels, get_test_loader
 from default import _C as config
 from default import update_config
-from toolz import compose, curry, itertoolz, pipe
-from torch.utils import data
-from toolz import take
-
-from matplotlib import cm
-
 
 _CLASS_NAMES = [
     "upper_ns",
@@ -64,9 +52,9 @@ class runningScore(object):
 
     def _fast_hist(self, label_true, label_pred, n_class):
         mask = (label_true >= 0) & (label_true < n_class)
-        hist = np.bincount(
-            n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,
-        ).reshape(n_class, n_class)
+        hist = np.bincount(n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,).reshape(
+            n_class, n_class
+        )
         return hist
 
     def update(self, label_trues, label_preds):
@@ -104,21 +92,6 @@ class runningScore(object):
 
     def reset(self):
         self.confusion_matrix = np.zeros((self.n_classes, self.n_classes))
-
-
-def normalize(array):
-    """
-    Normalizes a segmentation mask array to be in [0,1] range
-    """
-    min = array.min()
-    return (array - min) / (array.max() - min)
-
-
-def mask_to_disk(mask, fname):
-    """
-    write segmentation mask to disk using a particular colormap
-    """
-    Image.fromarray(cm.gist_earth(normalize(mask), bytes=True)).save(fname)
 
 
 def _transform_CHW_to_HWC(numpy_array):
@@ -202,9 +175,7 @@ def _compose_processing_pipeline(depth, aug=None):
 
 
 def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
-    hdc_wdx_generator = itertools.product(
-        range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride),
-    )
+    hdc_wdx_generator = itertools.product(range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride),)
     for batch_indexes in itertoolz.partition_all(batch_size, hdc_wdx_generator):
         yield batch_indexes
 
@@ -215,9 +186,7 @@ def _output_processing_pipeline(config, output):
     _, _, h, w = output.shape
     if config.TEST.POST_PROCESSING.SIZE != h or config.TEST.POST_PROCESSING.SIZE != w:
         output = F.interpolate(
-            output,
-            size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE,),
-            mode="bilinear",
+            output, size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE,), mode="bilinear",
         )
 
     if config.TEST.POST_PROCESSING.CROP_PIXELS > 0:
@@ -232,15 +201,7 @@ def _output_processing_pipeline(config, output):
 
 
 def _patch_label_2d(
-    model,
-    img,
-    pre_processing,
-    output_processing,
-    patch_size,
-    stride,
-    batch_size,
-    device,
-    num_classes,
+    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes,
 ):
     """Processes a whole section
     """
@@ -255,58 +216,31 @@ def _patch_label_2d(
     # generate output:
     for batch_indexes in _generate_batches(h, w, ps, patch_size, stride, batch_size=batch_size):
         batch = torch.stack(
-            [
-                pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing,)
-                for hdx, wdx in batch_indexes
-            ],
+            [pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing,) for hdx, wdx in batch_indexes],
             dim=0,
         )
 
         model_output = model(batch.to(device))
         for (hdx, wdx), output in zip(batch_indexes, model_output.detach().cpu()):
             output = output_processing(output)
-            output_p[
-                :, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size,
-            ] += output
+            output_p[:, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size,] += output
 
     # crop the output_p in the middle
     output = output_p[:, :, ps:-ps, ps:-ps]
     return output
 
-
-@curry
-def to_image(label_mask, n_classes=6):
-    label_colours = get_seismic_labels()
-    r = label_mask.copy()
-    g = label_mask.copy()
-    b = label_mask.copy()
-    for ll in range(0, n_classes):
-        r[label_mask == ll] = label_colours[ll, 0]
-        g[label_mask == ll] = label_colours[ll, 1]
-        b[label_mask == ll] = label_colours[ll, 2]
-    rgb = np.zeros((label_mask.shape[0], label_mask.shape[1], label_mask.shape[2], 3))
-    rgb[:, :, :, 0] = r
-    rgb[:, :, :, 1] = g
-    rgb[:, :, :, 2] = b
-    return rgb
-
-
 def _evaluate_split(
-    split,
-    section_aug,
-    model,
-    pre_processing,
-    output_processing,
-    device,
-    running_metrics_overall,
-    config,
-    debug=False,
+    split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config, debug=False,
 ):
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
     test_set = TestSectionLoader(
-        config.DATASET.ROOT, split=split, is_transform=True, augmentations=section_aug,
+        config.DATASET.ROOT,
+        config.DATASET.NUM_CLASSES,
+        split=split,
+        is_transform=True,
+        augmentations=section_aug
     )
 
     n_classes = test_set.n_classes
@@ -315,22 +249,14 @@ def _evaluate_split(
 
     if debug:
         logger.info("Running in Debug/Test mode")
-        test_loader = take(1, test_loader)
+        test_loader = take(2, test_loader)
 
     try:
         output_dir = generate_path(
-            config.OUTPUT_DIR + "_test",
-            git_branch(),
-            git_hash(),
-            config.MODEL.NAME,
-            current_datetime(),
+            config.OUTPUT_DIR + "_test", git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
         )
     except TypeError:
-        output_dir = generate_path(
-            config.OUTPUT_DIR + "_test",
-            config.MODEL.NAME,
-            current_datetime(),
-        )
+        output_dir = generate_path(config.OUTPUT_DIR + "_test", config.MODEL.NAME, current_datetime(),)
 
     running_metrics_split = runningScore(n_classes)
 
@@ -368,8 +294,12 @@ def _evaluate_split(
 
     # Log split results
     logger.info(f'Pixel Acc: {score["Pixel Acc: "]:.3f}')
-    for cdx, class_name in enumerate(_CLASS_NAMES):
-        logger.info(f'  {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
+    if debug:
+        for cdx in range(n_classes):
+            logger.info(f'  Class_{cdx}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
+    else:
+        for cdx, class_name in enumerate(_CLASS_NAMES):
+            logger.info(f'  {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
 
     logger.info(f'Mean Class Acc: {score["Mean Class Acc: "]:.3f}')
     logger.info(f'Freq Weighted IoU: {score["Freq Weighted IoU: "]:.3f}')
@@ -418,21 +348,19 @@ def test(*options, cfg=None, debug=False):
     running_metrics_overall = runningScore(n_classes)
 
     # Augmentation
-    section_aug = Compose(
-        [Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,)]
-    )
+    section_aug = Compose([Normalize(mean=(config.TRAIN.MEAN,), std=(config.TRAIN.STD,), max_pixel_value=1,)])
 
+    # TODO: make sure that this is consistent with how normalization and agumentation for train.py
+    # issue: https://github.com/microsoft/seismic-deeplearning/issues/270
     patch_aug = Compose(
         [
             Resize(
-                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT,
-                config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH,
-                always_apply=True,
+                config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True,
             ),
             PadIfNeeded(
                 min_height=config.TRAIN.AUGMENTATIONS.PAD.HEIGHT,
                 min_width=config.TRAIN.AUGMENTATIONS.PAD.WIDTH,
-                border_mode=cv2.BORDER_CONSTANT,
+                border_mode=config.OPENCV_BORDER_CONSTANT,
                 always_apply=True,
                 mask_value=255,
             ),
@@ -463,16 +391,34 @@ def test(*options, cfg=None, debug=False):
     score, class_iou = running_metrics_overall.get_scores()
 
     logger.info("--------------- FINAL RESULTS -----------------")
-    logger.info(f'Pixel Acc: {score["Pixel Acc: "]:.3f}')
-    for cdx, class_name in enumerate(_CLASS_NAMES):
-        logger.info(f'     {class_name}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
-    logger.info(f'Mean Class Acc: {score["Mean Class Acc: "]:.3f}')
-    logger.info(f'Freq Weighted IoU: {score["Freq Weighted IoU: "]:.3f}')
-    logger.info(f'Mean IoU: {score["Mean IoU: "]:0.3f}')
+    logger.info(f'Pixel Acc: {score["Pixel Acc: "]:.4f}')
+
+    if debug:
+        for cdx in range(n_classes):
+            logger.info(f'  Class_{cdx}_accuracy {score["Class Accuracy: "][cdx]:.3f}')
+    else:
+        for cdx, class_name in enumerate(_CLASS_NAMES):
+            logger.info(f'     {class_name}_accuracy {score["Class Accuracy: "][cdx]:.4f}')
+
+    logger.info(f'Mean Class Acc: {score["Mean Class Acc: "]:.4f}')
+    logger.info(f'Freq Weighted IoU: {score["Freq Weighted IoU: "]:.4f}')
+    logger.info(f'Mean IoU: {score["Mean IoU: "]:0.4f}')
 
     # Save confusion matrix:
     confusion = score["confusion_matrix"]
     np.savetxt(path.join(log_dir, "confusion.csv"), confusion, delimiter=" ")
+
+    if debug:
+        config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
+        fname = f"metrics_test_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
+        with open(fname, "w") as fid:
+            json.dump(
+                {
+                    metric: score[metric]
+                    for metric in ["Pixel Acc: ", "Mean Class Acc: ", "Freq Weighted IoU: ", "Mean IoU: "]
+                },
+                fid,
+            )
 
 
 if __name__ == "__main__":

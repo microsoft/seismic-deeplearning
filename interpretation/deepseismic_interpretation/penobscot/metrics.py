@@ -18,7 +18,7 @@ def _torch_hist(label_true, label_pred, n_class):
     Returns:
         [type]: [description]
     """
-    # TODO Add exceptions
+    
     assert len(label_true.shape) == 1, "Labels need to be 1D"
     assert len(label_pred.shape) == 1, "Predictions need to be 1D"
     mask = (label_true >= 0) & (label_true < n_class)
@@ -34,6 +34,7 @@ def _default_tensor(image_height, image_width, pad_value=255):
 
 # TODO: make output transform unpad and scale down mask
 # scale up y_pred and remove padding
+# issue: https://github.com/microsoft/seismic-deeplearning/issues/276
 class InlineMeanIoU(Metric):
     """Compute Mean IoU for Inline
 
@@ -95,6 +96,7 @@ class InlineMeanIoU(Metric):
     def update(self, output):
         y_pred, y, ids, patch_locations = output
         # TODO: Make assertion exception
+        # issue: https://github.com/microsoft/seismic-deeplearning/issues/276
         max_prediction = y_pred.max(1)[1].squeeze()
         assert y.shape == max_prediction.shape, "Shape not the same"
 

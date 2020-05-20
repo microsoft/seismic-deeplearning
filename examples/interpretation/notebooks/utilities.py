@@ -2,11 +2,15 @@
 # Licensed under the MIT License.
 
 import itertools
-
+import os
+import urllib
+import pathlib
+import validators
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn.functional as F
+import yacs
 from ignite.utils import convert_tensor
 from scipy.ndimage import zoom
 from toolz import compose, curry, itertoolz, pipe
@@ -19,9 +23,9 @@ class runningScore(object):
 
     def _fast_hist(self, label_true, label_pred, n_class):
         mask = (label_true >= 0) & (label_true < n_class)
-        hist = np.bincount(n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,).reshape(
-            n_class, n_class
-        )
+        hist = np.bincount(
+            n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,
+        ).reshape(n_class, n_class)
         return hist
 
     def update(self, label_trues, label_preds):
@@ -148,7 +152,9 @@ def compose_processing_pipeline(depth, aug=None):
 
 
 def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
-    hdc_wdx_generator = itertools.product(range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride))
+    hdc_wdx_generator = itertools.product(
+        range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride)
+    )
 
     for batch_indexes in itertoolz.partition_all(batch_size, hdc_wdx_generator):
         yield batch_indexes
@@ -160,7 +166,9 @@ def output_processing_pipeline(config, output):
     _, _, h, w = output.shape
     if config.TEST.POST_PROCESSING.SIZE != h or config.TEST.POST_PROCESSING.SIZE != w:
         output = F.interpolate(
-            output, size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE), mode="bilinear",
+            output,
+            size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE),
+            mode="bilinear",
         )
 
     if config.TEST.POST_PROCESSING.CROP_PIXELS > 0:
@@ -175,7 +183,15 @@ def output_processing_pipeline(config, output):
 
 
 def patch_label_2d(
-    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes,
+    model,
+    img,
+    pre_processing,
+    output_processing,
+    patch_size,
+    stride,
+    batch_size,
+    device,
+    num_classes,
 ):
     """Processes a whole section"""
     img = torch.squeeze(img)
@@ -189,14 +205,19 @@ def patch_label_2d(
     # generate output:
     for batch_indexes in _generate_batches(h, w, ps, patch_size, stride, batch_size=batch_size):
         batch = torch.stack(
-            [pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing) for hdx, wdx in batch_indexes],
+            [
+                pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing)
+                for hdx, wdx in batch_indexes
+            ],
             dim=0,
         )
 
         model_output = model(batch.to(device))
         for (hdx, wdx), output in zip(batch_indexes, model_output.detach().cpu()):
             output = output_processing(output)
-            output_p[:, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size] += output
+            output_p[
+                :, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size
+            ] += output
 
     # crop the output_p in the middle
     output = output_p[:, :, ps:-ps, ps:-ps]
@@ -240,3 +261,177 @@ def plot_aline(aline, labels, xlabel, ylabel="depth"):
     plt.imshow(labels)
     plt.xlabel(xlabel)
     plt.title("Label")
+
+
+def validate_config_paths(config):
+    """Checks that all paths in the config file are valid"""
+    # TODO: this is currently hardcoded, in the future, its better to have a more generic solution.
+    # issue https://github.com/microsoft/seismic-deeplearning/issues/265
+
+    # Make sure DATASET.ROOT directory exist:
+    assert os.path.isdir(config.DATASET.ROOT), (
+        "The DATASET.ROOT specified in the config file is not a valid directory."
+        f" Please make sure this path is correct: {config.DATASET.ROOT}"
+    )
+
+    # if a pretrained model path is specified in the config, it should exist:
+    if "PRETRAINED" in config.MODEL.keys():
+        assert os.path.isfile(config.MODEL.PRETRAINED), (
+            "A pretrained model is specified in the config file but does not exist."
+            f" Please make sure this path is correct: {config.MODEL.PRETRAINED}"
+        )
+
+    # if a test model path is specified in the config, it should exist:
+    if "TEST" in config.keys():
+        if "MODEL_PATH" in config.TEST.keys():
+            assert os.path.isfile(config.TEST.MODEL_PATH), (
+                "The TEST.MODEL_PATH specified in the config file does not exist."
+                f" Please make sure this path is correct: {config.TEST.MODEL_PATH}"
+            )
+            # Furthermore, if this is a HRNet model, the pretrained model path should exist if the test model is specified:
+            if "hrnet" in config.MODEL.NAME:
+                assert os.path.isfile(config.MODEL.PRETRAINED), (
+                    "For an HRNet model, you should specify the MODEL.PRETRAINED path"
+                    " in the config file if the TEST.MODEL_PATH is also specified."
+                )
+
+
+def download_pretrained_model(config):
+    """
+    This function reads the config file and downloads model pretrained on the penobscot or dutch
+    f3 datasets from the deepseismicsharedstore Azure storage.
+
+    Pre-trained model is specified with MODEL.PRETRAINED parameter:
+    - if it's a URL, model is downloaded from the URL
+    - if it's a valid file handle, model is loaded from that file
+        - otherwise model is loaded from a pre-made URL which this code creates
+
+    Running this code will overwrite the config.MODEL.PRETRAINED parameter value to the downloaded
+    pretrained model. The is the model which training is initialized from. 
+    If this parameter is blank, we start from a randomly-initialized model.
+
+    DATASET.ROOT parameter specifies the dataset which the model was pre-trained on
+
+    MODEL.DEPTH optional parameter specified whether or not depth information was used in the model
+    and what kind of depth augmentation it was.
+
+    We determine the pre-trained model name from these two parameters.
+
+    """
+
+    # this assumes the name of the dataset is preserved in the path -- this is the default behaviour of the code.
+    if "dutch" in config.DATASET.ROOT:
+        dataset = "dutch"
+    elif "penobscot" in config.DATASET.ROOT:
+        dataset = "penobscot"
+    else:
+        raise NameError(
+            "Unknown dataset name. Only dutch f3 and penobscot are currently supported."
+        )
+
+    if "hrnet" in config.MODEL.NAME:
+        model = "hrnet"
+    elif "deconvnet" in config.MODEL.NAME:
+        model = "deconvnet"
+    elif "unet" in config.MODEL.NAME:
+        model = "unet"
+    else:
+        raise NameError(
+            "Unknown model name. Only hrnet, deconvnet, and unet are currently supported."
+        )
+
+    # check if the user already supplied a URL, otherwise figure out the URL
+    if validators.url(config.MODEL.PRETRAINED):
+        url = config.MODEL.PRETRAINED
+        print(f"Will use user-supplied URL of '{url}'")
+    elif os.path.isfile(config.MODEL.PRETRAINED):
+        url = None
+        print(f"Will use user-supplied file on local disk of '{config.MODEL.PRETRAINED}'")
+    else:
+        # As more pretrained models are added, add their URLs below:
+        if dataset == "penobscot":
+            if model == "hrnet":
+                # TODO: the code should check if the model uses patches or sections.
+                # issue: https://github.com/microsoft/seismic-deeplearning/issues/266
+                url = "https://deepseismicsharedstore.blob.core.windows.net/master-public-models/penobscot_hrnet_patch_section_depth.pth"
+            else:
+                raise NotImplementedError(
+                    "We don't store a pretrained model for Dutch F3 for this model combination yet."
+                )
+            # add other models here ..
+        elif dataset == "dutch":
+            # add other models here ..
+            if model == "hrnet" and config.TRAIN.DEPTH == "section":
+                url = "https://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_hrnet_patch_section_depth.pth"
+            elif model == "hrnet" and config.TRAIN.DEPTH == "patch":
+                url = "https://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_hrnet_patch_patch_depth.pth"
+            elif (
+                model == "deconvnet"
+                and "skip" in config.MODEL.NAME
+                and config.TRAIN.DEPTH == "none"
+            ):
+                url = "http://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_deconvnetskip_patch_no_depth.pth"
+
+            elif (
+                model == "deconvnet"
+                and "skip" not in config.MODEL.NAME
+                and config.TRAIN.DEPTH == "none"
+            ):
+                url = "http://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_deconvnet_patch_no_depth.pth"
+            elif model == "unet" and config.TRAIN.DEPTH == "section":
+                url = "http://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_seresnetunet_patch_section_depth.pth"
+            else:
+                raise NotImplementedError(
+                    "We don't store a pretrained model for Dutch F3 for this model combination yet."
+                )
+        else:
+            raise NotImplementedError(
+                "We don't store a pretrained model for this dataset/model combination yet."
+            )
+
+        print(f"Could not find a user-supplied URL, downloading from '{url}'")
+
+    # make sure the model_dir directory is writeable
+    model_dir = config.TRAIN.MODEL_DIR
+
+    if not os.path.isdir(os.path.dirname(model_dir)) or not os.access(
+        os.path.dirname(model_dir), os.W_OK
+    ):
+        print(f"Cannot write to TRAIN.MODEL_DIR={config.TRAIN.MODEL_DIR}")
+        home = str(pathlib.Path.home())
+        model_dir = os.path.join(home, "models")
+        print(f"Will write to TRAIN.MODEL_DIR={model_dir}")
+
+    if not os.path.isdir(model_dir):
+        os.makedirs(model_dir)
+
+    if url:
+        # Download the pretrained model:
+        pretrained_model_path = os.path.join(
+            model_dir, "pretrained_" + dataset + "_" + model + ".pth"
+        )
+
+        # always redownload the model
+        print(
+            f"Downloading the pretrained model to '{pretrained_model_path}'. This will take a few mintues.. \n"
+        )
+        urllib.request.urlretrieve(url, pretrained_model_path)
+        print("Model successfully downloaded.. \n")
+    else:
+        # use same model which was on disk anyway - no download needed
+        pretrained_model_path = config.MODEL.PRETRAINED
+
+    # Update config MODEL.PRETRAINED
+    # TODO: Only HRNet uses a pretrained model currently.
+    # issue https://github.com/microsoft/seismic-deeplearning/issues/267
+    opts = [
+        "MODEL.PRETRAINED",
+        pretrained_model_path,
+        "TRAIN.MODEL_DIR",
+        model_dir,
+        "TEST.MODEL_PATH",
+        pretrained_model_path,
+    ]
+    config.merge_from_list(opts)
+
+    return config

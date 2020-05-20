@@ -7,6 +7,8 @@ import pytest
 def pytest_addoption(parser):
     parser.addoption("--nbname", action="store", type=str, default=None)
     parser.addoption("--dataset_root", action="store", type=str, default=None)
+    parser.addoption("--model_pretrained", action="store", type=str, default=None)
+    parser.addoption("--cwd", action="store", type=str, default="examples/interpretation/notebooks")
 
 
 @pytest.fixture
@@ -18,6 +20,13 @@ def nbname(request):
 def dataset_root(request):
     return request.config.getoption("--dataset_root")
 
+@pytest.fixture
+def model_pretrained(request):
+    return request.config.getoption("--model_pretrained")
+
+@pytest.fixture
+def cwd(request):
+    return request.config.getoption("--cwd")
 
 """
 def pytest_generate_tests(metafunc):

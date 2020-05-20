@@ -9,18 +9,19 @@ WORKERS: 4
 PRINT_FREQ: 10
 LOG_CONFIG: logging.conf
 SEED: 2019
+OPENCV_BORDER_CONSTANT: 0
 
 
 DATASET:
   NUM_CLASSES: 6
-  ROOT: /home/username/data/dutch/data
+  ROOT: "/home/username/data/dutch/data"
   CLASS_WEIGHTS: [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
 
 MODEL:
   NAME: seg_hrnet
   IN_CHANNELS: 3
-  PRETRAINED: '/mnt/hrnet_pretrained/image_classification/hrnetv2_w48_imagenet_pretrained.pth'
+  PRETRAINED: "<ImageNet pretrained model path - please see main README>"
   EXTRA:
     FINAL_CONV_KERNEL: 1
     STAGE2:
@@ -73,7 +74,7 @@ TRAIN:
   WEIGHT_DECAY: 0.0001
   SNAPSHOTS: 5
   AUGMENTATION: True
-  DEPTH: "section" #"patch" # Options are No, Patch and Section
+  DEPTH: "section" # Options are: none, patch, and section
   STRIDE: 50
   PATCH_SIZE: 100
   AUGMENTATIONS:
@@ -82,7 +83,7 @@ TRAIN:
       WIDTH: 200
     PAD:
       HEIGHT: 256
-      WIDTH: 256
+      WIDTH: 256 
   MEAN: 0.0009997 # 0.0009996710808862074
   STD: 0.20977 # 0.20976548783479299 
   MODEL_DIR: "models"
@@ -91,12 +92,12 @@ TRAIN:
 VALIDATION:
   BATCH_SIZE_PER_GPU: 128
 
-TEST: 
-  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/experiments/segmentation/dutchf3/local/output/mat/exp/237c16780794800631c3f1895cacc475e15aca99/seg_hrnet/Sep17_115731/models/seg_hrnet_running_model_33.pth"
+TEST:
+  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/experiments/interpretation/dutchf3_patch/local/output/staging/0d1d2bbf9685995a0515ca1d9de90f9bcec0db90/seg_hrnet/Dec20_233535/models/seg_hrnet_running_model_33.pth"
   TEST_STRIDE: 10
   SPLIT: 'Both' # Can be Both, Test1, Test2
   INLINE: True
   CROSSLINE: True
-  POST_PROCESSING: 
-    SIZE: 128 # 
+  POST_PROCESSING:
+    SIZE: 128 #
     CROP_PIXELS: 14 # Number of pixels to crop top, bottom, left and right
