@@ -3,7 +3,7 @@
       "component": { 
        "type": "git", 
        "git": { 
-         "repositoryUrl": "https://github.com/olivesgatech/facies_classification_benchmark", 
+         "repositoryUrl": "https://github.com/yalaudah/facies_classification_benchmark", 
          "commitHash": "12102683a1ae78f8fbc953823c35a43b151194b3" 
          }
        },

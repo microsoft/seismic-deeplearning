@@ -1,0 +1,64 @@
+CUDNN:
+  BENCHMARK: true
+  DETERMINISTIC: false
+  ENABLED: true
+GPUS: (0,)
+OUTPUT_DIR: 'output' 
+LOG_DIR: 'log'
+WORKERS: 4
+PRINT_FREQ: 10
+LOG_CONFIG: logging.conf
+SEED: 2019
+
+
+DATASET:  
+  NUM_CLASSES: 7
+  ROOT: /mnt/penobscot
+  CLASS_WEIGHTS:  [0.02630481, 0.05448931, 0.0811898 , 0.01866496, 0.15868563, 0.0875993 , 0.5730662]
+  INLINE_HEIGHT: 1501
+  INLINE_WIDTH: 481
+MODEL:
+  NAME: resnet_unet
+  IN_CHANNELS: 3
+
+TRAIN:
+  COMPLETE_PATCHES_ONLY: True
+  BATCH_SIZE_PER_GPU: 16
+  BEGIN_EPOCH: 0
+  END_EPOCH: 300
+  MIN_LR: 0.0001
+  MAX_LR: 0.006
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.0001
+  SNAPSHOTS: 5
+  AUGMENTATION: True
+  DEPTH: "patch" # Options are none, patch, and section
+  STRIDE: 64
+  PATCH_SIZE: 128
+  AUGMENTATIONS:
+    RESIZE:
+      HEIGHT: 256
+      WIDTH: 256
+    PAD:
+      HEIGHT: 256
+      WIDTH: 256
+  MEAN:  [-0.0001777, 0.49, -0.0000688] # First value is for images, second for depth and then combination of both
+  STD: [0.14076 , 0.2717, 0.06286] 
+  MAX: 1 
+  MODEL_DIR: "models"
+
+
+VALIDATION:
+  BATCH_SIZE_PER_GPU: 16
+  COMPLETE_PATCHES_ONLY: True
+
+TEST:
+  COMPLETE_PATCHES_ONLY: False
+  MODEL_PATH: "/data/home/vapaunic/repos/DeepSeismic/experiments/interpretation/penobscot/local/output/vapaunic/metrics/4120aa99152b6e4f92f8134b783ac63c8131e1ed/resnet_unet/Nov05_105704/models/resnet_unet_running_model_1.pth"
+  AUGMENTATIONS:
+    RESIZE:
+      HEIGHT: 256
+      WIDTH: 256
+    PAD:
+      HEIGHT: 256
+      WIDTH: 256

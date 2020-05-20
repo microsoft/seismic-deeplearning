@@ -30,7 +30,7 @@ _C.CUDNN.ENABLED = True
 
 # DATASET related params
 _C.DATASET = CN()
-_C.DATASET.ROOT = "/mnt/dutchf3"
+_C.DATASET.ROOT = "/home/username/data/dutch/data"
 _C.DATASET.NUM_CLASSES = 6
 _C.DATASET.CLASS_WEIGHTS = [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
 
