@@ -378,7 +378,7 @@ jobs:
 # Stage 5: Notebook tests
 ###################################################################################################
 
-- job: F3_block_training_and_evaluation_local_notebook
+- job: Dutch_F3_patch_model_training_and_evaluation
   dependsOn: dutchf3_patch
   timeoutInMinutes: 5
   displayName: F3 block training and evaluation local notebook
