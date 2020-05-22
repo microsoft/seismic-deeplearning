@@ -132,7 +132,6 @@ class SectionLoader(data.Dataset):
         self.augmentations = augmentations
         self.n_classes = n_classes
         self.sections = list()
-        self.debug = debug
 
     def __len__(self):
         return len(self.sections)
@@ -151,24 +150,12 @@ class SectionLoader(data.Dataset):
 
         im, lbl = _transform_WH_to_HW(im), _transform_WH_to_HW(lbl)
 
-        if self.debug and "test" in self.split:
-            outdir = f"debug/sectionLoader_{self.split}_raw"
-            generate_path(outdir)
-            image_to_disk(im, f"{outdir}/index_{index}_section_{section_name}_img.png")
-            mask_to_disk(lbl, f"{outdir}/index_{index}_section_{section_name}_lbl.png")
-
         if self.augmentations is not None:
             augmented_dict = self.augmentations(image=im, mask=lbl)
             im, lbl = augmented_dict["image"], augmented_dict["mask"]
 
         if self.is_transform:
             im, lbl = self.transform(im, lbl)
-
-        if self.debug and "test" in self.split:
-            outdir = f"debug/sectionLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
-            generate_path(outdir)
-            image_to_disk(np.array(im[0]), f"{outdir}/index_{index}_section_{section_name}_img.png")
-            mask_to_disk(np.array(lbl[0]), f"{outdir}/index_{index}_section_{section_name}_lbl.png")
 
         return im, lbl
 
@@ -403,14 +390,6 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
 
         im, lbl = _transform_WH_to_HW(im), _transform_WH_to_HW(lbl)
 
-        # dump images before augmentation
-        if self.debug:
-            outdir = f"debug/testSectionLoaderWithDepth_{self.split}_raw"
-            generate_path(outdir)
-            # this needs to take the first dimension of image (no depth) but lbl only has 1 dim
-            image_to_disk(im[0, :, :], f"{outdir}/index_{index}_section_{section_name}_img.png")
-            mask_to_disk(lbl, f"{outdir}/index_{index}_section_{section_name}_lbl.png")
-
         if self.augmentations is not None:
             im = _transform_CHW_to_HWC(im)
             augmented_dict = self.augmentations(image=im, mask=lbl)
@@ -419,15 +398,6 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
 
         if self.is_transform:
             im, lbl = self.transform(im, lbl)
-
-        # dump images and labels to disk after augmentation
-        if self.debug:
-            outdir = (
-                f"debug/testSectionLoaderWithDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
-            )
-            generate_path(outdir)
-            image_to_disk(np.array(im[0, :, :]), f"{outdir}/index_{index}_section_{section_name}_img.png")
-            mask_to_disk(np.array(lbl[0, :, :]), f"{outdir}/index_{index}_section_{section_name}_lbl.png")
 
         return im, lbl
 
@@ -460,7 +430,7 @@ class PatchLoader(data.Dataset):
         self.patches = list()
         self.patch_size = patch_size
         self.stride = stride
-        self.debug = debug
+        self.debug=debug
 
     def pad_volume(self, volume):
         """
@@ -478,7 +448,7 @@ class PatchLoader(data.Dataset):
 
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
-        # Remember we are cancelling the shift since we no longer pad
+        # Remember we are cancelling the shift since we no longer pad        
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
 
@@ -490,13 +460,6 @@ class PatchLoader(data.Dataset):
             lbl = self.labels[idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size]
 
         im, lbl = _transform_WH_to_HW(im), _transform_WH_to_HW(lbl)
-
-        # dump raw images before augmentation
-        if self.debug:
-            outdir = f"debug/patchLoader_{self.split}_raw"
-            generate_path(outdir)
-            image_to_disk(im, f"{outdir}/index_{index}_section_{patch_name}_img.png")
-            mask_to_disk(lbl, f"{outdir}/index_{index}_section_{patch_name}_lbl.png")
 
         if self.augmentations is not None:
             augmented_dict = self.augmentations(image=im, mask=lbl)
@@ -511,14 +474,6 @@ class PatchLoader(data.Dataset):
 
         if self.is_transform:
             im, lbl = self.transform(im, lbl)
-
-        # dump images and labels to disk
-        if self.debug:
-            outdir = f"debug/patchLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
-            generate_path(outdir)
-            image_to_disk(np.array(im[0, :, :]), f"{outdir}/index_{index}_section_{patch_name}_img.png")
-            mask_to_disk(np.array(lbl[0, :, :]), f"{outdir}/index_{index}_section_{patch_name}_lbl.png")
-
         return im, lbl
 
     def transform(self, img, lbl):
@@ -664,7 +619,7 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
 
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
-        # Remember we are cancelling the shift since we no longer pad
+        # Remember we are cancelling the shift since we no longer pad        
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
 
@@ -743,7 +698,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
 
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
-        # Remember we are cancelling the shift since we no longer pad
+        # Remember we are cancelling the shift since we no longer pad        
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
 
@@ -756,13 +711,6 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             im = np.swapaxes(im, 0, 1)  # From WCH to CWH
 
         im, lbl = _transform_WH_to_HW(im), _transform_WH_to_HW(lbl)
-
-        # dump images before augmentation
-        if self.debug:
-            outdir = f"debug/patchLoaderWithSectionDepth_{self.split}_raw"
-            generate_path(outdir)
-            image_to_disk(im[0, :, :], f"{outdir}/index_{index}_section_{patch_name}_img.png")
-            mask_to_disk(lbl, f"{outdir}/index_{index}_section_{patch_name}_lbl.png")
 
         if self.augmentations is not None:
             im = _transform_CHW_to_HWC(im)
@@ -779,16 +727,6 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
 
         if self.is_transform:
             im, lbl = self.transform(im, lbl)
-
-        # dump images and labels to disk after augmentation
-        if self.debug:
-            outdir = (
-                f"debug/patchLoaderWithSectionDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
-            )
-            generate_path(outdir)
-            image_to_disk(np.array(im[0, :, :]), f"{outdir}/index_{index}_section_{patch_name}_img.png")
-            mask_to_disk(np.array(lbl[0, :, :]), f"{outdir}/index_{index}_section_{patch_name}_lbl.png")
-
         return im, lbl
 
     def __repr__(self):

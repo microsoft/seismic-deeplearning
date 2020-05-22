@@ -31,14 +31,14 @@ TRAIN:
   AUGMENTATION: True
   DEPTH: "none" # Options are none, patch, and section
   STRIDE: 50
-  PATCH_SIZE: 100
+  PATCH_SIZE: 99
   AUGMENTATIONS:
     RESIZE:
-      HEIGHT: 100
-      WIDTH: 100
+      HEIGHT: 99
+      WIDTH: 99
     PAD:
-      HEIGHT: 100
-      WIDTH: 100
+      HEIGHT: 99
+      WIDTH: 99
   MEAN: 0.0009997 # 0.0009996710808862074
   STD: 0.20977 # 0.20976548783479299 
   MODEL_DIR: "models"
@@ -53,5 +53,5 @@ TEST:
   INLINE: True
   CROSSLINE: True
   POST_PROCESSING: 
-    SIZE: 100
+    SIZE: 99 
     CROP_PIXELS: 0 # Number of pixels to crop top, bottom, left and right

@@ -30,7 +30,7 @@ from torch.utils import data
 from cv_lib.segmentation import models
 from cv_lib.segmentation.dutchf3.utils import current_datetime, git_branch, git_hash
 
-from cv_lib.utils import load_log_configuration, mask_to_disk, generate_path, image_to_disk
+from cv_lib.utils import load_log_configuration, mask_to_disk, generate_path
 from deepseismic_interpretation.dutchf3.data import add_patch_depth_channels, get_test_loader
 from default import _C as config
 from default import update_config
@@ -201,7 +201,7 @@ def _output_processing_pipeline(config, output):
 
 
 def _patch_label_2d(
-    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes, split, debug
+    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes,
 ):
     """Processes a whole section
     """
@@ -221,25 +221,9 @@ def _patch_label_2d(
         )
 
         model_output = model(batch.to(device))
-
         for (hdx, wdx), output in zip(batch_indexes, model_output.detach().cpu()):
             output = output_processing(output)
             output_p[:, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size,] += output
-
-        # dump the data right before it's being put into the model and after scoring
-        if debug:
-            outdir = f"debug/batch_{split}"
-            generate_path(outdir)
-            for i in range(batch.shape[0]):
-                image_to_disk(
-                    np.array(batch[i, 0, :, :]), f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}_img.png"
-                )
-                # now dump model predictions
-                for nclass in range(num_classes):
-                    mask_to_disk(
-                        np.array(model_output[i, nclass, :, :].detach().cpu()),
-                        f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}_class_{nclass}_pred.png",
-                    )
 
     # crop the output_p in the middle
     output = output_p[:, :, ps:-ps, ps:-ps]
@@ -251,14 +235,12 @@ def _evaluate_split(
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
-
     test_set = TestSectionLoader(
         config.DATASET.ROOT,
         config.DATASET.NUM_CLASSES,
         split=split,
         is_transform=True,
-        augmentations=section_aug,
-        debug=debug,
+        augmentations=section_aug
     )
 
     n_classes = test_set.n_classes
@@ -271,10 +253,10 @@ def _evaluate_split(
 
     try:
         output_dir = generate_path(
-            f"debug/{config.OUTPUT_DIR}_test_{split}", git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
+            config.OUTPUT_DIR + "_test", git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
         )
     except TypeError:
-        output_dir = generate_path(f"debug/{config.OUTPUT_DIR}_test_{split}", config.MODEL.NAME, current_datetime(),)
+        output_dir = generate_path(config.OUTPUT_DIR + "_test", config.MODEL.NAME, current_datetime(),)
 
     running_metrics_split = runningScore(n_classes)
 
@@ -296,8 +278,6 @@ def _evaluate_split(
                 config.VALIDATION.BATCH_SIZE_PER_GPU,
                 device,
                 n_classes,
-                split,
-                debug,
             )
 
             pred = outputs.detach().max(1)[1].numpy()
@@ -351,7 +331,6 @@ def _write_section_file(labels, section_file):
 
 
 def test(*options, cfg=None, debug=False):
-
     update_config(config, options=options, config_file=cfg)
     n_classes = config.DATASET.NUM_CLASSES
 

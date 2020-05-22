@@ -4,6 +4,7 @@
 """ libraries """
 
 import numpy as np
+import sys
 import os
 
 np.set_printoptions(linewidth=200)
@@ -29,7 +30,6 @@ def make_box(n_inlines, n_crosslines, n_depth, box_size):
     :param n_inlines: dim x
     :param n_crosslines: dim y
     :param n_depth: dim z
-    :param box_size: size of each checkerbox
     :return: numpy array
     """
     # inline by crossline by depth
@@ -69,36 +69,6 @@ def make_box(n_inlines, n_crosslines, n_depth, box_size):
 
     # trim excess again
     return final_box[0:n_inlines, 0:n_crosslines, 0:n_depth]
-
-
-def make_gradient(n_inlines, n_crosslines, n_depth, box_size, dir="inline"):
-    """
-    Makes a 3D box gradient pattern in a particula direction
-
-    :param n_inlines: dim x
-    :param n_crosslines: dim y
-    :param n_depth: dim z
-    :param box_size: thichkness of gradient box
-    :param dir: direction of the gradient - can be crossline, inline or depth
-    :return: numpy array
-    """
-
-    axis = GRADIENT_DIR.index(dir)
-    n_points = (n_inlines, n_crosslines, n_depth)[axis]
-    n_classes = int(np.ceil(float(n_points) / box_size))
-    logging.info(f"GRADIENT: we will output {n_classes} classes in the {dir} direction")
-
-    output = np.ones((n_inlines, n_crosslines, n_depth))
-    start, finish = 0, box_size
-    for i in range(n_classes):
-        sl = [slice(None)] * output.ndim
-        sl[axis] = range(start, finish)
-        # set all values equal to class number, starting from 0
-        output[tuple(sl)] = i
-        start += box_size
-        finish = min(n_points, finish + box_size)
-
-    return output
 
 
 def mkdir(path):
@@ -148,79 +118,30 @@ def main(args):
     # this is the number of classes in Alaudah's Dutch F3 dataset
     assert test2_labels.max() == 5
 
-    if args.type == "checkerboard":
-        logging.info("train checkerbox")
-        n_inlines, n_crosslines, n_depth = train_seismic.shape
-        checkerboard_train_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
-        checkerboard_train_seismic = checkerboard_train_seismic.astype(train_seismic.dtype)
-        checkerboard_train_labels = checkerboard_train_seismic.astype(train_labels.dtype)
-        # labels are integers and start from zero
-        checkerboard_train_labels[checkerboard_train_seismic < WHITE_LABEL] = WHITE_LABEL
+    logging.info("train checkerbox")
+    n_inlines, n_crosslines, n_depth = train_seismic.shape
+    checkerboard_train_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
+    checkerboard_train_seismic = checkerboard_train_seismic.astype(train_seismic.dtype)
+    checkerboard_train_labels = checkerboard_train_seismic.astype(train_labels.dtype)
+    # labels are integers and start from zero
+    checkerboard_train_labels[checkerboard_train_seismic < WHITE_LABEL] = WHITE_LABEL
 
-        # create checkerbox
-        logging.info("test1 checkerbox")
-        n_inlines, n_crosslines, n_depth = test1_seismic.shape
-        checkerboard_test1_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
-        checkerboard_test1_seismic = checkerboard_test1_seismic.astype(test1_seismic.dtype)
-        checkerboard_test1_labels = checkerboard_test1_seismic.astype(test1_labels.dtype)
-        # labels are integers and start from zero
-        checkerboard_test1_labels[checkerboard_test1_seismic < WHITE_LABEL] = WHITE_LABEL
+    # create checkerbox
+    logging.info("test1 checkerbox")
+    n_inlines, n_crosslines, n_depth = test1_seismic.shape
+    checkerboard_test1_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
+    checkerboard_test1_seismic = checkerboard_test1_seismic.astype(test1_seismic.dtype)
+    checkerboard_test1_labels = checkerboard_test1_seismic.astype(test1_labels.dtype)
+    # labels are integers and start from zero
+    checkerboard_test1_labels[checkerboard_test1_seismic < WHITE_LABEL] = WHITE_LABEL
 
-        logging.info("test2 checkerbox")
-        n_inlines, n_crosslines, n_depth = test2_seismic.shape
-        checkerboard_test2_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
-        checkerboard_test2_seismic = checkerboard_test2_seismic.astype(test2_seismic.dtype)
-        checkerboard_test2_labels = checkerboard_test2_seismic.astype(test2_labels.dtype)
-        # labels are integers and start from zero
-        checkerboard_test2_labels[checkerboard_test2_seismic < WHITE_LABEL] = WHITE_LABEL
-
-    # substitute gradient dataset instead of checkerboard
-    elif args.type == "gradient":
-
-        logging.info("train gradient")
-        n_inlines, n_crosslines, n_depth = train_seismic.shape
-        checkerboard_train_seismic = make_gradient(
-            n_inlines, n_crosslines, n_depth, args.box_size, dir=args.gradient_dir
-        )
-        checkerboard_train_seismic = checkerboard_train_seismic.astype(train_seismic.dtype)
-        checkerboard_train_labels = checkerboard_train_seismic.astype(train_labels.dtype)
-
-        # create checkerbox
-        logging.info("test1 gradient")
-        n_inlines, n_crosslines, n_depth = test1_seismic.shape
-        checkerboard_test1_seismic = make_gradient(
-            n_inlines, n_crosslines, n_depth, args.box_size, dir=args.gradient_dir
-        )
-        checkerboard_test1_seismic = checkerboard_test1_seismic.astype(test1_seismic.dtype)
-        checkerboard_test1_labels = checkerboard_test1_seismic.astype(test1_labels.dtype)
-        # labels are integers and start from zero
-        checkerboard_test1_labels[checkerboard_test1_seismic < WHITE_LABEL] = WHITE_LABEL
-
-        logging.info("test2 gradient")
-        n_inlines, n_crosslines, n_depth = test2_seismic.shape
-        checkerboard_test2_seismic = make_gradient(
-            n_inlines, n_crosslines, n_depth, args.box_size, dir=args.gradient_dir
-        )
-        checkerboard_test2_seismic = checkerboard_test2_seismic.astype(test2_seismic.dtype)
-        checkerboard_test2_labels = checkerboard_test2_seismic.astype(test2_labels.dtype)
-        # labels are integers and start from zero
-        checkerboard_test2_labels[checkerboard_test2_seismic < WHITE_LABEL] = WHITE_LABEL
-
-    # substitute binary dataset instead of checkerboard
-    elif args.type == "binary":
-
-        logging.info("train binary")
-        checkerboard_train_seismic = train_seismic * 0 + WHITE
-        checkerboard_train_labels = train_labels * 0 + WHITE_LABEL
-
-        # create checkerbox
-        logging.info("test1 binary")
-        checkerboard_test1_seismic = test1_seismic * 0 + BLACK
-        checkerboard_test1_labels = test1_labels * 0 + BLACK_LABEL
-
-        logging.info("test2 binary")
-        checkerboard_test2_seismic = test2_seismic * 0 + BLACK
-        checkerboard_test2_labels = test2_labels * 0 + BLACK_LABEL
+    logging.info("test2 checkerbox")
+    n_inlines, n_crosslines, n_depth = test2_seismic.shape
+    checkerboard_test2_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
+    checkerboard_test2_seismic = checkerboard_test2_seismic.astype(test2_seismic.dtype)
+    checkerboard_test2_labels = checkerboard_test2_seismic.astype(test2_labels.dtype)
+    # labels are integers and start from zero
+    checkerboard_test2_labels[checkerboard_test2_seismic < WHITE_LABEL] = WHITE_LABEL
 
     logging.info("writing data to disk")
     mkdir(args.dataout)
@@ -245,24 +166,10 @@ def main(args):
 WHITE = -1
 BLACK = 1
 WHITE_LABEL = 0
-BLACK_LABEL = BLACK
-TYPES = ["checkerboard", "gradient", "binary"]
-GRADIENT_DIR = ["inline", "crossline", "depth"]
 
 parser.add_argument("--dataroot", help="Root location of the input data", type=str, required=True)
 parser.add_argument("--dataout", help="Root location of the output data", type=str, required=True)
 parser.add_argument("--box_size", help="Size of the bounding box", type=int, required=False, default=100)
-parser.add_argument(
-    "--type", help="Type of data to generate", type=str, required=False, choices=TYPES, default="checkerboard",
-)
-parser.add_argument(
-    "--gradient_dir",
-    help="Direction in which to build the gradient",
-    type=str,
-    required=False,
-    choices=GRADIENT_DIR,
-    default="inline",
-)
 parser.add_argument("--debug", help="Turn on debug mode", type=bool, required=False, default=False)
 
 """ main wrapper with profiler """

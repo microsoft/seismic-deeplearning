@@ -178,63 +178,43 @@ jobs:
       pids=
       # export CUDA_VISIBLE_DEVICES=0
       # find the latest model which we just trained
-      # if we're running on a build VM
-      model_dir=$(ls -td output/patch_deconvnet/no_depth/* | head -1)
-      # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/patch_deconvnet/no_depth/* | head -1)
-      model=$(ls -t ${model_dir}/*.pth | head -1)
+      model=$(ls -td output/patch_deconvnet/no_depth/* | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'no_depth' \
                        'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
-                       'TEST.MODEL_PATH' ${model} \
-                       'WORKERS' 1 \
+                       'TEST.MODEL_PATH' ${model}/patch_deconvnet_running_model_0.*.pth \
                        --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
       # export CUDA_VISIBLE_DEVICES=1
       # find the latest model which we just trained
-      # if we're running on a build VM
-      model_dir=$(ls -td output/unet/section_depth/* | head -1)
-      # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/unet/section_depth/* | head -1)
-      model=$(ls -t ${model_dir}/*.pth | head -1)
+      model=$(ls -td output/unet/section_depth/* | head -1)      
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
-                       'TEST.MODEL_PATH' ${model} \
-                       'WORKERS' 1 \
+                       'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_0.*.pth \
                        --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
       # export CUDA_VISIBLE_DEVICES=2
       # find the latest model which we just trained
-      # if we're running on a build VM
-      model_dir=$(ls -td output/seresnet_unet/section_depth/* | head -1)
-      # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/seresnet_unet/section_depth/* | head -1)
-      model=$(ls -t ${model_dir}/*.pth | head -1)
+      model=$(ls -td output/seresnet_unet/section_depth/* | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
                        'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
-                       'TEST.MODEL_PATH' ${model} \
-                       'WORKERS' 1 \
+                       'TEST.MODEL_PATH' ${model}/resnet_unet_running_model_0.*.pth \
                        --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
       # export CUDA_VISIBLE_DEVICES=3
       # find the latest model which we just trained
-      # if we're running on a build VM
-      model_dir=$(ls -td output/hrnet/section_depth/* | head -1)
-      # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/hrnet/section_depth/* | head -1)
-      model=$(ls -t ${model_dir}/*.pth | head -1)
+      model=$(ls -td output/hrnet/section_depth/* | head -1)      
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
                        'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
-                       'TEST.MODEL_PATH' ${model} \
-                       'WORKERS' 1 \
+                       'TEST.MODEL_PATH' ${model}/seg_hrnet_running_model_0.*.pth \
                        --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
 
@@ -268,7 +248,7 @@ jobs:
 
 - job: dutchf3_patch
   dependsOn: checkerboard_dutchf3_patch
-  timeoutInMinutes: 25
+  timeoutInMinutes: 20
   displayName: Dutch F3 patch local
   pool:
     name: deepseismicagentpool
@@ -336,59 +316,46 @@ jobs:
       pids=
       # export CUDA_VISIBLE_DEVICES=0
       # find the latest model which we just trained
-      # if we're running on a build VM
       model_dir=$(ls -td output/patch_deconvnet/no_depth/* | head -1)
-      # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/patch_deconvnet/no_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'no_depth' \
                        'TEST.MODEL_PATH' ${model} \
-                       'WORKERS' 1 \
                        --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
       # export CUDA_VISIBLE_DEVICES=1
       # find the latest model which we just trained
-      # if we're running on a build VM
       model_dir=$(ls -td output/unet/section_depth/* | head -1)
-      # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/unet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
+
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'TEST.MODEL_PATH' ${model} \
-                       'WORKERS' 1 \
                        --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
       # export CUDA_VISIBLE_DEVICES=2
       # find the latest model which we just trained
-      # if we're running on a build VM
       model_dir=$(ls -td output/seresnet_unet/section_depth/* | head -1)
-      # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/seresnet_unet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
+
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'TEST.MODEL_PATH' ${model} \
-                       'WORKERS' 1 \
                        --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
       # export CUDA_VISIBLE_DEVICES=3
       # find the latest model which we just trained
-      # if we're running on a build VM
       model_dir=$(ls -td output/hrnet/section_depth/* | head -1)
-      # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/hrnet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
+
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                        'TEST.MODEL_PATH' ${model} \
-                       'WORKERS' 1 \
                        --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
 
@@ -411,7 +378,7 @@ jobs:
 # Stage 5: Notebook tests
 ###################################################################################################
 
-- job: F3_block_training_and_evaluation_local_notebook
+- job: Dutch_F3_patch_model_training_and_evaluation
   dependsOn: dutchf3_patch
   timeoutInMinutes: 5
   displayName: F3 block training and evaluation local notebook
