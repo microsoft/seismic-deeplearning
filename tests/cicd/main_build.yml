@@ -185,7 +185,7 @@ jobs:
       # if we're running on a build VM
       model_dir=$(ls -td output/patch_deconvnet/no_depth/* | head -1)
       # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/patch_deconvnet/no_depth/* | head -1)
+      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/patch_deconvnet/no_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/data/test/gradient/data' \
@@ -200,7 +200,7 @@ jobs:
       # if we're running on a build VM
       model_dir=$(ls -td output/unet/section_depth/* | head -1)
       # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/unet/section_depth/* | head -1)
+      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/unet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/data/test/binary/data' \
@@ -215,7 +215,7 @@ jobs:
       # if we're running on a build VM
       model_dir=$(ls -td output/seresnet_unet/section_depth/* | head -1)
       # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/seresnet_unet/section_depth/* | head -1)
+      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/seresnet_unet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
@@ -230,7 +230,7 @@ jobs:
       # if we're running on a build VM
       model_dir=$(ls -td output/hrnet/section_depth/* | head -1)
       # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/hrnet/section_depth/* | head -1)
+      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/hrnet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
@@ -347,7 +347,7 @@ jobs:
       # if we're running on a build VM
       model_dir=$(ls -td output/patch_deconvnet/no_depth/* | head -1)
       # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/patch_deconvnet/no_depth/* | head -1)
+      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/patch_deconvnet/no_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
@@ -361,7 +361,7 @@ jobs:
       # if we're running on a build VM
       model_dir=$(ls -td output/unet/section_depth/* | head -1)
       # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/unet/section_depth/* | head -1)
+      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/unet/section_depth* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
@@ -375,7 +375,7 @@ jobs:
       # if we're running on a build VM
       model_dir=$(ls -td output/seresnet_unet/section_depth/* | head -1)
       # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/seresnet_unet/section_depth/* | head -1)
+      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/seresnet_unet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
@@ -389,7 +389,7 @@ jobs:
       # if we're running on a build VM
       model_dir=$(ls -td output/hrnet/section_depth/* | head -1)
       # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/*/*/hrnet/section_depth/* | head -1)
+      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/hrnet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
       { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
