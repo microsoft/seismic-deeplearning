@@ -113,15 +113,18 @@ data
     └── train_seismic.npy
 ```
 
-To prepare the data for the experiments (e.g. split into train/val/test), first change `data_dir` definition to `data_dir="$HOME/data/dutch/data"` , and please run the following script:
+To prepare the data for the experiments (e.g. split into train/val/test), please run the following script:
 
 ```
 # change working directory to scripts folder
 cd scripts
 
 # For patch-based experiments
-python prepare_dutchf3.py split_train_val patch --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits \
+python prepare_dutchf3.py split_train_val patch --data_dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits \
 --stride=50 --patch_size=100 --split_direction=both
+
+# For section-based experiments
+python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits \ --split_direction=both
 
 # go back to repo root
 cd ..
