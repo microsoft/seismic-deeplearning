@@ -4,8 +4,8 @@ You can run five different models on this dataset:
 * [HRNet](local/configs/hrnet.yaml)
 * [SEResNet](local/configs/seresnet_unet.yaml)
 * [UNet](local/configs/unet.yaml)
-* [PatchDeconvNet](local/configs/patch_patch_deconvnet.yaml)
-* [PatchDeconvNet-Skip](local/configs/patch_deconvnet_skip.yaml.yaml)
+* [PatchDeconvNet](local/configs/patch_deconvnet.yaml)
+* [PatchDeconvNet-Skip](local/configs/patch_deconvnet_skip.yaml)
 
 All these models take 2D patches of the dataset as input and provide predictions for those patches. The patches need to be stitched together to form a whole inline or crossline.
 

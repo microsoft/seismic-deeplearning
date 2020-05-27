@@ -26,7 +26,7 @@ If you run into any problems, chances are your problem has already been solved i
 The notebook is designed to be run in demo mode by default using a pre-trained model in under 5 minutes on any reasonable Deep Learning GPU such as nVidia K80/P40/P100/V100/TitanV.
 
 ### Azure Machine Learning
-[Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/) enables you to train and deploy your machine learning models and pipelines at scale, ane leverage open-source Python frameworks, such as PyTorch, TensorFlow, and scikit-learn. If you are looking at getting started with using the code in this repository with Azure Machine Learning, refer to [Azure Machine Learning How-to](https://github.com/Azure/MachineLearningNotebooks/tree/master/how-to-use-azureml) to get started.
+[Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/) enables you to train and deploy your machine learning models and pipelines at scale, and leverage open-source Python frameworks, such as PyTorch, TensorFlow, and scikit-learn. If you are looking at getting started with using the code in this repository with Azure Machine Learning, refer to [Azure Machine Learning How-to](https://github.com/Azure/MachineLearningNotebooks/tree/master/how-to-use-azureml) to get started.
 
 ## Interpretation
 For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-the-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation.
@@ -113,7 +113,7 @@ data
     └── train_seismic.npy
 ```
 
-To prepare the data for the experiments (e.g. split into train/val/test), please run the following script:
+To prepare the data for the experiments (e.g. split into train/val/test), first change `data_dir` definition to `data_dir="$HOME/data/dutch/data"` , and please run the following script:
 
 ```
 # change working directory to scripts folder
@@ -229,8 +229,8 @@ This section contains benchmarks of different algorithms for seismic interpretat
 
 
 #### Reproduce benchmarks
-In order to reproduce the benchmarks, you will need to navigate to the [experiments](experiments) folder. In there, each of the experiments are split into different folders. To run the Netherlands F3 experiment navigate to the [dutchf3_patch/local](experiments/dutchf3_patch/local) folder. In there is a training script [([train.sh](experiments/dutchf3_patch/local/train.sh))
-which will run the training for any configuration you pass in. Once you have run the training you will need to run the [test.sh](experiments/dutchf3_patch/local/test.sh) script. Make sure you specify
+In order to reproduce the benchmarks, you will need to navigate to the [experiments](experiments) folder. In there, each of the experiments are split into different folders. To run the Netherlands F3 experiment navigate to the [dutchf3_patch/local](experiments/interpretation/dutchf3_patch/local) folder. In there is a training script [([train.sh](experiments//interpretation/dutchf3_patch/local/train.sh))
+which will run the training for any configuration you pass in. Once you have run the training you will need to run the [test.sh](experiments/interpretation/dutchf3_patch/local/test.sh) script. Make sure you specify
 the path to the best performing model from your training run, either by passing it in as an argument or altering the YACS config file. 
 
 ## Contributing
