@@ -18,7 +18,7 @@ Also follow instructions for [downloading and preparing](../../../README.md#f3-N
 
 ### Running experiments
 
-Now you're all set to run training and testing experiments on the F3 Netherlands dataset. Please start from the `train.sh` and `test.sh` scripts under the `local/` and `distributed/` directories, which invoke the corresponding python scripts. Take a look at the project configurations in (e.g in `default.py`) for experiment options and modify if necessary. 
+Now you're all set to run training and testing experiments on the F3 Netherlands dataset. Please start from the `train.sh` and `test.sh` scripts under the `local/` directory, which invoke the corresponding python scripts. Take a look at the project configurations in (e.g in `default.py`) for experiment options and modify if necessary. 
 
 ### Monitoring progress with TensorBoard
 - from the this directory, run `tensorboard --logdir='output'` (all runtime logging information is
