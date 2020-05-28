@@ -188,9 +188,9 @@ jobs:
       [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/patch_deconvnet/no_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
-      { python test.py 'DATASET.ROOT' '/data/test/gradient/data' \
+      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'no_depth' \
-                       'DATASET.NUM_CLASSES' 7 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0,1.0, 1.0,1.0, 1.0,1.0]' \
+                       'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                        'TEST.MODEL_PATH' ${model} \
                        'WORKERS' 1 \
                        --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
@@ -203,9 +203,9 @@ jobs:
       [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/unet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
-      { python test.py 'DATASET.ROOT' '/data/test/binary/data' \
+      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
-                       'DATASET.NUM_CLASSES' 7 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0,1.0, 1.0,1.0, 1.0,1.0]' \
+                       'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                        'TEST.MODEL_PATH' ${model} \
                        'WORKERS' 1 \
                        --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
