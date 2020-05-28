@@ -1,4 +1,4 @@
-This Docker image allows the user to run the notebooks in this repository on any unix based operating system without having to setup the environment or install anything other than the Docker engine. We recommend using [Azure Data Science Virtual Machine (DSVM) for Linux (Ubuntu)](https://docs.microsoft.com/en-us/azure/machine-learning/data-science-virtual-machine/dsvm-ubuntu-intro) as outlined [here](../README.md#compute-environment). For instructions on how to install the Docker engine, click [here](https://www.docker.com/get-started). 
+This Docker image allows the user to run the notebooks in this repository on any Unix based operating system without having to setup the environment or install anything other than the Docker engine. We recommend using [Azure Data Science Virtual Machine (DSVM) for Linux (Ubuntu)](https://docs.microsoft.com/en-us/azure/machine-learning/data-science-virtual-machine/dsvm-ubuntu-intro) as outlined [here](../README.md#compute-environment). For instructions on how to install the Docker engine, click [here](https://www.docker.com/get-started). 
 
 # Download the HRNet model: 
 
