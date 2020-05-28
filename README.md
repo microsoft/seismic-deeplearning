@@ -3,6 +3,33 @@
 
 This repository shows you how to perform seismic imaging and interpretation on Azure. It empowers geophysicists and data scientists to run seismic experiments using state-of-art DSL-based PDE solvers and segmentation algorithms on Azure.  
 
+Highlights of the latest release for Seismic Interpretation [v0.1.2](https://github.com/microsoft/seismic-deeplearning/tree/v0.1.2), 
+
+
+| Module                  | Features                                                                                 |
+|-------------------------|------------------------------------------------------------------------------------------|
+| Data ingestion pipeline | * Scripts to download and prepare Dutch F3 and Penobscot datasets.                       |
+|                         | * Patch-based and section-based data prepration.                                         |
+| Training pipeline       | * Configurable for different options through configuration files for five architectures: |
+|                         | ---HRNet                                                                                 |
+|                         | ---SEResNet                                                                              |
+|                         | ---UNet                                                                                  |
+|                         | ---PatchDeconvNet                                                                        |
+|                         | ---PatchDeconvNet-Skip                                                                   |
+|                         | * Option to train a model from scratch.                                                  |
+|                         | * Option to use a pre-trained a model.                                                   |
+| Scoring pipeline        | * Configurable to run for different training expriments.                                 |
+
+
+additionaly:
+
+|----------|------------|
+| Docker   | Enabled    |
+| OS       | Linux      |
+| Hardware | Single GPU |
+
+
+
 The repository provides sample notebooks, data loaders for seismic data, utilities, and out-of-the-box ML pipelines, organized as follows:
 - **sample notebooks**: these can be found in the `examples` folder - they are standard Jupyter notebooks which highlight how to use the codebase by walking the user through a set of pre-made examples
 - **experiments**: the goal is to provide runnable Python scripts that train and test (score) our machine learning models in the `experiments` folder. The models themselves are swappable, meaning a single train script can be used to run a different model on the same dataset by simply swapping out the configuration file which defines the model. 
