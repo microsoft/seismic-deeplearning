@@ -1,8 +1,8 @@
-This Docker image allows the user to run the notebooks in this repository on any operating system without having to setup the environment or install anything other than the Docker engine. For instructions on how to install the Docker engine, click [here](https://www.docker.com/get-started). 
+This Docker image allows the user to run the notebooks in this repository on any unix based operating system without having to setup the environment or install anything other than the Docker engine. We recommend using [Azure Data Science Virtual Machine (DSVM) for Linux (Ubuntu)](https://docs.microsoft.com/en-us/azure/machine-learning/data-science-virtual-machine/dsvm-ubuntu-intro) as outlined [here](../README.md#compute-environment). For instructions on how to install the Docker engine, click [here](https://www.docker.com/get-started). 
 
 # Download the HRNet model: 
 
-To run the [`HRNet_Penobscot_demo_notebook.ipynb`](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/HRNet_Penobscot_demo_notebook.ipynb), you will need to manually download the [HRNet-W48-C](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk) pretrained model. You can follow the instructions [here.](../README.md#pretrained-models). 
+To run the [`Dutch_F3_patch_model_training_and_evaluation.ipynb`](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb), you will need to manually download the [HRNet-W48-C](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk) pretrained model. You can follow the instructions [here.](../README.md#pretrained-models). 
 
 If you are using an Azure Virtual Machine to run this code, you can download the model to your local machine, and then copy it to your Azure VM through the command below. Please make sure you update the `<azureuser>` and `<azurehost>` feilds.
 ```bash
