@@ -25,7 +25,8 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     wget --quiet https://github.com/microsoft/seismic-deeplearning/archive/master.zip -O master.zip && \
     unzip master.zip && rm master.zip
 
-RUN cd seismic-deeplearning-master && \
+RUN mv seismic-deeplearning-master seismic-deeplearning && \
+    cd seismic-deeplearning && \
     conda env create -n seismic-interpretation --file environment/anaconda/local/environment.yml && \
     source activate seismic-interpretation && \
     python -m ipykernel install --user --name seismic-interpretation && \
@@ -34,7 +35,7 @@ RUN cd seismic-deeplearning-master && \
 
 # TODO: add back in later when Penobscot notebook is available
 # Download Penobscot dataset:
-# RUN cd seismic-deeplearning-master && \
+# RUN cd seismic-deeplearning && \
 #    data_dir="/home/username/data/penobscot" && \
 #    mkdir -p "$data_dir" && \
 #    ./scripts/download_penobscot.sh "$data_dir"  && \
@@ -44,7 +45,7 @@ RUN cd seismic-deeplearning-master && \
 #    cd ..
 
 # Download F3 dataset:
-RUN cd seismic-deeplearning-master && \
+RUN cd seismic-deeplearning && \
     data_dir="/home/username/data/dutch" && \
     mkdir -p "$data_dir" && \
     ./scripts/download_dutch_f3.sh "$data_dir" && \

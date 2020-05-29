@@ -72,7 +72,7 @@ def run(*options, cfg=None, debug=False):
         output_dir = generate_path(
             config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),
         )
-    except TypeError:
+    except:
         output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
     # Logging:
