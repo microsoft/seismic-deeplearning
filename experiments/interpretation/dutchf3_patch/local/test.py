@@ -245,6 +245,7 @@ def _patch_label_2d(
     output = output_p[:, :, ps:-ps, ps:-ps]
     return output
 
+
 def _evaluate_split(
     split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config, debug=False,
 ):
@@ -273,7 +274,7 @@ def _evaluate_split(
         output_dir = generate_path(
             f"debug/{config.OUTPUT_DIR}_test_{split}", git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
         )
-    except TypeError:
+    except:
         output_dir = generate_path(f"debug/{config.OUTPUT_DIR}_test_{split}", config.MODEL.NAME, current_datetime(),)
 
     running_metrics_split = runningScore(n_classes)
