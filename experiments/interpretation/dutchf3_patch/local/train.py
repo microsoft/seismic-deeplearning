@@ -73,7 +73,7 @@ def run(*options, cfg=None, debug=False):
             config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),
         )
     except TypeError:
-        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)    
+        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
     # Logging:
     load_log_configuration(config.LOG_CONFIG)
@@ -133,8 +133,7 @@ def run(*options, cfg=None, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=train_aug,
-        #augmentations=Resize(config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True),
-        debug=True
+        debug=True,
     )
     logger.info(train_set)
     n_classes = train_set.n_classes
@@ -146,14 +145,13 @@ def run(*options, cfg=None, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=val_aug,
-        #augmentations=Resize(config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True),
-        debug=True
+        debug=True,
     )
     logger.info(val_set)
 
     if debug:
         logger.info("Running in debug mode..")
-        train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*config.NUM_DEBUG_BATCHES))
+        train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU * config.NUM_DEBUG_BATCHES))
         val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
 
     train_loader = data.DataLoader(
