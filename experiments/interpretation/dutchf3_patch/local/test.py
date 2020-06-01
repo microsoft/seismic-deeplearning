@@ -309,8 +309,8 @@ def _evaluate_split(
             running_metrics_overall.update(gt, pred)
 
             #  dump images to disk for review
-            mask_to_disk(pred.squeeze(), os.path.join(output_dir, f"{i}_pred.png", n_classes))
-            mask_to_disk(gt.squeeze(), os.path.join(output_dir, f"{i}_gt.png", n_classes))
+            mask_to_disk(pred.squeeze(), os.path.join(output_dir, f"{i}_pred.png"), n_classes)
+            mask_to_disk(gt.squeeze(), os.path.join(output_dir, f"{i}_gt.png"), n_classes)
 
     # get scores
     score, class_iou = running_metrics_split.get_scores()
