@@ -3,10 +3,11 @@
 
 This repository shows you how to perform seismic imaging and interpretation on Azure. It empowers geophysicists and data scientists to run seismic experiments using state-of-art DSL-based PDE solvers and segmentation algorithms on Azure.  
 
+
 The repository provides sample notebooks, data loaders for seismic data, utilities, and out-of-the-box ML pipelines, organized as follows:
 - **sample notebooks**: these can be found in the `examples` folder - they are standard Jupyter notebooks which highlight how to use the codebase by walking the user through a set of pre-made examples
 - **experiments**: the goal is to provide runnable Python scripts that train and test (score) our machine learning models in the `experiments` folder. The models themselves are swappable, meaning a single train script can be used to run a different model on the same dataset by simply swapping out the configuration file which defines the model. 
-- **pip installable utilities**: we provide `cv_lib` and `deepseismic_interpretation` utilities (more info below) which are used by both sample notebooks and experiments mentioned above
+- **pip installable utilities**: we provide `cv_lib` and `interpretation` utilities (more info below) which are used by both sample notebooks and experiments mentioned above
 
 DeepSeismic currently focuses on Seismic Interpretation (3D segmentation aka facies classification) with experimental code provided around Seismic Imaging in the contrib folder.
 
@@ -26,7 +27,7 @@ If you run into any problems, chances are your problem has already been solved i
 The notebook is designed to be run in demo mode by default using a pre-trained model in under 5 minutes on any reasonable Deep Learning GPU such as nVidia K80/P40/P100/V100/TitanV.
 
 ### Azure Machine Learning
-[Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/) enables you to train and deploy your machine learning models and pipelines at scale, ane leverage open-source Python frameworks, such as PyTorch, TensorFlow, and scikit-learn. If you are looking at getting started with using the code in this repository with Azure Machine Learning, refer to [Azure Machine Learning How-to](https://github.com/Azure/MachineLearningNotebooks/tree/master/how-to-use-azureml) to get started.
+[Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/) enables you to train and deploy your machine learning models and pipelines at scale, and leverage open-source Python frameworks, such as PyTorch, TensorFlow, and scikit-learn. If you are looking at getting started with using the code in this repository with Azure Machine Learning, refer to [Azure Machine Learning How-to](https://github.com/Azure/MachineLearningNotebooks/tree/master/how-to-use-azureml) to get started.
 
 ## Interpretation
 For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-the-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation.
@@ -120,8 +121,11 @@ To prepare the data for the experiments (e.g. split into train/val/test), please
 cd scripts
 
 # For patch-based experiments
-python prepare_dutchf3.py split_train_val patch --data_dir=${data_dir} --label_file=train/train_labels.npy --output_dir=splits \
+python prepare_dutchf3.py split_train_val patch --data_dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits \
 --stride=50 --patch_size=100 --split_direction=both
+
+# For section-based experiments
+python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits \ --split_direction=both
 
 # go back to repo root
 cd ..
@@ -229,8 +233,8 @@ This section contains benchmarks of different algorithms for seismic interpretat
 
 
 #### Reproduce benchmarks
-In order to reproduce the benchmarks, you will need to navigate to the [experiments](experiments) folder. In there, each of the experiments are split into different folders. To run the Netherlands F3 experiment navigate to the [dutchf3_patch/local](experiments/dutchf3_patch/local) folder. In there is a training script [([train.sh](experiments/dutchf3_patch/local/train.sh))
-which will run the training for any configuration you pass in. Once you have run the training you will need to run the [test.sh](experiments/dutchf3_patch/local/test.sh) script. Make sure you specify
+In order to reproduce the benchmarks, you will need to navigate to the [experiments](experiments) folder. In there, each of the experiments are split into different folders. To run the Netherlands F3 experiment navigate to the [dutchf3_patch/local](experiments/interpretation/dutchf3_patch/local) folder. In there is a training script [([train.sh](experiments/interpretation/dutchf3_patch/local/train.sh))
+which will run the training for any configuration you pass in. Once you have run the training you will need to run the [test.sh](experiments/interpretation/dutchf3_patch/local/test.sh) script. Make sure you specify
 the path to the best performing model from your training run, either by passing it in as an argument or altering the YACS config file. 
 
 ## Contributing
