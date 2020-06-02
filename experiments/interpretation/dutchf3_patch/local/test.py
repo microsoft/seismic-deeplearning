@@ -281,7 +281,7 @@ def _evaluate_split(
 
     running_metrics_split = runningScore(n_classes)
 
-    # testing mode:
+    # evaluation mode:
     with torch.no_grad():  # operations inside don't track history
         model.eval()
         total_iteration = 0
