@@ -184,6 +184,8 @@ def main(args):
         )
         checkerboard_train_seismic = checkerboard_train_seismic.astype(train_seismic.dtype)
         checkerboard_train_labels = checkerboard_train_seismic.astype(train_labels.dtype)
+        # labels are integers and start from zero
+        checkerboard_train_labels[checkerboard_train_seismic < WHITE_LABEL] = WHITE_LABEL
 
         # create checkerbox
         logging.info("test1 gradient")
