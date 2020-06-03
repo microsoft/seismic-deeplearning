@@ -154,8 +154,9 @@ class SectionLoader(data.Dataset):
         if self.debug and "test" in self.split:
             outdir = f"debug/sectionLoader_{self.split}_raw"
             generate_path(outdir)
-            image_to_disk(im, f"{outdir}/index_{index}_section_{section_name}_img.png")
-            mask_to_disk(lbl, f"{outdir}/index_{index}_section_{section_name}_lbl.png")
+            path_prefix = f"{outdir}/index_{index}_section_{section_name}"
+            image_to_disk(im, path_prefix + "_img.png")
+            mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.augmentations is not None:
             augmented_dict = self.augmentations(image=im, mask=lbl)
@@ -167,8 +168,9 @@ class SectionLoader(data.Dataset):
         if self.debug and "test" in self.split:
             outdir = f"debug/sectionLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
-            image_to_disk(np.array(im[0]), f"{outdir}/index_{index}_section_{section_name}_img.png")
-            mask_to_disk(np.array(lbl[0]), f"{outdir}/index_{index}_section_{section_name}_lbl.png")
+            path_prefix = f"{outdir}/index_{index}_section_{section_name}"
+            image_to_disk(np.array(im[0]), path_prefix + "_img.png")
+            mask_to_disk(np.array(lbl[0]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl
 
@@ -408,8 +410,9 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
             outdir = f"debug/testSectionLoaderWithDepth_{self.split}_raw"
             generate_path(outdir)
             # this needs to take the first dimension of image (no depth) but lbl only has 1 dim
-            image_to_disk(im[0, :, :], f"{outdir}/index_{index}_section_{section_name}_img.png")
-            mask_to_disk(lbl, f"{outdir}/index_{index}_section_{section_name}_lbl.png")
+            path_prefix = f"{outdir}/index_{index}_section_{section_name}"
+            image_to_disk(im[0, :, :], path_prefix + "_img.png")
+            mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.augmentations is not None:
             im = _transform_CHW_to_HWC(im)
@@ -426,8 +429,9 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
                 f"debug/testSectionLoaderWithDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             )
             generate_path(outdir)
-            image_to_disk(np.array(im[0, :, :]), f"{outdir}/index_{index}_section_{section_name}_img.png")
-            mask_to_disk(np.array(lbl[0, :, :]), f"{outdir}/index_{index}_section_{section_name}_lbl.png")
+            path_prefix = f"{outdir}/index_{index}_section_{section_name}"
+            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png")
+            mask_to_disk(np.array(lbl[0, :, :]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl
 
@@ -495,8 +499,9 @@ class PatchLoader(data.Dataset):
         if self.debug:
             outdir = f"debug/patchLoader_{self.split}_raw"
             generate_path(outdir)
-            image_to_disk(im, f"{outdir}/index_{index}_section_{patch_name}_img.png")
-            mask_to_disk(lbl, f"{outdir}/index_{index}_section_{patch_name}_lbl.png")
+            path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
+            image_to_disk(im, path_prefix + "_img.png")
+            mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.augmentations is not None:
             augmented_dict = self.augmentations(image=im, mask=lbl)
@@ -506,8 +511,9 @@ class PatchLoader(data.Dataset):
         if self.debug:
             outdir = f"patchLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
-            image_to_disk(im, f"{outdir}/{index}_img.png")
-            mask_to_disk(lbl, f"{outdir}/{index}_lbl.png")
+            path_prefix = f"{outdir}/{index}"
+            image_to_disk(im, path_prefix + "_img.png")
+            mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.is_transform:
             im, lbl = self.transform(im, lbl)
@@ -516,8 +522,9 @@ class PatchLoader(data.Dataset):
         if self.debug:
             outdir = f"debug/patchLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
-            image_to_disk(np.array(im[0, :, :]), f"{outdir}/index_{index}_section_{patch_name}_img.png")
-            mask_to_disk(np.array(lbl[0, :, :]), f"{outdir}/index_{index}_section_{patch_name}_lbl.png")
+            path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
+            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png")
+            mask_to_disk(np.array(lbl[0, :, :]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl
 
@@ -761,8 +768,9 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
         if self.debug:
             outdir = f"debug/patchLoaderWithSectionDepth_{self.split}_raw"
             generate_path(outdir)
-            image_to_disk(im[0, :, :], f"{outdir}/index_{index}_section_{patch_name}_img.png")
-            mask_to_disk(lbl, f"{outdir}/index_{index}_section_{patch_name}_lbl.png")
+            path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
+            image_to_disk(im[0, :, :], path_prefix + "_img.png")
+            mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.augmentations is not None:
             im = _transform_CHW_to_HWC(im)
@@ -774,8 +782,9 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
         if self.debug:
             outdir = f"patchLoaderWithSectionDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
-            image_to_disk(im[0,:,:], f"{outdir}/{index}_img.png")
-            mask_to_disk(lbl, f"{outdir}/{index}_lbl.png")
+            path_prefix = f"{outdir}/{index}"
+            image_to_disk(im[0, :, :], path_prefix + "_img.png")
+            mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.is_transform:
             im, lbl = self.transform(im, lbl)
@@ -786,8 +795,9 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
                 f"debug/patchLoaderWithSectionDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             )
             generate_path(outdir)
-            image_to_disk(np.array(im[0, :, :]), f"{outdir}/index_{index}_section_{patch_name}_img.png")
-            mask_to_disk(np.array(lbl[0, :, :]), f"{outdir}/index_{index}_section_{patch_name}_lbl.png")
+            path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
+            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png")
+            mask_to_disk(np.array(lbl[0, :, :]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl
 

@@ -1,4 +1,3 @@
-  
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
@@ -8,6 +7,7 @@ from PIL import Image
 import numpy as np
 from matplotlib import pyplot as plt
 
+
 def normalize(array):
     """
     Normalizes a segmentation mask array to be in [0,1] range
@@ -16,12 +16,19 @@ def normalize(array):
     min = array.min()
     return (array - min) / (array.max() - min)
 
-def mask_to_disk(mask, fname, cmap_name="Paired"):
+
+def mask_to_disk(mask, fname, n_classes, cmap_name="rainbow"):
     """
     write segmentation mask to disk using a particular colormap
+    mask (float): this contains the predicted labels in the range [0, n_classes].
+    fname (str): of the the image to be saved 
+    n_classes (int): total number of classes in the dataset
+    cmap_name (str): name of the matplotlib colormap to be used. The default "rainbow"
+        colormap works well for any number of classes. 
     """
     cmap = plt.get_cmap(cmap_name)
-    Image.fromarray(cmap(normalize(mask), bytes=True)).save(fname)
+    Image.fromarray(cmap(mask / n_classes, bytes=True)).save(fname)
+
 
 def image_to_disk(mask, fname, cmap_name="seismic"):
     """
@@ -30,7 +37,8 @@ def image_to_disk(mask, fname, cmap_name="seismic"):
     cmap = plt.get_cmap(cmap_name)
     Image.fromarray(cmap(normalize(mask), bytes=True)).save(fname)
 
-def decode_segmap(label_mask, colormap_name="Paired"):
+
+def decode_segmap(label_mask, colormap_name="rainbow"):
     """
     Decode segmentation class labels into a colour image
         Args:
@@ -47,6 +55,7 @@ def decode_segmap(label_mask, colormap_name="Paired"):
         out[i, :, :, :] = np.array(im).swapaxes(0, 2).swapaxes(1, 2)
 
     return out
+
 
 def load_log_configuration(log_config_file):
     """

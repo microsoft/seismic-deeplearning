@@ -83,7 +83,7 @@ def run(*options, cfg=None, debug=False):
     # Set CUDNN benchmark mode:
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
-    # we will write the model under outputs / config_file_name / model_dir
+    # We will write the model under outputs / config_file_name / model_dir
     config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
 
     # Fix random seeds:

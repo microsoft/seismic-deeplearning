@@ -231,14 +231,16 @@ def _patch_label_2d(
             outdir = f"debug/batch_{split}"
             generate_path(outdir)
             for i in range(batch.shape[0]):
-                image_to_disk(
-                    np.array(batch[i, 0, :, :]), f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}_img.png"
-                )
-                # now dump model predictions
+                path_prefix = f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}"
+                model_output = model_output.detach().cpu()
+                # save image:
+                image_to_disk(np.array(batch[i, 0, :, :]), path_prefix + "_img.png")
+                # dump model prediction:
+                mask_to_disk(model_output[i, :, :, :].argmax(dim=1).numpy(), path_prefix + "_pred.png", num_classes)
+                # dump model confidence values
                 for nclass in range(num_classes):
-                    mask_to_disk(
-                        np.array(model_output[i, nclass, :, :].detach().cpu()),
-                        f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}_class_{nclass}_pred.png",
+                    image_to_disk(
+                        model_output[i, nclass, :, :].numpy(), path_prefix + f"_class_{nclass}_conf.png",
                     )
 
     # crop the output_p in the middle
@@ -279,7 +281,7 @@ def _evaluate_split(
 
     running_metrics_split = runningScore(n_classes)
 
-    # testing mode:
+    # evaluation mode:
     with torch.no_grad():  # operations inside don't track history
         model.eval()
         total_iteration = 0
@@ -307,8 +309,8 @@ def _evaluate_split(
             running_metrics_overall.update(gt, pred)
 
             #  dump images to disk for review
-            mask_to_disk(pred.squeeze(), os.path.join(output_dir, f"{i}_pred.png"))
-            mask_to_disk(gt.squeeze(), os.path.join(output_dir, f"{i}_gt.png"))
+            mask_to_disk(pred.squeeze(), os.path.join(output_dir, f"{i}_pred.png"), n_classes)
+            mask_to_disk(gt.squeeze(), os.path.join(output_dir, f"{i}_gt.png"), n_classes)
 
     # get scores
     score, class_iou = running_metrics_split.get_scores()
