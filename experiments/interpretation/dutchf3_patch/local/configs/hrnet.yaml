@@ -93,7 +93,7 @@ VALIDATION:
   BATCH_SIZE_PER_GPU: 128
 
 TEST:
-  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/experiments/interpretation/dutchf3_patch/local/output/staging/0d1d2bbf9685995a0515ca1d9de90f9bcec0db90/seg_hrnet/Dec20_233535/models/seg_hrnet_running_model_33.pth"
+  MODEL_PATH: "/home/username/seismic-deeplearning/docker/hrnetv2_w48_imagenet_pretrained.pth"
   TEST_STRIDE: 10
   SPLIT: 'Both' # Can be Both, Test1, Test2
   INLINE: True

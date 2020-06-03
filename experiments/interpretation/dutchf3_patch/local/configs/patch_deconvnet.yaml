@@ -47,7 +47,7 @@ VALIDATION:
   BATCH_SIZE_PER_GPU: 64
 
 TEST:
-  MODEL_PATH: "/data/home/mat/repos/DeepSeismic/interpretation/experiments/segmentation/dutchf3/local/output/mat/exp/5cc37bbe5302e1989ef1388d629400a16f82d1a9/patch_deconvnet/Aug27_200339/models/patch_deconvnet_snapshot1model_50.pth"
+  MODEL_PATH: ""
   TEST_STRIDE: 10
   SPLIT: 'Both' # Can be Both, Test1, Test2
   INLINE: True
