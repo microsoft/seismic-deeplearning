@@ -85,11 +85,11 @@ def make_gradient(n_inlines, n_crosslines, n_depth, box_size, dir="inline"):
 
     orthogonal_dir = dir # for depth case
     if dir=='inline':
-        orthogonal_dir  = 'crossline'
+        orthogonal_dir = 'crossline'
     elif dir=='crossline':
-        orthogonal_dir  = 'inline'
+        orthogonal_dir = 'inline'
     
-    axis = GRADIENT_DIR.index(orthogonal_dir )
+    axis = GRADIENT_DIR.index(orthogonal_dir)
     
     n_points = (n_inlines, n_crosslines, n_depth)[axis]
     n_classes = int(np.ceil(float(n_points) / box_size))
