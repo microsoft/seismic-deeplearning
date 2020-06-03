@@ -272,7 +272,7 @@ jobs:
 
 - job: dutchf3_patch
   dependsOn: checkerboard_dutchf3_patch
-  timeoutInMinutes: 25
+  timeoutInMinutes: 60
   displayName: Dutch F3 patch local
   pool:
     name: deepseismicagentpool
