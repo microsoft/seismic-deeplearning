@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """ Please see the def main() function for code description."""
+import time
 
 """ libraries """
 
@@ -63,6 +64,7 @@ def main(args):
             logging.info(f"Running job {job_name}")
 
             try:
+                tic = time.perf_counter()
                 completed = subprocess.run(
                     # 'set -e && source activate seismic-interpretation && which python && pytest --durations=0 cv_lib/tests/',
                     bash,
@@ -74,6 +76,8 @@ def main(args):
                     env=current_env,
                     cwd=os.getcwd()
                 )
+                toc = time.perf_counter()
+                print(f"Job time took {(toc-tic)/60:0.2f} minutes")
             except subprocess.CalledProcessError as err:
                 logging.info(f'ERROR: \n{err}')
                 decoded_stdout = err.stdout.decode('utf-8')
