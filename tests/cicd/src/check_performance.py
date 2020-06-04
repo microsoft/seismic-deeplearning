@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """ Please see the def main() function for code description."""
 import json
+import math
 
 """ libraries """
 
@@ -31,45 +32,42 @@ def main(args):
     and test sets.
 
     """
-  
+
     logging.info("loading data")
 
-    with open(args.infile, 'r') as fp:
+    with open(args.infile, "r") as fp:
         data = json.load(fp)
 
+    metrics_dict = {"Pixel Accuracy": None, "Mean IoU": None}
+
     if args.test:
-        # process training set results
-        assert data["Pixel Acc: "] > 0.0
-        assert data["Pixel Acc: "] <= 1.0
-        # TODO make these into proper tests
-        # assert data["Pixel Acc: "] == 1.0
-        # TODO: add more tests as we fix performance
-        # assert data["Mean Class Acc: "] == 1.0
-        # assert data["Freq Weighted IoU: "] == 1.0
-        # assert data["Mean IoU: "] == 1.0
-
+        metrics_dict["Pixel Accuracy"] = "Pixel Acc: "
+        metrics_dict["Mean IoU"] = "Mean IoU: "
     else:
-        # process validation results
-        assert data['pixacc'] > 0.0
-        assert data['pixacc'] <= 1.0
-        # TODO make these into proper tests
-        # assert data['pixacc'] == 1.0
-        # TODO: add more tests as we fix performance
-        # assert data['mIoU'] < 1e-3
+        metrics_dict["Pixel Accuracy"] = "pixacc"
+        metrics_dict["Mean IoU"] = "mIoU"
 
+    # process training set results
+    assert data[metrics_dict["Pixel Accuracy"]] > 0.0
+    assert data[metrics_dict["Pixel Accuracy"]] <= 1.0
+    assert data[metrics_dict["Mean IoU"]] > 0.0
+    assert data[metrics_dict["Mean IoU"]] <= 1.0
+
+    # check for actual values
+    math.isclose(data[metrics_dict["Pixel Accuracy"]], 1.0, abs_tol=ABS_TOL)
+    math.isclose(data[metrics_dict["Mean IoU"]], 1.0, abs_tol=ABS_TOL)
 
     logging.info("all done")
 
 
 """ GLOBAL VARIABLES """
-
+# tolerance within which values are compared
+ABS_TOL = 1e-3
 
 """ cmd-line arguments """
 parser.add_argument("--infile", help="Location of the file which has the metrics", type=str, required=True)
 parser.add_argument(
-    "--test",
-    help="Flag to indicate that these are test set results - validation by default",
-    action="store_true"
+    "--test", help="Flag to indicate that these are test set results - validation by default", action="store_true"
 )
 
 """ main wrapper with profiler """
