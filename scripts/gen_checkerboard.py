@@ -73,7 +73,7 @@ def make_box(n_inlines, n_crosslines, n_depth, box_size):
 
 def make_gradient(n_inlines, n_crosslines, n_depth, box_size, dir="inline"):
     """
-    Makes a 3D box gradient pattern in a particula direction
+    Makes a 3D box gradient pattern in a particular direction
 
     :param n_inlines: dim x
     :param n_crosslines: dim y
@@ -83,7 +83,14 @@ def make_gradient(n_inlines, n_crosslines, n_depth, box_size, dir="inline"):
     :return: numpy array
     """
 
-    axis = GRADIENT_DIR.index(dir)
+    orthogonal_dir = dir # for depth case
+    if dir=='inline':
+        orthogonal_dir = 'crossline'
+    elif dir=='crossline':
+        orthogonal_dir = 'inline'
+    
+    axis = GRADIENT_DIR.index(orthogonal_dir)
+    
     n_points = (n_inlines, n_crosslines, n_depth)[axis]
     n_classes = int(np.ceil(float(n_points) / box_size))
     logging.info(f"GRADIENT: we will output {n_classes} classes in the {dir} direction")
@@ -184,6 +191,8 @@ def main(args):
         )
         checkerboard_train_seismic = checkerboard_train_seismic.astype(train_seismic.dtype)
         checkerboard_train_labels = checkerboard_train_seismic.astype(train_labels.dtype)
+        # labels are integers and start from zero
+        checkerboard_train_labels[checkerboard_train_seismic < WHITE_LABEL] = WHITE_LABEL
 
         # create checkerbox
         logging.info("test1 gradient")
