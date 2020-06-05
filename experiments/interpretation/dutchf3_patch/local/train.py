@@ -133,7 +133,7 @@ def run(*options, cfg=None, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=train_aug,
-        debug=True,
+        debug=debug,
     )
     logger.info(train_set)
     n_classes = train_set.n_classes
@@ -145,7 +145,7 @@ def run(*options, cfg=None, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=val_aug,
-        debug=True,
+        debug=debug,
     )
     logger.info(val_set)
 
