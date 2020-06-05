@@ -30,7 +30,7 @@ jobs:
 ###################################################################################################
 
 - job: setup
-  timeoutInMinutes: 15
+  timeoutInMinutes: 10
   displayName: Setup
   pool:
     name: deepseismicagentpool
