@@ -17,7 +17,7 @@ source activate seismic-interpretation
 # these have to match the rest of the build jobs unless we want to
 # define this in ADO pipelines
 DATA_CHECKERBOARD="${DATA_ROOT}/checkerboard"
-DATA_F3="${DATA_ROOT}/dutch"
+DATA_F3="${DATA_ROOT}/dutch_f3"
 DATA_PENOBSCOT="${DATA_ROOT}/penobscot"
 
 # remove data
