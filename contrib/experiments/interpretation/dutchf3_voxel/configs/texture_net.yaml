@@ -15,7 +15,7 @@ WINDOW_SIZE: 65
 
 DATASET:
   NUM_CLASSES: 2
-  ROOT: /home/maxkaz/data/dutchf3
+  ROOT: /home/username/data/dutchf3
   FILENAME: data.segy  
 
 MODEL:
