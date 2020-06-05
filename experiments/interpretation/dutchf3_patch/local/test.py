@@ -205,6 +205,8 @@ def _patch_label_2d(
 ):
     """Processes a whole section
     """
+    
+    
     img = torch.squeeze(img)
     h, w = img.shape[-2], img.shape[-1]  # height and width
 
@@ -234,14 +236,14 @@ def _patch_label_2d(
                 path_prefix = f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}"
                 model_output = model_output.detach().cpu()
                 # save image:
-                image_to_disk(np.array(batch[i, 0, :, :]), path_prefix + "_img.png")
+                image_to_disk(np.array(batch[i, 0, :, :]), path_prefix + "_img.png", float(img.min()), float(img.max()))
                 # dump model prediction:
                 mask_to_disk(model_output[i, :, :, :].argmax(dim=1).numpy(), path_prefix + "_pred.png", num_classes)
                 # dump model confidence values
                 for nclass in range(num_classes):
                     image_to_disk(
                         model_output[i, nclass, :, :].numpy(), path_prefix + f"_class_{nclass}_conf.png",
-                    )
+                        model_output[i, nclass, :, :].numpy().min(), model_output[i, nclass, :, :].numpy().max())
 
     # crop the output_p in the middle
     output = output_p[:, :, ps:-ps, ps:-ps]
@@ -288,7 +290,6 @@ def _evaluate_split(
         for i, (images, labels) in enumerate(test_loader):
             logger.info(f"split: {split}, section: {i}")
             total_iteration = total_iteration + 1
-
             outputs = _patch_label_2d(
                 model,
                 images,
