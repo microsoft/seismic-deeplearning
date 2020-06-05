@@ -30,7 +30,7 @@ jobs:
 ###################################################################################################
 
 - job: setup
-  timeoutInMinutes: 10
+  timeoutInMinutes: 15
   displayName: Setup
   pool:
     name: deepseismicagentpool
@@ -113,6 +113,7 @@ jobs:
       # Create a temporary directory to store the statuses
       dir=$(mktemp -d)
 
+  MEAN: 0.0009997 # 0.0009996710808862074
       # we are running a single batch in debug mode through, so increase the
       # number of epochs to obtain a representative set of results
 
