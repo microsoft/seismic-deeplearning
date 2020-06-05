@@ -293,7 +293,7 @@ jobs:
 
       pids=
       # export CUDA_VISIBLE_DEVICES=0
-      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'TRAIN.DEPTH' 'none' \
                         'TRAIN.BATCH_SIZE_PER_GPU' 2 'VALIDATION.BATCH_SIZE_PER_GPU' 2 \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
@@ -301,7 +301,7 @@ jobs:
                         --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
       # export CUDA_VISIBLE_DEVICES=1
-      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'TRAIN.DEPTH' 'section' \
                         'TRAIN.BATCH_SIZE_PER_GPU' 2 'VALIDATION.BATCH_SIZE_PER_GPU' 2 \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
@@ -309,7 +309,7 @@ jobs:
                         --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
       # export CUDA_VISIBLE_DEVICES=2
-      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'TRAIN.DEPTH' 'section' \
                         'TRAIN.BATCH_SIZE_PER_GPU' 2 'VALIDATION.BATCH_SIZE_PER_GPU' 2 \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
@@ -317,7 +317,7 @@ jobs:
                         --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
       # export CUDA_VISIBLE_DEVICES=3
-      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'TRAIN.DEPTH' 'section' \
                         'TRAIN.BATCH_SIZE_PER_GPU' 2 'VALIDATION.BATCH_SIZE_PER_GPU' 2 \
                         'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
@@ -352,7 +352,7 @@ jobs:
       [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/patch_deconvnet/no_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
-      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
+      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'no_depth' \
                        'TEST.MODEL_PATH' ${model} \
                        'WORKERS' 1 \
@@ -366,7 +366,7 @@ jobs:
       [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/unet/section_depth* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
-      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
+      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'TEST.MODEL_PATH' ${model} \
                        'WORKERS' 1 \
@@ -380,7 +380,7 @@ jobs:
       [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/seresnet_unet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
-      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
+      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'TEST.MODEL_PATH' ${model} \
                        'WORKERS' 1 \
@@ -394,7 +394,7 @@ jobs:
       [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/hrnet/section_depth/* | head -1)
       model=$(ls -t ${model_dir}/*.pth | head -1)
       # try running the test script
-      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
+      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch/data' \
                        'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
                        'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                        'TEST.MODEL_PATH' ${model} \
@@ -432,5 +432,5 @@ jobs:
       source activate seismic-interpretation
       pytest -s tests/cicd/src/notebook_integration_tests.py \
         --nbname examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb \
-        --dataset_root /home/alfred/data_dynamic/dutch_f3/data \
+        --dataset_root /home/alfred/data_dynamic/dutch/data \
         --model_pretrained download

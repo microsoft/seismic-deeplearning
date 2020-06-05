@@ -4,7 +4,7 @@
 NGPU=8
 # specify pretrained HRNet backbone
 PRETRAINED_HRNET='/home/maxkaz/models/hrnetv2_w48_imagenet_pretrained.pth'
-# DATA_F3='/home/alfred/data/dutch_f3/data'
+# DATA_F3='/home/alfred/data/dutch/data'
 # DATA_PENOBSCOT='/home/maxkaz/data/penobscot'
 DATA_F3='/storage/data/dutchf3/data'
 DATA_PENOBSCOT='/storage/data/penobscot'
