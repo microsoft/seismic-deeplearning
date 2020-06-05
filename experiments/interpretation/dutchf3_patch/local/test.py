@@ -236,7 +236,7 @@ def _patch_label_2d(
                 # save image:
                 image_to_disk(np.array(batch[i, 0, :, :]), path_prefix + "_img.png")
                 # dump model prediction:
-                mask_to_disk(model_output[i, :, :, :].argmax(dim=1).numpy(), path_prefix + "_pred.png", num_classes)
+                mask_to_disk(model_output[i, :, :, :].argmax(dim=0).numpy(), path_prefix + "_pred.png", num_classes)
                 # dump model confidence values
                 for nclass in range(num_classes):
                     image_to_disk(
