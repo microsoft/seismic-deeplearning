@@ -158,7 +158,7 @@ def run(*options, cfg=None):
     def _select_pred_and_mask(model_out):
         # receive a tuple of (x, y_pred), y
         # so actually in line 51 of
-        # cv_lib/cv_lib/segmentation/dutch_f3/metrics/__init__.py
+        # cv_lib/cv_lib/segmentation/dutch/metrics/__init__.py
         # we do the following line, so here we just select the model
         # _, y_pred = torch.max(model_out[0].squeeze(), 1, keepdim=True)
         y_pred = model_out[0].squeeze()

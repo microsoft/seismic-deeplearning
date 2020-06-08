@@ -2,10 +2,10 @@
 # Licensed under the MIT License.
 #
 # To Run on 2 GPUs
-# python -m torch.distributed.launch --nproc_per_node=2 train.py --cfg "configs/hrnet.yaml"
+# python -m torch.distributed.launch --nproc_per_node=2 train.py --cfg "configs/seresnet_unet.yaml"
 #
 # To Test:
-# python -m torch.distributed.launch --nproc_per_node=2 train.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
+# python -m torch.distributed.launch --nproc_per_node=2 train.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/seresnet_unet.yaml" --debug
 #
 # /* spell-checker: disable */
 """Train models on Dutch F3 dataset
@@ -138,7 +138,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=train_aug,
-    )    
+    )
 
     val_set = TrainPatchLoader(
         config.DATASET.ROOT,
@@ -154,10 +154,10 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
     if debug:
         val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
-        train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*2))
-    
+        train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU * 2))
+
     logger.info(f"Training examples {len(train_set)}")
-    logger.info(f"Validation examples {len(val_set)}")    
+    logger.info(f"Validation examples {len(val_set)}")
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
 
@@ -193,7 +193,7 @@ def run(*options, cfg=None, local_rank=0, debug=False):
 
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[device], find_unused_parameters=True)
 
-    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2*len(train_loader)
+    snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2 * len(train_loader)
 
     warmup_duration = 5 * len(train_loader)
 
