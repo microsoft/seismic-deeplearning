@@ -9,7 +9,7 @@ The repository provides sample notebooks, data loaders for seismic data, utiliti
 - **experiments**: the goal is to provide runnable Python scripts that train and test (score) our machine learning models in the `experiments` folder. The models themselves are swappable, meaning a single train script can be used to run a different model on the same dataset by simply swapping out the configuration file which defines the model. 
 - **pip installable utilities**: we provide `cv_lib` and `interpretation` utilities (more info below) which are used by both sample notebooks and experiments mentioned above
 
-DeepSeismic currently focuses on Seismic Interpretation (3D segmentation aka facies classification) with experimental code provided around Seismic Imaging in the contrib folder.
+DeepSeismic currently focuses on Seismic Interpretation (mainly facies classification) with experimental code provided around Seismic Imaging in the contrib folder.
 
 ### Quick Start
 
@@ -168,7 +168,7 @@ We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manag
 - __yml config files__ - YAML configuration files under `configs/` are typically created one for each experiment. These are meant to be used for repeatable experiment runs and reproducible settings. Each configuration file only overrides the options that are changing in that experiment (e.g. options loaded from `defaults.py` during an experiment run will be overridden by arguments loaded from the yaml file). As an example, to use yml configuration file with the training script, run:
 
     ```
-    python train.py --cfg "configs/hrnet.yaml"
+    python train.py --cfg "configs/seresnet_unet.yaml"
     ```
 
 - __command line__ - Finally, options can be passed in through `options` argument, and those will override arguments loaded from the configuration file. We created CLIs for all our scripts (using Python Fire library), so you can pass these options via command-line arguments, like so:

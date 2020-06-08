@@ -4,7 +4,7 @@
 # url: https://github.com/yalaudah/facies_classification_benchmark
 #
 # To Test:
-# python test.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
+# python test.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/seresnet_unet.yaml" --debug
 #
 # /* spell-checker: disable */
 """
