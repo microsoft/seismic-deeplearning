@@ -245,7 +245,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
 
 parser = argparse.ArgumentParser(description="Seismic Distributed Scoring")
-parser.add_argument("-d", "--data", default="/home/maxkaz/data/dutchf3", type=str, help="default dataset folder name")
+parser.add_argument("-d", "--data", default="/home/username/data/dutchf3", type=str, help="default dataset folder name")
 parser.add_argument(
     "-s",
     "--slice",

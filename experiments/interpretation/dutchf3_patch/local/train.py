@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 #
 # To Test:
-# python train.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
+# python train.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/seresnet_unet.yaml" --debug
 #
 # /* spell-checker: disable */
 """Train models on Dutch F3 dataset
@@ -72,8 +72,8 @@ def run(*options, cfg=None, debug=False):
         output_dir = generate_path(
             config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),
         )
-    except TypeError:
-        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)    
+    except:
+        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
     # Logging:
     load_log_configuration(config.LOG_CONFIG)
@@ -83,7 +83,7 @@ def run(*options, cfg=None, debug=False):
     # Set CUDNN benchmark mode:
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
-    # we will write the model under outputs / config_file_name / model_dir
+    # We will write the model under outputs / config_file_name / model_dir
     config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
 
     # Fix random seeds:
@@ -133,8 +133,7 @@ def run(*options, cfg=None, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=train_aug,
-        #augmentations=Resize(config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True),
-        debug=True
+        debug=debug,
     )
     logger.info(train_set)
     n_classes = train_set.n_classes
@@ -146,14 +145,13 @@ def run(*options, cfg=None, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=val_aug,
-        #augmentations=Resize(config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True),
-        debug=True
+        debug=debug,
     )
     logger.info(val_set)
 
     if debug:
         logger.info("Running in debug mode..")
-        train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU*config.NUM_DEBUG_BATCHES))
+        train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU * config.NUM_DEBUG_BATCHES))
         val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
 
     train_loader = data.DataLoader(

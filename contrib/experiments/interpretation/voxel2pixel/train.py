@@ -15,7 +15,7 @@ import tb_logger
 import utils
 
 # Parameters
-ROOT_PATH = "/home/maxkaz/data/dutchf3"
+ROOT_PATH = "/home/username/data/dutchf3"
 INPUT_VOXEL = "data.segy"
 TRAIN_MASK = "inline_339.png"
 VAL_MASK = "inline_405.png"

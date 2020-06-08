@@ -4,7 +4,7 @@
 # url: https://github.com/yalaudah/facies_classification_benchmark
 #
 # To Test:
-# python test.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
+# python test.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/seresnet_unet.yaml" --debug
 #
 # /* spell-checker: disable */
 """
@@ -30,7 +30,7 @@ from torch.utils import data
 from cv_lib.segmentation import models
 from cv_lib.segmentation.dutchf3.utils import current_datetime, git_branch, git_hash
 
-from cv_lib.utils import load_log_configuration, mask_to_disk, generate_path
+from cv_lib.utils import load_log_configuration, mask_to_disk, generate_path, image_to_disk
 from deepseismic_interpretation.dutchf3.data import add_patch_depth_channels, get_test_loader
 from default import _C as config
 from default import update_config
@@ -201,7 +201,7 @@ def _output_processing_pipeline(config, output):
 
 
 def _patch_label_2d(
-    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes,
+    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes, split, debug
 ):
     """Processes a whole section
     """
@@ -221,13 +221,32 @@ def _patch_label_2d(
         )
 
         model_output = model(batch.to(device))
+
         for (hdx, wdx), output in zip(batch_indexes, model_output.detach().cpu()):
             output = output_processing(output)
             output_p[:, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size,] += output
 
+        # dump the data right before it's being put into the model and after scoring
+        if debug:
+            outdir = f"debug/batch_{split}"
+            generate_path(outdir)
+            for i in range(batch.shape[0]):
+                path_prefix = f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}"
+                model_output = model_output.detach().cpu()
+                # save image:
+                image_to_disk(np.array(batch[i, 0, :, :]), path_prefix + "_img.png")
+                # dump model prediction:
+                mask_to_disk(model_output[i, :, :, :].argmax(dim=0).numpy(), path_prefix + "_pred.png", num_classes)
+                # dump model confidence values
+                for nclass in range(num_classes):
+                    image_to_disk(
+                        model_output[i, nclass, :, :].numpy(), path_prefix + f"_class_{nclass}_conf.png",
+                    )
+
     # crop the output_p in the middle
     output = output_p[:, :, ps:-ps, ps:-ps]
     return output
+
 
 def _evaluate_split(
     split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config, debug=False,
@@ -235,12 +254,14 @@ def _evaluate_split(
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
+
     test_set = TestSectionLoader(
         config.DATASET.ROOT,
         config.DATASET.NUM_CLASSES,
         split=split,
         is_transform=True,
-        augmentations=section_aug
+        augmentations=section_aug,
+        debug=debug,
     )
 
     n_classes = test_set.n_classes
@@ -253,14 +274,14 @@ def _evaluate_split(
 
     try:
         output_dir = generate_path(
-            config.OUTPUT_DIR + "_test", git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
+            f"debug/{config.OUTPUT_DIR}_test_{split}", git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
         )
-    except TypeError:
-        output_dir = generate_path(config.OUTPUT_DIR + "_test", config.MODEL.NAME, current_datetime(),)
+    except:
+        output_dir = generate_path(f"debug/{config.OUTPUT_DIR}_test_{split}", config.MODEL.NAME, current_datetime(),)
 
     running_metrics_split = runningScore(n_classes)
 
-    # testing mode:
+    # evaluation mode:
     with torch.no_grad():  # operations inside don't track history
         model.eval()
         total_iteration = 0
@@ -278,6 +299,8 @@ def _evaluate_split(
                 config.VALIDATION.BATCH_SIZE_PER_GPU,
                 device,
                 n_classes,
+                split,
+                debug,
             )
 
             pred = outputs.detach().max(1)[1].numpy()
@@ -286,8 +309,8 @@ def _evaluate_split(
             running_metrics_overall.update(gt, pred)
 
             #  dump images to disk for review
-            mask_to_disk(pred.squeeze(), os.path.join(output_dir, f"{i}_pred.png"))
-            mask_to_disk(gt.squeeze(), os.path.join(output_dir, f"{i}_gt.png"))
+            mask_to_disk(pred.squeeze(), os.path.join(output_dir, f"{i}_pred.png"), n_classes)
+            mask_to_disk(gt.squeeze(), os.path.join(output_dir, f"{i}_gt.png"), n_classes)
 
     # get scores
     score, class_iou = running_metrics_split.get_scores()
@@ -331,6 +354,7 @@ def _write_section_file(labels, section_file):
 
 
 def test(*options, cfg=None, debug=False):
+
     update_config(config, options=options, config_file=cfg)
     n_classes = config.DATASET.NUM_CLASSES
 

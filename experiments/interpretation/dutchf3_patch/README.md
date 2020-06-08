@@ -4,8 +4,8 @@ You can run five different models on this dataset:
 * [HRNet](local/configs/hrnet.yaml)
 * [SEResNet](local/configs/seresnet_unet.yaml)
 * [UNet](local/configs/unet.yaml)
-* [PatchDeconvNet](local/configs/patch_patch_deconvnet.yaml)
-* [PatchDeconvNet-Skip](local/configs/patch_deconvnet_skip.yaml.yaml)
+* [PatchDeconvNet](local/configs/patch_deconvnet.yaml)
+* [PatchDeconvNet-Skip](local/configs/patch_deconvnet_skip.yaml)
 
 All these models take 2D patches of the dataset as input and provide predictions for those patches. The patches need to be stitched together to form a whole inline or crossline.
 
@@ -18,7 +18,7 @@ Also follow instructions for [downloading and preparing](../../../README.md#f3-N
 
 ### Running experiments
 
-Now you're all set to run training and testing experiments on the F3 Netherlands dataset. Please start from the `train.sh` and `test.sh` scripts under the `local/` and `distributed/` directories, which invoke the corresponding python scripts. Take a look at the project configurations in (e.g in `default.py`) for experiment options and modify if necessary. 
+Now you're all set to run training and testing experiments on the F3 Netherlands dataset. Please start from the `train.sh` and `test.sh` scripts under the `local/` directory, which invoke the corresponding python scripts. Take a look at the project configurations in (e.g in `default.py`) for experiment options and modify if necessary. 
 
 ### Monitoring progress with TensorBoard
 - from the this directory, run `tensorboard --logdir='output'` (all runtime logging information is

@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 #
 # To Test:
-# python test.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/hrnet.yaml" --debug
+# python test.py TRAIN.END_EPOCH 1 TRAIN.SNAPSHOTS 1 --cfg "configs/seresnet_unet.yaml" --debug
 #
 # /* spell-checker: disable */
 """Train models on Penobscot dataset
@@ -244,9 +244,7 @@ def run(*options, cfg=None, debug=False):
     def _tensor_to_numpy(pred_tensor):
         return pred_tensor.squeeze().cpu().numpy()
 
-    transform_func = compose(
-        np_to_tb, decode_segmap, _tensor_to_numpy,
-    )
+    transform_func = compose(np_to_tb, decode_segmap, _tensor_to_numpy,)
 
     transform_pred = compose(transform_func, _select_max)
 

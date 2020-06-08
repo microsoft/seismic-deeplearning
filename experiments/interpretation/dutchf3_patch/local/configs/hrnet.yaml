@@ -21,7 +21,7 @@ DATASET:
 MODEL:
   NAME: seg_hrnet
   IN_CHANNELS: 3
-  PRETRAINED: "/home/yazeed/seismic-deeplearning/docker/hrnetv2_w48_imagenet_pretrained.pth"
+  PRETRAINED: "<ImageNet pretrained model path - please see main README>"
   EXTRA:
     FINAL_CONV_KERNEL: 1
     STAGE2:
@@ -93,7 +93,7 @@ VALIDATION:
   BATCH_SIZE_PER_GPU: 128
 
 TEST:
-  MODEL_PATH: "/home/yazeed/seismic-deeplearning/docker/hrnetv2_w48_imagenet_pretrained.pth"
+  MODEL_PATH: "/home/username/seismic-deeplearning/docker/hrnetv2_w48_imagenet_pretrained.pth"
   TEST_STRIDE: 10
   SPLIT: 'Both' # Can be Both, Test1, Test2
   INLINE: True
