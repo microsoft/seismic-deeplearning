@@ -155,7 +155,7 @@ class SectionLoader(data.Dataset):
             outdir = f"debug/sectionLoader_{self.split}_raw"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
-            image_to_disk(im, path_prefix + "_img.png", self.seismic.min(), self.seismic.max())
+            image_to_disk(im, path_prefix + "_img.png", -1, 1)
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.augmentations is not None:
@@ -169,7 +169,7 @@ class SectionLoader(data.Dataset):
             outdir = f"debug/sectionLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
-            image_to_disk(np.array(im[0]), path_prefix + "_img.png", self.seismic.min(), self.seismic.max())
+            image_to_disk(np.array(im[0]), path_prefix + "_img.png", -1, 1)
             mask_to_disk(np.array(lbl[0]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl
@@ -411,7 +411,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
             generate_path(outdir)
             # this needs to take the first dimension of image (no depth) but lbl only has 1 dim
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
-            image_to_disk(im[0, :, :], path_prefix + "_img.png", self.seismic.min(), self.seismic.max())
+            image_to_disk(im[0, :, :], path_prefix + "_img.png", -1, 1)
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.augmentations is not None:
@@ -430,7 +430,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
             )
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
-            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", self.seismic.min(), self.seismic.max())
+            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", -1, 1)
             mask_to_disk(np.array(lbl[0, :, :]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl
@@ -500,7 +500,7 @@ class PatchLoader(data.Dataset):
             outdir = f"debug/patchLoader_{self.split}_raw"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
-            image_to_disk(im, path_prefix + "_img.png", self.seismic.min(), self.seismic.max())
+            image_to_disk(im, path_prefix + "_img.png", -1, 1)
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.augmentations is not None:
@@ -512,7 +512,7 @@ class PatchLoader(data.Dataset):
             outdir = f"patchLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
             path_prefix = f"{outdir}/{index}"
-            image_to_disk(im, path_prefix + "_img.png", self.seismic.min(), self.seismic.max())
+            image_to_disk(im, path_prefix + "_img.png", -1, 1)
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.is_transform:
@@ -523,7 +523,7 @@ class PatchLoader(data.Dataset):
             outdir = f"debug/patchLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
-            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", self.seismic.min(), self.seismic.max())
+            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", -1, 1)
             mask_to_disk(np.array(lbl[0, :, :]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl
@@ -769,7 +769,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             outdir = f"debug/patchLoaderWithSectionDepth_{self.split}_raw"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
-            image_to_disk(im[0, :, :], path_prefix + "_img.png", self.seismic.min(), self.seismic.max())
+            image_to_disk(im[0, :, :], path_prefix + "_img.png", -1, 1)
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.augmentations is not None:
@@ -783,7 +783,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             outdir = f"patchLoaderWithSectionDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
             path_prefix = f"{outdir}/{index}"
-            image_to_disk(im[0, :, :], path_prefix + "_img.png", self.seismic.min(), self.seismic.max())
+            image_to_disk(im[0, :, :], path_prefix + "_img.png", -1, 1)
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.is_transform:
@@ -796,7 +796,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             )
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
-            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", self.seismic.min(), self.seismic.max())
+            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", -1, 1)
             mask_to_disk(np.array(lbl[0, :, :]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl

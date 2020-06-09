@@ -32,6 +32,10 @@ def main(args):
     add --setup to run it (destroys existing environment and creates a new one, along with all the data)
 
     """
+    from datetime import datetime
+   
+    beg = datetime.now()
+    
 
     logging.info("loading data")
 
@@ -91,9 +95,13 @@ def main(args):
                 logging.info(f"Have {len(completed.stdout)} output bytes: \n{completed.stdout.decode('utf-8')}")
 
     logging.info(f"Everything ran! You can try running the same jobs {job_names} on the build VM now")
+    end = datetime.now()
+    
+    print(end, beg)
+    print((end-beg).total_seconds())
 
 """ GLOBAL VARIABLES """
-PATH_PREFIX = "/data/anaconda/envs/seismic-interpretation/bin:/data/anaconda/bin"
+PATH_PREFIX = "/anaconda/envs/seismic-interpretation/bin:/anaconda/bin"
 
 parser.add_argument(
     "--file", help="Which yaml file you'd like to read which specifies build info", type=str, required=True
