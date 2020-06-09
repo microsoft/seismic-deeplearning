@@ -117,8 +117,7 @@ def read_labels(fname, data_info):
 class SectionLoader(data.Dataset):
     """
     Base class for section data loader
-    :param str data_dir: Root directory for training/test data
-    :param str n_classes: number of segmentation mask classes
+    :param config: configuration object to define other attributes in loaders
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
@@ -187,8 +186,7 @@ class SectionLoader(data.Dataset):
 class TrainSectionLoader(SectionLoader):
     """
     Training data loader for sections
-    :param str data_dir: Root directory for training/test data
-    :param str n_classes: number of segmentation mask classes
+    :param config: configuration object to define other attributes in loaders
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
@@ -240,8 +238,7 @@ class TrainSectionLoader(SectionLoader):
 class TrainSectionLoaderWithDepth(TrainSectionLoader):
     """
     Section data loader that includes additional channel for depth
-    :param str data_dir: Root directory for training/test data
-    :param str n_classes: number of segmentation mask classes
+    :param config: configuration object to define other attributes in loaders
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
@@ -302,8 +299,7 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
 class TestSectionLoader(SectionLoader):
     """
     Test data loader for sections
-    :param str data_dir: Root directory for training/test data
-    :param str n_classes: number of segmentation mask classes
+    :param config: configuration object to define other attributes in loaders
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
@@ -353,8 +349,7 @@ class TestSectionLoader(SectionLoader):
 class TestSectionLoaderWithDepth(TestSectionLoader):
     """
     Test data loader for sections that includes additional channel for depth
-    :param str data_dir: Root directory for training/test data
-    :param str n_classes: number of segmentation mask classes
+    :param config: configuration object to define other attributes in loaders
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
@@ -439,10 +434,7 @@ def _transform_WH_to_HW(numpy_array):
 class PatchLoader(data.Dataset):
     """
     Base Data loader for the patch-based deconvnet
-    :param str data_dir: Root directory for training/test data
-    :param str n_classes: number of segmentation mask classes
-    :param int stride: training data stride
-    :param int patch_size: Size of patch for training
+    :param config: configuration object to define other attributes in loaders
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
@@ -451,7 +443,7 @@ class PatchLoader(data.Dataset):
 
     def __init__(
         self, config, is_transform=True, augmentations=None, debug=False,
-    ): #stride=30, patch_size=99,
+    )
         self.data_dir = config.DATASET.ROOT
         self.n_classes = config.DATASET.NUM_CLASSES
         self.MIN = config.DATASET.MIN
@@ -536,10 +528,7 @@ class PatchLoader(data.Dataset):
 class TestPatchLoader(PatchLoader):
     """
     Test Data loader for the patch-based deconvnet
-    :param str data_dir: Root directory for training/test data
-    :param str n_classes: number of segmentation mask classes
-    :param int stride: training data stride
-    :param int patch_size: Size of patch for training
+    :param config: configuration object to define other attributes in loaders
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
     :param bool debug: enable debugging output
@@ -547,7 +536,7 @@ class TestPatchLoader(PatchLoader):
 
     def __init__(
         self, config, is_transform=True, augmentations=None, debug=False
-    ): #stride=30, patch_size=99
+    ):
         super(TestPatchLoader, self).__init__(
             config,
             is_transform=is_transform,
@@ -567,9 +556,7 @@ class TestPatchLoader(PatchLoader):
 class TrainPatchLoader(PatchLoader):
     """
     Train data loader for the patch-based deconvnet
-    :param str data_dir: Root directory for training/test data
-    :param int stride: training data stride
-    :param int patch_size: Size of patch for training
+    :param config: configuration object to define other attributes in loaders
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
@@ -580,8 +567,6 @@ class TrainPatchLoader(PatchLoader):
         self,
         config,
         split="train",
-        # stride=30,
-        # patch_size=99,
         is_transform=True,
         augmentations=None,
         seismic_path=None,
@@ -590,8 +575,6 @@ class TrainPatchLoader(PatchLoader):
     ):
         super(TrainPatchLoader, self).__init__(
             config,
-            # stride=stride,
-            # patch_size=patch_size,
             is_transform=is_transform,
             augmentations=augmentations,
             debug=debug,
@@ -623,9 +606,7 @@ class TrainPatchLoader(PatchLoader):
 class TrainPatchLoaderWithDepth(TrainPatchLoader):
     """
     Train data loader for the patch-based deconvnet with patch depth channel
-    :param str data_dir: Root directory for training/test data
-    :param int stride: training data stride
-    :param int patch_size: Size of patch for training
+    :param config: configuration object to define other attributes in loaders
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
@@ -693,9 +674,7 @@ def _transform_HWC_to_CHW(numpy_array):
 class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
     """
     Train data loader for the patch-based deconvnet section depth channel
-    :param str data_dir: Root directory for training/test data
-    :param int stride: training data stride
-    :param int patch_size: Size of patch for training
+    :param config: configuration object to define other attributes in loaders
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
