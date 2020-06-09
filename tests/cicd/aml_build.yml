@@ -32,66 +32,67 @@ jobs:
         git branch
         uname -ra
 
-        # setup run environment
-        ./scripts/env_reinstall.sh 
-
-        # use hardcoded root for now because not sure how env changes under ADO policy
-        DATA_ROOT="/home/alfred/data_dynamic"
-        ./tests/cicd/src/scripts/get_data_for_builds.sh ${DATA_ROOT}
-
-        # upload pre-processed data to AML build WASB storage - overwrites by default and auto-creates container name
-        azcopy --quiet --recursive \
-          --source ${DATA_ROOT}/dutch_f3/data --destination https://${BLOB_ACCOUNT_NAME}.blob.core.windows.net/${BLOB_CONTAINER_NAME}/data \
-          --dest-key ${BLOB_ACCOUNT_KEY}
-      env:
-        BLOB_ACCOUNT_NAME: $(amlbuildstore)
-        BLOB_CONTAINER_NAME: "amlbuild"
-        BLOB_ACCOUNT_KEY: $(amlbuildstorekey)
-
-
-- job: AML_pipeline_tests
-  dependsOn: setup
-  timeoutInMinutes: 20
-  displayName: AML pipeline tests
-  pool:
-    name: deepseismicagentpool
-  steps:
-  - bash: |      
-      source activate seismic-interpretation
-      # TODO: add code which launches your pytest files ("pytest sometest" OR "python test.py")
-      # data is in  $(amlbuildstore).blob.core.windows.net/amlbuild/data (container amlbuild, virtual folder data)
-      # storage key is $(amlbuildstorekey)
-      az --version
-      az account show
-      az login --service-principal -u $SPIDENTITY -p $SPECRET --tenant $SPTENANT
-      az account set --subscription $SUB_ID
-      mkdir .azureml
-      cat <<EOF > .azureml/config.json
-      {
-        "subscription_id": "$SUB_ID",
-        "resource_group": "$RESOURCE_GROUP",
-        "workspace_name": "$WORKSPACE_NAME"
-      }
-      EOF
-      pytest interpretation/tests/test_train_pipeline.py || EXITCODE=123
-      exit $EXITCODE
-      pytest
-    env:
-      SUB_ID: $(subscription_id)
-      RESOURCE_GROUP: $(resource_group)
-      WORKSPACE_NAME: $(workspace_name)
-      BLOB_ACCOUNT_NAME: $(amlbuildstore)
-      BLOB_CONTAINER_NAME: "amlbuild"
-      BLOB_ACCOUNT_KEY: $(amlbuildstorekey)
-      BLOB_SUB_ID: $(subscription_id)
-      AML_COMPUTE_CLUSTER_NAME: "testcluster"
-      AML_COMPUTE_CLUSTER_MIN_NODES: "1"
-      AML_COMPUTE_CLUSTER_MAX_NODES: "8"
-      AML_COMPUTE_CLUSTER_SKU: "STANDARD_NC6"
-      SPIDENTITY: $(spidentity)
-      SPECRET: $(spsecret)
-      SPTENANT: $(sptenant)
-    displayName: 'integration tests'
+# TODO: uncomment in the next release to bring back AML
+#        # setup run environment
+#        ./scripts/env_reinstall.sh
+#
+#        # use hardcoded root for now because not sure how env changes under ADO policy
+#        DATA_ROOT="/home/alfred/data_dynamic"
+#        ./tests/cicd/src/scripts/get_data_for_builds.sh ${DATA_ROOT}
+#
+#        # upload pre-processed data to AML build WASB storage - overwrites by default and auto-creates container name
+#        azcopy --quiet --recursive \
+#          --source ${DATA_ROOT}/dutch_f3/data --destination https://${BLOB_ACCOUNT_NAME}.blob.core.windows.net/${BLOB_CONTAINER_NAME}/data \
+#          --dest-key ${BLOB_ACCOUNT_KEY}
+#      env:
+#        BLOB_ACCOUNT_NAME: $(amlbuildstore)
+#        BLOB_CONTAINER_NAME: "amlbuild"
+#        BLOB_ACCOUNT_KEY: $(amlbuildstorekey)
+#
+#
+#- job: AML_pipeline_tests
+#  dependsOn: setup
+#  timeoutInMinutes: 20
+#  displayName: AML pipeline tests
+#  pool:
+#    name: deepseismicagentpool
+#  steps:
+#  - bash: |
+#      source activate seismic-interpretation
+#      # TODO: add code which launches your pytest files ("pytest sometest" OR "python test.py")
+#      # data is in  $(amlbuildstore).blob.core.windows.net/amlbuild/data (container amlbuild, virtual folder data)
+#      # storage key is $(amlbuildstorekey)
+#      az --version
+#      az account show
+#      az login --service-principal -u $SPIDENTITY -p $SPECRET --tenant $SPTENANT
+#      az account set --subscription $SUB_ID
+#      mkdir .azureml
+#      cat <<EOF > .azureml/config.json
+#      {
+#        "subscription_id": "$SUB_ID",
+#        "resource_group": "$RESOURCE_GROUP",
+#        "workspace_name": "$WORKSPACE_NAME"
+#      }
+#      EOF
+#      pytest interpretation/tests/test_train_pipeline.py || EXITCODE=123
+#      exit $EXITCODE
+#      pytest
+#    env:
+#      SUB_ID: $(subscription_id)
+#      RESOURCE_GROUP: $(resource_group)
+#      WORKSPACE_NAME: $(workspace_name)
+#      BLOB_ACCOUNT_NAME: $(amlbuildstore)
+#      BLOB_CONTAINER_NAME: "amlbuild"
+#      BLOB_ACCOUNT_KEY: $(amlbuildstorekey)
+#      BLOB_SUB_ID: $(subscription_id)
+#      AML_COMPUTE_CLUSTER_NAME: "testcluster"
+#      AML_COMPUTE_CLUSTER_MIN_NODES: "1"
+#      AML_COMPUTE_CLUSTER_MAX_NODES: "8"
+#      AML_COMPUTE_CLUSTER_SKU: "STANDARD_NC6"
+#      SPIDENTITY: $(spidentity)
+#      SPECRET: $(spsecret)
+#      SPTENANT: $(sptenant)
+#    displayName: 'integration tests'
 
 # - job: AML_short_pipeline_test
 #   dependsOn: setup

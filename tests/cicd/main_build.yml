@@ -63,7 +63,7 @@ jobs:
 - job: scripts_unit_tests_job
   dependsOn: setup
   timeoutInMinutes: 5
-  displayName: Unit Tests
+  displayName: Generic Unit Tests
   pool:
     name: deepseismicagentpool
   steps:
@@ -72,10 +72,35 @@ jobs:
       echo "Starting scripts unit tests"
       source activate seismic-interpretation
       pytest --durations=0 tests/
-      echo "Script unit test job passed"
+
+- job: data_loaders_unit_tests_job
+  dependsOn: scripts_unit_tests_job
+  timeoutInMinutes: 5
+  displayName: Data Loaders Unit Tests
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      set -e
+      echo "Starting scripts unit tests"
+      source activate seismic-interpretation
+      pytest --durations=0 interpretation/deepseismic_interpretation/dutchf3/tests/
+
+- job: segy_utils_unit_test_job
+  dependsOn: data_loaders_unit_tests_job
+  timeoutInMinutes: 5
+  displayName: SEGY Converter Unit Tests
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      set -e
+      echo "Starting scripts unit tests"
+      source activate seismic-interpretation
+      pytest --durations=0 examples/interpretation/segyconverter/test/
 
 - job: cv_lib_unit_tests_job
-  dependsOn: scripts_unit_tests_job
+  dependsOn: segy_utils_unit_test_job
   timeoutInMinutes: 5
   displayName: cv_lib Unit Tests
   pool:
