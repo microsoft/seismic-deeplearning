@@ -125,8 +125,6 @@ def run(*options, cfg=None, debug=False):
     # Training and Validation Loaders:
     TrainPatchLoader = get_patch_loader(config)
     logging.info(f"Using {TrainPatchLoader}")
-    sog = (config.DATASET.NUM_CLASSES, config.DATASET.MIN, config.DATASET.MAX)
-    print(sog)
 
     train_set = TrainPatchLoader(
         config,
