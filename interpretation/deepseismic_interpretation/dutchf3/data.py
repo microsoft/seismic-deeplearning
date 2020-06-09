@@ -443,7 +443,7 @@ class PatchLoader(data.Dataset):
 
     def __init__(
         self, config, is_transform=True, augmentations=None, debug=False,
-    )
+        ):
         self.data_dir = config.DATASET.ROOT
         self.n_classes = config.DATASET.NUM_CLASSES
         self.MIN = config.DATASET.MIN
