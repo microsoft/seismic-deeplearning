@@ -125,12 +125,14 @@ class SectionLoader(data.Dataset):
     :param bool debug: enable debugging output
     """
 
-    def __init__(self, data_dir, n_classes, split="train", is_transform=True, augmentations=None, debug=False):
+    def __init__(self, config, split="train", is_transform=True, augmentations=None, debug=False):
+        self.data_dir = config.DATASET.ROOT
+        self.n_classes = config.DATASET.NUM_CLASSES
+        self.MIN = config.DATASET.MIN
+        self.MAX = config.DATASET.MAX
         self.split = split
-        self.data_dir = data_dir
         self.is_transform = is_transform
         self.augmentations = augmentations
-        self.n_classes = n_classes
         self.sections = list()
         self.debug = debug
 
@@ -155,7 +157,7 @@ class SectionLoader(data.Dataset):
             outdir = f"debug/sectionLoader_{self.split}_raw"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
-            image_to_disk(im, path_prefix + "_img.png", -1, 1)
+            image_to_disk(im, path_prefix + "_img.png", self.MIN, self.MAX)
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.augmentations is not None:
@@ -169,7 +171,7 @@ class SectionLoader(data.Dataset):
             outdir = f"debug/sectionLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
-            image_to_disk(np.array(im[0]), path_prefix + "_img.png", -1, 1)
+            image_to_disk(np.array(im[0]), path_prefix + "_img.png", self.MIN, self.MAX)
             mask_to_disk(np.array(lbl[0]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl
@@ -197,8 +199,7 @@ class TrainSectionLoader(SectionLoader):
 
     def __init__(
         self,
-        data_dir,
-        n_classes,
+        config,
         split="train",
         is_transform=True,
         augmentations=None,
@@ -207,8 +208,7 @@ class TrainSectionLoader(SectionLoader):
         debug=False,
     ):
         super(TrainSectionLoader, self).__init__(
-            data_dir,
-            n_classes,
+            config,
             split=split,
             is_transform=is_transform,
             augmentations=augmentations,
@@ -252,8 +252,7 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
 
     def __init__(
         self,
-        data_dir,
-        n_classes,
+        config,
         split="train",
         is_transform=True,
         augmentations=None,
@@ -262,8 +261,7 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
         debug=False,
     ):
         super(TrainSectionLoaderWithDepth, self).__init__(
-            data_dir,
-            n_classes,
+            config,
             split=split,
             is_transform=is_transform,
             augmentations=augmentations,
@@ -316,8 +314,7 @@ class TestSectionLoader(SectionLoader):
 
     def __init__(
         self,
-        data_dir,
-        n_classes,
+        config,
         split="test1",
         is_transform=True,
         augmentations=None,
@@ -326,7 +323,7 @@ class TestSectionLoader(SectionLoader):
         debug=False,
     ):
         super(TestSectionLoader, self).__init__(
-            data_dir, n_classes, split=split, is_transform=is_transform, augmentations=augmentations, debug=debug,
+            config, split=split, is_transform=is_transform, augmentations=augmentations, debug=debug,
         )
 
         if "test1" in self.split:
@@ -368,8 +365,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
 
     def __init__(
         self,
-        data_dir,
-        n_classes,
+        config,
         split="test1",
         is_transform=True,
         augmentations=None,
@@ -378,8 +374,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
         debug=False,
     ):
         super(TestSectionLoaderWithDepth, self).__init__(
-            data_dir,
-            n_classes,
+            config,
             split=split,
             is_transform=is_transform,
             augmentations=augmentations,
@@ -411,7 +406,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
             generate_path(outdir)
             # this needs to take the first dimension of image (no depth) but lbl only has 1 dim
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
-            image_to_disk(im[0, :, :], path_prefix + "_img.png", -1, 1)
+            image_to_disk(im[0, :, :], path_prefix + "_img.png", self.MIN, self.MAX)
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.augmentations is not None:
@@ -430,7 +425,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
             )
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
-            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", -1, 1)
+            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", self.MIN, self.MAX
             mask_to_disk(np.array(lbl[0, :, :]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl
@@ -769,7 +764,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             outdir = f"debug/patchLoaderWithSectionDepth_{self.split}_raw"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
-            image_to_disk(im[0, :, :], path_prefix + "_img.png", -1, 1)
+            image_to_disk(im[0, :, :], path_prefix + "_img.png")
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.augmentations is not None:
@@ -783,7 +778,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             outdir = f"patchLoaderWithSectionDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
             path_prefix = f"{outdir}/{index}"
-            image_to_disk(im[0, :, :], path_prefix + "_img.png", -1, 1)
+            image_to_disk(im[0, :, :], path_prefix + "_img.png")
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.is_transform:
@@ -796,7 +791,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             )
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
-            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", -1, 1)
+            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png")
             mask_to_disk(np.array(lbl[0, :, :]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl
