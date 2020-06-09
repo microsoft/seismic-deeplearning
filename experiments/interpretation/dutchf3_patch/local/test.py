@@ -201,7 +201,7 @@ def _output_processing_pipeline(config, output):
 
 
 def _patch_label_2d(
-    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes, split, debug
+    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes, split, debug, MIN, MAX
 ):
     """Processes a whole section
     """
@@ -236,14 +236,14 @@ def _patch_label_2d(
                 path_prefix = f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}"
                 model_output = model_output.detach().cpu()
                 # save image:
-                image_to_disk(np.array(batch[i, 0, :, :]), path_prefix + "_img.png", float(img.min()), float(img.max()))
+                image_to_disk(np.array(batch[i, 0, :, :]), path_prefix + "_img.png", MIN, MAX)
                 # dump model prediction:
                 mask_to_disk(model_output[i, :, :, :].argmax(dim=0).numpy(), path_prefix + "_pred.png", num_classes)
                 # dump model confidence values
                 for nclass in range(num_classes):
                     image_to_disk(
                         model_output[i, nclass, :, :].numpy(), path_prefix + f"_class_{nclass}_conf.png",
-                        model_output[i, nclass, :, :].numpy().min(), model_output[i, nclass, :, :].numpy().max())
+                        MIN, MAX)
 
     # crop the output_p in the middle
     output = output_p[:, :, ps:-ps, ps:-ps]
@@ -258,8 +258,7 @@ def _evaluate_split(
     TestSectionLoader = get_test_loader(config)
 
     test_set = TestSectionLoader(
-        config.DATASET.ROOT,
-        config.DATASET.NUM_CLASSES,
+        config,
         split=split,
         is_transform=True,
         augmentations=section_aug,
@@ -302,7 +301,8 @@ def _evaluate_split(
                 n_classes,
                 split,
                 debug,
-            )
+                config.DATASET.MIN,
+                config.DATASET.MAX)
 
             pred = outputs.detach().max(1)[1].numpy()
             gt = labels.numpy()

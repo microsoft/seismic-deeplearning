@@ -425,7 +425,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
             )
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
-            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", self.MIN, self.MAX
+            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", self.MIN, self.MAX)
             mask_to_disk(np.array(lbl[0, :, :]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl
@@ -546,13 +546,10 @@ class TestPatchLoader(PatchLoader):
     """
 
     def __init__(
-        self, data_dir, n_classes, stride=30, patch_size=99, is_transform=True, augmentations=None, debug=False
-    ):
+        self, config, is_transform=True, augmentations=None, debug=False
+    ): #stride=30, patch_size=99
         super(TestPatchLoader, self).__init__(
-            data_dir,
-            n_classes,
-            stride=stride,
-            patch_size=patch_size,
+            config,
             is_transform=is_transform,
             augmentations=augmentations,
             debug=debug,
@@ -637,10 +634,8 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
 
     def __init__(
         self,
-        data_dir,
+        config,
         split="train",
-        stride=30,
-        patch_size=99,
         is_transform=True,
         augmentations=None,
         seismic_path=None,
@@ -648,10 +643,8 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
         debug=False,
     ):
         super(TrainPatchLoaderWithDepth, self).__init__(
-            data_dir,
+            config,
             split=split,
-            stride=stride,
-            patch_size=patch_size,
             is_transform=is_transform,
             augmentations=augmentations,
             seismic_path=seismic_path,
@@ -713,11 +706,8 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
 
     def __init__(
         self,
-        data_dir,
-        n_classes,
+        config,
         split="train",
-        stride=30,
-        patch_size=99,
         is_transform=True,
         augmentations=None,
         seismic_path=None,
@@ -725,11 +715,8 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
         debug=False,
     ):
         super(TrainPatchLoaderWithSectionDepth, self).__init__(
-            data_dir,
-            n_classes,
+            config,
             split=split,
-            stride=stride,
-            patch_size=patch_size,
             is_transform=is_transform,
             augmentations=augmentations,
             seismic_path=seismic_path,
@@ -764,7 +751,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             outdir = f"debug/patchLoaderWithSectionDepth_{self.split}_raw"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
-            image_to_disk(im[0, :, :], path_prefix + "_img.png")
+            image_to_disk(im[0, :, :], path_prefix + "_img.png", self.MIN, self.MAX)
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.augmentations is not None:
@@ -778,7 +765,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             outdir = f"patchLoaderWithSectionDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
             path_prefix = f"{outdir}/{index}"
-            image_to_disk(im[0, :, :], path_prefix + "_img.png")
+            image_to_disk(im[0, :, :], path_prefix + "_img.png", self.MIN, self.MAX)
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.is_transform:
@@ -791,7 +778,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             )
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
-            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png")
+            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", self.MIN, self.MAX)
             mask_to_disk(np.array(lbl[0, :, :]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl
