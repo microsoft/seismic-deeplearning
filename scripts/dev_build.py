@@ -35,7 +35,6 @@ def main(args):
     from datetime import datetime
    
     beg = datetime.now()
-    
 
     logging.info("loading data")
 
@@ -95,10 +94,10 @@ def main(args):
                 logging.info(f"Have {len(completed.stdout)} output bytes: \n{completed.stdout.decode('utf-8')}")
 
     logging.info(f"Everything ran! You can try running the same jobs {job_names} on the build VM now")
+    
     end = datetime.now()
     
-    print(end, beg)
-    print((end-beg).total_seconds())
+    print('time elapsed in seconds', (end-beg).total_seconds())
 
 """ GLOBAL VARIABLES """
 PATH_PREFIX = "/anaconda/envs/seismic-interpretation/bin:/anaconda/bin"

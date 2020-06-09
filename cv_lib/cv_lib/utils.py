@@ -17,6 +17,7 @@ def normalize(array, MIN, MAX):
     den = MAX - MIN
     if den==0:
         den += np.finfo(float).eps
+ 
     return (array - MIN) / den
 
 

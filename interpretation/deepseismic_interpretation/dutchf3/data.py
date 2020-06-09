@@ -455,15 +455,17 @@ class PatchLoader(data.Dataset):
     """
 
     def __init__(
-        self, data_dir, n_classes, stride=30, patch_size=99, is_transform=True, augmentations=None, debug=False,
-    ):
-        self.data_dir = data_dir
+        self, config, is_transform=True, augmentations=None, debug=False,
+    ): #stride=30, patch_size=99,
+        self.data_dir = config.DATASET.ROOT
+        self.n_classes = config.DATASET.NUM_CLASSES
+        self.MIN = config.DATASET.MIN
+        self.MAX = config.DATASET.MAX
+        self.patch_size = config.TRAIN.PATCH_SIZE
+        self.stride = config.TRAIN.STRIDE
         self.is_transform = is_transform
         self.augmentations = augmentations
-        self.n_classes = n_classes
         self.patches = list()
-        self.patch_size = patch_size
-        self.stride = stride
         self.debug = debug
 
     def pad_volume(self, volume):
@@ -500,7 +502,7 @@ class PatchLoader(data.Dataset):
             outdir = f"debug/patchLoader_{self.split}_raw"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
-            image_to_disk(im, path_prefix + "_img.png", -1, 1)
+            image_to_disk(im, path_prefix + "_img.png", self.MIN, self.MAX)
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.augmentations is not None:
@@ -512,7 +514,7 @@ class PatchLoader(data.Dataset):
             outdir = f"patchLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
             path_prefix = f"{outdir}/{index}"
-            image_to_disk(im, path_prefix + "_img.png", -1, 1)
+            image_to_disk(im, path_prefix + "_img.png", self.MIN, self.MAX)
             mask_to_disk(lbl, path_prefix + "_lbl.png", self.n_classes)
 
         if self.is_transform:
@@ -523,7 +525,7 @@ class PatchLoader(data.Dataset):
             outdir = f"debug/patchLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{patch_name}"
-            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", -1, 1)
+            image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", self.MIN, self.MAX)
             mask_to_disk(np.array(lbl[0, :, :]), path_prefix + "_lbl.png", self.n_classes)
 
         return im, lbl
@@ -584,11 +586,10 @@ class TrainPatchLoader(PatchLoader):
 
     def __init__(
         self,
-        data_dir,
-        n_classes,
+        config,
         split="train",
-        stride=30,
-        patch_size=99,
+        # stride=30,
+        # patch_size=99,
         is_transform=True,
         augmentations=None,
         seismic_path=None,
@@ -596,10 +597,9 @@ class TrainPatchLoader(PatchLoader):
         debug=False,
     ):
         super(TrainPatchLoader, self).__init__(
-            data_dir,
-            n_classes,
-            stride=stride,
-            patch_size=patch_size,
+            config,
+            # stride=stride,
+            # patch_size=patch_size,
             is_transform=is_transform,
             augmentations=augmentations,
             debug=debug,
