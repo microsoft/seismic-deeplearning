@@ -127,7 +127,7 @@ python prepare_dutchf3.py split_train_val patch --data_dir=${data_dir}/data --la
 --stride=50 --patch_size=100 --split_direction=both
 
 # For section-based experiments
-python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits \ --split_direction=both
+python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits --split_direction=both
 
 # go back to repo root
 cd ..

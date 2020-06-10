@@ -121,7 +121,7 @@ jobs:
 
 - job: checkerboard_dutchf3_patch
   dependsOn: cv_lib_unit_tests_job
-  timeoutInMinutes: 30
+  timeoutInMinutes: 60
   displayName: Checkerboard Dutch F3 patch local
   pool:
     name: deepseismicagentpool
