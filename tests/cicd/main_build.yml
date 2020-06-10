@@ -459,3 +459,19 @@ jobs:
         --nbname examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb \
         --dataset_root /home/alfred/data_dynamic/dutch_f3/data \
         --model_pretrained download
+
+- job: segyconverter_notebooks
+  dependsOn: F3_block_training_and_evaluation_local_notebook
+  timeoutInMinutes: 5
+  displayName: SEGY converter notebooks
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      source activate seismic-interpretation
+      pytest -s tests/cicd/src/notebook_integration_tests.py \
+        --nbname examples/interpretation/segyconverter/01_segy_sample_files.ipynb \
+        --cwd examples/interpretation/segyconverter
+      pytest -s tests/cicd/src/notebook_integration_tests.py \
+        --nbname examples/interpretation/segyconverter/02_segy_convert_sample.ipynb \
+        --cwd examples/interpretation/segyconverter
