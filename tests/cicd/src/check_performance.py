@@ -54,8 +54,8 @@ def main(args):
     assert data[metrics_dict["Mean IoU"]] <= 1.0
 
     # check for actual values
-    math.isclose(data[metrics_dict["Pixel Accuracy"]], 1.0, abs_tol=ABS_TOL)
-    math.isclose(data[metrics_dict["Mean IoU"]], 1.0, abs_tol=ABS_TOL)
+    assert math.isclose(data[metrics_dict["Pixel Accuracy"]], 1.0, abs_tol=ABS_TOL)
+    assert math.isclose(data[metrics_dict["Mean IoU"]], 1.0, abs_tol=ABS_TOL)
 
     logging.info("all done")
 
