@@ -59,13 +59,16 @@ def norm_value(v: float, min_clip: float, max_clip: float, min_range: float, max
     v = (v + offset) * scale
     # This value should ALWAYS be between min_range and max_range here
     if v > max_range or v < min_range:
-        raise Exception('normalized value should be within [{0},{1}].\
-             The value was: {2}'.format(min_range, max_range, v))
+        raise Exception(
+            "normalized value should be within [{0},{1}].\
+             The value was: {2}".format(
+                min_range, max_range, v
+            )
+        )
     return v
 
 
-def normalize_cube(cube: np.array, min_clip: float, max_clip: float, scale: float,
-                   min_range: float, max_range: float):
+def normalize_cube(cube: np.array, min_clip: float, max_clip: float, scale: float, min_range: float, max_range: float):
     """
         Normalize cube according to statistics. Normalization implies in clipping and normalize cube.
         :param cube: 3D array to be normalized
@@ -80,8 +83,7 @@ def normalize_cube(cube: np.array, min_clip: float, max_clip: float, scale: floa
     # Define function for normalization
     vfunc = np.vectorize(norm_value)
     # Normalize cube
-    norm_cube = vfunc(cube, min_clip=min_clip, max_clip=max_clip, min_range=min_range, max_range=max_range,
-                      scale=scale)
+    norm_cube = vfunc(cube, min_clip=min_clip, max_clip=max_clip, min_range=min_range, max_range=max_range, scale=scale)
     return norm_cube
 
 
@@ -99,8 +101,9 @@ def clip_cube(cube: np.array, min_clip: float, max_clip: float):
     return clip_cube
 
 
-def apply(cube: np.array, stddev: float, mean: float, k: float, min_range: float, max_range: float,
-          clip=True, normalize=True):
+def apply(
+    cube: np.array, stddev: float, mean: float, k: float, min_range: float, max_range: float, clip=True, normalize=True
+):
     """
     Preapre data according to provided parameters. This method will compute satistics and can
     normalize&clip, just clip, or leave the data as is. 
@@ -125,11 +128,12 @@ def apply(cube: np.array, stddev: float, mean: float, k: float, min_range: float
     min_clip, max_clip, scale = compute_statistics(stddev=stddev, mean=mean, k=k, max_range=max_range)
 
     if (clip and normalize) or normalize:
-        # Normalize&clip cube. Note that it is not possible to normalize data without 
+        # Normalize&clip cube. Note that it is not possible to normalize data without
         # applying clip operation
         print("Normalizing and Clipping File")
-        return normalize_cube(cube=cube, min_clip=min_clip, max_clip=max_clip, scale=scale, 
-                              min_range=min_range, max_range=max_range)
+        return normalize_cube(
+            cube=cube, min_clip=min_clip, max_clip=max_clip, scale=scale, min_range=min_range, max_range=max_range
+        )
     elif clip:
         # Only clip values
         print("Clipping File")

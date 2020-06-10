@@ -6,7 +6,7 @@ Tests for TrainLoader and TestLoader classes when overriding the file names of t
 
 import tempfile
 import numpy as np
-from interpretation.deepseismic_interpretation.dutchf3.data import (
+from deepseismic_interpretation.dutchf3.data import (
     get_test_loader,
     TrainPatchLoaderWithDepth,
     TrainSectionLoaderWithDepth,

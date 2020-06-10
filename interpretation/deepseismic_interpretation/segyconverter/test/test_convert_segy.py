@@ -5,8 +5,8 @@ Test that the current scripts can run from the command line
 """
 import os
 import numpy as np
-import convert_segy
-import test_util
+from deepseismic_interpretation.segyconverter import convert_segy
+from deepseismic_interpretation.segyconverter.test import test_util
 import pytest
 import segyio
 
@@ -14,14 +14,17 @@ MAX_RANGE = 1
 MIN_RANGE = 0
 ERROR_EXIT_CODE = 99
 
-@pytest.fixture(scope='class')
+
+@pytest.fixture(scope="class")
 def segy_single_file(request):
     # setup code
     # create segy file
-    inlinefile = './inlinesortsample.segy'
-    test_util.create_segy_file(lambda il, xl: not ((il < 20 and xl < 125) or (il > 40 and xl > 250)),
-                      inlinefile, segyio.TraceSortingFormat.INLINE_SORTING)
-
+    inlinefile = "./inlinesortsample.segy"
+    test_util.create_segy_file(
+        lambda il, xl: not ((il < 20 and xl < 125) or (il > 40 and xl > 250)),
+        inlinefile,
+        segyio.TraceSortingFormat.INLINE_SORTING,
+    )
 
     # inject class variables
     request.cls.testfile = inlinefile
@@ -31,14 +34,14 @@ def segy_single_file(request):
     os.remove(inlinefile)
 
 
-@pytest.mark.usefixtures('segy_single_file')
+@pytest.mark.usefixtures("segy_single_file")
 class TestConvertSEGY:
 
     testfile = None  # Set by segy_file fixture
 
     def test_convert_segy_generates_single_npy(self, tmpdir):
         # Setup
-        prefix = 'volume1'
+        prefix = "volume1"
         input_file = self.testfile
         output_dir = tmpdir.strpath
         metadata_only = False
@@ -51,17 +54,17 @@ class TestConvertSEGY:
         inputpath = ""
 
         # Test
-        convert_segy.main(input_file, output_dir, prefix, iline, xline,
-                          metadata_only, stride, cube_size, normalize, clip, inputpath)
+        convert_segy.main(
+            input_file, output_dir, prefix, iline, xline, metadata_only, stride, cube_size, normalize, clip
+        )
 
         # Validate
         npy_files = test_util.get_npy_files(tmpdir.strpath)
-        assert(len(npy_files) == 1)
+        assert len(npy_files) == 1
 
         min_val, max_val = _get_min_max(tmpdir.strpath)
-        assert (min_val >= MIN_RANGE)
-        assert (max_val <= MAX_RANGE)
-
+        assert min_val >= MIN_RANGE
+        assert max_val <= MAX_RANGE
 
     def test_convert_segy_generates_multiple_npy_files(self, tmpdir):
         """
@@ -70,7 +73,7 @@ class TestConvertSEGY:
         """
 
         # Setup
-        prefix = 'volume1'
+        prefix = "volume1"
         input_file = self.testfile
         output_dir = tmpdir.strpath
         metadata_only = False
@@ -82,13 +85,13 @@ class TestConvertSEGY:
         inputpath = ""
         clip = True
         # Test
-        convert_segy.main(input_file, output_dir, prefix, iline, xline,
-                          metadata_only, stride, cube_size, normalize, clip, inputpath)
+        convert_segy.main(
+            input_file, output_dir, prefix, iline, xline, metadata_only, stride, cube_size, normalize, clip
+        )
 
         # Validate
         npy_files = test_util.get_npy_files(tmpdir.strpath)
-        assert(len(npy_files) == 2)
-
+        assert len(npy_files) == 2
 
     def test_convert_segy_normalizes_data(self, tmpdir):
         """
@@ -97,7 +100,7 @@ class TestConvertSEGY:
         """
 
         # Setup
-        prefix = 'volume1'
+        prefix = "volume1"
         input_file = self.testfile
         output_dir = tmpdir.strpath
         metadata_only = False
@@ -110,16 +113,16 @@ class TestConvertSEGY:
         clip = True
 
         # Test
-        convert_segy.main(input_file, output_dir, prefix, iline, xline,
-                          metadata_only, stride, cube_size, normalize, clip, inputpath)
+        convert_segy.main(
+            input_file, output_dir, prefix, iline, xline, metadata_only, stride, cube_size, normalize, clip
+        )
 
         # Validate
         npy_files = test_util.get_npy_files(tmpdir.strpath)
-        assert(len(npy_files) == 2)
+        assert len(npy_files) == 2
         min_val, max_val = _get_min_max(tmpdir.strpath)
-        assert (min_val >= MIN_RANGE)
-        assert (max_val <= MAX_RANGE)
-
+        assert min_val >= MIN_RANGE
+        assert max_val <= MAX_RANGE
 
     def test_convert_segy_clips_data(self, tmpdir):
         """
@@ -128,7 +131,7 @@ class TestConvertSEGY:
         """
 
         # Setup
-        prefix = 'volume1'
+        prefix = "volume1"
         input_file = self.testfile
         output_dir = tmpdir.strpath
         metadata_only = False
@@ -141,18 +144,18 @@ class TestConvertSEGY:
         clip = True
 
         # Test
-        convert_segy.main(input_file, output_dir, prefix, iline, xline,
-                          metadata_only, stride, cube_size, normalize, clip, inputpath)
+        convert_segy.main(
+            input_file, output_dir, prefix, iline, xline, metadata_only, stride, cube_size, normalize, clip
+        )
 
         # Validate
         expected_max = 35.59
         expected_min = -35.59
         npy_files = test_util.get_npy_files(tmpdir.strpath)
-        assert(len(npy_files) == 2)
+        assert len(npy_files) == 2
         min_val, max_val = _get_min_max(tmpdir.strpath)
         assert expected_min == pytest.approx(min_val, rel=1e-3)
         assert expected_max == pytest.approx(max_val, rel=1e-3)
-
 
     def test_convert_segy_copies_exact_data_with_no_normalization(self, tmpdir):
         """
@@ -161,7 +164,7 @@ class TestConvertSEGY:
         """
 
         # Setup
-        prefix = 'volume1'
+        prefix = "volume1"
         input_file = self.testfile
         output_dir = tmpdir.strpath
         metadata_only = False
@@ -174,14 +177,15 @@ class TestConvertSEGY:
         clip = False
 
         # Test
-        convert_segy.main(input_file, output_dir, prefix, iline, xline,
-                          metadata_only, stride, cube_size, normalize, clip, inputpath)
+        convert_segy.main(
+            input_file, output_dir, prefix, iline, xline, metadata_only, stride, cube_size, normalize, clip
+        )
 
         # Validate
         expected_max = 1039.8
         expected_min = -1039.8
         npy_files = test_util.get_npy_files(tmpdir.strpath)
-        assert(len(npy_files) == 2)
+        assert len(npy_files) == 2
         min_val, max_val = _get_min_max(tmpdir.strpath)
         assert expected_min == pytest.approx(min_val, rel=1e-3)
         assert expected_max == pytest.approx(max_val, rel=1e-3)
@@ -206,4 +210,3 @@ def _get_min_max(outputdir):
         if this_max > max_val:
             max_val = this_max
     return min_val, max_val
-

@@ -7,37 +7,47 @@ import os
 import pytest
 import numpy as np
 import pandas as pd
-import utils.segyextract as segyextract
-import test_util
+from deepseismic_interpretation.segyconverter.utils import segyextract
+from deepseismic_interpretation.segyconverter.test import test_util
 import segyio
 import json
 
 FILENAME = "./normalsegy.segy"
 PREFIX = "normal"
 
-@pytest.fixture(scope='class')
+
+@pytest.fixture(scope="class")
 def segy_all_files(request):
     # setup code
     # create segy file
-    normal_filename = './normalsegy.segy'
+    normal_filename = "./normalsegy.segy"
     test_util.create_segy_file(lambda il, xl: True, normal_filename)
     request.cls.control_file = normal_filename  # Set by segy_file fixture
 
-    inline_filename = './inlineerror.segy'
-    test_util.create_segy_file(lambda il, xl: not ((il < 20 and xl < 125) or (il > 40 and xl > 250)),
-                               inline_filename, segyio.TraceSortingFormat.INLINE_SORTING)
+    inline_filename = "./inlineerror.segy"
+    test_util.create_segy_file(
+        lambda il, xl: not ((il < 20 and xl < 125) or (il > 40 and xl > 250)),
+        inline_filename,
+        segyio.TraceSortingFormat.INLINE_SORTING,
+    )
     request.cls.inline_sort_file = inline_filename  # Set by segy_file fixture
 
-    xline_filename = './xlineerror.segy'
-    test_util.create_segy_file(lambda il, xl: not ((il < 20 and xl < 125) or (il > 40 and xl > 250)),
-                               xline_filename, segyio.TraceSortingFormat.CROSSLINE_SORTING)
+    xline_filename = "./xlineerror.segy"
+    test_util.create_segy_file(
+        lambda il, xl: not ((il < 20 and xl < 125) or (il > 40 and xl > 250)),
+        xline_filename,
+        segyio.TraceSortingFormat.CROSSLINE_SORTING,
+    )
     request.cls.crossline_sort_file = xline_filename  # Set by segy_file fixture
 
-    hole_filename = './hole.segy'
-    test_util.create_segy_file(lambda il, xl: not ((20 < il < 30) and (150 < xl < 250)),
-                               hole_filename, segyio.TraceSortingFormat.INLINE_SORTING)
+    hole_filename = "./hole.segy"
+    test_util.create_segy_file(
+        lambda il, xl: not ((20 < il < 30) and (150 < xl < 250)),
+        hole_filename,
+        segyio.TraceSortingFormat.INLINE_SORTING,
+    )
     request.cls.hole_file = hole_filename  # Set by segy_file fixture
-                      
+
     yield
 
     # teardown code
@@ -46,7 +56,8 @@ def segy_all_files(request):
     os.remove(xline_filename)
     os.remove(hole_filename)
 
-@pytest.mark.usefixtures('segy_all_files')
+
+@pytest.mark.usefixtures("segy_all_files")
 class TestSEGYExtract:
 
     control_file = None  # Set by segy_file fixture
@@ -54,13 +65,18 @@ class TestSEGYExtract:
     crossline_sort_file = None  # Set by segy_file fixture
     hole_file = None  # Set by segy_file fixture
 
-    @pytest.mark.parametrize("filename, trace_count, first_inline, inline_count, first_xline, xline_count, depth", 
-                             [('./normalsegy.segy', 8000, 10, 40, 100, 200, 10),
-                              ('./inlineerror.segy', 7309, 10, 40, 125, 200, 10),
-                              ('./xlineerror.segy', 7309, 10, 40, 125, 200, 10),
-                              ('./hole.segy', 7109, 10, 40, 100, 200, 10)
-                             ])
-    def test_get_segy_metadata_should_return_correct_metadata(self, filename, trace_count, first_inline, inline_count, first_xline, xline_count, depth):
+    @pytest.mark.parametrize(
+        "filename, trace_count, first_inline, inline_count, first_xline, xline_count, depth",
+        [
+            ("./normalsegy.segy", 8000, 10, 40, 100, 200, 10),
+            ("./inlineerror.segy", 7309, 10, 40, 125, 200, 10),
+            ("./xlineerror.segy", 7309, 10, 40, 125, 200, 10),
+            ("./hole.segy", 7109, 10, 40, 100, 200, 10),
+        ],
+    )
+    def test_get_segy_metadata_should_return_correct_metadata(
+        self, filename, trace_count, first_inline, inline_count, first_xline, xline_count, depth
+    ):
         """
         Check that get_segy_metadata can correctly identify the sorting from the trace headers
         :param dict tmpdir: pytest fixture for local test directory cleanup
@@ -75,25 +91,28 @@ class TestSEGYExtract:
 
         # test
         fast_indexes, slow_indexes, trace_headers, sample_size = segyextract.get_segy_metadata(
-            filename, inline_byte_loc, xline_byte_loc)
+            filename, inline_byte_loc, xline_byte_loc
+        )
 
         # validate
-        assert(sample_size == depth)
-        assert(len(trace_headers) == trace_count)
-        assert(len(fast_indexes) == inline_count)
-        assert(len(slow_indexes) == xline_count)
+        assert sample_size == depth
+        assert len(trace_headers) == trace_count
+        assert len(fast_indexes) == inline_count
+        assert len(slow_indexes) == xline_count
 
         # Check fast direction
-        assert(trace_headers['slow'][0] == first_xline)
-        assert(trace_headers['fast'][0] == first_inline)
+        assert trace_headers["slow"][0] == first_xline
+        assert trace_headers["fast"][0] == first_inline
 
-
-    @pytest.mark.parametrize("filename,inline,xline,depth", 
-                             [('./normalsegy.segy', 40, 200, 10),
-                             ('./inlineerror.segy', 40, 200, 10),
-                             ('./xlineerror.segy', 40, 200, 10),
-                             ('./hole.segy', 40, 200, 10)
-                             ])
+    @pytest.mark.parametrize(
+        "filename,inline,xline,depth",
+        [
+            ("./normalsegy.segy", 40, 200, 10),
+            ("./inlineerror.segy", 40, 200, 10),
+            ("./xlineerror.segy", 40, 200, 10),
+            ("./hole.segy", 40, 200, 10),
+        ],
+    )
     def test_process_segy_data_should_create_cube_size_equal_to_segy(self, tmpdir, filename, inline, xline, depth):
         """
         Create single npy file for segy and validate size
@@ -106,13 +125,13 @@ class TestSEGYExtract:
         segyextract.process_segy_data_into_single_array(filename, tmpdir.strpath, PREFIX)
 
         npy_files = test_util.get_npy_files(tmpdir.strpath)
-        assert(len(npy_files) == 1)
+        assert len(npy_files) == 1
 
         data = np.load(os.path.join(tmpdir.strpath, npy_files[0]))
-        assert(len(data.shape) == 3)
-        assert(data.shape[0] == inline)
-        assert(data.shape[1] == xline)
-        assert(data.shape[2] == depth)
+        assert len(data.shape) == 3
+        assert data.shape[0] == inline
+        assert data.shape[1] == xline
+        assert data.shape[2] == depth
 
     def test_process_segy_data_should_write_npy_files_for_n_equals_128_stride_64(self, tmpdir):
         """
@@ -125,8 +144,7 @@ class TestSEGYExtract:
         stride = 64
 
         # test
-        segyextract.process_segy_data(FILENAME, tmpdir.strpath, PREFIX, n_points=n_points,
-                                      stride=stride)
+        segyextract.process_segy_data(FILENAME, tmpdir.strpath, PREFIX, n_points=n_points, stride=stride)
 
         # validate
         _output_npy_files_are_correct_for_cube_size(4, 128, tmpdir.strpath)
@@ -182,8 +200,7 @@ class TestSEGYExtract:
         n_points = 16
 
         # test
-        segyextract.process_segy_data(FILENAME, tmpdir.strpath, PREFIX,
-                                      n_points=n_points, stride=n_points)
+        segyextract.process_segy_data(FILENAME, tmpdir.strpath, PREFIX, n_points=n_points, stride=n_points)
 
         # validate
         npy_files = _output_npy_files_are_correct_for_cube_size(39, 16, tmpdir.strpath)
@@ -199,7 +216,7 @@ class TestSEGYExtract:
         segyextract.process_segy_data_into_single_array(FILENAME, tmpdir.strpath, PREFIX)
 
         npy_files = test_util.get_npy_files(tmpdir.strpath)
-        assert(len(npy_files) == 1)
+        assert len(npy_files) == 1
 
         data = np.load(os.path.join(tmpdir.strpath, npy_files[0]))
         _compare_output_to_segy(FILENAME, data, 40, 200, 10)
@@ -215,21 +232,21 @@ class TestSEGYExtract:
 
     def test_identify_fast_direction_should_handle_xline_sequence_1(self):
         # setup
-        df = pd.DataFrame({'i': [101, 102, 102, 102, 103, 103], 'j': [301, 301, 302, 303, 301, 302]})
+        df = pd.DataFrame({"i": [101, 102, 102, 102, 103, 103], "j": [301, 301, 302, 303, 301, 302]})
         # test
-        segyextract._identify_fast_direction(df, 'fast', 'slow')
+        segyextract._identify_fast_direction(df, "fast", "slow")
         # validate
-        assert(df.keys()[0] == 'fast')
-        assert(df.keys()[1] == 'slow')
+        assert df.keys()[0] == "fast"
+        assert df.keys()[1] == "slow"
 
     def test_identify_fast_direction_should_handle_xline_sequence_2(self):
         # setup
-        df = pd.DataFrame({'i': [101, 102, 102, 102, 102, 102], 'j': [301, 301, 302, 303, 304, 305]})
+        df = pd.DataFrame({"i": [101, 102, 102, 102, 102, 102], "j": [301, 301, 302, 303, 304, 305]})
         # test
-        segyextract._identify_fast_direction(df, 'fast', 'slow')
+        segyextract._identify_fast_direction(df, "fast", "slow")
         # validate
-        assert(df.keys()[0] == 'fast')
-        assert(df.keys()[1] == 'slow')
+        assert df.keys()[0] == "fast"
+        assert df.keys()[1] == "slow"
 
 
 def _output_npy_files_are_correct_for_cube_size(expected_count, cube_size, outputdir):
@@ -242,11 +259,11 @@ def _output_npy_files_are_correct_for_cube_size(expected_count, cube_size, outpu
     :rtype: list
     """
     npy_files = test_util.get_npy_files(outputdir)
-    assert(len(npy_files) == expected_count)
+    assert len(npy_files) == expected_count
 
     data = np.load(os.path.join(outputdir, npy_files[0]))
-    assert(len(data.shape) == 3)
-    assert(data.shape.count(cube_size) == 3)
+    assert len(data.shape) == 3
+    assert data.shape.count(cube_size) == 3
 
     return npy_files
 
@@ -273,7 +290,7 @@ def _compare_output_to_segy(filename, data, fast_size, slow_size, depth):
                 assert all([a == b for a, b in zip(trace, data_trace)]), f"Unmatched trace at {j}:{i}"
                 segy_sum += np.sum(trace, dtype=np.float32)
                 npy_sum += np.sum(data_trace, dtype=np.float32)
-        assert(segy_sum == npy_sum)
+        assert segy_sum == npy_sum
 
 
 def _compare_variance(filename, prefix, data, outputdir):
@@ -291,10 +308,10 @@ def _compare_variance(filename, prefix, data, outputdir):
         segy_stddev = np.sqrt(np.var(data))
 
     # Check statistics file generated from segy
-    with open(os.path.join(outputdir, prefix + '_stats.json'), 'r') as f:
+    with open(os.path.join(outputdir, prefix + "_stats.json"), "r") as f:
         metadatastr = f.read()
-    
-    metadata = json.loads(metadatastr)
-    stddev = float(metadata['stddev'])
 
-    assert(round(stddev) == round(segy_stddev))
+    metadata = json.loads(metadatastr)
+    stddev = float(metadata["stddev"])
+
+    assert round(stddev) == round(segy_stddev)

@@ -12,8 +12,8 @@ import pandas as pd
 import numpy as np
 import json
 
-FAST = 'fast'
-SLOW = 'slow'
+FAST = "fast"
+SLOW = "slow"
 DEFAULT_VALUE = 255
 
 
@@ -36,12 +36,11 @@ def get_segy_metadata(input_file, iline, xline):
     with segyio.open(input_file, ignore_geometry=True) as segy_file:
         segy_file.mmap()
         # Initialize df with trace id as index and headers as columns
-        trace_headers = pd.DataFrame(index=range(0, segy_file.tracecount),
-                                     columns=['i', 'j'])
+        trace_headers = pd.DataFrame(index=range(0, segy_file.tracecount), columns=["i", "j"])
 
         # Fill dataframe with all trace headers values
-        trace_headers['i'] = segy_file.attributes(iline)
-        trace_headers['j'] = segy_file.attributes(xline)
+        trace_headers["i"] = segy_file.attributes(iline)
+        trace_headers["j"] = segy_file.attributes(xline)
 
         _identify_fast_direction(trace_headers, FAST, SLOW)
 
@@ -74,32 +73,35 @@ def process_segy_data_into_single_array(input_file, output_dir, prefix, iline=18
         layer_fastmin = min(fast_distinct)
         layer_slowmax = max(slow_distinct)
         layer_slowmin = min(slow_distinct)
-        layer_trace_ids = trace_headers[(trace_headers.fast >= layer_fastmin)
-                                        & (trace_headers.fast <= layer_fastmax)
-                                        & (trace_headers.slow >= layer_slowmin)
-                                        & (trace_headers.slow <= layer_slowmax)]
+        layer_trace_ids = trace_headers[
+            (trace_headers.fast >= layer_fastmin)
+            & (trace_headers.fast <= layer_fastmax)
+            & (trace_headers.slow >= layer_slowmin)
+            & (trace_headers.slow <= layer_slowmax)
+        ]
 
-        block = np.full((len(fast_distinct), len(slow_distinct), sampledepth), DEFAULT_VALUE,
-                        dtype=np.float32)
+        block = np.full((len(fast_distinct), len(slow_distinct), sampledepth), DEFAULT_VALUE, dtype=np.float32)
         for _, row in layer_trace_ids.iterrows():
-            block[(row[FAST] - layer_fastmin) // fast_line_space,
-                  (row[SLOW] - layer_slowmin) // slow_line_space,
-                  0:sample_size] = segy_file.trace[row.name]
+            block[
+                (row[FAST] - layer_fastmin) // fast_line_space,
+                (row[SLOW] - layer_slowmin) // slow_line_space,
+                0:sample_size,
+            ] = segy_file.trace[row.name]
 
-        np.save(os.path.join(output_dir, "{}_{}_{}_{:05d}".format(prefix, fast_distinct[0],
-                             slow_distinct[0], 0)), block)
+        np.save(
+            os.path.join(output_dir, "{}_{}_{}_{:05d}".format(prefix, fast_distinct[0], slow_distinct[0], 0)), block
+        )
         variance = np.var(block)
         stddev = np.sqrt(variance)
         mean = np.mean(block)
 
-        with open(os.path.join(output_dir, prefix + '_stats.json'), 'w') as f:
-            f.write(json.dumps({'stddev': str(stddev), 'mean': str(mean)}))
+        with open(os.path.join(output_dir, prefix + "_stats.json"), "w") as f:
+            f.write(json.dumps({"stddev": str(stddev), "mean": str(mean)}))
         print("Npy files written: 1")
     return block
 
 
-def process_segy_data(input_file, output_dir, prefix,
-                      iline=189, xline=193, n_points=128, stride=128):
+def process_segy_data(input_file, output_dir, prefix, iline=189, xline=193, n_points=128, stride=128):
     """
     Open segy file and write all numpy array files to disk
     :param str input_file: path to segyfile
@@ -118,11 +120,12 @@ def process_segy_data(input_file, output_dir, prefix,
         mean = 0
         sample_count = 0
         filecount = 0
-        block_size = n_points**3
-        for block, i, j, k in _generate_all_blocks(segy_file, n_points, stride, fast_indexes,
-                                                   slow_indexes, trace_headers):
+        block_size = n_points ** 3
+        for block, i, j, k in _generate_all_blocks(
+            segy_file, n_points, stride, fast_indexes, slow_indexes, trace_headers
+        ):
             # Getting global variance as sum of local variance
-            if (variance == 0):
+            if variance == 0:
                 # init
                 variance = np.var(block)
                 mean = np.mean(block)
@@ -130,8 +133,7 @@ def process_segy_data(input_file, output_dir, prefix,
             else:
                 new_avg = np.mean(block)
                 new_variance = np.var(block)
-                variance = _parallel_variance(mean, sample_count, variance,
-                                              new_avg, block_size, new_variance)
+                variance = _parallel_variance(mean, sample_count, variance, new_avg, block_size, new_variance)
                 mean = ((mean * sample_count) + np.sum(block)) / (sample_count + block_size)
                 sample_count += block_size
 
@@ -139,13 +141,12 @@ def process_segy_data(input_file, output_dir, prefix,
             filecount += 1
 
         stddev = np.sqrt(variance)
-        with open(os.path.join(output_dir, prefix + '_stats.json'), 'w') as f:
-            f.write(json.dumps({'stddev': stddev, 'mean': mean}))
+        with open(os.path.join(output_dir, prefix + "_stats.json"), "w") as f:
+            f.write(json.dumps({"stddev": stddev, "mean": mean}))
         print("Npy files written: {}".format(filecount))
 
 
-def process_segy_data_column(input_file, output_dir, prefix, i, j,
-                             iline=189, xline=193, n_points=128, stride=128):
+def process_segy_data_column(input_file, output_dir, prefix, i, j, iline=189, xline=193, n_points=128, stride=128):
     """
     Open segy file and write one column of npy files to disk
     :param str input_file: segy file path
@@ -163,8 +164,9 @@ def process_segy_data_column(input_file, output_dir, prefix, i, j,
     with segyio.open(input_file, ignore_geometry=True) as segy_file:
         segy_file.mmap()
         filecount = 0
-        for block, i, j, k in _generate_column_blocks(segy_file, n_points, stride, i, j,
-                                                      fast_indexes, slow_indexes, trace_headers):
+        for block, i, j, k in _generate_column_blocks(
+            segy_file, n_points, stride, i, j, fast_indexes, slow_indexes, trace_headers
+        ):
             np.save(os.path.join(output_dir, "{}_{}_{}_{}".format(prefix, i, j, k)), block)
             filecount += 1
         print("Files written: {}".format(filecount))
@@ -202,13 +204,13 @@ def _identify_fast_direction(trace_headers, fastlabel, slowlabel):
     i_count = 0
     last_trace = 0
     slope_run = 5
-    for trace in trace_headers['j'][0:slope_run]:
+    for trace in trace_headers["j"][0:slope_run]:
         if not last_trace == trace:
             j_count += 1
             last_trace = trace
 
     last_trace = 0
-    for trace in trace_headers['i'][0:slope_run]:
+    for trace in trace_headers["i"][0:slope_run]:
         if not last_trace == trace:
             i_count += 1
             last_trace = trace
@@ -241,9 +243,9 @@ def _get_trace_column(n_lines, i, j, trace_headers, fast_distinct, slow_distinct
     :returns: thiscolumn, layer_fastmin, layer_slowmin
     :rtype: nparray, int, int
     """
-    layer_fastidxs = fast_distinct[i:i + n_lines]
+    layer_fastidxs = fast_distinct[i : i + n_lines]
     fast_line_space = abs(fast_distinct[1] - fast_distinct[0])
-    layer_slowidxs = slow_distinct[j:j + n_lines]
+    layer_slowidxs = slow_distinct[j : j + n_lines]
     slow_line_space = abs(slow_distinct[0] - slow_distinct[1])
     sample_size = len(segyfile.samples)
     sample_chunck_count = math.ceil(sample_size / n_lines)
@@ -251,22 +253,25 @@ def _get_trace_column(n_lines, i, j, trace_headers, fast_distinct, slow_distinct
     layer_fastmin = min(layer_fastidxs)
     layer_slowmax = max(layer_slowidxs)
     layer_slowmin = min(layer_slowidxs)
-    layer_trace_ids = trace_headers[(trace_headers.fast >= layer_fastmin)
-                                    & (trace_headers.fast <= layer_fastmax)
-                                    & (trace_headers.slow >= layer_slowmin)
-                                    & (trace_headers.slow <= layer_slowmax)]
+    layer_trace_ids = trace_headers[
+        (trace_headers.fast >= layer_fastmin)
+        & (trace_headers.fast <= layer_fastmax)
+        & (trace_headers.slow >= layer_slowmin)
+        & (trace_headers.slow <= layer_slowmax)
+    ]
 
     thiscolumn = np.zeros((n_lines, n_lines, sample_chunck_count * n_lines), dtype=np.float32)
     for _, row in layer_trace_ids.iterrows():
-        thiscolumn[(row[FAST] - layer_fastmin) // fast_line_space,
-                   (row[SLOW] - layer_slowmin) // slow_line_space,
-                   0:sample_size] = segyfile.trace[row.name]
+        thiscolumn[
+            (row[FAST] - layer_fastmin) // fast_line_space,
+            (row[SLOW] - layer_slowmin) // slow_line_space,
+            0:sample_size,
+        ] = segyfile.trace[row.name]
 
     return thiscolumn, layer_fastmin, layer_slowmin
 
 
-def _generate_column_blocks(segy_file, n_points, stride, i, j, fast_indexes,
-                            slow_indexes, trace_headers):
+def _generate_column_blocks(segy_file, n_points, stride, i, j, fast_indexes, slow_indexes, trace_headers):
     """
     Generate arrays for an open segy file (via segyio)
     :param segyio.file segy_file: input segy file previously opened using segyio
@@ -282,12 +287,11 @@ def _generate_column_blocks(segy_file, n_points, stride, i, j, fast_indexes,
     """
 
     sample_size = len(segy_file.samples)
-    thiscolumn, fast_anchor, slow_anchor = _get_trace_column(n_points, i, j,
-                                                             trace_headers, fast_indexes,
-                                                             slow_indexes, segy_file)
+    thiscolumn, fast_anchor, slow_anchor = _get_trace_column(
+        n_points, i, j, trace_headers, fast_indexes, slow_indexes, segy_file
+    )
     for k in range(0, sample_size - stride, stride):
-        yield thiscolumn[i:(i + n_points), j:(j + n_points),
-                         k:(k + n_points)], fast_anchor, slow_anchor, k
+        yield thiscolumn[i : (i + n_points), j : (j + n_points), k : (k + n_points)], fast_anchor, slow_anchor, k
 
 
 def _generate_all_blocks(segy_file, n_points, stride, fast_indexes, slow_indexes, trace_headers):
@@ -311,10 +315,11 @@ def _generate_all_blocks(segy_file, n_points, stride, fast_indexes, slow_indexes
     slow_lim = slow_size
     for i in range(0, fast_lim, stride):
         for j in range(0, slow_lim, stride):
-            thiscolumn, fast_anchor, slow_anchor = _get_trace_column(n_points, i, j, trace_headers,
-                                                                     fast_indexes, slow_indexes, segy_file)
+            thiscolumn, fast_anchor, slow_anchor = _get_trace_column(
+                n_points, i, j, trace_headers, fast_indexes, slow_indexes, segy_file
+            )
             for k in range(0, sample_size, stride):
-                yield thiscolumn[:, :, k:(k + n_points)], fast_anchor, slow_anchor, k
+                yield thiscolumn[:, :, k : (k + n_points)], fast_anchor, slow_anchor, k
 
 
 def timewrapper(func, *args, **kwargs):
@@ -326,6 +331,7 @@ def timewrapper(func, *args, **kwargs):
     :returns: wrapped
     :rtype: function
     """
+
     def wrapped():
         """
         Wrapper function that takes no arguments
@@ -333,4 +339,5 @@ def timewrapper(func, *args, **kwargs):
         :rtype: function
         """
         return func(*args, **kwargs)
+
     return wrapped

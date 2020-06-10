@@ -4,14 +4,11 @@
 """
 Test data normalization
 """
-import os
 import numpy as np
-import utils.dataprep as dataprep
+from deepseismic_interpretation.segyconverter.utils import dataprep
 import pytest
-import test_util
-import segyio
 
-INPUT_FOLDER = './contrib/segyconverter/test/test_data'
+INPUT_FOLDER = "./contrib/segyconverter/test/test_data"
 MAX_RANGE = 1
 MIN_RANGE = 0
 K = 12
@@ -29,8 +26,8 @@ class TestNormalizeCube:
         trace = np.linspace(-1, 1, 100, True, dtype=np.single)
         cube = np.ones((100, 50, 100)) * trace * 500
         # Add values to clip
-        cube[40,25,50] = 700
-        cube[70,30,70] = -700
+        cube[40, 25, 50] = 700
+        cube[70, 30, 70] = -700
         mean = np.mean(cube)
         variance = np.var(cube)
         stddev = np.sqrt(variance)
@@ -91,8 +88,7 @@ class TestNormalizeCube:
         assert norm_v <= MAX_RANGE
         assert norm_v >= MIN_RANGE
 
-        pytest.raises(Exception, dataprep.norm_value, v, min_clip * 10, max_clip * 10, 
-                      MIN_RANGE, MAX_RANGE, scale * 10)
+        pytest.raises(Exception, dataprep.norm_value, v, min_clip * 10, max_clip * 10, MIN_RANGE, MAX_RANGE, scale * 10)
 
     def test_clipped_value_on_cube_is_within_range(self):
         # Check if clipped value is within [min_clip, max_clip]
@@ -159,12 +155,12 @@ class TestNormalizeCube:
         stddev = np.sqrt(variance)
         mean = np.mean(cube)
         min_clip, max_clip, _ = dataprep.compute_statistics(stddev, mean, MAX_RANGE, K)
-        norm_block = dataprep.apply(cube, stddev, mean, K, MIN_RANGE, MAX_RANGE, clip=True,
-                                    normalize=False)
+        norm_block = dataprep.apply(cube, stddev, mean, K, MIN_RANGE, MAX_RANGE, clip=True, normalize=False)
         assert np.amax(norm_block) <= max_clip
         assert np.amin(norm_block) >= min_clip
 
         invalid_cube = np.empty_like(cube)
         invalid_cube[:] = np.nan
-        pytest.raises(Exception, dataprep.apply, invalid_cube, stddev, 0, MIN_RANGE, MAX_RANGE,
-                      clip=True, normalize=False)
+        pytest.raises(
+            Exception, dataprep.apply, invalid_cube, stddev, 0, MIN_RANGE, MAX_RANGE, clip=True, normalize=False
+        )

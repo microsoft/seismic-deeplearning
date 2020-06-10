@@ -97,7 +97,7 @@ jobs:
       set -e
       echo "Starting scripts unit tests"
       source activate seismic-interpretation
-      pytest --durations=0 examples/interpretation/segyconverter/test/
+      pytest --durations=0 interpretation/deepseismic_interpretation/segyconverter/test
 
 - job: cv_lib_unit_tests_job
   dependsOn: segy_utils_unit_test_job

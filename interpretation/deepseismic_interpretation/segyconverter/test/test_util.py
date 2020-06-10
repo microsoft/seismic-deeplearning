@@ -5,11 +5,8 @@ Utility functions for pytest
 """
 import numpy as np
 import os
-import pytest
+
 import segyio
-
-
-
 
 
 def is_npy(s):
@@ -19,7 +16,7 @@ def is_npy(s):
     :returns: True if npy
     :rtype: bool
     """
-    if (s.find(".npy") == -1):
+    if s.find(".npy") == -1:
         return False
     else:
         return True
@@ -53,12 +50,14 @@ def build_volume(n_points, npy_files, file_location):
     full_volume_from_file = np.zeros((n_points, n_points, n_points * len(npy_files)), dtype=np.float32)
     for i, file in enumerate(npy_files):
         data = np.load(os.path.join(file_location, file))
-        full_volume_from_file[:, :, n_points * i:n_points * (i + 1)] = data
+        full_volume_from_file[:, :, n_points * i : n_points * (i + 1)] = data
     return full_volume_from_file
 
 
-def create_segy_file(masklambda, filename, sorting=segyio.TraceSortingFormat.INLINE_SORTING, ilinerange=[10, 50], xlinerange=[100, 300]):
-    
+def create_segy_file(
+    masklambda, filename, sorting=segyio.TraceSortingFormat.INLINE_SORTING, ilinerange=[10, 50], xlinerange=[100, 300]
+):
+
     # segyio.spec is the minimum set of values for a valid segy file.
     spec = segyio.spec()
     spec.sorting = 2
@@ -80,7 +79,7 @@ def create_segy_file(masklambda, filename, sorting=segyio.TraceSortingFormat.INL
         # the rightmost digits is the index of the sample in that trace meaning
         # looking up an inline's i's jth crosslines' k should be roughly equal
         # to i.j0k
-        trace = np.linspace(-1,1,len(spec.samples),True,dtype=np.single)
+        trace = np.linspace(-1, 1, len(spec.samples), True, dtype=np.single)
         if sorting == segyio.TraceSortingFormat.INLINE_SORTING:
             # Write the file trace-by-trace and update headers with iline, xline
             # and offset
@@ -88,17 +87,11 @@ def create_segy_file(masklambda, filename, sorting=segyio.TraceSortingFormat.INL
             for il in spec.ilines:
                 for xl in spec.xlines:
                     if masklambda(il, xl):
-                        f.header[tr] = {
-                            segyio.su.offset: 1,
-                            segyio.su.iline: il,
-                            segyio.su.xline: xl
-                        }
+                        f.header[tr] = {segyio.su.offset: 1, segyio.su.iline: il, segyio.su.xline: xl}
                         f.trace[tr] = trace * ((xl / 100.0) + il)
                         tr += 1
-                      
-            f.bin.update(
-                tsort=segyio.TraceSortingFormat.INLINE_SORTING
-            )
+
+            f.bin.update(tsort=segyio.TraceSortingFormat.INLINE_SORTING)
         else:
             # Write the file trace-by-trace and update headers with iline, xline
             # and offset
@@ -106,17 +99,11 @@ def create_segy_file(masklambda, filename, sorting=segyio.TraceSortingFormat.INL
             for il in spec.ilines:
                 for xl in spec.xlines:
                     if masklambda(il, xl):
-                        f.header[tr] = {
-                            segyio.su.offset: 1,
-                            segyio.su.iline: il,
-                            segyio.su.xline: xl
-                        }
+                        f.header[tr] = {segyio.su.offset: 1, segyio.su.iline: il, segyio.su.xline: xl}
                         f.trace[tr] = trace * (xl / 100.0) + il
                         tr += 1
-                 
-            f.bin.update(
-                tsort=segyio.TraceSortingFormat.CROSSLINE_SORTING
-            )
+
+            f.bin.update(tsort=segyio.TraceSortingFormat.CROSSLINE_SORTING)
         # Add some noise for clipping and normalization tests
         f.trace[tr // 2] = trace * ((max(spec.xlines) / 100.0) + max(spec.ilines)) * 20
         f.trace[tr // 3] = trace * ((min(spec.xlines) / 100.0) + min(spec.ilines)) * 20

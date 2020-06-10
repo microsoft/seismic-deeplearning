@@ -14,7 +14,7 @@ These inline and xline ids are the upper left location of the data contained in 
 
 This script use [segyio](https://github.com/equinor/segyio) for interaction with SEG-Y.
 
-To use this script, first activate the `seismic-interpretation` environment defined in this repository's setup instructions: 
+To use this script, first activate the `seismic-interpretation` environment defined in this repository's setup instructions in the main [README](../../../README.md) file: 
 
 `conda activate seismic-interpretation`
 
@@ -57,11 +57,11 @@ NOTE: Missing traces will be filled in with zero values. A future enhancement to
 
 Run [pytest](https://docs.pytest.org/en/latest/getting-started.html) from the segyconverter directory to run the local unit tests.   
 
-For running all scripts available in test foder:
+For running all scripts available in [test foder](../../../interpretation/deepseismic_interpretation/segyconverter/test):
     ```
     pytest test
     ```   
 For running a specif script:
     ```
-    pytest test/<scrip_name.py>
+    pytest test/<script_name.py>
     ```
