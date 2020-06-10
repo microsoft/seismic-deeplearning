@@ -77,12 +77,10 @@ def run(*options, cfg=None, debug=False, input=None):
     except:
         output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
-    data_dir = config.DATASET.ROOT
-    output_dir = config.OUTPUT_DIR
-
+    # if AML training pipeline supplies us with input
     if input is not None:
         data_dir = input
-        output_dir = data_dir + output_dir
+        output_dir = data_dir + config.OUTPUT_DIR
 
     # Start logging
     load_log_configuration(config.LOG_CONFIG)
