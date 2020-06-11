@@ -43,23 +43,18 @@ def main(args):
     if args.test:
         metrics_dict["Pixel Accuracy"] = "Pixel Acc: "
         metrics_dict["Mean IoU"] = "Mean IoU: "
-
-        assert data[metrics_dict["Pixel Accuracy"]] <= 1.0
-        assert data[metrics_dict["Mean IoU"]] <= 1.0
-
     else:
         metrics_dict["Pixel Accuracy"] = "pixacc"
         metrics_dict["Mean IoU"] = "mIoU"
 
-        assert data[metrics_dict["Pixel Accuracy"]] <= 1.0
-        assert data[metrics_dict["Mean IoU"]] <= 1.0
+    # check for actual values
+    assert data[metrics_dict["Pixel Accuracy"]] > 0.97
+    assert data[metrics_dict["Mean IoU"]] > 0.97
 
-        # check for actual values
-        assert data[metrics_dict["Pixel Accuracy"]] > 0.97
-        assert data[metrics_dict["Mean IoU"]] > 0.97
+    assert data[metrics_dict["Pixel Accuracy"]] <= 1.0
+    assert data[metrics_dict["Mean IoU"]] <= 1.0
 
     logging.info("all done")
-
 
 """ GLOBAL VARIABLES """
 # tolerance within which values are compared
