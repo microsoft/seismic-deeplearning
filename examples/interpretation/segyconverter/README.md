@@ -1,6 +1,6 @@
 # SEG-Y Data Utilities
 
-SEG-Y files can have a lot of variability which makes it difficult to inferer the geometry when converting to npy. The segyio module attempts to do so but fails if there are missing traces in the file (which happens regularly). This utility reads traces using segyio with the inferencing turned off to avoid data loading errors and it uses its own logic to place traces into a numpy array. If traces are missing, the values of the npy array in that location are set to zero
+SEG-Y files can have a lot of variability which makes it difficult to infere the geometry when converting to npy. The segyio module attempts to do so but fails if there are missing traces in the file (which happens regularly). This utility reads traces using segyio with the inferencing turned off to avoid data loading errors and it uses its own logic to place traces into a numpy array. If traces are missing, the values of the npy array in that location are set to zero
 
 ## convert_segy.py script
 

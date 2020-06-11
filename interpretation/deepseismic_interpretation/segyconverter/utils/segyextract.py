@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import json
 
+# strings which indicate which slice direction has fewer datapoints, i.e. faster to iterate through
 FAST = "fast"
 SLOW = "slow"
 DEFAULT_VALUE = 255
