@@ -119,7 +119,7 @@ jobs:
       pids=
       # export CUDA_VISIBLE_DEVICES=0
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
-                        'NUM_DEBUG_BATCHES' 50 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+                        'NUM_DEBUG_BATCHES' 100 'TRAIN.END_EPOCH' 30 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'none' \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
@@ -146,7 +146,7 @@ jobs:
       pids+=" $!"
       # export CUDA_VISIBLE_DEVICES=3
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
-                        'NUM_DEBUG_BATCHES' 5 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+                        'NUM_DEBUG_BATCHES' 5 'TRAIN.END_EPOCH' 2 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'section' \
                         'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
