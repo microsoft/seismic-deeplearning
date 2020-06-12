@@ -156,17 +156,30 @@ def main(args):
     assert test2_labels.max() == 5
 
     if args.type == "checkerboard":
+        n = 2
+        Flag = True
         logging.info("train checkerbox")
         n_inlines, n_crosslines, n_depth = train_seismic.shape
+        print('train', n_inlines, n_crosslines, n_depth, args.box_size)
+        if Flag:
+            n_inlines, n_crosslines, n_depth = int(n*args.box_size),int(n*args.box_size),int(n*args.box_size)
+            print('train', n_inlines, n_crosslines, n_depth, args.box_size)
         checkerboard_train_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
         checkerboard_train_seismic = checkerboard_train_seismic.astype(train_seismic.dtype)
+        print(checkerboard_train_seismic.shape)
         checkerboard_train_labels = checkerboard_train_seismic.astype(train_labels.dtype)
         # labels are integers and start from zero
         checkerboard_train_labels[checkerboard_train_seismic < WHITE_LABEL] = WHITE_LABEL
 
+        print(checkerboard_train_labels.shape)
+        print(checkerboard_train_seismic.shape)
         # create checkerbox
         logging.info("test1 checkerbox")
         n_inlines, n_crosslines, n_depth = test1_seismic.shape
+        print('test1', n_inlines, n_crosslines, n_depth, args.box_size)
+        if Flag:
+            n_inlines, n_crosslines, n_depth = int(n*args.box_size),int(n*args.box_size),int(n*args.box_size)
+            print('test1', n_inlines, n_crosslines, n_depth, args.box_size)
         checkerboard_test1_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
         checkerboard_test1_seismic = checkerboard_test1_seismic.astype(test1_seismic.dtype)
         checkerboard_test1_labels = checkerboard_test1_seismic.astype(test1_labels.dtype)
@@ -175,6 +188,10 @@ def main(args):
 
         logging.info("test2 checkerbox")
         n_inlines, n_crosslines, n_depth = test2_seismic.shape
+        print('test2', n_inlines, n_crosslines, n_depth, args.box_size)
+        if Flag:
+            n_inlines, n_crosslines, n_depth = int(n*args.box_size),int(n*args.box_size),int(n*args.box_size)
+            print('test2', n_inlines, n_crosslines, n_depth, args.box_size)
         checkerboard_test2_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
         checkerboard_test2_seismic = checkerboard_test2_seismic.astype(test2_seismic.dtype)
         checkerboard_test2_labels = checkerboard_test2_seismic.astype(test2_labels.dtype)
