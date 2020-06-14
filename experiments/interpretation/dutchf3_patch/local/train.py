@@ -151,6 +151,7 @@ def run(*options, cfg=None, debug=False):
     if debug:
         logger.info("Running in debug mode..")
         train_range = min(config.TRAIN.BATCH_SIZE_PER_GPU * config.NUM_DEBUG_BATCHES, len(train_set))
+        logging.info(f"train range in debug mode {train_range}")
         train_set = data.Subset(train_set, range(train_range))
         valid_range = min(config.VALIDATION.BATCH_SIZE_PER_GPU, len(val_set))
         val_set = data.Subset(val_set, range(valid_range))
