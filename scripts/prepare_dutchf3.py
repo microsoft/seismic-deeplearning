@@ -39,7 +39,8 @@ def _write_split_files(splits_path, train_list, val_list, loader_type):
     file_object = open(path.join(splits_path, loader_type + "_train_val.txt"), "w")
     file_object.write("\n".join(train_list + val_list))
     file_object.close()
-    file_object = open(path.join(splits_path, loader_type + "_train.txt"), "w")
+    file_object = open(path.join(splits_path,
+                       loader_type + "_train.txt"), "w")
     file_object.write("\n".join(train_list))
     file_object.close()
     file_object = open(path.join(splits_path, loader_type + "_val.txt"), "w")

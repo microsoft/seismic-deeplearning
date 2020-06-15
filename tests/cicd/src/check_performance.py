@@ -48,8 +48,6 @@ def main(args):
         metrics_dict["Mean IoU"] = "mIoU"
 
     # check for actual values
-    print(data[metrics_dict["Pixel Accuracy"]])
-    print(data[metrics_dict["Mean IoU"]])
     assert data[metrics_dict["Pixel Accuracy"]] > 0.97
     assert data[metrics_dict["Mean IoU"]] > 0.97
 

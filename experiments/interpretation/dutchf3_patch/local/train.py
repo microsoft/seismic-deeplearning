@@ -47,7 +47,7 @@ def prepare_batch(batch, device=None, non_blocking=False):
     )
 
 
-def run(*options, cfg=None, debug=False):
+def run(*options, cfg=None, debug=False, input=None):
     """Run training and validation of model
 
     Notes:
@@ -62,6 +62,8 @@ def run(*options, cfg=None, debug=False):
                                       default.py
         cfg (str, optional): Location of config file to load. Defaults to None.        
         debug (bool): Places scripts in debug/test mode and only executes a few iterations
+        input (str, optional): Location of data if Azure ML run, 
+            for local runs input is config.DATASET.ROOT
     """
     # Configuration:
     update_config(config, options=options, config_file=cfg)
@@ -75,7 +77,12 @@ def run(*options, cfg=None, debug=False):
     except:
         output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
-    # Logging:
+    # if AML training pipeline supplies us with input
+    if input is not None:
+        data_dir = input
+        output_dir = data_dir + config.OUTPUT_DIR
+
+    # Start logging
     load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
