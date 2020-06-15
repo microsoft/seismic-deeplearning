@@ -38,7 +38,7 @@ DATA_F3="${DATA_F3}/data"
 
 cd scripts
 
-python gen_checkerboard.py --dataroot ${DATA_F3} --dataout ${DATA_CHECKERBOARD} --type checkerboard --based_on fixed_box_number
+python gen_synthetic_data.py --dataroot ${DATA_F3} --dataout ${DATA_CHECKERBOARD} --type checkerboard --based_on fixed_box_number
 
 # finished data download and generation
 

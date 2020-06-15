@@ -173,6 +173,7 @@ jobs:
 
       # check validation set performance
       set -e
+      # TODO: enable this after investigating reproducibility problem of patch_deconvnet for small-size training data
       # python ../../../../tests/cicd/src/check_performance.py --infile metrics_patch_deconvnet_no_depth.json
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_unet_section_depth.json
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_seresnet_unet_section_depth.json
@@ -262,6 +263,7 @@ jobs:
 
       # check test set performance
       set -e
+      # TODO: enable this after investigating reproducibility problem of patch_deconvnet for small-size training data
       # python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_patch_deconvnet_no_depth.json --test
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_unet_section_depth.json --test
       python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_seresnet_unet_section_depth.json --test

@@ -127,7 +127,7 @@ def main(args):
 
     logging.info("loading data")
 
-    assert args.based_on in ['dutch_f3', 'fixed_box_number']
+    
     # TODO: extend this to binary and gradient
     if args.type!='checkerboard':
         assert args.based_on=='dutch_f3'
@@ -285,11 +285,12 @@ WHITE_LABEL = 0
 BLACK_LABEL = BLACK
 TYPES = ["checkerboard", "gradient", "binary"]
 GRADIENT_DIR = ["inline", "crossline", "depth"]
+METHODS = ['dutch_f3', 'fixed_box_number']
 
 parser.add_argument("--dataroot", help="Root location of the input data", type=str, required=True)
 parser.add_argument("--dataout", help="Root location of the output data", type=str, required=True)
 parser.add_argument("--box_size", help="Size of the bounding box", type=int, required=False, default=100)
-parser.add_argument("--based_on", help="This determines the shape of synthetic data array", type=str, required=False, default='dutch_f3')
+parser.add_argument("--based_on", help="This determines the shape of synthetic data array", type=str, required=False, choices=METHODS, default='dutch_f3')
 parser.add_argument("--box_number", help="Number of boxes", type=int, required=False, default=2)
 parser.add_argument(
     "--type", help="Type of data to generate", type=str, required=False, choices=TYPES, default="checkerboard",
