@@ -1,0 +1,1 @@
+../../../interpretation/deepseismic_interpretation/segyconverter/convert_segy.py

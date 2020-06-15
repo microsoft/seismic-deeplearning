@@ -47,22 +47,18 @@ def main(args):
         metrics_dict["Pixel Accuracy"] = "pixacc"
         metrics_dict["Mean IoU"] = "mIoU"
 
-    # process training set results
-    assert data[metrics_dict["Pixel Accuracy"]] > 0.0
-    assert data[metrics_dict["Pixel Accuracy"]] <= 1.0
-    assert data[metrics_dict["Mean IoU"]] > 0.0
-    assert data[metrics_dict["Mean IoU"]] <= 1.0
-
     # check for actual values
-    math.isclose(data[metrics_dict["Pixel Accuracy"]], 1.0, abs_tol=ABS_TOL)
-    math.isclose(data[metrics_dict["Mean IoU"]], 1.0, abs_tol=ABS_TOL)
+    assert data[metrics_dict["Pixel Accuracy"]] > 0.97
+    assert data[metrics_dict["Mean IoU"]] > 0.97
+
+    assert data[metrics_dict["Pixel Accuracy"]] <= 1.0
+    assert data[metrics_dict["Mean IoU"]] <= 1.0
 
     logging.info("all done")
 
-
 """ GLOBAL VARIABLES """
 # tolerance within which values are compared
-ABS_TOL = 1e-3
+ABS_TOL = 1e-2
 
 """ cmd-line arguments """
 parser.add_argument("--infile", help="Location of the file which has the metrics", type=str, required=True)
