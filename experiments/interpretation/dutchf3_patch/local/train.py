@@ -152,12 +152,19 @@ def run(*options, cfg=None, debug=False, input=None):
         debug=debug,
     )
     logger.info(val_set)
+    
+
 
     if debug:
         logger.info("Running in debug mode..")
-        train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU * config.NUM_DEBUG_BATCHES))
-        val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
+        train_range = min(config.TRAIN.BATCH_SIZE_PER_GPU * config.NUM_DEBUG_BATCHES, len(train_set))
+        logging.info(f"train range in debug mode {train_range}")
+        train_set = data.Subset(train_set, range(train_range))
+        valid_range = min(config.VALIDATION.BATCH_SIZE_PER_GPU, len(val_set))
+        val_set = data.Subset(val_set, range(valid_range))
 
+    
+    
     train_loader = data.DataLoader(
         train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True
     )
