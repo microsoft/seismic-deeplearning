@@ -114,15 +114,15 @@ jobs:
       echo "cv_lib unit test job passed"
 
 ###################################################################################################
-# Stage 3: Dutch F3 patch models on checkerboard test set: 
+# Stage 3: Patch models on checkerboard test set: 
 #              deconvnet, unet, HRNet patch depth, HRNet section depth
 # CAUTION: reverted these builds to single-GPU leaving new multi-GPU code in to be reverted later
 ###################################################################################################
 
-- job: checkerboard_dutchf3_patch
+- job: checkerboard_patch
   dependsOn: cv_lib_unit_tests_job
   timeoutInMinutes: 60
-  displayName: Checkerboard Dutch F3 patch local
+  displayName: Checkerboard patch local
   pool:
     name: deepseismicagentpool
   steps:
@@ -304,7 +304,7 @@ jobs:
 ###################################################################################################
 
 - job: F3_block_training_and_evaluation_local_notebook
-  dependsOn: checkerboard_dutchf3_patch
+  dependsOn: checkerboard_patch
   timeoutInMinutes: 5
   displayName: F3 block training and evaluation local notebook
   pool:
