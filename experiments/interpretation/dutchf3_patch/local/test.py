@@ -275,10 +275,10 @@ def _evaluate_split(
 
     try:
         output_dir = generate_path(
-            f"debug/{config.OUTPUT_DIR}_test_{split}", git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
+            f"{config.OUTPUT_DIR}/test/{split}", git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
         )
     except:
-        output_dir = generate_path(f"debug/{config.OUTPUT_DIR}_test_{split}", config.MODEL.NAME, current_datetime(),)
+        output_dir = generate_path(f"{config.OUTPUT_DIR}/test/{split}", config.MODEL.NAME, current_datetime(),)
 
     running_metrics_split = runningScore(n_classes)
 
@@ -363,7 +363,7 @@ def test(*options, cfg=None, debug=False):
     load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    log_dir, model_name = os.path.split(config.TEST.MODEL_PATH)
+    log_dir, _ = os.path.split(config.TEST.MODEL_PATH)
 
     # load model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
