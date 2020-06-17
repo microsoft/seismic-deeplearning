@@ -216,16 +216,7 @@ class Res34Unetv4(nn.Module):
     def init_weights(
         self, pretrained="",
     ):
-        logger.info("=> init weights from normal distribution")
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.normal_(m.weight, std=0.001)
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-
-        if pretrained and not os.path.isfile(pretrained):
-            raise FileNotFoundError(f"The file {pretrained} was not found. Please supply correct path or leave empty")
+        # skip weight initialization - leave at default values
 
         if os.path.isfile(pretrained):
             pretrained_dict = torch.load(pretrained)
@@ -331,13 +322,7 @@ class Res34Unetv3(nn.Module):
     def init_weights(
         self, pretrained="",
     ):
-        logger.info("=> init weights from normal distribution")
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.normal_(m.weight, std=0.001)
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
+        # skip weight initialization - leave at default values
 
         if pretrained and not os.path.isfile(pretrained):
             raise FileNotFoundError(f"The file {pretrained} was not found. Please supply correct path or leave empty")
@@ -412,13 +397,7 @@ class Res34Unetv5(nn.Module):
     def init_weights(
         self, pretrained="",
     ):
-        logger.info("=> init weights from normal distribution")
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.normal_(m.weight, std=0.001)
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
+        # skip weight initialization - leave at default values
 
         if pretrained and not os.path.isfile(pretrained):
             raise FileNotFoundError(f"The file {pretrained} was not found. Please supply correct path or leave empty")
