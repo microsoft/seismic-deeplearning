@@ -69,6 +69,11 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
         cfg (str, optional): Location of config file to load. Defaults to None.        
         debug (bool): Places scripts in debug/test mode and only executes a few iterations
     """
+    # Logging:
+    load_log_configuration(config.LOG_CONFIG)
+    logger = logging.getLogger(__name__)
+    logger.debug(config.WORKERS)
+
     # Configuration:
     update_config(config, options=options, config_file=cfg)
     silence_other_ranks = True
