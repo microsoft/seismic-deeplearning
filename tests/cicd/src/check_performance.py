@@ -56,9 +56,6 @@ def main(args):
 
     logging.info("all done")
 
-# """ GLOBAL VARIABLES """
-# # tolerance within which values are compared
-# ABS_TOL = 1e-2
 
 """ cmd-line arguments """
 parser.add_argument("--infile", help="Location of the file which has the metrics", type=str, required=True)
