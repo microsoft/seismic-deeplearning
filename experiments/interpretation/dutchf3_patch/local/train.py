@@ -183,7 +183,7 @@ def run(*options, cfg=None, debug=False, input=None):
         data_flow_dict['train_loader_length'] = len(train_loader)
         data_flow_dict['validation_loader_length'] = len(val_loader)
         
-        fname = f"data_flow_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
+        fname = f"data_flow_train_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
         with open(fname, 'w') as f:
             json.dump(data_flow_dict, f, indent=4)
     
