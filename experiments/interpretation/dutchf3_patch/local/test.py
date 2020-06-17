@@ -230,7 +230,7 @@ def _patch_label_2d(
 
         # dump the data right before it's being put into the model and after scoring
         if debug:
-            outdir = f"debug/batch_{split}"
+            outdir = f"debug/test/batch_{split}"
             generate_path(outdir)
             for i in range(batch.shape[0]):
                 path_prefix = f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}"

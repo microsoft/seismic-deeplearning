@@ -153,7 +153,7 @@ class SectionLoader(data.Dataset):
         im, lbl = _transform_WH_to_HW(im), _transform_WH_to_HW(lbl)
 
         if self.debug and "test" in self.split:
-            outdir = f"debug/sectionLoader_{self.split}_raw"
+            outdir = f"debug/test/sectionLoader_{self.split}_raw"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
             image_to_disk(im, path_prefix + "_img.png", self.MIN, self.MAX)
@@ -167,7 +167,7 @@ class SectionLoader(data.Dataset):
             im, lbl = self.transform(im, lbl)
 
         if self.debug and "test" in self.split:
-            outdir = f"debug/sectionLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
+            outdir = f"debug/test/sectionLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
             image_to_disk(np.array(im[0]), path_prefix + "_img.png", self.MIN, self.MAX)
@@ -397,7 +397,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
 
         # dump images before augmentation
         if self.debug:
-            outdir = f"debug/testSectionLoaderWithDepth_{self.split}_raw"
+            outdir = f"debug/test/testSectionLoaderWithDepth_{self.split}_raw"
             generate_path(outdir)
             # this needs to take the first dimension of image (no depth) but lbl only has 1 dim
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
@@ -416,7 +416,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
         # dump images and labels to disk after augmentation
         if self.debug:
             outdir = (
-                f"debug/testSectionLoaderWithDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
+                f"debug/test/testSectionLoaderWithDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             )
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
