@@ -136,24 +136,11 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
     TrainPatchLoader = get_patch_loader(config)
     logging.info(f"Using {TrainPatchLoader}")
 
-    train_set = TrainPatchLoader(
-        config,
-        split="train",
-        is_transform=True,
-        augmentations=train_aug,
-        debug=debug,
-    )
+    train_set = TrainPatchLoader(config, split="train", is_transform=True, augmentations=train_aug, debug=debug,)
     logger.info(train_set)
 
-    
     n_classes = train_set.n_classes
-    val_set = TrainPatchLoader(
-        config,
-        split="val",
-        is_transform=True,
-        augmentations=val_aug,
-        debug=debug,
-    )
+    val_set = TrainPatchLoader(config, split="val", is_transform=True, augmentations=val_aug, debug=debug,)
     logger.info(val_set)
 
     if debug:
@@ -167,11 +154,11 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
     val_sampler = torch.utils.data.distributed.DistributedSampler(val_set, num_replicas=device_count, rank=local_rank)
 
     train_loader = data.DataLoader(
-        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True
+        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, sampler=train_sampler,
     )
     val_loader = data.DataLoader(
-        val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=1
-    )  # config.WORKERS)
+        val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, sampler=val_sampler
+    )
 
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
@@ -189,7 +176,11 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
     epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2 * len(train_loader)
     cosine_scheduler = CosineAnnealingScheduler(
-        optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration
+        optimizer,
+        "lr",
+        config.TRAIN.MAX_LR * device_count,
+        config.TRAIN.MIN_LR * device_count,
+        cycle_size=snapshot_duration,
     )
 
     if distributed:
@@ -219,6 +210,11 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
 
     # Ignite trainer and evaluator:
     trainer = create_supervised_trainer(model, optimizer, criterion, prepare_batch, device=device)
+    trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
+    # Set to update the epoch parameter of our distributed data sampler so that we get
+    # different shuffles
+    trainer.add_event_handler(Events.EPOCH_STARTED, update_sampler_epoch(train_loader))
+
     transform_fn = lambda output_dict: (output_dict["y_pred"].squeeze(), output_dict["mask"].squeeze())
     evaluator = create_supervised_evaluator(
         model,
@@ -235,11 +231,6 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
     )
 
     if local_rank == 0:  # Run only on master process
-
-        trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
-        # Set to update the epoch parameter of our distributed data sampler so that we get
-        # different shuffles
-        trainer.add_event_handler(Events.EPOCH_STARTED, update_sampler_epoch(train_loader))
 
         # The model will be saved under: outputs/<config_file_name>/<model_dir>
         config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
@@ -267,6 +258,16 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
         trainer.add_event_handler(
             Events.ITERATION_COMPLETED, tensorboard_handlers.log_validation_output(summary_writer)
         )
+
+        # Checkpointing: snapshotting trained models to disk
+        checkpoint_handler = SnapshotHandler(
+            output_dir,
+            config.MODEL.NAME,
+            extract_metric_from("mIoU"),
+            lambda: (trainer.state.iteration % snapshot_duration) == 0,
+        )
+        evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
+        logger.info("Starting training")
 
         # add specific logger which also triggers printed metrics on training set
         @trainer.on(Events.EPOCH_COMPLETED)
