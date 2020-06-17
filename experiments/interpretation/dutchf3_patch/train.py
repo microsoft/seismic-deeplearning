@@ -90,11 +90,6 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
     else:
         logging.info(f"Started train.py using local mode.")
 
-    # Logging:
-    load_log_configuration(config.LOG_CONFIG)
-    logger = logging.getLogger(__name__)
-    logger.debug(config.WORKERS)
-
     # Set CUDNN benchmark mode:
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
