@@ -77,7 +77,9 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
     # Configuration:
     update_config(config, options=options, config_file=cfg)
     silence_other_ranks = True
-    device_count = torch.cuda.device_count() if distributed else 1
+
+    world_size = int(os.environ.get("WORLD_SIZE", 1))
+    distributed = world_size > 1
 
     if distributed:
         # FOR DISTRIBUTED: Set the device according to local_rank.
@@ -148,10 +150,8 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
         train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU * config.NUM_DEBUG_BATCHES))
         val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
 
-    train_sampler = torch.utils.data.distributed.DistributedSampler(
-        train_set, num_replicas=device_count, rank=local_rank
-    )
-    val_sampler = torch.utils.data.distributed.DistributedSampler(val_set, num_replicas=device_count, rank=local_rank)
+    train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
+    val_sampler = torch.utils.data.distributed.DistributedSampler(val_set, num_replicas=world_size, rank=local_rank)
 
     train_loader = data.DataLoader(
         train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, sampler=train_sampler,
@@ -178,8 +178,8 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
     cosine_scheduler = CosineAnnealingScheduler(
         optimizer,
         "lr",
-        config.TRAIN.MAX_LR * device_count,
-        config.TRAIN.MIN_LR * device_count,
+        config.TRAIN.MAX_LR * world_size,
+        config.TRAIN.MIN_LR * world_size,
         cycle_size=snapshot_duration,
     )
 
@@ -189,7 +189,7 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
             optimizer,
             "lr",
             start_value=config.TRAIN.MAX_LR,
-            end_value=config.TRAIN.MAX_LR * device_count,
+            end_value=config.TRAIN.MAX_LR * world_size,
             cycle_size=10 * len(train_loader),
         )
         scheduler = ConcatScheduler(schedulers=[warmup_scheduler, cosine_scheduler], durations=[warmup_duration])
@@ -230,22 +230,16 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
         device=device,
     )
 
+    # The model will be saved under: outputs/<config_file_name>/<model_dir>
+    config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
+    try:
+        output_dir = generate_path(
+            config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),
+        )
+    except:
+        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
+
     if local_rank == 0:  # Run only on master process
-
-        # The model will be saved under: outputs/<config_file_name>/<model_dir>
-        config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
-        try:
-            output_dir = generate_path(
-                config.OUTPUT_DIR,
-                git_branch(),
-                git_hash(),
-                config_file_name,
-                config.TRAIN.MODEL_DIR,
-                current_datetime(),
-            )
-        except:
-            output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
-
         # Logging:
         trainer.add_event_handler(
             Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
