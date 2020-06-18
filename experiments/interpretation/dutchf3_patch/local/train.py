@@ -126,9 +126,6 @@ def run(*options, cfg=None, debug=False, input=None):
     else:
         train_aug = val_aug = basic_aug
 
-    
-    
-
     # Training and Validation Loaders:
     TrainPatchLoader = get_patch_loader(config)
     logging.info(f"Using {TrainPatchLoader}")
@@ -183,9 +180,9 @@ def run(*options, cfg=None, debug=False, input=None):
         data_flow_dict['train_loader_length'] = len(train_loader)
         data_flow_dict['validation_loader_length'] = len(val_loader)
         
-        fname = f"data_flow_train_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
+        fname = f"data_flow_train_{config_file_name}_{config.TRAIN.DEPTH}_{config.TRAIN.MODEL_DIR}.json"
         with open(fname, 'w') as f:
-            json.dump(data_flow_dict, f, indent=4)
+            json.dump(data_flow_dict, f, indent=2)
     
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)

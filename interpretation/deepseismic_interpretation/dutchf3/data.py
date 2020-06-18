@@ -773,9 +773,6 @@ _TRAIN_PATCH_LOADERS = {
     "patch": TrainPatchLoaderWithDepth,
 }
 
-_TRAIN_SECTION_LOADERS = {"section": TrainSectionLoaderWithDepth}
-
-
 def get_patch_loader(cfg):
     assert str(cfg.TRAIN.DEPTH).lower() in [
         "section",
@@ -785,6 +782,7 @@ def get_patch_loader(cfg):
             Valid values: section, patch, none."
     return _TRAIN_PATCH_LOADERS.get(cfg.TRAIN.DEPTH, TrainPatchLoader)
 
+_TRAIN_SECTION_LOADERS = {"section": TrainSectionLoaderWithDepth}
 
 def get_section_loader(cfg):
     assert str(cfg.TRAIN.DEPTH).lower() in [
@@ -796,7 +794,6 @@ def get_section_loader(cfg):
 
 
 _TEST_LOADERS = {"section": TestSectionLoaderWithDepth}
-
 
 def get_test_loader(cfg):
     logger = logging.getLogger(__name__)
