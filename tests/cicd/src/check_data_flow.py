@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """ Please see the def main() function for code description."""
 import json
-import math
+
 
 """ libraries """
 
 import numpy as np
-import sys
 import os
 
 np.set_printoptions(linewidth=200)
@@ -37,18 +36,54 @@ def main(args):
     with open(args.infile, "r") as fp:
         data = json.load(fp)
 
-    
+    # Note: these are specific to the setup in 
+    # main_build.yml for train.py 
+    # and get_data_for_builds.sh and prepare_dutchf3.py and prepare_dutchf3.py
 
     if args.step=='test':
-        pass
+
+        for test_key in data.keys():
+            print(test_key)
+            if args.train_depth=='none':
+                print(args.train_depth)
+                assert tuple(data[test_key]['test_input_shape'])==(200, 200, 200) 
+                for img in data[test_key]["img_shape"]:
+                    assert tuple(img)==(1, 1, 200, 200) #dimenstion
+            
+            elif args.train_depth=='section':
+                print(args.train_depth)
+                assert tuple(data[test_key]['test_input_shape'])==(200, 3, 200, 200) 
+                for img in data[test_key]["img_shape"]:
+                    assert tuple(img)==(1, 3, 200, 200) #dimenstion
+    
+            
+            assert len(data[test_key]["pred_shape"])==data[test_key]["take_n_sections"]
+            assert len(data[test_key]["gt_shape"])==data[test_key]["take_n_sections"]
+            assert len(data[test_key]["img_shape"])==data[test_key]["take_n_sections"]
+
+            assert tuple(data[test_key]["test_label_shape"])==(200, 200, 200)
+
+            assert data[test_key]["test_section_loader_length"]==400
+            assert data[test_key]["n_classes"]==2
+            assert data[test_key]["test_loader_length"]==400
+
+            for pred, gt in zip(data[test_key]["pred_shape"], data[test_key]["gt_shape"]):
+                assert tuple(pred[0])==(1, 200, 200) #dimenstion
+                assert pred[1]<=2 # unique classes
+
+                assert tuple(gt[0])==(1, 1, 200, 200) #dimenstion
+                assert gt[1]<=2 # unique classes
+        
+
+
     elif args.step=='train':
         if args.train_depth=='none':
             assert tuple(data['train_input_shape'])==(200, 200, 200)
-            
         elif args.train_depth=='section':
             assert tuple(data['train_input_shape'])==(200, 3, 200, 200)
         elif args.train_depth=='patch':
-            pass
+            raise Exception('Must be added')
+        
         assert tuple(data['train_label_shape'])==(200, 200, 200)
         assert data['train_patch_loader_length']==64
         assert data['validation_patch_loader_length']==1280
@@ -57,11 +92,7 @@ def main(args):
         assert data['train_loader_length']==4
         assert data['validation_loader_length']==1
         assert data['n_classes']==2
-        
-
-
     
-
     logging.info("all done")
 
 
@@ -77,22 +108,3 @@ parser.add_argument("--train_depth", choices=TRAIN_DEPTH, type=str, required=Tru
 if __name__ == "__main__":
     main(parser.parse_args())
 
-# pretty printing of the stack
-"""
-  try:
-    logging.info('before main')
-    main(parser.parse_args())
-    logging.info('after main')
-  except:
-    for frame in traceback.extract_tb(sys.exc_info()[2]):
-      fname,lineno,fn,text = frame
-      print ("Error in %s on line %d" % (fname, lineno))
-"""
-# optionally enable profiling information
-#  import cProfile
-#  name = <insert_name_here>
-#  cProfile.run('main.run()', name + '.prof')
-#  import pstats
-#  p = pstats.Stats(name + '.prof')
-#  p.sort_stats('cumulative').print_stats(10)
-#  p.sort_stats('time').print_stats()
