@@ -43,18 +43,18 @@ def main(args):
     if args.step=='test':
 
         for test_key in data.keys():
-            print(test_key)
             if args.train_depth=='none':
-                print(args.train_depth)
                 assert tuple(data[test_key]['test_input_shape'])==(200, 200, 200) 
                 for img in data[test_key]["img_shape"]:
                     assert tuple(img)==(1, 1, 200, 200) #dimenstion
             
             elif args.train_depth=='section':
-                print(args.train_depth)
                 assert tuple(data[test_key]['test_input_shape'])==(200, 3, 200, 200) 
                 for img in data[test_key]["img_shape"]:
                     assert tuple(img)==(1, 3, 200, 200) #dimenstion
+            
+            elif args.train_depth=='patch':
+                raise Exception('Must be added')
     
             
             assert len(data[test_key]["pred_shape"])==data[test_key]["take_n_sections"]
