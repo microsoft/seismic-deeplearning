@@ -5,4 +5,4 @@ if [ "$NGPUS" -lt "2" ]; then
     exit 1
 fi
 nohup python -m torch.distributed.launch --nproc_per_node=$NGPUS train.py \
-     --distributed --debug --cfg "configs/seresnet_unet.yaml" > train_distributed.log 2>&1 &
+     --distributed --cfg "configs/seresnet_unet.yaml" > train_distributed.log 2>&1 &
