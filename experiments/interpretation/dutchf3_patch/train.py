@@ -15,6 +15,8 @@ Time to run on single V100 for 300 epochs: 4.5 days
 import json
 import logging
 import logging.config
+
+import os
 from os import path
 
 import fire
@@ -244,14 +246,7 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
         trainer.add_event_handler(
             Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
         )
-        trainer.add_event_handler(Events.EPOCH_COMPLETED, logging_handlers.log_lr(optimizer))
-
-        # Tensorboard and Logging:
-        summary_writer = create_summary_writer(log_dir=path.join(output_dir, "logs"))
-        trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer))
-        trainer.add_event_handler(
-            Events.ITERATION_COMPLETED, tensorboard_handlers.log_validation_output(summary_writer)
-        )
+        trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
 
         # Checkpointing: snapshotting trained models to disk
         checkpoint_handler = SnapshotHandler(
@@ -260,22 +255,31 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
             extract_metric_from("mIoU"),
             lambda: (trainer.state.iteration % snapshot_duration) == 0,
         )
-        evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
-        logger.info("Starting training")
 
-        # add specific logger which also triggers printed metrics on training set
-        @trainer.on(Events.EPOCH_COMPLETED)
-        def log_training_results(engine):
-            evaluator.run(train_loader)
+        evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
+
+        # Tensorboard and Logging:
+        summary_writer = create_summary_writer(log_dir=path.join(output_dir, "logs"))
+        trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer))
+        trainer.add_event_handler(
+            Events.ITERATION_COMPLETED, tensorboard_handlers.log_validation_output(summary_writer)
+        )
+
+    @trainer.on(Events.EPOCH_COMPLETED)
+    def log_training_results(engine):
+        evaluator.run(train_loader)
+        if local_rank == 0:  # Run only on master process
             tensorboard_handlers.log_results(engine, evaluator, summary_writer, n_classes, stage="Training")
             logging_handlers.log_metrics(engine, evaluator, stage="Training")
+            logger.info("Logging training results..")
 
-        # add specific logger which also triggers printed metrics on validation set
-        @trainer.on(Events.EPOCH_COMPLETED)
-        def log_validation_results(engine):
-            evaluator.run(val_loader)
+    @trainer.on(Events.EPOCH_COMPLETED)
+    def log_validation_results(engine):
+        evaluator.run(val_loader)
+        if local_rank == 0:  # Run only on master process
             tensorboard_handlers.log_results(engine, evaluator, summary_writer, n_classes, stage="Validation")
             logging_handlers.log_metrics(engine, evaluator, stage="Validation")
+            logger.info("Logging validation results..")
             # dump validation set metrics at the very end for debugging purposes
             if engine.state.epoch == config.TRAIN.END_EPOCH and debug:
                 fname = f"metrics_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
@@ -286,16 +290,7 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
                 log_msg = " ".join(f"{k}: {out_dict[k]}" for k in out_dict.keys())
                 logging.info(log_msg)
 
-        # Checkpointing: snapshotting trained models to disk
-        checkpoint_handler = SnapshotHandler(
-            output_dir,
-            config.MODEL.NAME,
-            extract_metric_from("mIoU"),
-            lambda: (trainer.state.iteration % snapshot_duration) == 0,
-        )
-        evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
-        logger.info("Starting training")
-
+    logger.info("Starting training")
     trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length=len(train_loader), seed=config.SEED)
     summary_writer.close()
 
