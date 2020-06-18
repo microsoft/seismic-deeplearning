@@ -148,6 +148,7 @@ jobs:
                         'TRAIN.END_EPOCH' 2 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'none' \
+                        'TRAIN.BATCH_SIZE_PER_GPU' 16 'VALIDATION.BATCH_SIZE_PER_GPU' 32 \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
                         'WORKERS' 1 \
                         --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
@@ -158,6 +159,7 @@ jobs:
                         'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'section' \
+                        'TRAIN.BATCH_SIZE_PER_GPU' 16 'VALIDATION.BATCH_SIZE_PER_GPU' 32 \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
                         'WORKERS' 1 \
                         --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
@@ -168,6 +170,7 @@ jobs:
                         'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'section' \
+                        'TRAIN.BATCH_SIZE_PER_GPU' 16 'VALIDATION.BATCH_SIZE_PER_GPU' 32 \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
                         'WORKERS' 1 \
                         --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
@@ -178,6 +181,7 @@ jobs:
                         'TRAIN.END_EPOCH' 2 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'section' \
+                        'TRAIN.BATCH_SIZE_PER_GPU' 16 'VALIDATION.BATCH_SIZE_PER_GPU' 32 \
                         'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
                         'WORKERS' 1 \

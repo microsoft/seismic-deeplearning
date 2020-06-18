@@ -441,7 +441,7 @@ def test(*options, cfg=None, debug=False):
     if debug:
         config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
 
-        fname = f"data_flow_test_{config_file_name}_{config.TRAIN.DEPTH}_{config.TRAIN.MODEL_DIR}.json"
+        fname = f"data_flow_test_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
         with open(fname, 'w') as f:
             json.dump(data_flow, f, indent=1)
 
