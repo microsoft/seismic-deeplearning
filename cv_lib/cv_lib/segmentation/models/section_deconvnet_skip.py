@@ -304,4 +304,5 @@ def get_seg_model(cfg, **kwargs):
         cfg.MODEL.IN_CHANNELS == 1
     ), f"Section deconvnet is not implemented to accept {cfg.MODEL.IN_CHANNELS} channels. Please only pass 1 for cfg.MODEL.IN_CHANNELS"
     model = section_deconvnet_skip(n_classes=cfg.DATASET.NUM_CLASSES)
+
     return model
