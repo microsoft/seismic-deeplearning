@@ -448,8 +448,6 @@ def test(*options, cfg=None, debug=False):
     # FINAL TEST RESULTS:
     score, class_iou = running_metrics_overall.get_scores()
 
-    print(score, class_iou)
-
     logger.info("--------------- FINAL RESULTS -----------------")
     logger.info(f'Pixel Acc: {score["Pixel Acc: "]:.4f}')
 
