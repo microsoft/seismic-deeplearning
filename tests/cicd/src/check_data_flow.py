@@ -44,35 +44,70 @@ def main(args):
 
         for test_key in data.keys():
             if args.train_depth=='none':
-                assert tuple(data[test_key]['test_input_shape'])==(200, 200, 200) 
-                for img in data[test_key]["img_shape"]:
-                    assert tuple(img)==(1, 1, 200, 200) #dimenstion
-            
+                expected_test_input_shape = (200, 200, 200)
+                expected_img = (1, 1, 200, 200)
+
             elif args.train_depth=='section':
-                assert tuple(data[test_key]['test_input_shape'])==(200, 3, 200, 200) 
-                for img in data[test_key]["img_shape"]:
-                    assert tuple(img)==(1, 3, 200, 200) #dimenstion
+                expected_test_input_shape = (200, 3, 200, 200)
+                expected_img = (1, 3, 200, 200)
             
             elif args.train_depth=='patch':
+                expected_test_input_shape = 'TBD'
+                expected_img = 'TBD'
                 raise Exception('Must be added')
     
+            msg = f"Expected {expected_test_input_shape} for shape, received {tuple(data[test_key]['test_input_shape'])} instead, in {args.infile.split('.')[0]}"
+            assert tuple(data[test_key]['test_input_shape'])==expected_test_input_shape, msg
+
+            expected_test_label_shape = (200, 200, 200)
+            msg = f"Expected {expected_test_label_shape} for shape, received {tuple(data[test_key]['test_label_shape'])} instead, in {args.infile.split('.')[0]}"
+            assert tuple(data[test_key]['test_label_shape'])==expected_test_label_shape, msg
+
+            for img in data[test_key]["img_shape"]:
+                # dimension
+                msg = f"Expected {expected_img} for shape, received {tuple(img)} instead, in {args.infile.split('.')[0]}"
+                assert tuple(img)==expected_img, msg
+
+            msg = f"Expected {data[test_key]["take_n_sections"]} number of items, received {len(data[test_key]["pred_shape"])} instead, in {args.infile.split('.')[0]}"
+            assert len(data[test_key]["pred_shape"])==data[test_key]["take_n_sections"], msg
+
+            msg = f"Expected {data[test_key]["take_n_sections"]} number of items, received {len(data[test_key]["gt_shape"])} instead, in {args.infile.split('.')[0]}"
+            assert len(data[test_key]["gt_shape"])==data[test_key]["take_n_sections"], msg
+
+            msg = f"Expected {data[test_key]["take_n_sections"]} number of items, received {len(data[test_key]["img_shape"])} instead, in {args.infile.split('.')[0]}"
+            assert len(data[test_key]["img_shape"])==data[test_key]["take_n_sections"], msg
+
             
-            assert len(data[test_key]["pred_shape"])==data[test_key]["take_n_sections"]
-            assert len(data[test_key]["gt_shape"])==data[test_key]["take_n_sections"]
-            assert len(data[test_key]["img_shape"])==data[test_key]["take_n_sections"]
+            expected_len = 400
+            msg = f"Expected {expected_len} for test section loader length, received {data[test_key]["test_section_loader_length"]} instead, in {args.infile.split('.')[0]}"
+            assert data[test_key]["test_section_loader_length"]==expected_len, msg
 
-            assert tuple(data[test_key]["test_label_shape"])==(200, 200, 200)
+            msg = f"Expected {expected_len} for test loader length, received {data[test_key]["test_loader_length"]} instead, in {args.infile.split('.')[0]}"
+            assert data[test_key]["test_loader_length"]==expected_len, msg
 
-            assert data[test_key]["test_section_loader_length"]==400
-            assert data[test_key]["n_classes"]==2
-            assert data[test_key]["test_loader_length"]==400
+            expected_n_classes = 2
+            msg = f"Expected {expected_n_classes} for test loader length, received {data[test_key]["n_classes"]} instead, in {args.infile.split('.')[0]}"
+            assert data[test_key]["n_classes"]==expected_n_classes, msg
+            
+            expected_pred = (1, 200, 200)
+            expected_gt = (1, 1, 200, 200)
 
             for pred, gt in zip(data[test_key]["pred_shape"], data[test_key]["gt_shape"]):
-                assert tuple(pred[0])==(1, 200, 200) #dimenstion
-                assert pred[1]<=2 # unique classes
+                #dimenstion
+                msg = f"Expected {expected_pred} for prediction shape, received {tuple(pred[0])} instead, in {args.infile.split('.')[0]}"
+                assert tuple(pred[0])==expected_pred, msg
 
-                assert tuple(gt[0])==(1, 1, 200, 200) #dimenstion
-                assert gt[1]<=2 # unique classes
+                # unique classes
+                msg = f"Expected up to {expected_n_classes} unique prediction classes, received {pred[1]} instead, in {args.infile.split('.')[0]}"
+                assert pred[1]<=expected_n_classes, msg
+
+                #dimenstion
+                msg = f"Expected {expected_gt} for ground truth mask shape, received {tuple(gt[0])} instead, in {args.infile.split('.')[0]}"
+                assert tuple(gt[0])==expected_gt, msg
+
+                # unique classes
+                msg = f"Expected up to {expected_n_classes} unique ground truth classes, received {gt[1]} instead, in {args.infile.split('.')[0]}"
+                assert gt[1]<=expected_n_classes, msg
         
 
 
