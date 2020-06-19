@@ -19,7 +19,7 @@ Now you're all set to run training and testing experiments on the F3 Netherlands
 ### Monitoring progress with TensorBoard
 - from the this directory, run `tensorboard --logdir='output'` (all runtime logging information is
 written to the `output` folder  
-- open a web-browser and go to  either vmpublicip:6006 if running remotely or localhost:6006 if running locally  
+- open a web-browser and go to  either `<vm_public_ip>:6006` if running remotely or localhost:6006 if running locally  
 > **NOTE**:If running remotely remember that the port must be open and accessible 
  
 More information on Tensorboard can be found [here](https://www.tensorflow.org/get_started/summaries_and_tensorboard#launching_tensorboard).

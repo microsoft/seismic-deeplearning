@@ -30,10 +30,10 @@ You will need the following files to complete an run in AzureML
 - [base_pipeline.py](base_pipeline.py) This script is used as a base class and train_pipeline.py inherits from it. This is intended to be a helpful abstraction that an an future addition of an inference pipeline can leverage
 - [train_pipeline.py](train_pipeline.py) This script inherts from base_pipeline.py and is used to construct the pipeline and its steps. The script kickoff_train_pipeline.py will call the function defined here and the pipeline_config
 - [pipeline_config.json](pipeline_config.json) This pipeline configuration specifies the steps of the pipeline, location of data, and any specific arguments. This is consumed once the kickoff_train_script.py is run
-- [train.py](../../../experiments/interpretation/dutchf3_patch/local/train.py) This is the training script that is used to train the model
-- [unet.yaml](../../../experiments/interpretation/dutchf3_patch/local/configs/unet.yaml) This config specifices the model configuration to be used in train.py and is referenced in the pipeline_config.json
-- [azureml_requirements.txt](../../../experiments/interpretation/dutchf3_patch/local/azureml_requirements.txt) This file holds all dependencies for train.py so they can be installed on the compute in Azure ML
-- [logging.config](../../../experiments/interpretation/dutchf3_patch/local/logging.config) This logging config is used to set up logging
+- [train.py](../../../experiments/interpretation/dutchf3_patch/train.py) This is the training script that is used to train the model
+- [unet.yaml](../../../experiments/interpretation/dutchf3_patch/configs/unet.yaml) This config specifices the model configuration to be used in train.py and is referenced in the pipeline_config.json
+- [azureml_requirements.txt](../../../experiments/interpretation/dutchf3_patch/azureml_requirements.txt) This file holds all dependencies for train.py so they can be installed on the compute in Azure ML
+- [logging.config](../../../experiments/interpretation/dutchf3_patch/logging.config) This logging config is used to set up logging
 - local environment with cv_lib and interpretation set up using guidance [here](../../../README.md)
 
 ## Running a Pipeline in AzureML

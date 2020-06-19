@@ -1,20 +1,23 @@
 {
-    "step1":
-    {
+    "step1": {
         "type": "MpiStep",
         "name": "train step",
         "script": "train.py",
         "input_datareference_path": "data/",
         "input_datareference_name": "ds_test",
         "input_dataset_name": "deepseismic_test_dataset",
-        "source_directory": "experiments/interpretation/dutchf3_patch/local",
+        "source_directory": "experiments/interpretation/dutchf3_patch",
         "arguments": [
-                      "--cfg", "configs/unet.yaml",
-                      "TRAIN.END_EPOCH", "1",
-                      "TRAIN.SNAPSHOTS", "1", 
-                      "DATASET.ROOT", "data"
-                      ],
-        "requirements": "experiments/interpretation/dutchf3_patch/local/azureml_requirements.txt",
+            "--cfg",
+            "configs/unet.yaml",
+            "TRAIN.END_EPOCH",
+            "1",
+            "TRAIN.SNAPSHOTS",
+            "1",
+            "DATASET.ROOT",
+            "data"
+        ],
+        "requirements": "experiments/interpretation/dutchf3_patch/azureml_requirements.txt",
         "node_count": 1,
         "processes_per_node": 1,
         "base_image": "pytorch/pytorch"

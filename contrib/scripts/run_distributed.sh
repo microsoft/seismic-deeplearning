@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # number of GPUs to train on
-NGPU=8
+NGPUS=$(nvidia-smi -L | wc -l)
+if [ "$NGPUS" -lt "2" ]; then
+    echo "ERROR: cannot run distributed training without 2 or more GPUs."
+    exit 1
+fi
 # specify pretrained HRNet backbone
 PRETRAINED_HRNET='/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth'
 # DATA_F3='/home/alfred/data/dutch/data'
@@ -15,9 +19,8 @@ unset CUDA_VISIBLE_DEVICES
 # bug to fix conda not launching from a bash shell
 source /data/anaconda/etc/profile.d/conda.sh
 conda activate seismic-interpretation
-export PYTHONPATH=/storage/repos/forks/seismic-deeplearning-1/interpretation:$PYTHONPATH
 
-cd experiments/interpretation/dutchf3_patch/distributed/
+cd experiments/interpretation/dutchf3_patch/
 
 # patch based without skip connections
 nohup time python -m torch.distributed.launch --nproc_per_node=${NGPU} train.py \
