@@ -113,20 +113,48 @@ def main(args):
 
     elif args.step=='train':
         if args.train_depth=='none':
-            assert tuple(data['train_input_shape'])==(200, 200, 200)
+            expected_shape_in = (200, 200, 200)
         elif args.train_depth=='section':
-            assert tuple(data['train_input_shape'])==(200, 3, 200, 200)
+            expected_shape_in = (200, 3, 200, 200)
         elif args.train_depth=='patch':
+            expected_shape_in = 'TBD'
             raise Exception('Must be added')
         
-        assert tuple(data['train_label_shape'])==(200, 200, 200)
-        assert data['train_patch_loader_length']==64
-        assert data['validation_patch_loader_length']==1280
-        assert data['train_length_subset']==64
-        assert data['validation_length_subset']==32
-        assert data['train_loader_length']==4
+        msg = f"Expected {expected_shape_in} for shape, received {tuple(data['train_input_shape'])} instead, in {args.infile.split('.')[0]}"
+        assert tuple(data['train_input_shape'])==expected_shape_in, msg
+
+        expected_shape_label = (200, 200, 200)
+        msg = f"Expected {expected_shape_label} for shape, received {tuple(data['train_label_shape'])} instead, in {args.infile.split('.')[0]}"
+        assert tuple(data['train_label_shape'])==expected_shape_label, msg
+
+
+        expected_len = 64
+        msg = f"Expected {expected_len} for train patch loader length, received {data['train_patch_loader_length']} instead, in {args.infile.split('.')[0]}"
+        assert data['train_patch_loader_length']==expected_len, msg
+
+        expected_len = 1280
+        msg = f"Expected {expected_len} for validation patch loader length, received {data['validation_patch_loader_length']} instead, in {args.infile.split('.')[0]}"
+        assert data['validation_patch_loader_length']==expected_len
+
+        expected_len = 64
+        msg = f"Expected {expected_len} for train subset length, received {data['train_length_subset']} instead, in {args.infile.split('.')[0]}"
+        assert data['train_length_subset']==expected_len
+
+        expected_len = 32
+        msg = f"Expected {expected_len} for validation subset length, received {data['validation_length_subset']} instead, in {args.infile.split('.')[0]}"
+        assert data['validation_length_subset']==expected_len
+
+        expected_len = 55 #4
+        msg = f"Expected {expected_len} for train loader length, received {data['train_loader_length']} instead, in {args.infile.split('.')[0]}"
+        assert data['train_loader_length']==expected_len
+
+        expected_len = 4
+        msg = f"Expected {expected_len} for train loader length, received {data['train_loader_length']} instead, in {args.infile.split('.')[0]}"
         assert data['validation_loader_length']==1
-        assert data['n_classes']==2
+
+        expected_n_classes = 2
+        msg = f"Expected {expected_n_classes} for number of classes, received {data['n_classes']} instead, in {args.infile.split('.')[0]}"
+        assert data['n_classes']==expected_n_classes
     
     logging.info("all done")
 
