@@ -299,10 +299,8 @@ def _evaluate_split(
     # evaluation mode:
     with torch.no_grad():  # operations inside don't track history
         model.eval()
-        # total_iteration = 0
         for i, (images, labels) in enumerate(test_loader):
             logger.info(f"split: {split}, section: {i}")
-            # total_iteration = total_iteration + 1
             outputs = _patch_label_2d(
                 model,
                 images,
