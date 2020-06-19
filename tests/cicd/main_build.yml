@@ -202,10 +202,10 @@ jobs:
      
      
       set -e
-      python ../../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_patch_deconvnet_no_depth.json --step train --train_depth none
-      python ../../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_unet_section_depth.json --step train --train_depth section
-      python ../../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_seresnet_unet_section_depth.json --step train --train_depth section
-      python ../../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_hrnet_section_depth.json --step train --train_depth section
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_patch_deconvnet_no_depth.json --step train --train_depth none
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_unet_section_depth.json --step train --train_depth section
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_seresnet_unet_section_depth.json --step train --train_depth section
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_hrnet_section_depth.json --step train --train_depth section
       set +e
 
 
@@ -302,10 +302,10 @@ jobs:
 
       # check data flow for test
       set -e
-      python ../../../../tests/cicd/src/check_data_flow.py --infile data_flow_test_patch_deconvnet_no_depth.json --step test --train_depth none
-      python ../../../../tests/cicd/src/check_data_flow.py --infile data_flow_test_unet_section_depth.json --step test --train_depth section
-      python ../../../../tests/cicd/src/check_data_flow.py --infile data_flow_test_seresnet_unet_section_depth.json --step test --train_depth section
-      python ../../../../tests/cicd/src/check_data_flow.py --infile data_flow_test_hrnet_section_depth.json --step test --train_depth section
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_test_patch_deconvnet_no_depth.json --step test --train_depth none
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_test_unet_section_depth.json --step test --train_depth section
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_test_seresnet_unet_section_depth.json --step test --train_depth section
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_test_hrnet_section_depth.json --step test --train_depth section
       set +e
       
       # check test set performance
