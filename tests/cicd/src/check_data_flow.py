@@ -151,13 +151,13 @@ def main(args):
         msg = f"Expected {expected_len} for validation subset length, received {data['validation_length_subset']} instead, in {args.infile.split('.')[0]}"
         assert data['validation_length_subset']==expected_len, msg
 
-        expected_len = 55 #4
+        expected_len = 4
         msg = f"Expected {expected_len} for train loader length, received {data['train_loader_length']} instead, in {args.infile.split('.')[0]}"
         assert data['train_loader_length']==expected_len, msg
 
-        expected_len = 4
+        expected_len = 1
         msg = f"Expected {expected_len} for train loader length, received {data['train_loader_length']} instead, in {args.infile.split('.')[0]}"
-        assert data['validation_loader_length']==1, msg
+        assert data['validation_loader_length']==expected_len, msg
 
         expected_n_classes = 2
         msg = f"Expected {expected_n_classes} for number of classes, received {data['n_classes']} instead, in {args.infile.split('.')[0]}"
