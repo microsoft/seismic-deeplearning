@@ -150,6 +150,8 @@ We also provide scripts for a number of experiments we conducted using different
 This release currently supports Dutch F3 local and distributed training
 - [Dutch F3 Patch](experiments/interpretation/dutchf3_patch/README.md)
 
+Please note that we use [NVIDIA's NCCL](https://docs.nvidia.com/deeplearning/nccl/install-guide/index.html) library to enable distributed training. Please follow the installation instructions [here](https://docs.nvidia.com/deeplearning/nccl/install-guide/index.html#down) to install NCCL on your system.   
+
 #### Configuration Files
 We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manage configuration options for the experiments. There are three ways to pass arguments to the experiment scripts (e.g. train.py or test.py):
 
