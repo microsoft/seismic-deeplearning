@@ -59,7 +59,7 @@ nohup time python test.py \
     --cfg "configs/${CONFIG_NAME}.yaml" > ${CONFIG_NAME}_test.log 2>&1 &
 sleep 1
 
-cd ../../dutchf3_patch/local
+cd ../../dutchf3_patch
 
 # patch based without skip connections
 export CUDA_VISIBLE_DEVICES=2
@@ -140,7 +140,7 @@ wait
 
 # scoring scripts are in the local folder
 # models are in the distributed folder
-cd ../../dutchf3_patch/local
+cd ../../dutchf3_patch
 
 # patch based without skip connections
 export CUDA_VISIBLE_DEVICES=2

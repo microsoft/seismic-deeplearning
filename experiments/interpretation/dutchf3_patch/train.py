@@ -15,17 +15,20 @@ Time to run on single V100 for 300 epochs: 4.5 days
 import json
 import logging
 import logging.config
+
+import os
 from os import path
 
 import fire
 import numpy as np
 import torch
-from torch.utils import data
 from albumentations import Compose, HorizontalFlip, Normalize, PadIfNeeded, Resize
-from ignite.contrib.handlers import CosineAnnealingScheduler
+from ignite.contrib.handlers import ConcatScheduler, CosineAnnealingScheduler, LinearCyclicalScheduler
 from ignite.engine import Events
 from ignite.metrics import Loss
 from ignite.utils import convert_tensor
+from toolz import curry
+from torch.utils import data
 
 from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard_handlers
 from cv_lib.event_handlers.tensorboard_handlers import create_summary_writer
@@ -33,7 +36,7 @@ from cv_lib.segmentation import extract_metric_from, models
 from cv_lib.segmentation.dutchf3.engine import create_supervised_evaluator, create_supervised_trainer
 from cv_lib.segmentation.dutchf3.utils import current_datetime, git_branch, git_hash
 from cv_lib.segmentation.metrics import class_accuracy, class_iou, mean_class_accuracy, mean_iou, pixelwise_accuracy
-from cv_lib.utils import load_log_configuration, generate_path
+from cv_lib.utils import generate_path, load_log_configuration
 from deepseismic_interpretation.dutchf3.data import get_patch_loader
 from default import _C as config
 from default import update_config
@@ -47,7 +50,12 @@ def prepare_batch(batch, device=None, non_blocking=False):
     )
 
 
-def run(*options, cfg=None, debug=False, input=None):
+@curry
+def update_sampler_epoch(data_loader, engine):
+    data_loader.sampler.epoch = engine.state.epoch
+
+
+def run(*options, cfg=None, local_rank=0, debug=False, input=None, distributed=False):
     """Run training and validation of model
 
     Notes:
@@ -64,18 +72,9 @@ def run(*options, cfg=None, debug=False, input=None):
         debug (bool): Places scripts in debug/test mode and only executes a few iterations
         input (str, optional): Location of data if Azure ML run, 
             for local runs input is config.DATASET.ROOT
+        distributed (bool): This flag tells the training script to run in distributed mode
+            if more than one GPU exists.
     """
-    # Configuration:
-    update_config(config, options=options, config_file=cfg)
-
-    # The model will be saved under: outputs/<config_file_name>/<model_dir>
-    config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
-    try:
-        output_dir = generate_path(
-            config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),
-        )
-    except:
-        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
     # if AML training pipeline supplies us with input
     if input is not None:
@@ -86,6 +85,24 @@ def run(*options, cfg=None, debug=False, input=None):
     load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
+
+    # Configuration:
+    update_config(config, options=options, config_file=cfg)
+    silence_other_ranks = True
+
+    world_size = int(os.environ.get("WORLD_SIZE", 1))
+    distributed = world_size > 1
+
+    if distributed:
+        # FOR DISTRIBUTED: Set the device according to local_rank.
+        torch.cuda.set_device(local_rank)
+
+        # FOR DISTRIBUTED: Initialize the backend. torch.distributed.launch will
+        # provide environment variables, and requires that you use init_method=`env://`.
+        torch.distributed.init_process_group(backend="nccl", init_method="env://")
+        logging.info(f"Started train.py using distributed mode.")
+    else:
+        logging.info(f"Started train.py using local mode.")
 
     # Set CUDNN benchmark mode:
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
@@ -133,27 +150,12 @@ def run(*options, cfg=None, debug=False, input=None):
     TrainPatchLoader = get_patch_loader(config)
     logging.info(f"Using {TrainPatchLoader}")
 
-    train_set = TrainPatchLoader(
-        config,
-        split="train",
-        is_transform=True,
-        augmentations=train_aug,
-        debug=debug,
-    )
+    train_set = TrainPatchLoader(config, split="train", is_transform=True, augmentations=train_aug, debug=debug,)
     logger.info(train_set)
 
-    
     n_classes = train_set.n_classes
-    val_set = TrainPatchLoader(
-        config,
-        split="val",
-        is_transform=True,
-        augmentations=val_aug,
-        debug=debug,
-    )
+    val_set = TrainPatchLoader(config, split="val", is_transform=True, augmentations=val_aug, debug=debug,)
     logger.info(val_set)
-    
-
 
     if debug:
         logger.info("Running in debug mode..")
@@ -163,14 +165,15 @@ def run(*options, cfg=None, debug=False, input=None):
         valid_range = min(config.VALIDATION.BATCH_SIZE_PER_GPU, len(val_set))
         val_set = data.Subset(val_set, range(valid_range))
 
-    
-    
+    train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
+    val_sampler = torch.utils.data.distributed.DistributedSampler(val_set, num_replicas=world_size, rank=local_rank)
+
     train_loader = data.DataLoader(
-        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, shuffle=True
+        train_set, batch_size=config.TRAIN.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, sampler=train_sampler,
     )
     val_loader = data.DataLoader(
-        val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=1
-    )  # config.WORKERS)
+        val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, sampler=val_sampler
+    )
 
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
@@ -187,12 +190,26 @@ def run(*options, cfg=None, debug=False, input=None):
 
     epochs_per_cycle = config.TRAIN.END_EPOCH // config.TRAIN.SNAPSHOTS
     snapshot_duration = epochs_per_cycle * len(train_loader) if not debug else 2 * len(train_loader)
-    scheduler = CosineAnnealingScheduler(
-        optimizer, "lr", config.TRAIN.MAX_LR, config.TRAIN.MIN_LR, cycle_size=snapshot_duration
+    cosine_scheduler = CosineAnnealingScheduler(
+        optimizer,
+        "lr",
+        config.TRAIN.MAX_LR * world_size,
+        config.TRAIN.MIN_LR * world_size,
+        cycle_size=snapshot_duration,
     )
 
-    # Tensorboard writer:
-    summary_writer = create_summary_writer(log_dir=path.join(output_dir, "logs"))
+    if distributed:
+        warmup_duration = 5 * len(train_loader)
+        warmup_scheduler = LinearCyclicalScheduler(
+            optimizer,
+            "lr",
+            start_value=config.TRAIN.MAX_LR,
+            end_value=config.TRAIN.MAX_LR * world_size,
+            cycle_size=10 * len(train_loader),
+        )
+        scheduler = ConcatScheduler(schedulers=[warmup_scheduler, cosine_scheduler], durations=[warmup_duration])
+    else:
+        scheduler = cosine_scheduler
 
     # class weights are inversely proportional to the frequency of the classes in the training set
     class_weights = torch.tensor(config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False)
@@ -200,8 +217,19 @@ def run(*options, cfg=None, debug=False, input=None):
     # Loss:
     criterion = torch.nn.CrossEntropyLoss(weight=class_weights, ignore_index=255, reduction="mean")
 
+    # Model:
+    if distributed:
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[device], find_unused_parameters=True)
+        if silence_other_ranks & local_rank != 0:
+            logging.getLogger("ignite.engine.engine.Engine").setLevel(logging.WARNING)
+
     # Ignite trainer and evaluator:
     trainer = create_supervised_trainer(model, optimizer, criterion, prepare_batch, device=device)
+    trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
+    # Set to update the epoch parameter of our distributed data sampler so that we get
+    # different shuffles
+    trainer.add_event_handler(Events.EPOCH_STARTED, update_sampler_epoch(train_loader))
+
     transform_fn = lambda output_dict: (output_dict["y_pred"].squeeze(), output_dict["mask"].squeeze())
     evaluator = create_supervised_evaluator(
         model,
@@ -216,53 +244,67 @@ def run(*options, cfg=None, debug=False, input=None):
         },
         device=device,
     )
-    trainer.add_event_handler(Events.ITERATION_STARTED, scheduler)
 
-    # Logging:
-    trainer.add_event_handler(
-        Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
-    )
-    trainer.add_event_handler(Events.EPOCH_COMPLETED, logging_handlers.log_lr(optimizer))
+    # The model will be saved under: outputs/<config_file_name>/<model_dir>
+    config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
+    try:
+        output_dir = generate_path(
+            config.OUTPUT_DIR, git_branch(), git_hash(), config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),
+        )
+    except:
+        output_dir = generate_path(config.OUTPUT_DIR, config_file_name, config.TRAIN.MODEL_DIR, current_datetime(),)
 
-    # Tensorboard and Logging:
-    trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer))
-    trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_validation_output(summary_writer))
+    if local_rank == 0:  # Run only on master process
+        # Logging:
+        trainer.add_event_handler(
+            Events.ITERATION_COMPLETED, logging_handlers.log_training_output(log_interval=config.PRINT_FREQ),
+        )
+        trainer.add_event_handler(Events.EPOCH_STARTED, logging_handlers.log_lr(optimizer))
 
-    # add specific logger which also triggers printed metrics on training set
+        # Checkpointing: snapshotting trained models to disk
+        checkpoint_handler = SnapshotHandler(
+            output_dir,
+            config.MODEL.NAME,
+            extract_metric_from("mIoU"),
+            lambda: (trainer.state.iteration % snapshot_duration) == 0,
+        )
+
+        evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
+
+        # Tensorboard and Logging:
+        summary_writer = create_summary_writer(log_dir=path.join(output_dir, "logs"))
+        trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer))
+        trainer.add_event_handler(
+            Events.ITERATION_COMPLETED, tensorboard_handlers.log_validation_output(summary_writer)
+        )
+
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
         evaluator.run(train_loader)
-        tensorboard_handlers.log_results(engine, evaluator, summary_writer, n_classes, stage="Training")
-        logging_handlers.log_metrics(engine, evaluator, stage="Training")
+        if local_rank == 0:  # Run only on master process
+            tensorboard_handlers.log_results(engine, evaluator, summary_writer, n_classes, stage="Training")
+            logging_handlers.log_metrics(engine, evaluator, stage="Training")
+            logger.info("Logging training results..")
 
-    # add specific logger which also triggers printed metrics on validation set
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
         evaluator.run(val_loader)
-        tensorboard_handlers.log_results(engine, evaluator, summary_writer, n_classes, stage="Validation")
-        logging_handlers.log_metrics(engine, evaluator, stage="Validation")
-        # dump validation set metrics at the very end for debugging purposes
-        if engine.state.epoch == config.TRAIN.END_EPOCH and debug:
-            fname = f"metrics_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
-            metrics = evaluator.state.metrics
-            out_dict = {x: metrics[x] for x in ["nll", "pixacc", "mca", "mIoU"]}
-            with open(fname, "w") as fid:
-                json.dump(out_dict, fid)
-            log_msg = " ".join(f"{k}: {out_dict[k]}" for k in out_dict.keys())
-            logging.info(log_msg)
-
-    # Checkpointing: snapshotting trained models to disk
-    checkpoint_handler = SnapshotHandler(
-        output_dir,
-        config.MODEL.NAME,
-        extract_metric_from("mIoU"),
-        lambda: (trainer.state.iteration % snapshot_duration) == 0,
-    )
-    evaluator.add_event_handler(Events.EPOCH_COMPLETED, checkpoint_handler, {"model": model})
+        if local_rank == 0:  # Run only on master process
+            tensorboard_handlers.log_results(engine, evaluator, summary_writer, n_classes, stage="Validation")
+            logging_handlers.log_metrics(engine, evaluator, stage="Validation")
+            logger.info("Logging validation results..")
+            # dump validation set metrics at the very end for debugging purposes
+            if engine.state.epoch == config.TRAIN.END_EPOCH and debug:
+                fname = f"metrics_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
+                metrics = evaluator.state.metrics
+                out_dict = {x: metrics[x] for x in ["nll", "pixacc", "mca", "mIoU"]}
+                with open(fname, "w") as fid:
+                    json.dump(out_dict, fid)
+                log_msg = " ".join(f"{k}: {out_dict[k]}" for k in out_dict.keys())
+                logging.info(log_msg)
 
     logger.info("Starting training")
     trainer.run(train_loader, max_epochs=config.TRAIN.END_EPOCH, epoch_length=len(train_loader), seed=config.SEED)
-
     summary_writer.close()
 
 
