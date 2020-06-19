@@ -117,7 +117,6 @@ def main(args):
                 assert gt[1]<=expected_n_classes, msg
         
 
-
     elif args.step=='train':
         if args.train_depth=='none':
             expected_shape_in = (200, 200, 200)
