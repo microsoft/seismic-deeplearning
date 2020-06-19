@@ -328,23 +328,23 @@ def download_pretrained_model(config):
         raise NameError(
             "Unknown dataset name. Only dutch f3 and penobscot are currently supported."
         )
-
+    
     if "hrnet" in config.MODEL.NAME:
         model = "hrnet"
     elif "deconvnet" in config.MODEL.NAME:
         model = "deconvnet"
-    elif "unet" in config.MODEL.NAME:
-        model = "unet"
+    elif "resnet" in config.MODEL.NAME:
+        model = "seresnetunet"    
     else:
         raise NameError(
-            "Unknown model name. Only hrnet, deconvnet, and unet are currently supported."
+            "Unknown model name. Only hrnet, deconvnet, and seresnet_unet are currently supported."
         )
 
     # check if the user already supplied a URL, otherwise figure out the URL
-    if validators.url(config.MODEL.PRETRAINED):
+    if "PRETRAINED" in config.MODEL.keys() and validators.url(config.MODEL.PRETRAINED):
         url = config.MODEL.PRETRAINED
         print(f"Will use user-supplied URL of '{url}'")
-    elif os.path.isfile(config.MODEL.PRETRAINED):
+    elif "PRETRAINED" in config.MODEL.keys() and os.path.isfile(config.MODEL.PRETRAINED):
         url = None
         print(f"Will use user-supplied file on local disk of '{config.MODEL.PRETRAINED}'")
     else:
@@ -371,19 +371,20 @@ def download_pretrained_model(config):
                 and config.TRAIN.DEPTH == "none"
             ):
                 url = "http://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_deconvnetskip_patch_no_depth.pth"
-
             elif (
                 model == "deconvnet"
                 and "skip" not in config.MODEL.NAME
                 and config.TRAIN.DEPTH == "none"
             ):
-                url = "http://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_deconvnet_patch_no_depth.pth"
-            elif model == "unet" and config.TRAIN.DEPTH == "section":
-                url = "http://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_seresnetunet_patch_section_depth.pth"
+                url = "http://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_deconvnet_patch_no_depth.pth"            
+            elif model == "seresnetunet" and config.TRAIN.DEPTH == "section":
+                url = "https://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_seresnetunet_patch_section_depth.pth"
             else:
                 raise NotImplementedError(
                     "We don't store a pretrained model for Dutch F3 for this model combination yet."
                 )
+            
+
         else:
             raise NotImplementedError(
                 "We don't store a pretrained model for this dataset/model combination yet."
@@ -424,6 +425,11 @@ def download_pretrained_model(config):
     # Update config MODEL.PRETRAINED
     # TODO: Only HRNet uses a pretrained model currently.
     # issue https://github.com/microsoft/seismic-deeplearning/issues/267
+
+    # now that we have a pre-trained model, we can set it
+    if "PRETRAINED" not in config.MODEL.keys():
+        config.MODEL["PRETRAINED"] = "dummy"
+
     opts = [
         "MODEL.PRETRAINED",
         pretrained_model_path,
@@ -432,6 +438,7 @@ def download_pretrained_model(config):
         "TEST.MODEL_PATH",
         pretrained_model_path,
     ]
+
     config.merge_from_list(opts)
 
     return config

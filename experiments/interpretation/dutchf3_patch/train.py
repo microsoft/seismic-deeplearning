@@ -55,7 +55,7 @@ def update_sampler_epoch(data_loader, engine):
     data_loader.sampler.epoch = engine.state.epoch
 
 
-def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
+def run(*options, cfg=None, local_rank=0, debug=False, input=None, distributed=False):
     """Run training and validation of model
 
     Notes:
@@ -70,8 +70,18 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
                                       default.py
         cfg (str, optional): Location of config file to load. Defaults to None.        
         debug (bool): Places scripts in debug/test mode and only executes a few iterations
+        input (str, optional): Location of data if Azure ML run, 
+            for local runs input is config.DATASET.ROOT
+        distributed (bool): This flag tells the training script to run in distributed mode
+            if more than one GPU exists.
     """
-    # Logging:
+
+    # if AML training pipeline supplies us with input
+    if input is not None:
+        data_dir = input
+        output_dir = data_dir + config.OUTPUT_DIR
+
+    # Start logging
     load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     logger.debug(config.WORKERS)
@@ -149,8 +159,11 @@ def run(*options, cfg=None, local_rank=0, debug=False, distributed=False):
 
     if debug:
         logger.info("Running in debug mode..")
-        train_set = data.Subset(train_set, range(config.TRAIN.BATCH_SIZE_PER_GPU * config.NUM_DEBUG_BATCHES))
-        val_set = data.Subset(val_set, range(config.VALIDATION.BATCH_SIZE_PER_GPU))
+        train_range = min(config.TRAIN.BATCH_SIZE_PER_GPU * config.NUM_DEBUG_BATCHES, len(train_set))
+        logging.info(f"train range in debug mode {train_range}")
+        train_set = data.Subset(train_set, range(train_range))
+        valid_range = min(config.VALIDATION.BATCH_SIZE_PER_GPU, len(val_set))
+        val_set = data.Subset(val_set, range(valid_range))
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
     val_sampler = torch.utils.data.distributed.DistributedSampler(val_set, num_replicas=world_size, rank=local_rank)

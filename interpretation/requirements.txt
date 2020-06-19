@@ -1,3 +1,6 @@
 numpy>=1.17.0
 azure-cli-core
-azureml-sdk==1.0.74
+azureml-sdk==1.0.83
+azureml-contrib-pipeline-steps==1.0.83
+azureml-contrib-services==1.0.83
+python-dotenv==0.10.5
