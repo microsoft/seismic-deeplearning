@@ -107,9 +107,6 @@ def run(*options, cfg=None, local_rank=0, debug=False, input=None, distributed=F
     # Set CUDNN benchmark mode:
     torch.backends.cudnn.benchmark = config.CUDNN.BENCHMARK
 
-    # We will write the model under outputs / config_file_name / model_dir
-    config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
-
     # Fix random seeds:
     torch.manual_seed(config.SEED)
     if torch.cuda.is_available():
@@ -155,9 +152,18 @@ def run(*options, cfg=None, local_rank=0, debug=False, input=None, distributed=F
 
     n_classes = train_set.n_classes
     val_set = TrainPatchLoader(config, split="val", is_transform=True, augmentations=val_aug, debug=debug,)
+    
     logger.info(val_set)
 
     if debug:
+        data_flow_dict = dict()
+
+        data_flow_dict['train_patch_loader_length'] = len(train_set)
+        data_flow_dict['validation_patch_loader_length'] = len(val_set)
+        data_flow_dict['train_input_shape'] = train_set.seismic.shape
+        data_flow_dict['train_label_shape'] = train_set.labels.shape
+        data_flow_dict['n_classes'] = n_classes
+
         logger.info("Running in debug mode..")
         train_range = min(config.TRAIN.BATCH_SIZE_PER_GPU * config.NUM_DEBUG_BATCHES, len(train_set))
         logging.info(f"train range in debug mode {train_range}")
@@ -165,6 +171,9 @@ def run(*options, cfg=None, local_rank=0, debug=False, input=None, distributed=F
         valid_range = min(config.VALIDATION.BATCH_SIZE_PER_GPU, len(val_set))
         val_set = data.Subset(val_set, range(valid_range))
 
+        data_flow_dict['train_length_subset'] = len(train_set)
+        data_flow_dict['validation_length_subset'] = len(val_set)
+ 
     train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, num_replicas=world_size, rank=local_rank)
     val_sampler = torch.utils.data.distributed.DistributedSampler(val_set, num_replicas=world_size, rank=local_rank)
 
@@ -175,6 +184,14 @@ def run(*options, cfg=None, local_rank=0, debug=False, input=None, distributed=F
         val_set, batch_size=config.VALIDATION.BATCH_SIZE_PER_GPU, num_workers=config.WORKERS, sampler=val_sampler
     )
 
+    if debug:
+        data_flow_dict['train_loader_length'] = len(train_loader)
+        data_flow_dict['validation_loader_length'] = len(val_loader)
+        config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
+        fname = f"data_flow_train_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
+        with open(fname, 'w') as f:
+            json.dump(data_flow_dict, f, indent=2)
+    
     # Model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
     device = "cuda" if torch.cuda.is_available() else "cpu"

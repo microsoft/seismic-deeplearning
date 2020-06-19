@@ -43,7 +43,7 @@ def main(args):
     if args.test:
         metrics_dict["Pixel Accuracy"] = "Pixel Acc: "
         metrics_dict["Mean IoU"] = "Mean IoU: "
-    else:
+    else: # validation
         metrics_dict["Pixel Accuracy"] = "pixacc"
         metrics_dict["Mean IoU"] = "mIoU"
 
@@ -56,9 +56,6 @@ def main(args):
 
     logging.info("all done")
 
-""" GLOBAL VARIABLES """
-# tolerance within which values are compared
-ABS_TOL = 1e-2
 
 """ cmd-line arguments """
 parser.add_argument("--infile", help="Location of the file which has the metrics", type=str, required=True)
