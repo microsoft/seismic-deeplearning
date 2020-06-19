@@ -71,27 +71,30 @@ def main(args):
             exp_n_section = data[test_key]["take_n_sections"]
             pred_shape_len = len(data[test_key]["pred_shape"])
             msg = f"Expected {exp_n_section} number of items, received {pred_shape_len} instead, in {args.infile.split('.')[0]}"
-            assert len(data[test_key]["pred_shape"])==data[test_key]["take_n_sections"], msg
+            assert pred_shape_len==exp_n_section, msg
 
             gt_shape_len = len(data[test_key]["gt_shape"])
             msg = f"Expected {exp_n_section} number of items, received {gt_shape_len} instead, in {args.infile.split('.')[0]}"
-            assert len(data[test_key]["gt_shape"])==data[test_key]["take_n_sections"], msg
+            assert gt_shape_len==exp_n_section, msg
 
             img_shape_len = len(data[test_key]["img_shape"])
             msg = f"Expected {exp_n_section} number of items, received {img_shape_len} instead, in {args.infile.split('.')[0]}"
-            assert len(data[test_key]["img_shape"])==data[test_key]["take_n_sections"], msg
+            assert img_shape_len==exp_n_section, msg
 
             
-            # expected_len = 400
-            # msg = f"Expected {expected_len} for test section loader length, received {data[test_key]["test_section_loader_length"]} instead, in {args.infile.split('.')[0]}"
-            # assert data[test_key]["test_section_loader_length"]==expected_len, msg
+            expected_len = 400
+            lhs_assertion = data[test_key]["test_section_loader_length"]
+            msg = f"Expected {expected_len} for test section loader length, received {lhs_assertion} instead, in {args.infile.split('.')[0]}"
+            assert lhs_assertion==expected_len, msg
 
-            # msg = f"Expected {expected_len} for test loader length, received {data[test_key]["test_loader_length"]} instead, in {args.infile.split('.')[0]}"
-            # assert data[test_key]["test_loader_length"]==expected_len, msg
+            lhs_assertion = data[test_key]["test_loader_length"]
+            msg = f"Expected {expected_len} for test loader length, received {lhs_assertion} instead, in {args.infile.split('.')[0]}"
+            assert lhs_assertion==expected_len, msg
 
             expected_n_classes = 2
-            # msg = f"Expected {expected_n_classes} for test loader length, received {data[test_key]["n_classes"]} instead, in {args.infile.split('.')[0]}"
-            # assert data[test_key]["n_classes"]==expected_n_classes, msg
+            lhs_assertion = data[test_key]["n_classes"]
+            msg = f"Expected {expected_n_classes} for test loader length, received {lhs_assertion} instead, in {args.infile.split('.')[0]}"
+            assert lhs_assertion==expected_n_classes, msg
             
             expected_pred = (1, 200, 200)
             expected_gt = (1, 1, 200, 200)
@@ -138,27 +141,27 @@ def main(args):
 
         expected_len = 1280
         msg = f"Expected {expected_len} for validation patch loader length, received {data['validation_patch_loader_length']} instead, in {args.infile.split('.')[0]}"
-        assert data['validation_patch_loader_length']==expected_len
+        assert data['validation_patch_loader_length']==expected_len, msg
 
         expected_len = 64
         msg = f"Expected {expected_len} for train subset length, received {data['train_length_subset']} instead, in {args.infile.split('.')[0]}"
-        assert data['train_length_subset']==expected_len
+        assert data['train_length_subset']==expected_len, msg
 
         expected_len = 32
         msg = f"Expected {expected_len} for validation subset length, received {data['validation_length_subset']} instead, in {args.infile.split('.')[0]}"
-        assert data['validation_length_subset']==expected_len
+        assert data['validation_length_subset']==expected_len, msg
 
         expected_len = 55 #4
         msg = f"Expected {expected_len} for train loader length, received {data['train_loader_length']} instead, in {args.infile.split('.')[0]}"
-        assert data['train_loader_length']==expected_len
+        assert data['train_loader_length']==expected_len, msg
 
         expected_len = 4
         msg = f"Expected {expected_len} for train loader length, received {data['train_loader_length']} instead, in {args.infile.split('.')[0]}"
-        assert data['validation_loader_length']==1
+        assert data['validation_loader_length']==1, msg
 
         expected_n_classes = 2
         msg = f"Expected {expected_n_classes} for number of classes, received {data['n_classes']} instead, in {args.infile.split('.')[0]}"
-        assert data['n_classes']==expected_n_classes
+        assert data['n_classes']==expected_n_classes, msg
     
     logging.info("all done")
 
