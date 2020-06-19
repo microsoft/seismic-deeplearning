@@ -64,30 +64,34 @@ def main(args):
             assert tuple(data[test_key]['test_label_shape'])==expected_test_label_shape, msg
 
             for img in data[test_key]["img_shape"]:
-                # dimension
                 msg = f"Expected {expected_img} for shape, received {tuple(img)} instead, in {args.infile.split('.')[0]}"
                 assert tuple(img)==expected_img, msg
 
-            msg = f"Expected {data[test_key]["take_n_sections"]} number of items, received {len(data[test_key]["pred_shape"])} instead, in {args.infile.split('.')[0]}"
+            # -----------------------------------------------
+            exp_n_section = data[test_key]["take_n_sections"]
+            pred_shape_len = len(data[test_key]["pred_shape"])
+            msg = f"Expected {exp_n_section} number of items, received {pred_shape_len} instead, in {args.infile.split('.')[0]}"
             assert len(data[test_key]["pred_shape"])==data[test_key]["take_n_sections"], msg
 
-            msg = f"Expected {data[test_key]["take_n_sections"]} number of items, received {len(data[test_key]["gt_shape"])} instead, in {args.infile.split('.')[0]}"
+            gt_shape_len = len(data[test_key]["gt_shape"])
+            msg = f"Expected {exp_n_section} number of items, received {gt_shape_len} instead, in {args.infile.split('.')[0]}"
             assert len(data[test_key]["gt_shape"])==data[test_key]["take_n_sections"], msg
 
-            msg = f"Expected {data[test_key]["take_n_sections"]} number of items, received {len(data[test_key]["img_shape"])} instead, in {args.infile.split('.')[0]}"
+            img_shape_len = len(data[test_key]["img_shape"])
+            msg = f"Expected {exp_n_section} number of items, received {img_shape_len} instead, in {args.infile.split('.')[0]}"
             assert len(data[test_key]["img_shape"])==data[test_key]["take_n_sections"], msg
 
             
-            expected_len = 400
-            msg = f"Expected {expected_len} for test section loader length, received {data[test_key]["test_section_loader_length"]} instead, in {args.infile.split('.')[0]}"
-            assert data[test_key]["test_section_loader_length"]==expected_len, msg
+            # expected_len = 400
+            # msg = f"Expected {expected_len} for test section loader length, received {data[test_key]["test_section_loader_length"]} instead, in {args.infile.split('.')[0]}"
+            # assert data[test_key]["test_section_loader_length"]==expected_len, msg
 
-            msg = f"Expected {expected_len} for test loader length, received {data[test_key]["test_loader_length"]} instead, in {args.infile.split('.')[0]}"
-            assert data[test_key]["test_loader_length"]==expected_len, msg
+            # msg = f"Expected {expected_len} for test loader length, received {data[test_key]["test_loader_length"]} instead, in {args.infile.split('.')[0]}"
+            # assert data[test_key]["test_loader_length"]==expected_len, msg
 
             expected_n_classes = 2
-            msg = f"Expected {expected_n_classes} for test loader length, received {data[test_key]["n_classes"]} instead, in {args.infile.split('.')[0]}"
-            assert data[test_key]["n_classes"]==expected_n_classes, msg
+            # msg = f"Expected {expected_n_classes} for test loader length, received {data[test_key]["n_classes"]} instead, in {args.infile.split('.')[0]}"
+            # assert data[test_key]["n_classes"]==expected_n_classes, msg
             
             expected_pred = (1, 200, 200)
             expected_gt = (1, 1, 200, 200)
