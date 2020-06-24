@@ -145,7 +145,7 @@ jobs:
       # export CUDA_VISIBLE_DEVICES=0
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
                         'NUM_DEBUG_BATCHES' 64 \
-                        'TRAIN.END_EPOCH' 2 'TRAIN.SNAPSHOTS' 1 \
+                        'TRAIN.END_EPOCH' 13 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'none' \
                         'TRAIN.BATCH_SIZE_PER_GPU' 16 'VALIDATION.BATCH_SIZE_PER_GPU' 32 \
@@ -212,8 +212,7 @@ jobs:
 
       # check validation set performance
       set -e
-      # TODO: enable this after investigating reproducibility problem of patch_deconvnet for small-size training data
-      # python ../../../tests/cicd/src/check_performance.py --infile metrics_patch_deconvnet_no_depth.json
+      python ../../../tests/cicd/src/check_performance.py --infile metrics_patch_deconvnet_no_depth.json
       python ../../../tests/cicd/src/check_performance.py --infile metrics_unet_section_depth.json
       python ../../../tests/cicd/src/check_performance.py --infile metrics_seresnet_unet_section_depth.json
       # TODO: enable HRNet test set metrics when we debug HRNet
@@ -310,8 +309,7 @@ jobs:
       
       # check test set performance
       set -e
-      # TODO: enable this after investigating reproducibility problem of patch_deconvnet for small-size training data
-      # python ../../../tests/cicd/src/check_performance.py --infile metrics_test_patch_deconvnet_no_depth.json --test
+      python ../../../tests/cicd/src/check_performance.py --infile metrics_test_patch_deconvnet_no_depth.json --test
       python ../../../tests/cicd/src/check_performance.py --infile metrics_test_unet_section_depth.json --test
       python ../../../tests/cicd/src/check_performance.py --infile metrics_test_seresnet_unet_section_depth.json --test
       # TODO: enable HRNet test set metrics when we debug HRNet
