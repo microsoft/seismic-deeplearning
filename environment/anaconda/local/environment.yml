@@ -12,7 +12,7 @@ dependencies:
   - torchvision>=0.5.0
   - pandas==0.25.3
   - scikit-learn==0.21.3
-  - tensorflow==2.0
+  - tensorflow==2.1.0
   - opt-einsum>=2.3.2
   - tqdm==4.39.0
   - itkwidgets==0.23.1
