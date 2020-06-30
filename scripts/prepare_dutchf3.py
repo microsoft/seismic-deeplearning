@@ -163,7 +163,7 @@ def split_patch_train_val(
     train_range, val_range = _get_aline_range(num_sections, per_val, section_stride)
     buffer = patch_size // 2
     vert_locations = range(buffer, depth - patch_size - buffer, patch_stride)
-    horz_locations = range(buffer, section_length - patch_size - buffer, patch_stride)
+    horz_locations = range(0, section_length, patch_stride)
 
     logger.debug(vert_locations)
     logger.debug(horz_locations)
