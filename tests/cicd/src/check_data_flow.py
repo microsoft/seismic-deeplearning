@@ -129,7 +129,7 @@ def main(args):
         msg = f"Expected {expected_shape_in} for shape, received {tuple(data['train_input_shape'])} instead, in {args.infile.split('.')[0]}"
         assert tuple(data["train_input_shape"]) == expected_shape_in, msg
 
-        expected_shape_label = (200, 200, 200)
+        expected_shape_label = (200, 200, 400)
         msg = f"Expected {expected_shape_label} for shape, received {tuple(data['train_label_shape'])} instead, in {args.infile.split('.')[0]}"
         assert tuple(data["train_label_shape"]) == expected_shape_label, msg
 
