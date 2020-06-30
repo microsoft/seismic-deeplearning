@@ -121,7 +121,7 @@ def main(args):
         if args.train_depth == "none":
             expected_shape_in = (200, 200, 400)
         elif args.train_depth == "section":
-            expected_shape_in = (200, 3, 200, 200)
+            expected_shape_in = (200, 3, 200, 400)
         elif args.train_depth == "patch":
             expected_shape_in = "TBD"
             raise Exception("Must be added")
