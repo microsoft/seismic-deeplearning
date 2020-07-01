@@ -415,9 +415,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
 
         # dump images and labels to disk after augmentation
         if self.debug:
-            outdir = (
-                f"debug/test/testSectionLoaderWithDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
-            )
+            outdir = f"debug/test/testSectionLoaderWithDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
             path_prefix = f"{outdir}/index_{index}_section_{section_name}"
             image_to_disk(np.array(im[0, :, :]), path_prefix + "_img.png", self.MIN, self.MAX)
@@ -441,11 +439,10 @@ class PatchLoader(data.Dataset):
     :param bool debug: enable debugging output
     """
 
-    def __init__(
-        self, config, is_transform=True, augmentations=None, debug=False,
-        ):
+    def __init__(self, config, split="train", is_transform=True, augmentations=None, debug=False):
         self.data_dir = config.DATASET.ROOT
         self.n_classes = config.DATASET.NUM_CLASSES
+        self.split = split
         self.MIN = config.DATASET.MIN
         self.MAX = config.DATASET.MAX
         self.patch_size = config.TRAIN.PATCH_SIZE
@@ -455,11 +452,21 @@ class PatchLoader(data.Dataset):
         self.patches = list()
         self.debug = debug
 
-    def pad_volume(self, volume):
+    def pad_volume(self, volume, value):
         """
-        Only used for train/val!! Not test.
+        Pads a 3D numpy array with a constant value along the depth direction only. 
+
+        Args:
+            volume (numpy ndarrray): numpy array containing the seismic amplitude or labels. 
+            value (int): value to pad the array with. 
         """
-        return np.pad(volume, pad_width=self.patch_size, mode="constant", constant_values=255)
+
+        return np.pad(
+            volume,
+            pad_width=[(0, 0), (0, 0), (self.patch_size, self.patch_size)],
+            mode="constant",
+            constant_values=value,
+        )
 
     def __len__(self):
         return len(self.patches)
@@ -468,12 +475,7 @@ class PatchLoader(data.Dataset):
 
         patch_name = self.patches[index]
         direction, idx, xdx, ddx = patch_name.split(sep="_")
-
-        # Shift offsets the padding that is added in training
-        # shift = self.patch_size if "test" not in self.split else 0
-        # Remember we are cancelling the shift since we no longer pad
-        shift = 0
-        idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
+        idx, xdx, ddx = int(idx), int(xdx), int(ddx)
 
         if direction == "i":
             im = self.seismic[idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size]
@@ -525,34 +527,6 @@ class PatchLoader(data.Dataset):
         return torch.from_numpy(img).float(), torch.from_numpy(lbl).long()
 
 
-class TestPatchLoader(PatchLoader):
-    """
-    Test Data loader for the patch-based deconvnet
-    :param config: configuration object to define other attributes in loaders
-    :param bool is_transform: Transform patch to dimensions expected by PyTorch
-    :param list augmentations: Data augmentations to apply to patches
-    :param bool debug: enable debugging output
-    """
-
-    def __init__(
-        self, config, is_transform=True, augmentations=None, debug=False
-    ):
-        super(TestPatchLoader, self).__init__(
-            config,
-            is_transform=is_transform,
-            augmentations=augmentations,
-            debug=debug,
-        )
-        ## Warning: this is not used or tested
-        raise NotImplementedError("This class is not correctly implemented.")
-        self.seismic = np.load(_train_data_for(self.data_dir))
-        self.labels = np.load(_train_labels_for(self.data_dir))
-
-        patch_list = tuple(open(txt_path, "r"))
-        patch_list = [id_.rstrip() for id_ in patch_list]
-        self.patches = patch_list
-
-
 class TrainPatchLoader(PatchLoader):
     """
     Train data loader for the patch-based deconvnet
@@ -574,13 +548,9 @@ class TrainPatchLoader(PatchLoader):
         debug=False,
     ):
         super(TrainPatchLoader, self).__init__(
-            config,
-            is_transform=is_transform,
-            augmentations=augmentations,
-            debug=debug,
+            config, is_transform=is_transform, augmentations=augmentations, debug=debug,
         )
 
-        warnings.warn("This no longer pads the volume")
         if seismic_path is not None and label_path is not None:
             # Load npy files (seismc and corresponding labels) from provided
             # location (path)
@@ -593,8 +563,11 @@ class TrainPatchLoader(PatchLoader):
         else:
             self.seismic = np.load(_train_data_for(self.data_dir))
             self.labels = np.load(_train_labels_for(self.data_dir))
-        # We are in train/val mode. Most likely the test splits are not saved yet,
-        # so don't attempt to load them.
+
+        # pad the data:
+        self.seismic = self.pad_volume(self.seismic, value=0)
+        self.labels = self.pad_volume(self.labels, value=255)
+
         self.split = split
         # reading the file names for split
         txt_path = path.join(self.data_dir, "splits", "patch_" + split + ".txt")
@@ -637,12 +610,7 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
 
         patch_name = self.patches[index]
         direction, idx, xdx, ddx = patch_name.split(sep="_")
-
-        # Shift offsets the padding that is added in training
-        # shift = self.patch_size if "test" not in self.split else 0
-        # Remember we are cancelling the shift since we no longer pad
-        shift = 0
-        idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
+        idx, xdx, ddx = int(idx), int(xdx), int(ddx)
 
         if direction == "i":
             im = self.seismic[idx, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size]
@@ -708,12 +676,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
 
         patch_name = self.patches[index]
         direction, idx, xdx, ddx = patch_name.split(sep="_")
-
-        # Shift offsets the padding that is added in training
-        # shift = self.patch_size if "test" not in self.split else 0
-        # Remember we are cancelling the shift since we no longer pad
-        shift = 0
-        idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
+        idx, xdx, ddx = int(idx), int(xdx), int(ddx)
 
         if direction == "i":
             im = self.seismic[idx, :, xdx : xdx + self.patch_size, ddx : ddx + self.patch_size]
@@ -773,6 +736,7 @@ _TRAIN_PATCH_LOADERS = {
     "patch": TrainPatchLoaderWithDepth,
 }
 
+
 def get_patch_loader(cfg):
     assert str(cfg.TRAIN.DEPTH).lower() in [
         "section",
@@ -782,7 +746,9 @@ def get_patch_loader(cfg):
             Valid values: section, patch, none."
     return _TRAIN_PATCH_LOADERS.get(cfg.TRAIN.DEPTH, TrainPatchLoader)
 
+
 _TRAIN_SECTION_LOADERS = {"section": TrainSectionLoaderWithDepth}
+
 
 def get_section_loader(cfg):
     assert str(cfg.TRAIN.DEPTH).lower() in [
@@ -794,6 +760,7 @@ def get_section_loader(cfg):
 
 
 _TEST_LOADERS = {"section": TestSectionLoaderWithDepth}
+
 
 def get_test_loader(cfg):
     logger = logging.getLogger(__name__)
