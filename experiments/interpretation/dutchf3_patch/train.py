@@ -252,12 +252,12 @@ def run(*options, cfg=None, local_rank=0, debug=False, input=None, distributed=F
         model,
         prepare_batch,
         metrics={
-            "nll": Loss(criterion, output_transform=transform_fn),
+            "nll": Loss(criterion, output_transform=transform_fn, device=device),
             "pixacc": pixelwise_accuracy(n_classes, output_transform=transform_fn, device=device),
-            "cacc": class_accuracy(n_classes, output_transform=transform_fn),
-            "mca": mean_class_accuracy(n_classes, output_transform=transform_fn),
-            "ciou": class_iou(n_classes, output_transform=transform_fn),
-            "mIoU": mean_iou(n_classes, output_transform=transform_fn),
+            "cacc": class_accuracy(n_classes, output_transform=transform_fn, device=device),
+            "mca": mean_class_accuracy(n_classes, output_transform=transform_fn, device=device),
+            "ciou": class_iou(n_classes, output_transform=transform_fn, device=device),
+            "mIoU": mean_iou(n_classes, output_transform=transform_fn, device=device),
         },
         device=device,
     )
