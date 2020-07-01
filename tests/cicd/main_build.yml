@@ -120,7 +120,7 @@ jobs:
 
 - job: checkerboard_patch
   dependsOn: cv_lib_unit_tests_job
-  timeoutInMinutes: 60
+  timeoutInMinutes: 15
   displayName: Checkerboard patch local
   pool:
     name: deepseismicagentpool
@@ -351,3 +351,26 @@ jobs:
       pytest -s tests/cicd/src/notebook_integration_tests.py \
         --nbname examples/interpretation/segyconverter/02_segy_convert_sample.ipynb \
         --cwd examples/interpretation/segyconverter
+
+
+###################################################################################################
+# Stage 5: Docker tests
+###################################################################################################
+
+
+- job: docker_build_test
+  dependsOn: segyconverter_notebooks
+  timeoutInMinutes: 30
+  displayName: Docker build test
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      set -e
+      echo "build docker"
+      pwd
+      cd docker
+      pwd
+      docker build -t seismic-deeplearning . 
+
+
