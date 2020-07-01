@@ -366,6 +366,7 @@ jobs:
       set -e
       echo "build docker"
       cd docker
+      docker images | grep "seismic-deeplearning" | awk '{print $1 ":" $2}' xargs docker rmi
       pwd
       docker build -t seismic-deeplearning . 
 
