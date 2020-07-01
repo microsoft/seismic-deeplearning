@@ -51,7 +51,7 @@ RUN cd seismic-deeplearning && \
     ./scripts/download_dutch_f3.sh "$data_dir" && \
     cd scripts && \
     source activate seismic-interpretation && \
-    python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits --split_direction=both && \
+    python prepare_3dutchf3.py split_train_val section --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits --split_direction=both && \
     python prepare_dutchf3.py split_train_val patch --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both && \
     cd ..
 
@@ -60,5 +60,5 @@ EXPOSE 9000/tcp
 # TensorBoard inside notebook
 EXPOSE 9001/tcp
 
-CMD source ativate seismic-interpretation && \
+CMD source activate seismic-interpretation && \
     jupyter lab --allow-root --ip 0.0.0.0 --port 9000
