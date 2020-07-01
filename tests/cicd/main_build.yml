@@ -366,12 +366,8 @@ jobs:
       set -e
       echo "build docker"
       cd docker
-      # if docker images | grep "seismic-deeplearning" | awk '{print $1 ":" $2}'; then
-      #   echo "image found, removing..."
-      #   docker images | grep "seismic-deeplearning" | awk '{print $1 ":" $2}' xargs docker rmi
-      # fi
       pwd
-      docker images | grep "seismic-deeplearning" | awk '{print $1 ":" $2}' xargs docker rmi || echo "pass"
+      docker images | grep "seismic-deeplearning" | awk '{print $1 ":" $2}' xargs docker rmi || echo "pass if no seismic-deeplearning image is found"
       docker build -t seismic-deeplearning . 
 
 
