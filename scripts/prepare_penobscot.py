@@ -41,6 +41,8 @@ def _copy_files(files_iter, new_dir):
 
 
 def _split_train_val_test(partition, val_ratio, test_ratio):
+    logger = logging.getLogger("__name__")
+    logger.warning(f"prepare_penobscot.py does not support padding. Results might be incorrect. ")
     total_samples = len(partition)
     val_samples = math.floor(val_ratio * total_samples)
     test_samples = math.floor(test_ratio * total_samples)

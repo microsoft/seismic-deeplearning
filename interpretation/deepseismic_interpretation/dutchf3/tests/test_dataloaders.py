@@ -208,5 +208,5 @@ def test_TrainPatchLoaderWithDepth_should_load_with_one_train_and_label_file(tmp
         label_path=os.path.join(tmpdir, "volume_name", "labels.npy"),
     )
 
-    assert train_set.labels.shape == (IL, XL, D)
-    assert train_set.seismic.shape == (IL, XL, D)
+    assert train_set.labels.shape == (IL, XL, D + 2 * config.TRAIN.PATCH_SIZE)
+    assert train_set.seismic.shape == (IL, XL, D + 2 * config.TRAIN.PATCH_SIZE)
