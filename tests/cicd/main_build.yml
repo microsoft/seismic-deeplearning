@@ -356,7 +356,7 @@ jobs:
 # Stage 5: Docker tests
 ###################################################################################################
 - job: docker_build_test
-  # dependsOn: segyconverter_notebooks
+  dependsOn: segyconverter_notebooks
   timeoutInMinutes: 30
   displayName: Docker build test
   pool:
