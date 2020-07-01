@@ -55,7 +55,6 @@ jobs:
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
 
-
 ###################################################################################################
 # Stage 2: fast unit tests
 ###################################################################################################
