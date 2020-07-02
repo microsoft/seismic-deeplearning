@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 """
 Cancel pipeline run
 """
@@ -6,8 +9,8 @@ from azureml.core import Workspace, Experiment
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--run_id', type=str, help='run id value', required=True)
-parser.add_argument('--step_id', type=str, help='step id value', required=True)
+parser.add_argument("--run_id", type=str, help="run id value", required=True)
+parser.add_argument("--step_id", type=str, help="step id value", required=True)
 
 args = parser.parse_args()
 

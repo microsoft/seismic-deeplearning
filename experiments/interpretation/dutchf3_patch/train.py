@@ -290,7 +290,7 @@ def run(*options, cfg=None, local_rank=0, debug=False, input=None, distributed=F
 
         # Tensorboard and Logging:
         summary_writer = create_summary_writer(log_dir=path.join(output_dir, "logs"))
-        trainer.add_event_handler(Events.EPOCH_STARTED, tensorboard_handlers.log_lr(summary_writer, optimizer, 'epoch'))
+        trainer.add_event_handler(Events.EPOCH_STARTED, tensorboard_handlers.log_lr(summary_writer, optimizer, "epoch"))
         trainer.add_event_handler(Events.ITERATION_COMPLETED, tensorboard_handlers.log_training_output(summary_writer))
         trainer.add_event_handler(
             Events.ITERATION_COMPLETED, tensorboard_handlers.log_validation_output(summary_writer)

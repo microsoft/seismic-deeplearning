@@ -201,12 +201,23 @@ def _output_processing_pipeline(config, output):
 
 
 def _patch_label_2d(
-    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes, split, debug, MIN, MAX
+    model,
+    img,
+    pre_processing,
+    output_processing,
+    patch_size,
+    stride,
+    batch_size,
+    device,
+    num_classes,
+    split,
+    debug,
+    MIN,
+    MAX,
 ):
     """Processes a whole section
     """
-    
-    
+
     img = torch.squeeze(img)
     h, w = img.shape[-2], img.shape[-1]  # height and width
 
@@ -242,8 +253,8 @@ def _patch_label_2d(
                 # dump model confidence values
                 for nclass in range(num_classes):
                     image_to_disk(
-                        model_output[i, nclass, :, :].numpy(), path_prefix + f"_class_{nclass}_conf.png",
-                        MIN, MAX)
+                        model_output[i, nclass, :, :].numpy(), path_prefix + f"_class_{nclass}_conf.png", MIN, MAX
+                    )
 
     # crop the output_p in the middle
     output = output_p[:, :, ps:-ps, ps:-ps]
@@ -251,40 +262,41 @@ def _patch_label_2d(
 
 
 def _evaluate_split(
-    split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config, data_flow, debug=False,
+    split,
+    section_aug,
+    model,
+    pre_processing,
+    output_processing,
+    device,
+    running_metrics_overall,
+    config,
+    data_flow,
+    debug=False,
 ):
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
 
-    test_set = TestSectionLoader(
-        config,
-        split=split,
-        is_transform=True,
-        augmentations=section_aug,
-        debug=debug,
-    )
+    test_set = TestSectionLoader(config, split=split, is_transform=True, augmentations=section_aug, debug=debug,)
 
     n_classes = test_set.n_classes
 
     if debug:
         data_flow[split] = dict()
-        data_flow[split]['test_section_loader_length'] = len(test_set)
-        data_flow[split]['test_input_shape'] = test_set.seismic.shape
-        data_flow[split]['test_label_shape'] = test_set.labels.shape
-        data_flow[split]['n_classes'] = n_classes
-
+        data_flow[split]["test_section_loader_length"] = len(test_set)
+        data_flow[split]["test_input_shape"] = test_set.seismic.shape
+        data_flow[split]["test_label_shape"] = test_set.labels.shape
+        data_flow[split]["n_classes"] = n_classes
 
     test_loader = data.DataLoader(test_set, batch_size=1, num_workers=config.WORKERS, shuffle=False)
 
     if debug:
-        data_flow[split]['test_loader_length'] = len(test_loader)
+        data_flow[split]["test_loader_length"] = len(test_loader)
         logger.info("Running in Debug/Test mode")
         take_n = 2
         test_loader = take(take_n, test_loader)
-        data_flow[split]['take_n_sections'] = take_n
+        data_flow[split]["take_n_sections"] = take_n
         pred_list, gt_list, img_list = [], [], []
-
 
     try:
         output_dir = generate_path(
@@ -294,7 +306,6 @@ def _evaluate_split(
         output_dir = generate_path(f"{config.OUTPUT_DIR}/test/{split}", config.MODEL.NAME, current_datetime(),)
 
     running_metrics_split = runningScore(n_classes)
-   
 
     # evaluation mode:
     with torch.no_grad():  # operations inside don't track history
@@ -314,7 +325,8 @@ def _evaluate_split(
                 split,
                 debug,
                 config.DATASET.MIN,
-                config.DATASET.MAX)
+                config.DATASET.MAX,
+            )
 
             pred = outputs.detach().max(1)[1].numpy()
             gt = labels.numpy()
@@ -331,10 +343,10 @@ def _evaluate_split(
             mask_to_disk(gt.squeeze(), os.path.join(output_dir, f"{i}_gt.png"), n_classes)
 
     if debug:
-        data_flow[split]['pred_shape'] =  pred_list
-        data_flow[split]['gt_shape'] =  gt_list
-        data_flow[split]['img_shape'] =  img_list
-    
+        data_flow[split]["pred_shape"] = pred_list
+        data_flow[split]["gt_shape"] = gt_list
+        data_flow[split]["img_shape"] = img_list
+
     # get scores
     score, class_iou = running_metrics_split.get_scores()
 
@@ -440,7 +452,7 @@ def test(*options, cfg=None, debug=False):
         config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
 
         fname = f"data_flow_test_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
-        with open(fname, 'w') as f:
+        with open(fname, "w") as f:
             json.dump(data_flow, f, indent=1)
 
     # FINAL TEST RESULTS:

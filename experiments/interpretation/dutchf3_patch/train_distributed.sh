@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
 NGPUS=$(nvidia-smi -L | wc -l)
 if [ "$NGPUS" -lt "2" ]; then
     echo "ERROR: cannot run distributed training without 2 or more GPUs."

@@ -23,9 +23,9 @@ class runningScore(object):
 
     def _fast_hist(self, label_true, label_pred, n_class):
         mask = (label_true >= 0) & (label_true < n_class)
-        hist = np.bincount(
-            n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,
-        ).reshape(n_class, n_class)
+        hist = np.bincount(n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,).reshape(
+            n_class, n_class
+        )
         return hist
 
     def update(self, label_trues, label_preds):
@@ -152,9 +152,7 @@ def compose_processing_pipeline(depth, aug=None):
 
 
 def _generate_batches(h, w, ps, patch_size, stride, batch_size=64):
-    hdc_wdx_generator = itertools.product(
-        range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride)
-    )
+    hdc_wdx_generator = itertools.product(range(0, h - patch_size + ps, stride), range(0, w - patch_size + ps, stride))
 
     for batch_indexes in itertoolz.partition_all(batch_size, hdc_wdx_generator):
         yield batch_indexes
@@ -166,9 +164,7 @@ def output_processing_pipeline(config, output):
     _, _, h, w = output.shape
     if config.TEST.POST_PROCESSING.SIZE != h or config.TEST.POST_PROCESSING.SIZE != w:
         output = F.interpolate(
-            output,
-            size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE),
-            mode="bilinear",
+            output, size=(config.TEST.POST_PROCESSING.SIZE, config.TEST.POST_PROCESSING.SIZE), mode="bilinear",
         )
 
     if config.TEST.POST_PROCESSING.CROP_PIXELS > 0:
@@ -183,15 +179,7 @@ def output_processing_pipeline(config, output):
 
 
 def patch_label_2d(
-    model,
-    img,
-    pre_processing,
-    output_processing,
-    patch_size,
-    stride,
-    batch_size,
-    device,
-    num_classes,
+    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes,
 ):
     """Processes a whole section"""
     img = torch.squeeze(img)
@@ -205,19 +193,14 @@ def patch_label_2d(
     # generate output:
     for batch_indexes in _generate_batches(h, w, ps, patch_size, stride, batch_size=batch_size):
         batch = torch.stack(
-            [
-                pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing)
-                for hdx, wdx in batch_indexes
-            ],
+            [pipe(img_p, _extract_patch(hdx, wdx, ps, patch_size), pre_processing) for hdx, wdx in batch_indexes],
             dim=0,
         )
 
         model_output = model(batch.to(device))
         for (hdx, wdx), output in zip(batch_indexes, model_output.detach().cpu()):
             output = output_processing(output)
-            output_p[
-                :, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size
-            ] += output
+            output_p[:, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size] += output
 
     # crop the output_p in the middle
     output = output_p[:, :, ps:-ps, ps:-ps]
@@ -325,20 +308,16 @@ def download_pretrained_model(config):
     elif "penobscot" in config.DATASET.ROOT:
         dataset = "penobscot"
     else:
-        raise NameError(
-            "Unknown dataset name. Only dutch f3 and penobscot are currently supported."
-        )
-    
+        raise NameError("Unknown dataset name. Only dutch f3 and penobscot are currently supported.")
+
     if "hrnet" in config.MODEL.NAME:
         model = "hrnet"
     elif "deconvnet" in config.MODEL.NAME:
         model = "deconvnet"
     elif "resnet" in config.MODEL.NAME:
-        model = "seresnetunet"    
+        model = "seresnetunet"
     else:
-        raise NameError(
-            "Unknown model name. Only hrnet, deconvnet, and seresnet_unet are currently supported."
-        )
+        raise NameError("Unknown model name. Only hrnet, deconvnet, and seresnet_unet are currently supported.")
 
     # check if the user already supplied a URL, otherwise figure out the URL
     if "PRETRAINED" in config.MODEL.keys() and validators.url(config.MODEL.PRETRAINED):
@@ -365,39 +344,26 @@ def download_pretrained_model(config):
                 url = "https://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_hrnet_patch_section_depth.pth"
             elif model == "hrnet" and config.TRAIN.DEPTH == "patch":
                 url = "https://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_hrnet_patch_patch_depth.pth"
-            elif (
-                model == "deconvnet"
-                and "skip" in config.MODEL.NAME
-                and config.TRAIN.DEPTH == "none"
-            ):
+            elif model == "deconvnet" and "skip" in config.MODEL.NAME and config.TRAIN.DEPTH == "none":
                 url = "http://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_deconvnetskip_patch_no_depth.pth"
-            elif (
-                model == "deconvnet"
-                and "skip" not in config.MODEL.NAME
-                and config.TRAIN.DEPTH == "none"
-            ):
-                url = "http://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_deconvnet_patch_no_depth.pth"            
+            elif model == "deconvnet" and "skip" not in config.MODEL.NAME and config.TRAIN.DEPTH == "none":
+                url = "http://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_deconvnet_patch_no_depth.pth"
             elif model == "seresnetunet" and config.TRAIN.DEPTH == "section":
                 url = "https://deepseismicsharedstore.blob.core.windows.net/master-public-models/dutchf3_seresnetunet_patch_section_depth.pth"
             else:
                 raise NotImplementedError(
                     "We don't store a pretrained model for Dutch F3 for this model combination yet."
                 )
-            
 
         else:
-            raise NotImplementedError(
-                "We don't store a pretrained model for this dataset/model combination yet."
-            )
+            raise NotImplementedError("We don't store a pretrained model for this dataset/model combination yet.")
 
         print(f"Could not find a user-supplied URL, downloading from '{url}'")
 
     # make sure the model_dir directory is writeable
     model_dir = config.TRAIN.MODEL_DIR
 
-    if not os.path.isdir(os.path.dirname(model_dir)) or not os.access(
-        os.path.dirname(model_dir), os.W_OK
-    ):
+    if not os.path.isdir(os.path.dirname(model_dir)) or not os.access(os.path.dirname(model_dir), os.W_OK):
         print(f"Cannot write to TRAIN.MODEL_DIR={config.TRAIN.MODEL_DIR}")
         home = str(pathlib.Path.home())
         model_dir = os.path.join(home, "models")
@@ -408,14 +374,10 @@ def download_pretrained_model(config):
 
     if url:
         # Download the pretrained model:
-        pretrained_model_path = os.path.join(
-            model_dir, "pretrained_" + dataset + "_" + model + ".pth"
-        )
+        pretrained_model_path = os.path.join(model_dir, "pretrained_" + dataset + "_" + model + ".pth")
 
         # always redownload the model
-        print(
-            f"Downloading the pretrained model to '{pretrained_model_path}'. This will take a few mintues.. \n"
-        )
+        print(f"Downloading the pretrained model to '{pretrained_model_path}'. This will take a few mintues.. \n")
         urllib.request.urlretrieve(url, pretrained_model_path)
         print("Model successfully downloaded.. \n")
     else:

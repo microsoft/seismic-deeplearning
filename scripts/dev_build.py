@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
 """ Please see the def main() function for code description."""
 import time
 
@@ -25,6 +27,7 @@ myname = os.path.realpath(__file__)
 mypath = os.path.dirname(myname)
 myname = os.path.basename(myname)
 
+
 def main(args):
     """
 
@@ -33,7 +36,7 @@ def main(args):
 
     """
     from datetime import datetime
-   
+
     beg = datetime.now()
 
     logging.info("loading data")
@@ -44,7 +47,7 @@ def main(args):
         logging.info(f"Loaded {file}")
 
         # run single job
-        job_names = [x["job"] for x in list["jobs"]] if not args.job else args.job.split(',')
+        job_names = [x["job"] for x in list["jobs"]] if not args.job else args.job.split(",")
 
         if not args.setup and "setup" in job_names:
             job_names.remove("setup")
@@ -55,7 +58,7 @@ def main(args):
         current_env = os.environ.copy()
         # modify for conda to work
         # TODO: not sure why on DS VM this does not get picked up from the standard environment
-        current_env["PATH"] = PATH_PREFIX+":"+current_env["PATH"]
+        current_env["PATH"] = PATH_PREFIX + ":" + current_env["PATH"]
 
         for job in job_list:
             job_name = job["job"]
@@ -77,16 +80,16 @@ def main(args):
                     stderr=subprocess.STDOUT,
                     executable=current_env["SHELL"],
                     env=current_env,
-                    cwd=os.getcwd()
+                    cwd=os.getcwd(),
                 )
                 toc = time.perf_counter()
                 print(f"Job time took {(toc-tic)/60:0.2f} minutes")
             except subprocess.CalledProcessError as err:
-                logging.info(f'ERROR: \n{err}')
-                decoded_stdout = err.stdout.decode('utf-8')
+                logging.info(f"ERROR: \n{err}")
+                decoded_stdout = err.stdout.decode("utf-8")
                 log_file = "dev_build.latest_error.log"
                 logging.info(f"Have {len(err.stdout)} output bytes in {log_file}")
-                with open(log_file, 'w') as log_file:
+                with open(log_file, "w") as log_file:
                     log_file.write(decoded_stdout)
                 sys.exit()
             else:
@@ -94,10 +97,11 @@ def main(args):
                 logging.info(f"Have {len(completed.stdout)} output bytes: \n{completed.stdout.decode('utf-8')}")
 
     logging.info(f"Everything ran! You can try running the same jobs {job_names} on the build VM now")
-    
+
     end = datetime.now()
-    
-    print('time elapsed in seconds', (end-beg).total_seconds())
+
+    print("time elapsed in seconds", (end - beg).total_seconds())
+
 
 """ GLOBAL VARIABLES """
 PATH_PREFIX = "/anaconda/envs/seismic-interpretation/bin:/anaconda/bin"

@@ -13,11 +13,11 @@ def normalize(array, MIN, MAX):
     Normalizes a segmentation image array by the global range of the data, 
     MIN and MAX, for use with PIL.Image
     """
-   
+
     den = MAX - MIN
-    if den==0:
+    if den == 0:
         den += np.finfo(float).eps
- 
+
     return (array - MIN) / den
 
 

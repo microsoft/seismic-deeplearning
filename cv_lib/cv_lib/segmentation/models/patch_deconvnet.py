@@ -298,6 +298,7 @@ class patch_deconvnet(nn.Module):
                         l2.bias.data = l1.bias.data
                         i_layer = i_layer + 1
 
+
 def get_seg_model(cfg, **kwargs):
     assert (
         cfg.MODEL.IN_CHANNELS == 1

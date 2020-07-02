@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 """ Please see the def main() function for code description."""
 import json
 
@@ -178,4 +181,3 @@ parser.add_argument(
 """ main wrapper with profiler """
 if __name__ == "__main__":
     main(parser.parse_args())
-

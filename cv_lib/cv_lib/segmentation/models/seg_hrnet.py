@@ -430,15 +430,14 @@ class HighResolutionNet(nn.Module):
 
         if pretrained and not os.path.isfile(pretrained):
             raise FileNotFoundError(f"The file {pretrained} was not found. Please supply correct path or leave empty")
-        
+
         if os.path.isfile(pretrained):
             pretrained_dict = torch.load(pretrained)
             logger.info("=> loading pretrained model {}".format(pretrained))
             model_dict = self.state_dict()
             pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys()}
             for k, _ in pretrained_dict.items():
-               logger.info(
-                   '=> loading {} pretrained model {}'.format(k, pretrained))
+                logger.info("=> loading {} pretrained model {}".format(k, pretrained))
             model_dict.update(pretrained_dict)
             self.load_state_dict(model_dict)
 

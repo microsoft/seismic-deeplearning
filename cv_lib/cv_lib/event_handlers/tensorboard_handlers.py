@@ -10,6 +10,7 @@ from toolz import curry
 from cv_lib.segmentation.dutchf3.utils import np_to_tb
 from cv_lib.utils import decode_segmap
 
+
 def create_summary_writer(log_dir):
     writer = SummaryWriter(logdir=log_dir)
     return writer
