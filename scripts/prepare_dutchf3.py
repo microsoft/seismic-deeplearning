@@ -39,8 +39,7 @@ def _write_split_files(splits_path, train_list, val_list, loader_type):
     file_object = open(path.join(splits_path, loader_type + "_train_val.txt"), "w")
     file_object.write("\n".join(train_list + val_list))
     file_object.close()
-    file_object = open(path.join(splits_path,
-                       loader_type + "_train.txt"), "w")
+    file_object = open(path.join(splits_path, loader_type + "_train.txt"), "w")
     file_object.write("\n".join(train_list))
     file_object.close()
     file_object = open(path.join(splits_path, loader_type + "_val.txt"), "w")
@@ -149,6 +148,10 @@ def split_patch_train_val(
 
     iline, xline, depth = labels.shape
 
+    # Since the locations we will save reference the padded volume, we will increase
+    # the depth of the volume by the padding amount (2*patch_size).
+    depth += 2 * patch_size
+
     split_direction = split_direction.lower()
     if split_direction == "inline":
         num_sections, section_length = iline, xline
@@ -158,8 +161,10 @@ def split_patch_train_val(
         raise ValueError(f"Unknown split_direction: {split_direction}")
 
     train_range, val_range = _get_aline_range(num_sections, per_val, section_stride)
-    vert_locations = range(0, depth, patch_stride)
+    buffer = patch_size // 2
+    vert_locations = range(buffer, depth - patch_size - buffer, patch_stride)
     horz_locations = range(0, section_length, patch_stride)
+
     logger.debug(vert_locations)
     logger.debug(horz_locations)
 
