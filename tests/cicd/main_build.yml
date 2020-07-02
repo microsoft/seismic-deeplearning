@@ -52,6 +52,14 @@ jobs:
 
       ./tests/cicd/src/scripts/get_data_for_builds.sh ${DATA_ROOT}
 
+      # taken from https://zenodo.org/record/3924682
+      # paper https://arxiv.org/abs/1905.04307
+      # TODO: enable when Penobscot is ready to be provided in the repo - rough sequence of steps below
+      # cd scripts
+      # wget -o /dev/null -O dataset.h5 https://zenodo.org/record/3924682/files/dataset.h5?download=1
+      # python byod_penobscot.py --filename dataset.h5 --outdir <where to output data>
+      # python prepare_dutchf3.py split_train_val patch   --data_dir=<outdir from the previous step> --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both --section_stride=100
+
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
 
