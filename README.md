@@ -19,7 +19,7 @@ For developers, we offer a more hands-on Quick Start below.
 
 #### Dev Quick Start
 There are two ways to get started with the DeepSeismic codebase, which currently focuses on Interpretation:
-- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb)
+- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [demo notebook](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb)
 - to run the code, you'll need to set up a compute environment (which includes setting up a GPU-enabled Linux VM and downloading the appropriate Anaconda Python packages) and download the datasets which you'd like to work with - detailed steps for doing this are provided in the next `Interpretation` section below.
 
 If you run into any problems, chances are your problem has already been solved in the [Troubleshooting](#troubleshooting) section.
@@ -32,6 +32,9 @@ If you are looking at getting started with using the code in this repository wit
 
 ## Interpretation
 For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-the-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation.
+We currently support rectangular data, i.e. 2D and 3D seismic images which form a rectangle in 2D. 
+We also provide [utilities](./examples/interpretation/segyconverter/README.md) for converting SEGY data with rectangular boundaries into numpy arrays
+where everything outside the boundary has been padded to produce a rectangular 3D numpy volume.   
 
 To run examples available on the repo, please follow instructions below to:
 1) [Set up the environment](#setting-up-environment)
@@ -86,7 +89,7 @@ This repository provides examples on how to run seismic interpretation on Dutch 
 
 Please make sure you have enough disk space to download either dataset.
 
-We have experiments and notebooks which use either one dataset or the other. Depending on which experiment/notebook you want to run you'll need to download the corresponding dataset. We suggest you start by looking at [HRNet demo notebook](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb) which requires the Dutch F3 dataset.
+We have experiments and notebooks which use either one dataset or the other. Depending on which experiment/notebook you want to run you'll need to download the corresponding dataset. We suggest you start by looking at [demo notebook](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb) which requires the Dutch F3 dataset.
 
 #### Dutch F3 dataset prep
 To download the Dutch F3 dataset for 2D experiments, please follow the data download instructions at
@@ -196,20 +199,19 @@ We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manag
     python train.py DATASET.ROOT "/home/username/data/dutch/data" TRAIN.END_EPOCH 10
     ```
 
+#### Training
+We run an aggressive cosine annealing schedule which starts with a higher Learning Rate (LR) and gradually lowers it over approximately 60 epochs to zero, 
+at which point we raise LR back up to its original value and lower it again for about 60 epochs; this process continues 5 times, forming 60*5=300 training epochs in total
+in 5 cycles; model with the best frequency-weighted IoU is snapshotted to disc during each cycle. We suggest consulting TensorBoard logs to see which training cycle
+produced the best model and use that model during scoring.
+
+For multi-GPU training, we run a linear burn-in LR schedule before starting the 5 cosine cycles, then the training continues the same way as for single-GPU.
 
 ### Pretrained Models
 
 There are two types of pre-trained models used by this repo:
 1. pre-trained models trained on non-seismic Computer Vision datasets which we fine-tune for the seismic domain through re-training on seismic data
 2. models which we already trained on seismic data - these are downloaded automatically by our code if needed (again, please see the notebook for a demo above regarding how this is done).
-
-#### HRNet ImageNet weights model
-
-To enable training from scratch on seismic data and to achieve the same results as the benchmarks quoted below you will need to download the HRNet model [pretrained](https://github.com/HRNet/HRNet-Image-Classification) on ImageNet. We are specifically using the [HRNet-W48-C](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk) pre-trained model; other  HRNet variants are also available [here](https://github.com/HRNet/HRNet-Image-Classification) - you can navigate to those from the [main HRNet landing page](https://github.com/HRNet/HRNet-Object-Detection) for object detection.
-
-Unfortunately, the OneDrive location which is used to host the model is using a temporary authentication token, so there is no way for us to script up model download. There are two ways to upload and use the pre-trained HRNet model on DS VM:
-- download the model to your local drive using a web browser of your choice and then upload the model to the DS VM using something like `scp`; navigate to Portal and copy DS VM's public IP from the Overview panel of your DS VM (you can search your DS VM by name in the search bar of the Portal) then use `scp local_model_location username@DS_VM_public_IP:./model/save/path` to upload
-- alternatively, you can use the same public IP to open remote desktop over SSH to your Linux VM using [X2Go](https://wiki.x2go.org/doku.php/download:start): you can basically open the web browser on your VM this way and download the model to VM's disk
 
 
 ### Viewers (optional)
@@ -241,15 +243,17 @@ This section contains benchmarks of different algorithms for seismic interpretat
 
 #### Dutch F3
 
-| Source         | Experiment                  | PA    | FW IoU | MCA  | V100 (16GB) training time |
-| -------------- | --------------------------- | ----- | ------ | ---- | ------------------------- |
-| Alaudah et al. | Section-based               | 0.905 | 0.817  | .832 | N/A                       |
-|                | Patch-based                 | 0.852 | 0.743  | .689 | N/A                       |
-| DeepSeismic    | Patch-based+fixed           | .875  | .784   | .740 | 08h 54min                 |
-|                | SEResNet UNet+section depth | .910  | .841   | .809 | 55h 02min                 |
-|                | HRNet(patch)+patch_depth    | .884  | .795   | .739 | 67h 41min                 |
-|                | HRNet(patch)+section_depth  | .900  | .820   | .767 | 55h 08min                 |
+| Source         | Experiment                                | PA    | FW IoU | MCA  | V100 (16GB) training time |
+| -------------- | ----------------------------------------- | ----- | ------ | ---- | ------------------------- |
+| Alaudah et al. | Section-based                             | 0.905 | 0.817  | .832 | N/A                       |
+|                | Patch-based                               | 0.852 | 0.743  | .689 | N/A                       |
+| DeepSeismic    | Patch-based+fixed                         | .875  | .784   | .740 | 08h 54min                 |
+|                | SEResNet UNet+section depth               | .910  | .841   | .809 | 55h 02min                 |
+|                | HRNet(patch)+patch_depth (experimental)   | .884  | .795   | .739 | 67h 41min                 |
+|                | HRNet(patch)+section_depth (experimental) | .900  | .820   | .767 | 55h 08min                 |
 
+Note: these are single-run performance numbers and we expect the results to fluctuate in-between different runs, i.e. some variability is to be expected,
+but we expect the performance numbers to be close to these with this codebase.
 
 #### Reproduce benchmarks
 In order to reproduce the benchmarks, you will need to navigate to the [experiments](experiments) folder. In there, each of the experiments are split into different folders. To run the Dutch F3 experiment navigate to the [dutchf3_patch](experiments/interpretation/dutchf3_patch/) folder. In there is a training script [train.sh](experiments/interpretation/dutchf3_patch/train.sh)
