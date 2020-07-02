@@ -127,7 +127,9 @@ cd ..
 ```
 Refer to the script itself for more argument options.
 
-#### Bring your own SEG-Y data
+#### Bring Your Own Data [BYOD]
+
+##### Bring your own SEG-Y data
 
 If you want to train these models using your own seismic and label data, the files will need to be prepped and
 converted to npy files. Typically, the [segyio](https://pypi.org/project/segyio/) can be used to open SEG-Y files that follow the standard, but more often than not, there are non standard settings or missing traces that will cause segyio to fail. If this happens with your data, read these notebooks and scripts to help prepare your data files:
@@ -137,6 +139,21 @@ converted to npy files. Typically, the [segyio](https://pypi.org/project/segyio/
 * [segy_convert_sample notebook](contrib/segyconverter/segy_convert_sample.ipynb) - Details on SEG-Y data conversion
 * [segy_sample_files notebook](contrib/segyconverter/segy_sample_files.ipynb) - Create test SEG-Y files that describe the scenarios that may cause issues when converting the data to numpy arrays
 
+##### Penobscot example
+
+We also offer starter code to convert [Penobscot](https://arxiv.org/abs/1905.04307) dataset (available [here](https://zenodo.org/record/3924682))
+into Tensor format used by the Dutch F3 dataset - once converted, you can run Penobscot through the same
+mechanisms as the Dutch F3 dataset. The rough sequence of steps is:
+
+```bash
+conda activate seismic-interpretation
+cd scripts
+wget -o /dev/null -O dataset.h5 https://zenodo.org/record/3924682/files/dataset.h5?download=1
+# convert penobscot
+python byod_penobscot.py --filename dataset.h5 --outdir <where to output data>
+# preprocess for experiments
+python prepare_dutchf3.py split_train_val patch --data_dir=<outdir from the previous step> --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both --section_stride=100
+```
 
 ### Run Examples
 
