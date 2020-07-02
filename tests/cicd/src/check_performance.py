@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 """ Please see the def main() function for code description."""
 import json
 import math
@@ -43,7 +46,7 @@ def main(args):
     if args.test:
         metrics_dict["Pixel Accuracy"] = "Pixel Acc: "
         metrics_dict["Mean IoU"] = "Mean IoU: "
-    else: # validation
+    else:  # validation
         metrics_dict["Pixel Accuracy"] = "pixacc"
         metrics_dict["Mean IoU"] = "mIoU"
 

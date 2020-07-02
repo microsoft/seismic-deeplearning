@@ -6,7 +6,11 @@ Create pipeline and kickoff run
 from deepseismic_interpretation.azureml_pipelines.train_pipeline import TrainPipeline
 import fire
 
-def kickoff_pipeline(experiment="DEV-train-pipeline", orchestrator_config="interpretation/deepseismic_interpretation/azureml_pipelines/pipeline_config.json"):
+
+def kickoff_pipeline(
+    experiment="DEV-train-pipeline",
+    orchestrator_config="interpretation/deepseismic_interpretation/azureml_pipelines/pipeline_config.json",
+):
     """Kicks off pipeline run
 
     Args:
@@ -16,6 +20,7 @@ def kickoff_pipeline(experiment="DEV-train-pipeline", orchestrator_config="inter
     orchestrator = TrainPipeline(orchestrator_config)
     orchestrator.construct_pipeline()
     run = orchestrator.run_pipeline(experiment_name=experiment)
+
 
 if __name__ == "__main__":
     """Example:

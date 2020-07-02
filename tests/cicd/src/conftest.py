@@ -20,13 +20,16 @@ def nbname(request):
 def dataset_root(request):
     return request.config.getoption("--dataset_root")
 
+
 @pytest.fixture
 def model_pretrained(request):
     return request.config.getoption("--model_pretrained")
 
+
 @pytest.fixture
 def cwd(request):
     return request.config.getoption("--cwd")
+
 
 """
 def pytest_generate_tests(metafunc):

@@ -37,4 +37,3 @@ def git_branch():
 def git_hash():
     repo = Repo(search_parent_directories=True)
     return repo.active_branch.commit.hexsha
-

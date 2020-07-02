@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
 
 conda env remove -n seismic-interpretation
 yes | conda env create -f environment/anaconda/local/environment.yml

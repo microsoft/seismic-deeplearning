@@ -86,14 +86,14 @@ def make_gradient(n_inlines, n_crosslines, n_depth, box_size, dir="inline"):
     :return: numpy array
     """
 
-    orthogonal_dir = dir # for depth case
-    if dir=='inline':
-        orthogonal_dir = 'crossline'
-    elif dir=='crossline':
-        orthogonal_dir = 'inline'
-    
+    orthogonal_dir = dir  # for depth case
+    if dir == "inline":
+        orthogonal_dir = "crossline"
+    elif dir == "crossline":
+        orthogonal_dir = "inline"
+
     axis = GRADIENT_DIR.index(orthogonal_dir)
-    
+
     n_points = (n_inlines, n_crosslines, n_depth)[axis]
     n_classes = int(np.ceil(float(n_points) / box_size))
     logging.info(f"GRADIENT: we will output {n_classes} classes in the {dir} direction")
@@ -130,15 +130,13 @@ def main(args):
 
     logging.info("loading data")
 
-    
     # TODO: extend this to binary and gradient
-    if args.type!='checkerboard':
-        assert args.based_on=='dutch_f3'
+    if args.type != "checkerboard":
+        assert args.based_on == "dutch_f3"
 
     logging.info(f"synthetic data generation based on {args.based_on}")
 
-
-    if args.based_on=='dutch_f3':
+    if args.based_on == "dutch_f3":
 
         train_seismic = np.load(os.path.join(args.dataroot, "train", "train_seismic.npy"))
         train_labels = np.load(os.path.join(args.dataroot, "train", "train_labels.npy"))
@@ -167,20 +165,19 @@ def main(args):
         assert test2_labels.min() == 0
         # this is the number of classes in Alaudah's Dutch F3 dataset
         assert test2_labels.max() == 5
-    elif args.based_on=='fixed_box_number':
+    elif args.based_on == "fixed_box_number":
         logging.info(f"box_number is {args.box_number}")
         logging.info(f"box_size is {args.box_size}")
         # Note: this assumes the data is 3D, opening up higher dimensions, this (and other parts of this scrpit)
         # must be refactored
         synthetic_shape = (int(args.box_number * args.box_size),) * 3
         train_seismic = np.ones(synthetic_shape, dtype=float)
-        train_labels =  np.ones(synthetic_shape, dtype=int)
+        train_labels = np.ones(synthetic_shape, dtype=int)
 
         test1_seismic = train_seismic
         test1_labels = train_labels
         test2_seismic = train_seismic
         test2_labels = train_labels
-
 
     if args.type == "checkerboard":
 
@@ -288,12 +285,19 @@ WHITE_LABEL = 0
 BLACK_LABEL = BLACK
 TYPES = ["checkerboard", "gradient", "binary"]
 GRADIENT_DIR = ["inline", "crossline", "depth"]
-METHODS = ['dutch_f3', 'fixed_box_number']
+METHODS = ["dutch_f3", "fixed_box_number"]
 
 parser.add_argument("--dataroot", help="Root location of the input data", type=str, required=True)
 parser.add_argument("--dataout", help="Root location of the output data", type=str, required=True)
 parser.add_argument("--box_size", help="Size of the bounding box", type=int, required=False, default=100)
-parser.add_argument("--based_on", help="This determines the shape of synthetic data array", type=str, required=False, choices=METHODS, default='dutch_f3')
+parser.add_argument(
+    "--based_on",
+    help="This determines the shape of synthetic data array",
+    type=str,
+    required=False,
+    choices=METHODS,
+    default="dutch_f3",
+)
 parser.add_argument("--box_number", help="Number of boxes", type=int, required=False, default=2)
 parser.add_argument(
     "--type", help="Type of data to generate", type=str, required=False, choices=TYPES, default="checkerboard",

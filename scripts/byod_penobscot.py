@@ -30,32 +30,33 @@ myname = os.path.realpath(__file__)
 mypath = os.path.dirname(myname)
 myname = os.path.basename(myname)
 
+
 def main(args):
     """
     Transforms Penobscot HDF5 dataset into DeepSeismic Tensor Format
     """
 
     logging.info("loading data")
-    f = h5py.File(args.filename, 'r')
-    data = f['features'][:,:,:,0]
-    labels = f['label'][:, :, :]
+    f = h5py.File(args.filename, "r")
+    data = f["features"][:, :, :, 0]
+    labels = f["label"][:, :, :]
     assert labels.min() == 0
-    n_classes = labels.max()+1
+    n_classes = labels.max() + 1
     assert n_classes == N_CLASSES
 
     # inline x depth x crossline, make it inline x crossline x depth
-    data   = np.swapaxes(data, 1, 2)
+    data = np.swapaxes(data, 1, 2)
     labels = np.swapaxes(labels, 1, 2)
 
-    #Make data cube fast to access
-    data = np.ascontiguousarray(data,'float32')
-    labels = np.ascontiguousarray(labels,'uint8')
+    # Make data cube fast to access
+    data = np.ascontiguousarray(data, "float32")
+    labels = np.ascontiguousarray(labels, "uint8")
 
     # combine classes 4 and 5 (index 3 and 4)- shift others down
-    labels[labels>3]-=1
+    labels[labels > 3] -= 1
 
     # rescale to be within a certain range
-    range_min, range_max = -1., 1.
+    range_min, range_max = -1.0, 1.0
     data_std = (data - data.min()) / (data.max() - data.min())
     data = data_std * (range_max - range_min) + range_min
 
@@ -71,11 +72,11 @@ def main(args):
     n_crosslines = data.shape[1]
 
     inline_cut = int(np.floor(n_inlines * INLINE_FRACTION))
-    crossline_cut = int(np.floor(n_crosslines*CROSSLINE_FRACTION))
+    crossline_cut = int(np.floor(n_crosslines * CROSSLINE_FRACTION))
 
-    data_train = data[0:inline_cut,0:crossline_cut,:]
-    data_test1 = data[inline_cut:n_inlines,:,:]
-    data_test2 = data[:,crossline_cut:n_crosslines,:]
+    data_train = data[0:inline_cut, 0:crossline_cut, :]
+    data_test1 = data[inline_cut:n_inlines, :, :]
+    data_test2 = data[:, crossline_cut:n_crosslines, :]
 
     labels_train = labels[0:inline_cut, 0:crossline_cut, :]
     labels_test1 = labels[inline_cut:n_inlines, :, :]
@@ -115,6 +116,7 @@ def main(args):
     logging.info(data.mean())
     logging.info("STANDARD DEVIATION")
     logging.info(data.std())
+
 
 """ GLOBAL VARIABLES """
 INLINE_FRACTION = 0.7

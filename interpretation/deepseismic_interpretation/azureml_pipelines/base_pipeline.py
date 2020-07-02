@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 """
 base class for constructing and running an azureml pipeline and some of the
 accompanying resources.
@@ -26,6 +29,7 @@ class DeepSeismicAzMLPipeline(ABC):
     """
     Abstract base class for pipelines in AzureML
     """
+
     def __init__(self, pipeline_config, ws_config=None):
         """
         constructor for DeepSeismicAzMLPipeline class
@@ -50,7 +54,7 @@ class DeepSeismicAzMLPipeline(ABC):
         :param str config_path: path to the pipeline config file
         """
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 self.config = json.load(f)
         except Exception as e:
             raise Exception("Was unable to load pipeline config file. {}".format(e))
@@ -102,18 +106,18 @@ class DeepSeismicAzMLPipeline(ABC):
         for model in models:
             if model.name == model_name:
                 self.model = model
-                print('Found model: ' + self.model.name)
+                print("Found model: " + self.model.name)
                 break
 
         if model_path is not None:
-            self.model = Model.register(model_path=model_path,
-                                        model_name=model_name,
-                                        workspace=self.ws)
+            self.model = Model.register(model_path=model_path, model_name=model_name, workspace=self.ws)
 
         if self.model is None:
-            raise Exception("""no model was found or registered. Ensure that you
+            raise Exception(
+                """no model was found or registered. Ensure that you
                              have a model registered in this workspace or that
-                             you passed the path of a local model""")
+                             you passed the path of a local model"""
+            )
 
     def _setup_datastore(self, blob_dataset_name, output_path=None):
         """
@@ -130,18 +134,20 @@ class DeepSeismicAzMLPipeline(ABC):
             self.blob_ds = Datastore.get(self.ws, blob_dataset_name)
             print("Found Blob Datastore with name: %s" % blob_dataset_name)
         except HttpOperationError:
-            self.blob_ds = Datastore.register_azure_blob_container(workspace=self.ws,
-                                                                   datastore_name=blob_dataset_name,
-                                                                   account_name=self.account_name,
-                                                                   container_name=self.container_name,
-                                                                   account_key=self.account_key,
-                                                                   subscription_id=self.blob_sub_id)
+            self.blob_ds = Datastore.register_azure_blob_container(
+                workspace=self.ws,
+                datastore_name=blob_dataset_name,
+                account_name=self.account_name,
+                container_name=self.container_name,
+                account_key=self.account_key,
+                subscription_id=self.blob_sub_id,
+            )
 
             print("Registered blob datastore with name: %s" % blob_dataset_name)
         if output_path is not None:
-            self.output_dir = PipelineData(name="output",
-                                           datastore=self.ws.get_default_datastore(),
-                                           output_path_on_compute=output_path)
+            self.output_dir = PipelineData(
+                name="output", datastore=self.ws.get_default_datastore(), output_path_on_compute=output_path
+            )
 
     def _setup_dataset(self, ds_name, data_paths):
         """
@@ -155,12 +161,9 @@ class DeepSeismicAzMLPipeline(ABC):
         for data_path in data_paths:
             curr_name = ds_name + str(count)
             path_on_datastore = self.blob_ds.path(data_path)
-            input_ds = Dataset.File.from_files(path=path_on_datastore,
-                                               validate=False)
+            input_ds = Dataset.File.from_files(path=path_on_datastore, validate=False)
             try:
-                registered_ds = input_ds.register(workspace=self.ws,
-                                                  name=curr_name,
-                                                  create_new_version=True)
+                registered_ds = input_ds.register(workspace=self.ws, name=curr_name, create_new_version=True)
             except Exception as e:
                 n, v = self._parse_exception(e)
                 registered_ds = Dataset.get_by_name(self.ws, name=n, version=v)
@@ -176,9 +179,7 @@ class DeepSeismicAzMLPipeline(ABC):
         :returns: input_data
         :rtype: DataReference
         """
-        input_data = DataReference(datastore=self.blob_ds,
-                                   data_reference_name=name,
-                                   path_on_datastore=path)
+        input_data = DataReference(datastore=self.blob_ds, data_reference_name=name, path_on_datastore=path)
         return input_data
 
     def _setup_pipelinedata(self, name, output_path=None):
@@ -191,16 +192,16 @@ class DeepSeismicAzMLPipeline(ABC):
         :rtype: PipelineData
         """
         if output_path is not None:
-            output_data = PipelineData(name=name,
-                                       datastore=self.blob_ds,
-                                       output_name=name,
-                                       output_mode='mount',
-                                       output_path_on_compute=output_path,
-                                       is_directory=True)
+            output_data = PipelineData(
+                name=name,
+                datastore=self.blob_ds,
+                output_name=name,
+                output_mode="mount",
+                output_path_on_compute=output_path,
+                is_directory=True,
+            )
         else:
-            output_data = PipelineData(name=name,
-                                       datastore=self.ws.get_default_datastore(),
-                                       output_name=name)
+            output_data = PipelineData(name=name, datastore=self.ws.get_default_datastore(), output_name=name)
         return output_data
 
     def _setup_compute(self):
@@ -214,19 +215,15 @@ class DeepSeismicAzMLPipeline(ABC):
         if self.comp_name in self.ws.compute_targets:
             self.compute_target = self.ws.compute_targets[self.comp_name]
             if self.compute_target and type(self.compute_target) is AmlCompute:
-                print('Found compute target: ' + self.comp_name)
+                print("Found compute target: " + self.comp_name)
         else:
-            print('creating a new compute target...')
-            p_cfg = AmlCompute.provisioning_configuration(vm_size=self.comp_vm_size,
-                                                          min_nodes=self.comp_min_nodes,
-                                                          max_nodes=self.comp_max_nodes)
+            print("creating a new compute target...")
+            p_cfg = AmlCompute.provisioning_configuration(
+                vm_size=self.comp_vm_size, min_nodes=self.comp_min_nodes, max_nodes=self.comp_max_nodes
+            )
 
-            self.compute_target = ComputeTarget.create(self.ws,
-                                                       self.comp_name,
-                                                       p_cfg)
-            self.compute_target.wait_for_completion(show_output=True,
-                                                    min_node_count=None,
-                                                    timeout_in_minutes=20)
+            self.compute_target = ComputeTarget.create(self.ws, self.comp_name, p_cfg)
+            self.compute_target.wait_for_completion(show_output=True, min_node_count=None, timeout_in_minutes=20)
 
             print(self.compute_target.get_status().serialize())
         return self.compute_target
@@ -240,7 +237,7 @@ class DeepSeismicAzMLPipeline(ABC):
         :returns: conda_dependencies
         :rtype: CondaDependencies
         """
-        with open(step['requirements'], 'r') as f:
+        with open(step["requirements"], "r") as f:
             packages = [line.strip() for line in f]
 
         return CondaDependencies.create(pip_packages=packages)
@@ -256,13 +253,13 @@ class DeepSeismicAzMLPipeline(ABC):
         """
         conda_deps = self._get_conda_deps(step)
 
-        env = Environment(name=step['name'] + "_environment")
+        env = Environment(name=step["name"] + "_environment")
         env.docker.enabled = True
 
         env.docker.base_image = DEFAULT_GPU_IMAGE
         env.spark.precache_packages = False
         env.python.conda_dependencies = conda_deps
-        env.python.conda_dependencies.add_conda_package('pip==20.0.2')
+        env.python.conda_dependencies.add_conda_package("pip==20.0.2")
         return env
 
     def _generate_run_config(self, step):
@@ -276,9 +273,8 @@ class DeepSeismicAzMLPipeline(ABC):
         """
         try:
             conda_deps = self._get_conda_deps(step)
-            conda_deps.add_conda_package('pip==20.0.2')
-            return RunConfiguration(script=step['script'],
-                                    conda_dependencies=conda_deps)
+            conda_deps.add_conda_package("pip==20.0.2")
+            return RunConfiguration(script=step["script"], conda_dependencies=conda_deps)
         except KeyError:
             return None
 
@@ -291,16 +287,18 @@ class DeepSeismicAzMLPipeline(ABC):
         :returns: parallel_run_config
         :rtype: ParallelRunConfig
         """
-        return ParallelRunConfig(source_directory=step['source_directory'],
-                                 entry_script=step['script'],
-                                 mini_batch_size=str(step['mini_batch_size']),
-                                 error_threshold=10,
-                                 output_action="summary_only",
-                                 environment=self._setup_env(step),
-                                 compute_target=self.compute_target,
-                                 node_count=step.get('node_count', 1),
-                                 process_count_per_node=step.get('processes_per_node', 1),
-                                 run_invocation_timeout=60)
+        return ParallelRunConfig(
+            source_directory=step["source_directory"],
+            entry_script=step["script"],
+            mini_batch_size=str(step["mini_batch_size"]),
+            error_threshold=10,
+            output_action="summary_only",
+            environment=self._setup_env(step),
+            compute_target=self.compute_target,
+            node_count=step.get("node_count", 1),
+            process_count_per_node=step.get("processes_per_node", 1),
+            run_invocation_timeout=60,
+        )
 
     def _create_pipeline_step(self, step, arguments, input_data, output=None, run_config=None):
         """
@@ -314,41 +312,47 @@ class DeepSeismicAzMLPipeline(ABC):
         :param ParallelRunConfig run_config: [optional] the run configuration for a MpiStep
         """
 
-        if step['type'] == 'PythonScriptStep':
+        if step["type"] == "PythonScriptStep":
             run_config = self._generate_run_config(step)
-            pipeline_step = PythonScriptStep(script_name=step['script'],
-                                             arguments=arguments,
-                                             inputs=[input_data],
-                                             outputs=output,
-                                             name=step['name'],
-                                             compute_target=self.compute_target,
-                                             source_directory=step['source_directory'],
-                                             allow_reuse=True,
-                                             runconfig=run_config)
+            pipeline_step = PythonScriptStep(
+                script_name=step["script"],
+                arguments=arguments,
+                inputs=[input_data],
+                outputs=output,
+                name=step["name"],
+                compute_target=self.compute_target,
+                source_directory=step["source_directory"],
+                allow_reuse=True,
+                runconfig=run_config,
+            )
 
-        elif step['type'] == 'MpiStep':
-            pipeline_step = MpiStep(name=step['name'],
-                                    source_directory=step['source_directory'],
-                                    arguments=arguments,
-                                    inputs=[input_data],
-                                    node_count=step.get("node_count", 1),
-                                    process_count_per_node=step.get("processes_per_node", 1),
-                                    compute_target=self.compute_target,
-                                    script_name=step['script'],
-                                    environment_definition=self._setup_env(step))
+        elif step["type"] == "MpiStep":
+            pipeline_step = MpiStep(
+                name=step["name"],
+                source_directory=step["source_directory"],
+                arguments=arguments,
+                inputs=[input_data],
+                node_count=step.get("node_count", 1),
+                process_count_per_node=step.get("processes_per_node", 1),
+                compute_target=self.compute_target,
+                script_name=step["script"],
+                environment_definition=self._setup_env(step),
+            )
 
-        elif step['type'] == 'ParallelRunStep':
+        elif step["type"] == "ParallelRunStep":
             run_config = self._generate_parallel_run_config(step)
 
-            pipeline_step = ParallelRunStep(name=step['name'],
-                                            models=[self.model],
-                                            parallel_run_config=run_config,
-                                            inputs=input_data,
-                                            output=output,
-                                            arguments=arguments,
-                                            allow_reuse=False)
+            pipeline_step = ParallelRunStep(
+                name=step["name"],
+                models=[self.model],
+                parallel_run_config=run_config,
+                inputs=input_data,
+                output=output,
+                arguments=arguments,
+                allow_reuse=False,
+            )
         else:
-            raise Exception("Pipeline step type {} not supported".format(step['type']))
+            raise Exception("Pipeline step type {} not supported".format(step["type"]))
 
         self.steps.append(pipeline_step)
 
@@ -365,10 +369,7 @@ class DeepSeismicAzMLPipeline(ABC):
             tags = self.pipeline_tags
         step_sequence = StepSequence(steps=self.steps)
         pipeline = Pipeline(workspace=self.ws, steps=step_sequence)
-        run = Experiment(self.ws,
-                   experiment_name).submit(pipeline,
-                                           tags=tags,
-                                           continue_on_step_failure=False)
+        run = Experiment(self.ws, experiment_name).submit(pipeline, tags=tags, continue_on_step_failure=False)
         return run
 
     def _parse_exception(self, e):
@@ -382,6 +383,6 @@ class DeepSeismicAzMLPipeline(ABC):
         s = str(e)
         result = re.search('name="(.*)"', s)
         name = result.group(1)
-        version = s[s.find("version=") + 8:s.find(")")]
+        version = s[s.find("version=") + 8 : s.find(")")]
 
         return name, version
