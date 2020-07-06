@@ -401,8 +401,10 @@ def test(*options, cfg=None, debug=False):
 
     # load model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
-    model.load_state_dict(torch.load(config.TEST.MODEL_PATH), strict=False)
-    model = model.to(device)  # Send to GPU if available
+    trained_model = torch.load(config.TEST.MODEL_PATH)
+    trained_model = {k.replace("module.", ""): v for (k, v) in trained_model.items()}
+    model.load_state_dict(trained_model, strict=True)
+    model = model.to(device)
 
     running_metrics_overall = runningScore(n_classes)
 
