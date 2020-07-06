@@ -213,21 +213,6 @@ class Res34Unetv4(nn.Module):
 
         return logit
 
-    def init_weights(
-        self, pretrained="",
-    ):
-        # skip weight initialization - leave at default values
-
-        if os.path.isfile(pretrained):
-            pretrained_dict = torch.load(pretrained)
-            logger.info("=> loading pretrained model {}".format(pretrained))
-            model_dict = self.state_dict()
-            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys()}
-            for k, _ in pretrained_dict.items():
-                logger.info("=> loading {} pretrained model {}".format(k, pretrained))
-            model_dict.update(pretrained_dict)
-            self.load_state_dict(model_dict)
-
 
 # stage2 model
 class Res34Unetv3(nn.Module):
@@ -319,24 +304,6 @@ class Res34Unetv3(nn.Module):
 
         return logit, logit_pixel, logit_image.view(-1)
 
-    def init_weights(
-        self, pretrained="",
-    ):
-        # skip weight initialization - leave at default values
-
-        if pretrained and not os.path.isfile(pretrained):
-            raise FileNotFoundError(f"The file {pretrained} was not found. Please supply correct path or leave empty")
-
-        if os.path.isfile(pretrained):
-            pretrained_dict = torch.load(pretrained)
-            logger.info("=> loading pretrained model {}".format(pretrained))
-            model_dict = self.state_dict()
-            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys()}
-            for k, _ in pretrained_dict.items():
-                logger.info("=> loading {} pretrained model {}".format(k, pretrained))
-            model_dict.update(pretrained_dict)
-            self.load_state_dict(model_dict)
-
 
 # stage3 model
 class Res34Unetv5(nn.Module):
@@ -394,30 +361,10 @@ class Res34Unetv5(nn.Module):
 
         return logit
 
-    def init_weights(
-        self, pretrained="",
-    ):
-        # skip weight initialization - leave at default values
-
-        if pretrained and not os.path.isfile(pretrained):
-            raise FileNotFoundError(f"The file {pretrained} was not found. Please supply correct path or leave empty")
-
-        if os.path.isfile(pretrained):
-            pretrained_dict = torch.load(pretrained)
-            logger.info("=> loading pretrained model {}".format(pretrained))
-            model_dict = self.state_dict()
-            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys()}
-            for k, _ in pretrained_dict.items():
-                logger.info("=> loading {} pretrained model {}".format(k, pretrained))
-            model_dict.update(pretrained_dict)
-            self.load_state_dict(model_dict)
-
 
 def get_seg_model(cfg, **kwargs):
     assert (
         cfg.MODEL.IN_CHANNELS == 3
     ), f"SEResnet Unet deconvnet is not implemented to accept {cfg.MODEL.IN_CHANNELS} channels. Please only pass 3 for cfg.MODEL.IN_CHANNELS"
     model = Res34Unetv4(n_classes=cfg.DATASET.NUM_CLASSES)
-    if "PRETRAINED" in cfg.MODEL.keys():
-        model.init_weights(cfg.MODEL.PRETRAINED)
     return model
