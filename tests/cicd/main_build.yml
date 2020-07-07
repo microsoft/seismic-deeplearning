@@ -52,9 +52,16 @@ jobs:
 
       ./tests/cicd/src/scripts/get_data_for_builds.sh ${DATA_ROOT}
 
+      # taken from https://zenodo.org/record/3924682
+      # paper https://arxiv.org/abs/1905.04307
+      # TODO: enable when Penobscot is ready to be provided in the repo - rough sequence of steps below
+      # cd scripts
+      # wget -o /dev/null -O dataset.h5 https://zenodo.org/record/3924682/files/dataset.h5?download=1
+      # python byod_penobscot.py --filename dataset.h5 --outdir <where to output data>
+      # python prepare_dutchf3.py split_train_val patch   --data_dir=<outdir from the previous step> --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both --section_stride=100
+
       # copy your model files like so - using dummy file to illustrate
       azcopy --quiet --source:https://$(storagename).blob.core.windows.net/models/model --source-key $(storagekey) --destination /home/alfred/models/your_model_name
-
 
 ###################################################################################################
 # Stage 2: fast unit tests
@@ -63,7 +70,7 @@ jobs:
 - job: scripts_unit_tests_job
   dependsOn: setup
   timeoutInMinutes: 5
-  displayName: Unit Tests
+  displayName: Generic Unit Tests
   pool:
     name: deepseismicagentpool
   steps:
@@ -72,10 +79,35 @@ jobs:
       echo "Starting scripts unit tests"
       source activate seismic-interpretation
       pytest --durations=0 tests/
-      echo "Script unit test job passed"
+
+- job: data_loaders_unit_tests_job
+  dependsOn: scripts_unit_tests_job
+  timeoutInMinutes: 5
+  displayName: Data Loaders Unit Tests
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      set -e
+      echo "Starting scripts unit tests"
+      source activate seismic-interpretation
+      pytest --durations=0 interpretation/deepseismic_interpretation/dutchf3/tests/
+
+- job: segy_utils_unit_test_job
+  dependsOn: data_loaders_unit_tests_job
+  timeoutInMinutes: 5
+  displayName: SEGY Converter Unit Tests
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      set -e
+      echo "Starting scripts unit tests"
+      source activate seismic-interpretation
+      pytest --durations=0 interpretation/deepseismic_interpretation/segyconverter/test
 
 - job: cv_lib_unit_tests_job
-  dependsOn: scripts_unit_tests_job
+  dependsOn: segy_utils_unit_test_job
   timeoutInMinutes: 5
   displayName: cv_lib Unit Tests
   pool:
@@ -89,15 +121,15 @@ jobs:
       echo "cv_lib unit test job passed"
 
 ###################################################################################################
-# Stage 3: Dutch F3 patch models on checkerboard test set: 
+# Stage 3: Patch models on checkerboard test set: 
 #              deconvnet, unet, HRNet patch depth, HRNet section depth
 # CAUTION: reverted these builds to single-GPU leaving new multi-GPU code in to be reverted later
 ###################################################################################################
 
-- job: checkerboard_dutchf3_patch
+- job: checkerboard_patch
   dependsOn: cv_lib_unit_tests_job
-  timeoutInMinutes: 30
-  displayName: Checkerboard Dutch F3 patch local
+  timeoutInMinutes: 15
+  displayName: Checkerboard patch local
   pool:
     name: deepseismicagentpool
   steps:
@@ -108,7 +140,7 @@ jobs:
       # disable auto error handling as we flag it manually
       set +e
 
-      cd experiments/interpretation/dutchf3_patch/local
+      cd experiments/interpretation/dutchf3_patch
           
       # Create a temporary directory to store the statuses
       dir=$(mktemp -d)
@@ -119,36 +151,44 @@ jobs:
       pids=
       # export CUDA_VISIBLE_DEVICES=0
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
-                        'NUM_DEBUG_BATCHES' 50 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+                        'NUM_DEBUG_BATCHES' 64 \
+                        'TRAIN.END_EPOCH' 13 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'none' \
+                        'TRAIN.BATCH_SIZE_PER_GPU' 16 'VALIDATION.BATCH_SIZE_PER_GPU' 32 \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
                         'WORKERS' 1 \
                         --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
       # export CUDA_VISIBLE_DEVICES=1
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
-                        'NUM_DEBUG_BATCHES' 10 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+                        'NUM_DEBUG_BATCHES' 64 \
+                        'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'section' \
+                        'TRAIN.BATCH_SIZE_PER_GPU' 16 'VALIDATION.BATCH_SIZE_PER_GPU' 32 \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
                         'WORKERS' 1 \
                         --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
       # export CUDA_VISIBLE_DEVICES=2
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
-                        'NUM_DEBUG_BATCHES' 50 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+                        'NUM_DEBUG_BATCHES' 64 \
+                        'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'section' \
+                        'TRAIN.BATCH_SIZE_PER_GPU' 16 'VALIDATION.BATCH_SIZE_PER_GPU' 32 \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
                         'WORKERS' 1 \
                         --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
       pids+=" $!"
       # export CUDA_VISIBLE_DEVICES=3
       { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/checkerboard/data' \
-                        'NUM_DEBUG_BATCHES' 5 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
+                        'NUM_DEBUG_BATCHES' 64 \
+                        'TRAIN.END_EPOCH' 2 'TRAIN.SNAPSHOTS' 1 \
                         'DATASET.NUM_CLASSES' 2 'DATASET.CLASS_WEIGHTS' '[1.0, 1.0]' \
                         'TRAIN.DEPTH' 'section' \
+                        'TRAIN.BATCH_SIZE_PER_GPU' 16 'VALIDATION.BATCH_SIZE_PER_GPU' 32 \
                         'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
                         'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
                         'WORKERS' 1 \
@@ -166,14 +206,21 @@ jobs:
 
       # Remove the temporary directory
       rm -r "$dir"
+    
+      set -e
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_patch_deconvnet_no_depth.json --step train --train_depth none
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_unet_section_depth.json --step train --train_depth section
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_seresnet_unet_section_depth.json --step train --train_depth section
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_hrnet_section_depth.json --step train --train_depth section
+      set +e
 
       # check validation set performance
       set -e
-      python ../../../../tests/cicd/src/check_performance.py --infile metrics_patch_deconvnet_no_depth.json
-      python ../../../../tests/cicd/src/check_performance.py --infile metrics_unet_section_depth.json
-      python ../../../../tests/cicd/src/check_performance.py --infile metrics_seresnet_unet_section_depth.json
+      python ../../../tests/cicd/src/check_performance.py --infile metrics_patch_deconvnet_no_depth.json
+      python ../../../tests/cicd/src/check_performance.py --infile metrics_unet_section_depth.json
+      python ../../../tests/cicd/src/check_performance.py --infile metrics_seresnet_unet_section_depth.json
       # TODO: enable HRNet test set metrics when we debug HRNet
-      # python ../../../../tests/cicd/src/check_performance.py --infile metrics_hrnet_section_depth.json
+      # python ../../../tests/cicd/src/check_performance.py --infile metrics_hrnet_section_depth.json
       set +e
       echo "All models finished training - start scoring"
 
@@ -256,173 +303,32 @@ jobs:
       # Remove the temporary directory
       rm -r "$dir"
 
+      # check data flow for test
+      set -e
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_test_patch_deconvnet_no_depth.json --step test --train_depth none
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_test_unet_section_depth.json --step test --train_depth section
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_test_seresnet_unet_section_depth.json --step test --train_depth section
+      python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_test_hrnet_section_depth.json --step test --train_depth section
+      set +e
+      
       # check test set performance
       set -e
-      python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_patch_deconvnet_no_depth.json --test
-      python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_unet_section_depth.json --test
-      python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_seresnet_unet_section_depth.json --test
+      python ../../../tests/cicd/src/check_performance.py --infile metrics_test_patch_deconvnet_no_depth.json --test
+      python ../../../tests/cicd/src/check_performance.py --infile metrics_test_unet_section_depth.json --test
+      python ../../../tests/cicd/src/check_performance.py --infile metrics_test_seresnet_unet_section_depth.json --test
       # TODO: enable HRNet test set metrics when we debug HRNet
-      # python ../../../../tests/cicd/src/check_performance.py --infile metrics_test_hrnet_section_depth.json --test
+      # python ../../../tests/cicd/src/check_performance.py --infile metrics_test_hrnet_section_depth.json --test
       
       echo "PASSED"
 
 
-###################################################################################################
-# Stage 3: Dutch F3 patch models: deconvnet, unet, HRNet patch depth, HRNet section depth
-# CAUTION: reverted these builds to single-GPU leaving new multi-GPU code in to be reverted later
-###################################################################################################
-
-- job: dutchf3_patch
-  dependsOn: checkerboard_dutchf3_patch
-  timeoutInMinutes: 60
-  displayName: Dutch F3 patch local
-  pool:
-    name: deepseismicagentpool
-  steps:
-  - bash: |
-
-      source activate seismic-interpretation
-
-      # disable auto error handling as we flag it manually
-      set +e
-
-      cd experiments/interpretation/dutchf3_patch/local
-
-      # Create a temporary directory to store the statuses
-      dir=$(mktemp -d)
-
-      pids=
-      # export CUDA_VISIBLE_DEVICES=0
-      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
-                        'TRAIN.DEPTH' 'none' \
-                        'TRAIN.BATCH_SIZE_PER_GPU' 2 'VALIDATION.BATCH_SIZE_PER_GPU' 2 \
-                        'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'no_depth' \
-                        'WORKERS' 1 \
-                        --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
-      pids+=" $!"
-      # export CUDA_VISIBLE_DEVICES=1
-      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
-                        'TRAIN.DEPTH' 'section' \
-                        'TRAIN.BATCH_SIZE_PER_GPU' 2 'VALIDATION.BATCH_SIZE_PER_GPU' 2 \
-                        'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                        'WORKERS' 1 \
-                        --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
-      pids+=" $!"
-      # export CUDA_VISIBLE_DEVICES=2
-      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
-                        'TRAIN.DEPTH' 'section' \
-                        'TRAIN.BATCH_SIZE_PER_GPU' 2 'VALIDATION.BATCH_SIZE_PER_GPU' 2 \
-                        'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                        'WORKERS' 1 \
-                        --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
-      pids+=" $!"
-      # export CUDA_VISIBLE_DEVICES=3
-      { python train.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' 'TRAIN.END_EPOCH' 1 'TRAIN.SNAPSHOTS' 1 \
-                        'TRAIN.DEPTH' 'section' \
-                        'TRAIN.BATCH_SIZE_PER_GPU' 2 'VALIDATION.BATCH_SIZE_PER_GPU' 2 \
-                        'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
-                        'OUTPUT_DIR' 'output' 'TRAIN.MODEL_DIR' 'section_depth' \
-                        'WORKERS' 1 \
-                        --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
-      pids+=" $!"
-
-      wait $pids || exit 1
-
-      # check if any of the models had an error during execution
-      # Get return information for each pid
-      for file in "$dir"/*; do
-        printf 'PID %d returned %d\n' "${file##*/}" "$(<"$file")"
-        [[ "$(<"$file")" -ne "0" ]] && exit 1 || echo "pass"
-      done
-
-      # Remove the temporary directory
-      rm -r "$dir"
-
-      echo "All models finished training - start scoring"
-
-      # Create a temporary directory to store the statuses
-      dir=$(mktemp -d)
-
-      pids=
-      # export CUDA_VISIBLE_DEVICES=0
-      # find the latest model which we just trained
-      # if we're running on a build VM
-      model_dir=$(ls -td output/patch_deconvnet/no_depth/* | head -1)
-      # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/patch_deconvnet/no_depth/* | head -1)
-      model=$(ls -t ${model_dir}/*.pth | head -1)
-      # try running the test script
-      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
-                       'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'no_depth' \
-                       'TEST.MODEL_PATH' ${model} \
-                       'WORKERS' 1 \
-                       --cfg=configs/patch_deconvnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
-      pids+=" $!"
-      # export CUDA_VISIBLE_DEVICES=1
-      # find the latest model which we just trained
-      # if we're running on a build VM
-      model_dir=$(ls -td output/unet/section_depth/* | head -1)
-      # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/unet/section_depth* | head -1)
-      model=$(ls -t ${model_dir}/*.pth | head -1)
-      # try running the test script
-      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
-                       'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
-                       'TEST.MODEL_PATH' ${model} \
-                       'WORKERS' 1 \
-                       --cfg=configs/unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
-      pids+=" $!"
-      # export CUDA_VISIBLE_DEVICES=2
-      # find the latest model which we just trained
-      # if we're running on a build VM
-      model_dir=$(ls -td output/seresnet_unet/section_depth/* | head -1)
-      # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/seresnet_unet/section_depth/* | head -1)
-      model=$(ls -t ${model_dir}/*.pth | head -1)
-      # try running the test script
-      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
-                       'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
-                       'TEST.MODEL_PATH' ${model} \
-                       'WORKERS' 1 \
-                       --cfg=configs/seresnet_unet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
-      pids+=" $!"
-      # export CUDA_VISIBLE_DEVICES=3
-      # find the latest model which we just trained
-      # if we're running on a build VM
-      model_dir=$(ls -td output/hrnet/section_depth/* | head -1)
-      # if we're running in a checked out git repo
-      [[ -z ${model_dir} ]] && model_dir=$(ls -td output/$(git rev-parse --abbrev-ref HEAD)/*/hrnet/section_depth/* | head -1)
-      model=$(ls -t ${model_dir}/*.pth | head -1)
-      # try running the test script
-      { python test.py 'DATASET.ROOT' '/home/alfred/data_dynamic/dutch_f3/data' \
-                       'TEST.SPLIT' 'Both' 'TRAIN.MODEL_DIR' 'section_depth' \
-                       'MODEL.PRETRAINED' '/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth' \
-                       'TEST.MODEL_PATH' ${model} \
-                       'WORKERS' 1 \
-                       --cfg=configs/hrnet.yaml --debug ; echo "$?" > "$dir/$BASHPID"; }
-      pids+=" $!"
-
-      # wait for completion
-      wait $pids || exit 1
-
-      # check if any of the models had an error during execution
-      # Get return information for each pid
-      for file in "$dir"/*; do
-        printf 'PID %d returned %d\n' "${file##*/}" "$(<"$file")"
-        [[ "$(<"$file")" -ne "0" ]] && exit 1 || echo "pass"
-      done
-
-      # Remove the temporary directory
-      rm -r "$dir"
-
-      echo "PASSED"
 
 ###################################################################################################
-# Stage 5: Notebook tests
+# Stage 4: Notebook tests
 ###################################################################################################
 
 - job: F3_block_training_and_evaluation_local_notebook
-  dependsOn: dutchf3_patch
+  dependsOn: checkerboard_patch
   timeoutInMinutes: 5
   displayName: F3 block training and evaluation local notebook
   pool:
@@ -434,3 +340,40 @@ jobs:
         --nbname examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb \
         --dataset_root /home/alfred/data_dynamic/dutch_f3/data \
         --model_pretrained download
+
+- job: segyconverter_notebooks
+  dependsOn: F3_block_training_and_evaluation_local_notebook
+  timeoutInMinutes: 5
+  displayName: SEGY converter notebooks
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      source activate seismic-interpretation
+      pytest -s tests/cicd/src/notebook_integration_tests.py \
+        --nbname examples/interpretation/segyconverter/01_segy_sample_files.ipynb \
+        --cwd examples/interpretation/segyconverter
+      pytest -s tests/cicd/src/notebook_integration_tests.py \
+        --nbname examples/interpretation/segyconverter/02_segy_convert_sample.ipynb \
+        --cwd examples/interpretation/segyconverter
+
+###################################################################################################
+# Stage 5: Docker tests
+###################################################################################################
+- job: docker_build_test
+  dependsOn: segyconverter_notebooks
+  timeoutInMinutes: 30
+  displayName: Docker build test
+  pool:
+    name: deepseismicagentpool
+  steps:
+  - bash: |
+      set -e
+      echo "build docker"
+      cd docker
+      pwd
+      docker images | grep "seismic-deeplearning" | awk '{print $1 ":" $2}' | xargs docker rmi || echo "pass if no seismic-deeplearning image is found"
+      docker images | grep "<none>" | awk '{print $1 ":" $2}' | xargs docker rmi || echo "pass if no non-tagged images is found"
+      docker build -t seismic-deeplearning . 
+
+

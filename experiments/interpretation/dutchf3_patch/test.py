@@ -201,10 +201,23 @@ def _output_processing_pipeline(config, output):
 
 
 def _patch_label_2d(
-    model, img, pre_processing, output_processing, patch_size, stride, batch_size, device, num_classes, split, debug
+    model,
+    img,
+    pre_processing,
+    output_processing,
+    patch_size,
+    stride,
+    batch_size,
+    device,
+    num_classes,
+    split,
+    debug,
+    MIN,
+    MAX,
 ):
     """Processes a whole section
     """
+
     img = torch.squeeze(img)
     h, w = img.shape[-2], img.shape[-1]  # height and width
 
@@ -228,19 +241,19 @@ def _patch_label_2d(
 
         # dump the data right before it's being put into the model and after scoring
         if debug:
-            outdir = f"debug/batch_{split}"
+            outdir = f"debug/test/batch_{split}"
             generate_path(outdir)
             for i in range(batch.shape[0]):
                 path_prefix = f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}"
                 model_output = model_output.detach().cpu()
                 # save image:
-                image_to_disk(np.array(batch[i, 0, :, :]), path_prefix + "_img.png")
+                image_to_disk(np.array(batch[i, 0, :, :]), path_prefix + "_img.png", MIN, MAX)
                 # dump model prediction:
                 mask_to_disk(model_output[i, :, :, :].argmax(dim=0).numpy(), path_prefix + "_pred.png", num_classes)
                 # dump model confidence values
                 for nclass in range(num_classes):
                     image_to_disk(
-                        model_output[i, nclass, :, :].numpy(), path_prefix + f"_class_{nclass}_conf.png",
+                        model_output[i, nclass, :, :].numpy(), path_prefix + f"_class_{nclass}_conf.png", MIN, MAX
                     )
 
     # crop the output_p in the middle
@@ -249,46 +262,56 @@ def _patch_label_2d(
 
 
 def _evaluate_split(
-    split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config, debug=False,
+    split,
+    section_aug,
+    model,
+    pre_processing,
+    output_processing,
+    device,
+    running_metrics_overall,
+    config,
+    data_flow,
+    debug=False,
 ):
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
 
-    test_set = TestSectionLoader(
-        config.DATASET.ROOT,
-        config.DATASET.NUM_CLASSES,
-        split=split,
-        is_transform=True,
-        augmentations=section_aug,
-        debug=debug,
-    )
+    test_set = TestSectionLoader(config, split=split, is_transform=True, augmentations=section_aug, debug=debug,)
 
     n_classes = test_set.n_classes
+
+    if debug:
+        data_flow[split] = dict()
+        data_flow[split]["test_section_loader_length"] = len(test_set)
+        data_flow[split]["test_input_shape"] = test_set.seismic.shape
+        data_flow[split]["test_label_shape"] = test_set.labels.shape
+        data_flow[split]["n_classes"] = n_classes
 
     test_loader = data.DataLoader(test_set, batch_size=1, num_workers=config.WORKERS, shuffle=False)
 
     if debug:
+        data_flow[split]["test_loader_length"] = len(test_loader)
         logger.info("Running in Debug/Test mode")
-        test_loader = take(2, test_loader)
+        take_n = 2
+        test_loader = take(take_n, test_loader)
+        data_flow[split]["take_n_sections"] = take_n
+        pred_list, gt_list, img_list = [], [], []
 
     try:
         output_dir = generate_path(
-            f"debug/{config.OUTPUT_DIR}_test_{split}", git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
+            f"{config.OUTPUT_DIR}/test/{split}", git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
         )
     except:
-        output_dir = generate_path(f"debug/{config.OUTPUT_DIR}_test_{split}", config.MODEL.NAME, current_datetime(),)
+        output_dir = generate_path(f"{config.OUTPUT_DIR}/test/{split}", config.MODEL.NAME, current_datetime(),)
 
     running_metrics_split = runningScore(n_classes)
 
     # evaluation mode:
     with torch.no_grad():  # operations inside don't track history
         model.eval()
-        total_iteration = 0
         for i, (images, labels) in enumerate(test_loader):
             logger.info(f"split: {split}, section: {i}")
-            total_iteration = total_iteration + 1
-
             outputs = _patch_label_2d(
                 model,
                 images,
@@ -301,16 +324,28 @@ def _evaluate_split(
                 n_classes,
                 split,
                 debug,
+                config.DATASET.MIN,
+                config.DATASET.MAX,
             )
 
             pred = outputs.detach().max(1)[1].numpy()
             gt = labels.numpy()
+            if debug:
+                pred_list.append((pred.shape, len(np.unique(pred))))
+                gt_list.append((gt.shape, len(np.unique(gt))))
+                img_list.append(images.numpy().shape)
+
             running_metrics_split.update(gt, pred)
             running_metrics_overall.update(gt, pred)
 
             #  dump images to disk for review
             mask_to_disk(pred.squeeze(), os.path.join(output_dir, f"{i}_pred.png"), n_classes)
             mask_to_disk(gt.squeeze(), os.path.join(output_dir, f"{i}_gt.png"), n_classes)
+
+    if debug:
+        data_flow[split]["pred_shape"] = pred_list
+        data_flow[split]["gt_shape"] = gt_list
+        data_flow[split]["img_shape"] = img_list
 
     # get scores
     score, class_iou = running_metrics_split.get_scores()
@@ -362,12 +397,14 @@ def test(*options, cfg=None, debug=False):
     load_log_configuration(config.LOG_CONFIG)
     logger = logging.getLogger(__name__)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    log_dir, model_name = os.path.split(config.TEST.MODEL_PATH)
+    log_dir, _ = os.path.split(config.TEST.MODEL_PATH)
 
     # load model:
     model = getattr(models, config.MODEL.NAME).get_seg_model(config)
-    model.load_state_dict(torch.load(config.TEST.MODEL_PATH), strict=False)
-    model = model.to(device)  # Send to GPU if available
+    trained_model = torch.load(config.TEST.MODEL_PATH)
+    trained_model = {k.replace("module.", ""): v for (k, v) in trained_model.items()}
+    model.load_state_dict(trained_model, strict=True)
+    model = model.to(device)
 
     running_metrics_overall = runningScore(n_classes)
 
@@ -395,6 +432,7 @@ def test(*options, cfg=None, debug=False):
     output_processing = _output_processing_pipeline(config)
 
     splits = ["test1", "test2"] if "Both" in config.TEST.SPLIT else [config.TEST.SPLIT]
+    data_flow = dict()
     for sdx, split in enumerate(splits):
         labels = np.load(path.join(config.DATASET.ROOT, "test_once", split + "_labels.npy"))
         section_file = path.join(config.DATASET.ROOT, "splits", "section_" + split + ".txt")
@@ -408,8 +446,16 @@ def test(*options, cfg=None, debug=False):
             device,
             running_metrics_overall,
             config,
+            data_flow,
             debug=debug,
         )
+
+    if debug:
+        config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
+
+        fname = f"data_flow_test_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
+        with open(fname, "w") as f:
+            json.dump(data_flow, f, indent=1)
 
     # FINAL TEST RESULTS:
     score, class_iou = running_metrics_overall.get_scores()
@@ -433,7 +479,6 @@ def test(*options, cfg=None, debug=False):
     np.savetxt(path.join(log_dir, "confusion.csv"), confusion, delimiter=" ")
 
     if debug:
-        config_file_name = "default_config" if not cfg else cfg.split("/")[-1].split(".")[0]
         fname = f"metrics_test_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
         with open(fname, "w") as fid:
             json.dump(

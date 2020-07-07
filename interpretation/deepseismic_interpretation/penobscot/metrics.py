@@ -18,7 +18,7 @@ def _torch_hist(label_true, label_pred, n_class):
     Returns:
         [type]: [description]
     """
-    
+
     assert len(label_true.shape) == 1, "Labels need to be 1D"
     assert len(label_pred.shape) == 1, "Predictions need to be 1D"
     mask = (label_true >= 0) & (label_true < n_class)

@@ -19,7 +19,7 @@ For developers, we offer a more hands-on Quick Start below.
 
 #### Dev Quick Start
 There are two ways to get started with the DeepSeismic codebase, which currently focuses on Interpretation:
-- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [HRNet demo notebook](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb)
+- if you'd like to get an idea of how our interpretation (segmentation) models are used, simply review the [demo notebook](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb)
 - to run the code, you'll need to set up a compute environment (which includes setting up a GPU-enabled Linux VM and downloading the appropriate Anaconda Python packages) and download the datasets which you'd like to work with - detailed steps for doing this are provided in the next `Interpretation` section below.
 
 If you run into any problems, chances are your problem has already been solved in the [Troubleshooting](#troubleshooting) section.
@@ -27,10 +27,14 @@ If you run into any problems, chances are your problem has already been solved i
 The notebook is designed to be run in demo mode by default using a pre-trained model in under 5 minutes on any reasonable Deep Learning GPU such as nVidia K80/P40/P100/V100/TitanV.
 
 ### Azure Machine Learning
-[Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/) enables you to train and deploy your machine learning models and pipelines at scale, and leverage open-source Python frameworks, such as PyTorch, TensorFlow, and scikit-learn. If you are looking at getting started with using the code in this repository with Azure Machine Learning, refer to [Azure Machine Learning How-to](https://github.com/Azure/MachineLearningNotebooks/tree/master/how-to-use-azureml) to get started.
+[Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/) enables you to train and deploy your machine learning models and pipelines at scale, and leverage open-source Python frameworks, such as PyTorch, TensorFlow, and scikit-learn.
+If you are looking at getting started with using the code in this repository with Azure Machine Learning, refer to [Azure Machine Learning How-to](https://github.com/Azure/MachineLearningNotebooks/tree/master/how-to-use-azureml) to get started.
 
 ## Interpretation
 For seismic interpretation, the repository consists of extensible machine learning pipelines, that shows how you can leverage state-of-the-art segmentation algorithms (UNet, SEResNET, HRNet) for seismic interpretation.
+We currently support rectangular data, i.e. 2D and 3D seismic images which form a rectangle in 2D. 
+We also provide [utilities](./examples/interpretation/segyconverter/README.md) for converting SEGY data with rectangular boundaries into numpy arrays
+where everything outside the boundary has been padded to produce a rectangular 3D numpy volume.   
 
 To run examples available on the repo, please follow instructions below to:
 1) [Set up the environment](#setting-up-environment)
@@ -85,23 +89,19 @@ This repository provides examples on how to run seismic interpretation on Dutch 
 
 Please make sure you have enough disk space to download either dataset.
 
-We have experiments and notebooks which use either one dataset or the other. Depending on which experiment/notebook you want to run you'll need to download the corresponding dataset. We suggest you start by looking at [HRNet demo notebook](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb) which requires the Dutch F3 dataset.
+We have experiments and notebooks which use either one dataset or the other. Depending on which experiment/notebook you want to run you'll need to download the corresponding dataset. We suggest you start by looking at [demo notebook](https://github.com/microsoft/seismic-deeplearning/blob/master/examples/interpretation/notebooks/Dutch_F3_patch_model_training_and_evaluation.ipynb) which requires the Dutch F3 dataset.
 
-#### Dutch F3 Netherlands dataset prep
-To download the F3 Netherlands dataset for 2D experiments, please follow the data download instructions at
+#### Dutch F3 dataset prep
+To download the Dutch F3 dataset for 2D experiments, please follow the data download instructions at
 [this github repository](https://github.com/yalaudah/facies_classification_benchmark) (section Dataset). Atternatively, you can use the [download script](scripts/download_dutch_f3.sh)
 
-```
+```bash
 data_dir="$HOME/data/dutch"
 mkdir -p "${data_dir}"
 ./scripts/download_dutch_f3.sh "${data_dir}"
 ```
-
-Download scripts also automatically create any subfolders in `${data_dir}` which are needed for the data preprocessing scripts.
-
-At this point, your `${data_dir}` directory should contain a `data` folder, which should look like this:
-
-```
+Download scripts also automatically create any subfolders in `${data_dir}` which are needed for the data preprocessing scripts. At this point, your `${data_dir}` directory should contain a `data` folder, which should look like this:
+```bash
 data
 ├── splits
 ├── test_once
@@ -113,10 +113,8 @@ data
     ├── train_labels.npy
     └── train_seismic.npy
 ```
-
 To prepare the data for the experiments (e.g. split into train/val/test), please run the following script:
-
-```
+```bash
 # change working directory to scripts folder
 cd scripts
 
@@ -125,13 +123,40 @@ python prepare_dutchf3.py split_train_val patch --data_dir=${data_dir}/data --la
 --stride=50 --patch_size=100 --split_direction=both
 
 # For section-based experiments
-python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits \ --split_direction=both
+python prepare_dutchf3.py split_train_val section --data-dir=${data_dir}/data --label_file=train/train_labels.npy --output_dir=splits --split_direction=both
 
 # go back to repo root
 cd ..
 ```
-
 Refer to the script itself for more argument options.
+
+#### Bring Your Own Data [BYOD]
+
+##### Bring your own SEG-Y data
+
+If you want to train these models using your own seismic and label data, the files will need to be prepped and
+converted to npy files. Typically, the [segyio](https://pypi.org/project/segyio/) can be used to open SEG-Y files that follow the standard, but more often than not, there are non standard settings or missing traces that will cause segyio to fail. If this happens with your data, read these notebooks and scripts to help prepare your data files:
+
+* [SEG-Y Data Prep README](contrib/segyconverter/README.md)
+* [convert_segy.py utility](contrib/segyconverter/convert_segy.py) - Utility script that can read SEG-Y files with unusual byte header locations and missing traces
+* [segy_convert_sample notebook](contrib/segyconverter/segy_convert_sample.ipynb) - Details on SEG-Y data conversion
+* [segy_sample_files notebook](contrib/segyconverter/segy_sample_files.ipynb) - Create test SEG-Y files that describe the scenarios that may cause issues when converting the data to numpy arrays
+
+##### Penobscot example
+
+We also offer starter code to convert [Penobscot](https://arxiv.org/abs/1905.04307) dataset (available [here](https://zenodo.org/record/3924682))
+into Tensor format used by the Dutch F3 dataset - once converted, you can run Penobscot through the same
+mechanisms as the Dutch F3 dataset. The rough sequence of steps is:
+
+```bash
+conda activate seismic-interpretation
+cd scripts
+wget -o /dev/null -O dataset.h5 https://zenodo.org/record/3924682/files/dataset.h5?download=1
+# convert penobscot
+python byod_penobscot.py --filename dataset.h5 --outdir <where to output data>
+# preprocess for experiments
+python prepare_dutchf3.py split_train_val patch --data_dir=<outdir from the previous step> --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both --section_stride=100
+```
 
 ### Run Examples
 
@@ -139,26 +164,25 @@ Refer to the script itself for more argument options.
 We provide example notebooks under `examples/interpretation/notebooks/` to demonstrate how to train seismic interpretation models and evaluate them on Penobscot and F3 datasets. 
 
 Make sure to run the notebooks in the conda environment we previously set up (`seismic-interpretation`). To register the conda environment in Jupyter, please run:
-
 ```
 python -m ipykernel install --user --name seismic-interpretation
 ```
-
 __Optional__: if you plan to develop a notebook, you can install black formatter with the following commands:
 ```bash
 conda activate seismic-interpretation
 jupyter nbextension install https://github.com/drillan/jupyter-black/archive/master.zip --user
 jupyter nbextension enable jupyter-black-master/jupyter-black
 ```
-
 This will enable your notebook with a Black formatter button, which then clicked will automatically format a notebook cell which you're in.
 
 #### Experiments
 
-We also provide scripts for a number of experiments we conducted using different segmentation approaches. These experiments are available under `experiments/interpretation`, and can be used as examples. Within each experiment start from the `train.sh` and `test.sh` scripts under the `local/` directory, which invoke the corresponding python scripts, `train.py` and `test.py`. Take a look at the experiment configurations (see Experiment Configuration Files section below) for experiment options and modify if necessary.
+We also provide scripts for a number of experiments we conducted using different segmentation approaches. These experiments are available under `experiments/interpretation`, and can be used as examples. Within each experiment start from the `train.sh` and `test.sh` scripts which invoke the corresponding python scripts, `train.py` and `test.py`. Take a look at the experiment configurations (see Experiment Configuration Files section below) for experiment options and modify if necessary.
 
-This release currently supports Dutch F3 local execution
-- [F3 Netherlands Patch](experiments/interpretation/dutchf3_patch/README.md)
+This release currently supports Dutch F3 local and distributed training
+- [Dutch F3 Patch](experiments/interpretation/dutchf3_patch/README.md)
+
+Please note that we use [NVIDIA's NCCL](https://docs.nvidia.com/deeplearning/nccl/install-guide/index.html) library to enable distributed training. Please follow the installation instructions [here](https://docs.nvidia.com/deeplearning/nccl/install-guide/index.html#down) to install NCCL on your system.   
 
 #### Configuration Files
 We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manage configuration options for the experiments. There are three ways to pass arguments to the experiment scripts (e.g. train.py or test.py):
@@ -166,31 +190,28 @@ We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manag
 - __default.py__ - A project config file `default.py` is a one-stop reference point for all configurable options, and provides sensible defaults for all arguments. If no arguments are passed to `train.py` or `test.py` script (e.g. `python train.py`), the arguments are by default loaded from `default.py`. Please take a look at `default.py` to familiarize yourself with the experiment arguments the script you run uses.
 
 - __yml config files__ - YAML configuration files under `configs/` are typically created one for each experiment. These are meant to be used for repeatable experiment runs and reproducible settings. Each configuration file only overrides the options that are changing in that experiment (e.g. options loaded from `defaults.py` during an experiment run will be overridden by arguments loaded from the yaml file). As an example, to use yml configuration file with the training script, run:
-
     ```
     python train.py --cfg "configs/seresnet_unet.yaml"
     ```
 
 - __command line__ - Finally, options can be passed in through `options` argument, and those will override arguments loaded from the configuration file. We created CLIs for all our scripts (using Python Fire library), so you can pass these options via command-line arguments, like so:
-
     ```
     python train.py DATASET.ROOT "/home/username/data/dutch/data" TRAIN.END_EPOCH 10
     ```
 
+#### Training
+We run an aggressive cosine annealing schedule which starts with a higher Learning Rate (LR) and gradually lowers it over approximately 60 epochs to zero, 
+at which point we raise LR back up to its original value and lower it again for about 60 epochs; this process continues 5 times, forming 60*5=300 training epochs in total
+in 5 cycles; model with the best frequency-weighted IoU is snapshotted to disc during each cycle. We suggest consulting TensorBoard logs to see which training cycle
+produced the best model and use that model during scoring.
+
+For multi-GPU training, we run a linear burn-in LR schedule before starting the 5 cosine cycles, then the training continues the same way as for single-GPU.
 
 ### Pretrained Models
 
 There are two types of pre-trained models used by this repo:
 1. pre-trained models trained on non-seismic Computer Vision datasets which we fine-tune for the seismic domain through re-training on seismic data
 2. models which we already trained on seismic data - these are downloaded automatically by our code if needed (again, please see the notebook for a demo above regarding how this is done).
-
-#### HRNet ImageNet weights model
-
-To enable training from scratch on seismic data and to achieve the same results as the benchmarks quoted below you will need to download the HRNet model [pretrained](https://github.com/HRNet/HRNet-Image-Classification) on ImageNet. We are specifically using the [HRNet-W48-C](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk) pre-trained model; other  HRNet variants are also available [here](https://github.com/HRNet/HRNet-Image-Classification) - you can navigate to those from the [main HRNet landing page](https://github.com/HRNet/HRNet-Object-Detection) for object detection.
-
-Unfortunately, the OneDrive location which is used to host the model is using a temporary authentication token, so there is no way for us to script up model download. There are two ways to upload and use the pre-trained HRNet model on DS VM:
-- download the model to your local drive using a web browser of your choice and then upload the model to the DS VM using something like `scp`; navigate to Portal and copy DS VM's public IP from the Overview panel of your DS VM (you can search your DS VM by name in the search bar of the Portal) then use `scp local_model_location username@DS_VM_public_IP:./model/save/path` to upload
-- alternatively, you can use the same public IP to open remote desktop over SSH to your Linux VM using [X2Go](https://wiki.x2go.org/doku.php/download:start): you can basically open the web browser on your VM this way and download the model to VM's disk
 
 
 ### Viewers (optional)
@@ -222,20 +243,21 @@ This section contains benchmarks of different algorithms for seismic interpretat
 
 #### Dutch F3
 
-| Source         | Experiment                  | PA    | FW IoU | MCA  | V100 (16GB) training time |
-| -------------- | --------------------------- | ----- | ------ | ---- | ------------------------- |
-| Alaudah et al. | Section-based               | 0.905 | 0.817  | .832 | N/A                       |
-|                | Patch-based                 | 0.852 | 0.743  | .689 | N/A                       |
-| DeepSeismic    | Patch-based+fixed           | .875  | .784   | .740 | 08h 54min                 |
-|                | SEResNet UNet+section depth | .910  | .841   | .809 | 55h 02min                 |
-|                | HRNet(patch)+patch_depth    | .884  | .795   | .739 | 67h 41min                 |
-|                | HRNet(patch)+section_depth  | .900  | .820   | .767 | 55h 08min                 |
+| Source         | Experiment                                | PA    | FW IoU | MCA  | V100 (16GB) training time |
+| -------------- | ----------------------------------------- | ----- | ------ | ---- | ------------------------- |
+| Alaudah et al. | Section-based                             | 0.905 | 0.817  | .832 | N/A                       |
+|                | Patch-based                               | 0.852 | 0.743  | .689 | N/A                       |
+| DeepSeismic    | Patch-based+fixed                         | .875  | .784   | .740 | 08h 54min                 |
+|                | SEResNet UNet+section depth               | .910  | .841   | .809 | 55h 02min                 |
+|                | HRNet(patch)+patch_depth (experimental)   | .884  | .795   | .739 | 67h 41min                 |
+|                | HRNet(patch)+section_depth (experimental) | .900  | .820   | .767 | 55h 08min                 |
 
+Note: these are single-run performance numbers and we expect the results to fluctuate in-between different runs, i.e. some variability is to be expected,
+but we expect the performance numbers to be close to these with this codebase.
 
 #### Reproduce benchmarks
-In order to reproduce the benchmarks, you will need to navigate to the [experiments](experiments) folder. In there, each of the experiments are split into different folders. To run the Netherlands F3 experiment navigate to the [dutchf3_patch/local](experiments/interpretation/dutchf3_patch/local) folder. In there is a training script [([train.sh](experiments/interpretation/dutchf3_patch/local/train.sh))
-which will run the training for any configuration you pass in. Once you have run the training you will need to run the [test.sh](experiments/interpretation/dutchf3_patch/local/test.sh) script. Make sure you specify
-the path to the best performing model from your training run, either by passing it in as an argument or altering the YACS config file. 
+In order to reproduce the benchmarks, you will need to navigate to the [experiments](experiments) folder. In there, each of the experiments are split into different folders. To run the Dutch F3 experiment navigate to the [dutchf3_patch](experiments/interpretation/dutchf3_patch/) folder. In there is a training script [train.sh](experiments/interpretation/dutchf3_patch/train.sh)
+which will run the training for any configuration you pass in. If your machine has multiple GPUs, you can run distributed training using the distributed training script [train_distributed.sh](experiments/interpretation/dutchf3_patch/train_distributed.sh). Once you have run the training you will need to run the [test.sh](experiments/interpretation/dutchf3_patch/test.sh) script. Make sure you specify the path to the best performing model from your training run, either by passing it in as an argument or altering the YACS config file. 
 
 ## Contributing
 
@@ -288,11 +310,11 @@ which will indicate that anaconda folder is `__/anaconda__`. We'll refer to this
   <summary><b>Data Science Virtual Machine conda package installation warnings</b></summary>
 
   It could happen that while creating the conda environment defined by `environment/anaconda/local/environment.yml` on an Ubuntu DSVM, one can get multiple warnings like so:
-  ```
+  ```bash
   WARNING conda.gateways.disk.delete:unlink_or_rename_to_trash(140): Could not remove or rename /anaconda/pkgs/ipywidgets-7.5.1-py_0/site-packages/ipywidgets-7.5.1.dist-info/LICENSE.  Please remove this file manually (you may need to reboot to free file handles)  
   ```
     
-  If this happens, similar to instructions above, stop the conda environment creation (type ```Ctrl+C```) and then change recursively the ownership /anaconda directory from root to current user, by running this command: 
+  If this happens, similar to instructions above, stop the conda environment creation (type ```Ctrl+C```) and then change recursively the ownership `/anaconda` directory from root to current user, by running this command: 
 
   ```bash
   sudo chown -R $USER /anaconda
@@ -322,17 +344,14 @@ which will indicate that anaconda folder is `__/anaconda__`. We'll refer to this
   torch.cuda.is_available() 
   ```
 
-  The output should say "True".
-
-  If the output is still "False", you may want to try setting your environment variable to specify the device manually - to test this, start a new `ipython` session and type:
+  The output should say `True`. If the output is still `False`, you may want to try setting your environment variable to specify the device manually - to test this, start a new `ipython` session and type:
   ```python
   import os
   os.environ['CUDA_VISIBLE_DEVICES']='0'
   import torch                                                                                  
   torch.cuda.is_available() 
   ```
-
-  The output should say "True" this time. If it does, you can make the change permanent by adding
+  The output should say `True` this time. If it does, you can make the change permanent by adding:
   ```bash
   export CUDA_VISIBLE_DEVICES=0
   ```
@@ -367,4 +386,3 @@ which will indicate that anaconda folder is `__/anaconda__`. We'll refer to this
   5. Navigate back to the Virtual Machine view in Step 2 and click the Start button to start the virtual machine.
 
 </details>
-

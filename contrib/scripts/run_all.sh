@@ -39,7 +39,7 @@ nohup time python train.py \
 # wait for python to pick up the runtime env before switching it
 sleep 1
 
-cd ../../dutchf3_patch/local
+cd ../../dutchf3_patch
 
 # patch based without skip connections
 export CUDA_VISIBLE_DEVICES=2

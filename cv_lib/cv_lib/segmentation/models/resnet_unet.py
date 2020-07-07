@@ -1,10 +1,15 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import logging
+import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
+
+logger = logging.getLogger(__name__)
 
 
 class FPAv2(nn.Module):

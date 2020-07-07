@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 """ Please see the def main() function for code description."""
 
 """ libraries """
@@ -83,14 +86,14 @@ def make_gradient(n_inlines, n_crosslines, n_depth, box_size, dir="inline"):
     :return: numpy array
     """
 
-    orthogonal_dir = dir # for depth case
-    if dir=='inline':
-        orthogonal_dir = 'crossline'
-    elif dir=='crossline':
-        orthogonal_dir = 'inline'
-    
+    orthogonal_dir = dir  # for depth case
+    if dir == "inline":
+        orthogonal_dir = "crossline"
+    elif dir == "crossline":
+        orthogonal_dir = "inline"
+
     axis = GRADIENT_DIR.index(orthogonal_dir)
-    
+
     n_points = (n_inlines, n_crosslines, n_depth)[axis]
     n_classes = int(np.ceil(float(n_points) / box_size))
     logging.info(f"GRADIENT: we will output {n_classes} classes in the {dir} direction")
@@ -127,35 +130,57 @@ def main(args):
 
     logging.info("loading data")
 
-    train_seismic = np.load(os.path.join(args.dataroot, "train", "train_seismic.npy"))
-    train_labels = np.load(os.path.join(args.dataroot, "train", "train_labels.npy"))
-    test1_seismic = np.load(os.path.join(args.dataroot, "test_once", "test1_seismic.npy"))
-    test1_labels = np.load(os.path.join(args.dataroot, "test_once", "test1_labels.npy"))
-    test2_seismic = np.load(os.path.join(args.dataroot, "test_once", "test2_seismic.npy"))
-    test2_labels = np.load(os.path.join(args.dataroot, "test_once", "test2_labels.npy"))
+    # TODO: extend this to binary and gradient
+    if args.type != "checkerboard":
+        assert args.based_on == "dutch_f3"
 
-    assert train_seismic.shape == train_labels.shape
-    assert train_seismic.min() == WHITE
-    assert train_seismic.max() == BLACK
-    assert train_labels.min() == 0
-    # this is the number of classes in Alaudah's Dutch F3 dataset
-    assert train_labels.max() == 5
+    logging.info(f"synthetic data generation based on {args.based_on}")
 
-    assert test1_seismic.shape == test1_labels.shape
-    assert test1_seismic.min() == WHITE
-    assert test1_seismic.max() == BLACK
-    assert test1_labels.min() == 0
-    # this is the number of classes in Alaudah's Dutch F3 dataset
-    assert test1_labels.max() == 5
+    if args.based_on == "dutch_f3":
 
-    assert test2_seismic.shape == test2_labels.shape
-    assert test2_seismic.min() == WHITE
-    assert test2_seismic.max() == BLACK
-    assert test2_labels.min() == 0
-    # this is the number of classes in Alaudah's Dutch F3 dataset
-    assert test2_labels.max() == 5
+        train_seismic = np.load(os.path.join(args.dataroot, "train", "train_seismic.npy"))
+        train_labels = np.load(os.path.join(args.dataroot, "train", "train_labels.npy"))
+        test1_seismic = np.load(os.path.join(args.dataroot, "test_once", "test1_seismic.npy"))
+        test1_labels = np.load(os.path.join(args.dataroot, "test_once", "test1_labels.npy"))
+        test2_seismic = np.load(os.path.join(args.dataroot, "test_once", "test2_seismic.npy"))
+        test2_labels = np.load(os.path.join(args.dataroot, "test_once", "test2_labels.npy"))
+
+        assert train_seismic.shape == train_labels.shape
+        assert train_seismic.min() == WHITE
+        assert train_seismic.max() == BLACK
+        assert train_labels.min() == 0
+        # this is the number of classes in Alaudah's Dutch F3 dataset
+        assert train_labels.max() == 5
+
+        assert test1_seismic.shape == test1_labels.shape
+        assert test1_seismic.min() == WHITE
+        assert test1_seismic.max() == BLACK
+        assert test1_labels.min() == 0
+        # this is the number of classes in Alaudah's Dutch F3 dataset
+        assert test1_labels.max() == 5
+
+        assert test2_seismic.shape == test2_labels.shape
+        assert test2_seismic.min() == WHITE
+        assert test2_seismic.max() == BLACK
+        assert test2_labels.min() == 0
+        # this is the number of classes in Alaudah's Dutch F3 dataset
+        assert test2_labels.max() == 5
+    elif args.based_on == "fixed_box_number":
+        logging.info(f"box_number is {args.box_number}")
+        logging.info(f"box_size is {args.box_size}")
+        # Note: this assumes the data is 3D, opening up higher dimensions, this (and other parts of this scrpit)
+        # must be refactored
+        synthetic_shape = (int(args.box_number * args.box_size),) * 3
+        train_seismic = np.ones(synthetic_shape, dtype=float)
+        train_labels = np.ones(synthetic_shape, dtype=int)
+
+        test1_seismic = train_seismic
+        test1_labels = train_labels
+        test2_seismic = train_seismic
+        test2_labels = train_labels
 
     if args.type == "checkerboard":
+
         logging.info("train checkerbox")
         n_inlines, n_crosslines, n_depth = train_seismic.shape
         checkerboard_train_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
@@ -163,23 +188,26 @@ def main(args):
         checkerboard_train_labels = checkerboard_train_seismic.astype(train_labels.dtype)
         # labels are integers and start from zero
         checkerboard_train_labels[checkerboard_train_seismic < WHITE_LABEL] = WHITE_LABEL
-
+        logging.info(f"training data shape {checkerboard_train_seismic.shape}")
         # create checkerbox
         logging.info("test1 checkerbox")
         n_inlines, n_crosslines, n_depth = test1_seismic.shape
+
         checkerboard_test1_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
         checkerboard_test1_seismic = checkerboard_test1_seismic.astype(test1_seismic.dtype)
         checkerboard_test1_labels = checkerboard_test1_seismic.astype(test1_labels.dtype)
         # labels are integers and start from zero
         checkerboard_test1_labels[checkerboard_test1_seismic < WHITE_LABEL] = WHITE_LABEL
-
+        logging.info(f"test1 data shape {checkerboard_test1_seismic.shape}")
         logging.info("test2 checkerbox")
         n_inlines, n_crosslines, n_depth = test2_seismic.shape
+
         checkerboard_test2_seismic = make_box(n_inlines, n_crosslines, n_depth, args.box_size)
         checkerboard_test2_seismic = checkerboard_test2_seismic.astype(test2_seismic.dtype)
         checkerboard_test2_labels = checkerboard_test2_seismic.astype(test2_labels.dtype)
         # labels are integers and start from zero
         checkerboard_test2_labels[checkerboard_test2_seismic < WHITE_LABEL] = WHITE_LABEL
+        logging.info(f"test2 data shape {checkerboard_test2_seismic.shape}")
 
     # substitute gradient dataset instead of checkerboard
     elif args.type == "gradient":
@@ -257,10 +285,20 @@ WHITE_LABEL = 0
 BLACK_LABEL = BLACK
 TYPES = ["checkerboard", "gradient", "binary"]
 GRADIENT_DIR = ["inline", "crossline", "depth"]
+METHODS = ["dutch_f3", "fixed_box_number"]
 
 parser.add_argument("--dataroot", help="Root location of the input data", type=str, required=True)
 parser.add_argument("--dataout", help="Root location of the output data", type=str, required=True)
 parser.add_argument("--box_size", help="Size of the bounding box", type=int, required=False, default=100)
+parser.add_argument(
+    "--based_on",
+    help="This determines the shape of synthetic data array",
+    type=str,
+    required=False,
+    choices=METHODS,
+    default="dutch_f3",
+)
+parser.add_argument("--box_number", help="Number of boxes", type=int, required=False, default=2)
 parser.add_argument(
     "--type", help="Type of data to generate", type=str, required=False, choices=TYPES, default="checkerboard",
 )

@@ -1,3 +1,5 @@
+# UNet configuration
+
 CUDNN:
   BENCHMARK: true
   DETERMINISTIC: false
@@ -10,17 +12,21 @@ PRINT_FREQ: 10
 LOG_CONFIG: logging.conf
 SEED: 2019
 
+
 DATASET:
   NUM_CLASSES: 6
-  ROOT: /home/username/data/dutch/data
+  ROOT: '/home/username/data/dutch/data'
   CLASS_WEIGHTS: [0.7151, 0.8811, 0.5156, 0.9346, 0.9683, 0.9852]
+  MIN: -1
+  MAX: 1
 
 MODEL:
-  NAME: patch_deconvnet
-  IN_CHANNELS: 1
+  NAME: resnet_unet
+  IN_CHANNELS: 3
+
 
 TRAIN:
-  BATCH_SIZE_PER_GPU: 64
+  BATCH_SIZE_PER_GPU: 16
   BEGIN_EPOCH: 0
   END_EPOCH: 300
   MIN_LR: 0.001
@@ -29,22 +35,23 @@ TRAIN:
   WEIGHT_DECAY: 0.0001
   SNAPSHOTS: 5
   AUGMENTATION: True
-  DEPTH: "none" # Options are none, patch, and section
+  DEPTH: "section" # Options are none, patch, and section
   STRIDE: 50
   PATCH_SIZE: 100
   AUGMENTATIONS:
     RESIZE:
-      HEIGHT: 100
-      WIDTH: 100
+      HEIGHT: 200
+      WIDTH: 200
     PAD:
-      HEIGHT: 100
-      WIDTH: 100
+      HEIGHT: 256
+      WIDTH: 256
   MEAN: 0.0009997 # 0.0009996710808862074
   STD: 0.20977 # 0.20976548783479299 
   MODEL_DIR: "models"
 
+
 VALIDATION:
-  BATCH_SIZE_PER_GPU: 64
+  BATCH_SIZE_PER_GPU: 32
 
 TEST:
   MODEL_PATH: ""
@@ -53,5 +60,6 @@ TEST:
   INLINE: True
   CROSSLINE: True
   POST_PROCESSING: 
-    SIZE: 100
-    CROP_PIXELS: 0 # Number of pixels to crop top, bottom, left and right
+    SIZE: 128 
+    CROP_PIXELS: 14 # Number of pixels to crop top, bottom, left and right
+
