@@ -206,16 +206,13 @@ jobs:
 
       # Remove the temporary directory
       rm -r "$dir"
-     
-     
+    
       set -e
       python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_patch_deconvnet_no_depth.json --step train --train_depth none
       python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_unet_section_depth.json --step train --train_depth section
       python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_seresnet_unet_section_depth.json --step train --train_depth section
       python ../../../tests/cicd/src/check_data_flow.py --infile data_flow_train_hrnet_section_depth.json --step train --train_depth section
       set +e
-
-
 
       # check validation set performance
       set -e
