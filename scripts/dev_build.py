@@ -12,6 +12,8 @@ import sys
 import yaml
 import subprocess
 
+from datetime import datetime
+
 np.set_printoptions(linewidth=200)
 import logging
 
@@ -27,7 +29,6 @@ myname = os.path.realpath(__file__)
 mypath = os.path.dirname(myname)
 myname = os.path.basename(myname)
 
-
 def main(args):
     """
 
@@ -35,8 +36,7 @@ def main(args):
     add --setup to run it (destroys existing environment and creates a new one, along with all the data)
 
     """
-    from datetime import datetime
-
+    
     beg = datetime.now()
 
     logging.info("loading data")

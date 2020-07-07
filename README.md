@@ -386,4 +386,3 @@ which will indicate that anaconda folder is `__/anaconda__`. We'll refer to this
   5. Navigate back to the Virtual Machine view in Step 2 and click the Start button to start the virtual machine.
 
 </details>
-
