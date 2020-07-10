@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
-
+import torch
 import torch.nn as nn
 
 
@@ -304,5 +304,9 @@ def get_seg_model(cfg, **kwargs):
         cfg.MODEL.IN_CHANNELS == 1
     ), f"Patch deconvnet is not implemented to accept {cfg.MODEL.IN_CHANNELS} channels. Please only pass 1 for cfg.MODEL.IN_CHANNELS"
     model = patch_deconvnet(n_classes=cfg.DATASET.NUM_CLASSES)
-
+    # load the pre-trained model
+    if "PRETRAINED" in cfg.MODEL.keys():
+        trained_model = torch.load(cfg.MODEL.PRETRAINED)
+        trained_model = {k.replace("module.", ""): v for (k, v) in trained_model.items()}
+        model.load_state_dict(trained_model, strict=True)
     return model

@@ -367,4 +367,9 @@ def get_seg_model(cfg, **kwargs):
         cfg.MODEL.IN_CHANNELS == 3
     ), f"SEResnet Unet deconvnet is not implemented to accept {cfg.MODEL.IN_CHANNELS} channels. Please only pass 3 for cfg.MODEL.IN_CHANNELS"
     model = Res34Unetv4(n_classes=cfg.DATASET.NUM_CLASSES)
+    # load the pre-trained model
+    if "PRETRAINED" in cfg.MODEL.keys():
+        trained_model = torch.load(cfg.MODEL.PRETRAINED)
+        trained_model = {k.replace("module.", ""): v for (k, v) in trained_model.items()}
+        model.load_state_dict(trained_model, strict=True)
     return model
