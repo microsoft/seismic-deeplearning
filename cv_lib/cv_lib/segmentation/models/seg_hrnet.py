@@ -444,6 +444,6 @@ class HighResolutionNet(nn.Module):
 
 def get_seg_model(cfg, **kwargs):
     model = HighResolutionNet(cfg, **kwargs)
-    if "PRETRAINED" in cfg.MODEL.keys():
+    if "PRETRAINED" in cfg.MODEL.keys() and os.path.exists(cfg.MODEL.PRETRAINED) and os.path.isfile(cfg.MODEL.PRETRAINED):
         model.init_weights(cfg.MODEL.PRETRAINED)
     return model
