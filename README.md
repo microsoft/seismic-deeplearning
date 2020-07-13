@@ -11,7 +11,8 @@ The repository provides sample notebooks, data loaders for seismic data, utiliti
 
 DeepSeismic currently focuses on Seismic Interpretation (mainly facies classification) with experimental code provided around Seismic Imaging in the contrib folder.
 
-For a quick overview you can [![watch the video](./assets/ds.gif)](https://www.screencast.com/t/BRIad19jv) showcasing the latest 0.2 release of this repository.
+For a quick overview you can watch the video showcasing the latest 0.2 release of this repository by clicking on the GIF below:
+[![watch the video](./assets/ds.gif)](https://www.screencast.com/t/BRIad19jv)
 
 ### Quick Start
 
