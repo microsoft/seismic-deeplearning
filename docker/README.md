@@ -18,7 +18,7 @@ The command above will run a [JupyterLab](https://jupyterlab.readthedocs.io/en/s
 
 We recommend using [Google Chrome](https://www.google.com/chrome/) web browser for any visualizations shown in the notebook.
 
-You can alternatively use [Jupyter](https://jupyter.org/) instead of Jupyterlab by changing the last line in the Dockerfile from
+You can alternatively use [Jupyter](https://jupyter.org/) notebook instead of Jupyter Lab by changing the last line in the Dockerfile from
 ```bash
 jupyter lab --allow-root --ip 0.0.0.0 --port 9000
 ```  
