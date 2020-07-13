@@ -48,13 +48,16 @@ If you are using an Azure Virtual Machine to run this code, you can download the
 ```bash
 scp hrnetv2_w48_imagenet_pretrained.pth <azureuser>@<azurehost>:/home/<azureuser>/seismic-deeplearning/docker/hrnetv2_w48_imagenet_pretrained.pth
 ```
-Once you have the model downloaded (ideally under the `docker` directory), you can proceed to build the Docker image. 
-
-If you have saved the pretrained model in a different directory, make sure you replace `$PWD/hrnetv2_w48_imagenet_pretrained.pth` with the **absolute** path to the pretrained HRNet model. 
-The command above will run a Jupyter Lab instance that you can access by clicking on the link in your terminal. You can then navigate to the notebook or script that you would like to run.
 
 ## Run the Docker image:
+
+Once you have the model downloaded (ideally under the `docker` directory), you can proceed to build the Docker image: go to the [Build the Docker image](#build-the-docker-image) section above to do so.
+
 Once the Docker image is built, you can run it anytime using the following command:
 ```bash
 sudo docker run --rm -it -p 9000:9000 -p 9001:9001 --gpus=all --shm-size 11G --mount type=bind,source=$PWD/hrnetv2_w48_imagenet_pretrained.pth,target=/home/username/seismic-deeplearning/docker/hrnetv2_w48_imagenet_pretrained.pth seismic-deeplearning
 ```
+
+If you have saved the pretrained model in a different directory, make sure you replace `$PWD/hrnetv2_w48_imagenet_pretrained.pth` with the **absolute** path to the pretrained HRNet model. 
+The command above will run a Jupyter Lab instance that you can access by clicking on the link in your terminal. You can then navigate to the notebook or script that you would like to run.
+
