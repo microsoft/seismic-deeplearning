@@ -11,6 +11,9 @@ The repository provides sample notebooks, data loaders for seismic data, utiliti
 
 DeepSeismic currently focuses on Seismic Interpretation (mainly facies classification) with experimental code provided around Seismic Imaging in the contrib folder.
 
+Here's a GIF illustrating what the repo offers:
+[![GIF](./assets/ds.gif)](https://www.screencast.com/t/BRIad19jv)
+
 ### Quick Start
 
 Our repo is Docker-enabled and we provide a Docker file which you can use to quickly demo our codebase. If you are in a hurry and just can't wait to run our code, follow the [Docker README](https://github.com/microsoft/seismic-deeplearning/blob/master/docker/README.md) to build and run our repo from [Dockerfile](https://github.com/microsoft/seismic-deeplearning/blob/master/docker/Dockerfile).
@@ -243,14 +246,14 @@ This section contains benchmarks of different algorithms for seismic interpretat
 
 #### Dutch F3
 
-| Source         | Experiment                                | PA    | FW IoU | MCA  | V100 (16GB) training time |
-| -------------- | ----------------------------------------- | ----- | ------ | ---- | ------------------------- |
-| Alaudah et al. | Section-based                             | 0.905 | 0.817  | .832 | N/A                       |
-|                | Patch-based                               | 0.852 | 0.743  | .689 | N/A                       |
-| DeepSeismic    | Patch-based+fixed                         | .875  | .784   | .740 | 08h 54min                 |
-|                | SEResNet UNet+section depth               | .910  | .841   | .809 | 55h 02min                 |
-|                | HRNet(patch)+patch_depth (experimental)   | .884  | .795   | .739 | 67h 41min                 |
-|                | HRNet(patch)+section_depth (experimental) | .900  | .820   | .767 | 55h 08min                 |
+| Source         | Experiment                                | PA    | FW IoU | MCA  | single V100 (16GB) GPU training time | four V100 (16GB) GPUs training time |
+| -------------- | ----------------------------------------- | ----- | ------ | ---- | ------------------------------------ | ----------------------------------- |
+| Alaudah et al. | Section-based                             | 0.905 | 0.817  | .832 | N/A                                  | N/A                                 |
+|                | Patch-based                               | 0.852 | 0.743  | .689 | N/A                                  | N/A                                 |
+| DeepSeismic    | Patch-based+fixed                         | .892  | .811   | .759 | 18h 42min                            | 7h 24min                            |
+|                | Patch-based+fixed+skip                    | .909  | .839   | .802 | 19h 01min                            | 7h 39min                            |
+|                | SEResNet UNet+section depth               | .928  | .872   | .866 | ~9 days                              | 35h 54min                           |
+|                | HRNet(patch)+section_depth (experimental) | .926  | .869   | .873 | ~10 days                             | 43h 9min                            |
 
 Note: these are single-run performance numbers and we expect the results to fluctuate in-between different runs, i.e. some variability is to be expected,
 but we expect the performance numbers to be close to these with this codebase.

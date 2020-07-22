@@ -156,4 +156,9 @@ class TextureNet(nn.Module):
 
 def get_seg_model(cfg, **kwargs):
     model = TextureNet(n_classes=cfg.DATASET.NUM_CLASSES)
+    # load the pre-trained model
+    if "PRETRAINED" in cfg.MODEL.keys() and os.path.exists(cfg.MODEL.PRETRAINED) and os.path.isfile(cfg.MODEL.PRETRAINED):
+        trained_model = torch.load(cfg.MODEL.PRETRAINED)
+        trained_model = {k.replace("module.", ""): v for (k, v) in trained_model.items()}
+        model.load_state_dict(trained_model, strict=True)
     return model
