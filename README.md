@@ -228,8 +228,15 @@ To install [segyviewer](https://github.com/equinor/segyviewer) run:
 ```bash
 conda env create -n segyviewer python=2.7
 conda activate segyviewer
-conda install -c anaconda pyqt=4.11.4
+conda install -c conda-forge pyqt=4.11.4
 pip install segyviewer
+```
+
+If you run into any QtPy4 related problems after the installation, try running:
+```bash
+sudo add-apt-repository ppa:rock-core/qt4
+sudo apt update
+sudo apt install libqt4-designer libqt4-opengl libqt4-svg libqtgui4 libqtwebkit4
 ```
 
 To visualize cross-sections of a 3D volume, you can run

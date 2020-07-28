@@ -5,6 +5,10 @@ import itertools
 import math
 from collections import defaultdict
 
+import logging
+# toggle to WARNING when running in production, or use CLI
+logging.getLogger().setLevel(logging.DEBUG)
+
 import numpy as np
 import torch
 from PIL import Image
@@ -13,11 +17,48 @@ from toolz import partition_all
 from torch.utils.data import Dataset
 from torchvision.datasets.utils import iterable_to_str, verify_str_arg
 
+import segyio
+
 _open_to_array = compose(np.array, Image.open)
 
 
 class DataNotSplitException(Exception):
     pass
+
+
+def read_segy(filename):
+    """
+    Read in a SEGY-format file given a filename
+
+    Args:
+        filename: input filename
+
+    Returns:
+        numpy data array and its info as a dictionary (tuple)
+
+    """
+    logging.info(f"Loading data cube from {filename}")
+
+    # Read full data cube
+    data = segyio.tools.cube(filename)
+
+    # Read meta data
+    segyfile = segyio.open(filename, "r")
+    print("  Crosslines: ", segyfile.xlines[0], ":", segyfile.xlines[-1])
+    print("  Inlines:    ", segyfile.ilines[0], ":", segyfile.ilines[-1])
+    print("  Timeslices: ", "1", ":", data.shape[2])
+
+    # Make dict with cube-info
+    # TODO: read this from segy
+    # Read dt and other params needed to do create a new
+    data_info = {
+        "crossline_start": segyfile.xlines[0],
+        "inline_start": segyfile.ilines[0],
+        "timeslice_start": 1,
+        "shape": data.shape,
+    }
+
+    return data, data_info
 
 
 def _get_classes_and_counts(mask_list):

@@ -95,7 +95,11 @@ def run(*options, cfg=None, local_rank=0, debug=False, input=None, distributed=F
 
     if distributed:
         # FOR DISTRIBUTED: Set the device according to local_rank.
-        torch.cuda.set_device(local_rank)
+        # if we're running on a single GPU (multi-GPU development), set to the same GPU
+        if torch.cuda.device_count()==1:
+            torch.cuda.set_device(0)
+        else:
+            torch.cuda.set_device(local_rank)
 
         # FOR DISTRIBUTED: Initialize the backend. torch.distributed.launch will
         # provide environment variables, and requires that you use init_method=`env://`.
