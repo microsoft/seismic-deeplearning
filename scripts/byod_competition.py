@@ -9,12 +9,11 @@ python prepare_dutchf3.py split_train_val patch   --data_dir=<outdir from the pr
 
 # information to include in configuration file when running:
 
-INFO:root:CLASS WEIGHTS TO USE
 INFO:root:[0.84979262 0.57790153 0.95866329 0.71236326 0.99004844 0.91123086]
 INFO:root:MEAN
-INFO:root:0.0043642526
+INFO:root:4.183678e-05
 INFO:root:STANDARD DEVIATION
-INFO:root:0.07544233
+INFO:root:0.31477982
 
 # kick off run as:
 
@@ -22,22 +21,31 @@ NGPU=2
 python -m torch.distributed.launch --nproc_per_node=${NGPU} train.py \
 TRAIN.BATCH_SIZE_PER_GPU 2 VALIDATION.BATCH_SIZE_PER_GPU 2 \
 DATASET.ROOT "/data/seismic" DATASET.NUM_CLASSES 6 DATASET.CLASS_WEIGHTS  "[0.84979262, 0.57790153, 0.95866329, 0.71236326, 0.99004844, 0.91123086]" \
-TRAIN.MEAN 0.0043642526 TRAIN.STD 0.07544233 \
+TRAIN.MEAN 0.0 TRAIN.STD 0.31477982 \
 --distributed --cfg configs/seresnet_unet.yaml
-
 
 nohup time \
 python -m torch.distributed.launch --nproc_per_node=4 train.py \
 DATASET.ROOT "/home/maxkaz/data/seismic" DATASET.NUM_CLASSES 6 DATASET.CLASS_WEIGHTS  "[0.84979262, 0.57790153, 0.95866329, 0.71236326, 0.99004844, 0.91123086]" \
-TRAIN.MEAN 0.0043642526 TRAIN.STD 0.07544233 \
+TRAIN.MEAN 0.0 TRAIN.STD 0.31477982 \
 --distributed --cfg configs/seresnet_unet.yaml > se.log 2>&1 &
 
 nohup time \
 python -m torch.distributed.launch --nproc_per_node=4 train.py \
 MODEL.PRETRAINED "/home/alfred/models/hrnetv2_w48_imagenet_pretrained.pth" \
 DATASET.ROOT "/home/maxkaz/data/seismic" DATASET.NUM_CLASSES 6 DATASET.CLASS_WEIGHTS  "[0.84979262, 0.57790153, 0.95866329, 0.71236326, 0.99004844, 0.91123086]" \
-TRAIN.MEAN 0.0043642526 TRAIN.STD 0.07544233 \
+TRAIN.MEAN 0.0 TRAIN.STD 0.31477982 \
 --distributed --cfg configs/hrnet.yaml > hr.log 2>&1 &
+
+Scoring:
+
+nohup time \
+python test.py \
+DATASET.ROOT "/home/maxkaz/data/seismic" DATASET.NUM_CLASSES 6 \
+DATASET.CLASS_WEIGHTS  "[0.84979262, 0.57790153, 0.95866329, 0.71236326, 0.99004844, 0.91123086]" \
+TRAIN.MEAN 0.0043642526 TRAIN.STD 0.07544233 \
+TEST.SPLIT 'test1'
+--distributed --cfg configs/seresnet_unet.yaml > se.log 2>&1 &
 
 """
 
@@ -150,6 +158,7 @@ def main(args):
     class_weights = 1 - class_count / np.sum(class_count)
     logging.info("CLASS WEIGHTS TO USE")
     logging.info(class_weights)
+    mean, std = data.mean(), data.std()
     logging.info("MEAN")
     logging.info(mean)
     logging.info("STANDARD DEVIATION")
@@ -158,7 +167,7 @@ def main(args):
 
 """ GLOBAL VARIABLES """
 INLINE_FRACTION = 0.7
-CROSSLINE_FRACTION = 1.0
+CROSSLINE_FRACTION = 0.78
 N_CLASSES = 6
 
 parser.add_argument("--train", help="Name of train data", type=str, required=True)
