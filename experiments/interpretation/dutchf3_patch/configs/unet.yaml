@@ -11,7 +11,7 @@ WORKERS: 4
 PRINT_FREQ: 10
 LOG_CONFIG: logging.conf
 SEED: 2019
-
+OPENCV_BORDER_CONSTANT: 0
 
 DATASET:
   NUM_CLASSES: 6
@@ -21,7 +21,7 @@ DATASET:
   MAX: 1
 
 MODEL:
-  NAME: resnet_unet
+  NAME: unet
   IN_CHANNELS: 3
 
 
