@@ -41,11 +41,10 @@ Scoring:
 
 nohup time \
 python test.py \
-DATASET.ROOT "/home/maxkaz/data/seismic" DATASET.NUM_CLASSES 6 \
-DATASET.CLASS_WEIGHTS  "[0.84979262, 0.57790153, 0.95866329, 0.71236326, 0.99004844, 0.91123086]" \
-TRAIN.MEAN 0.0043642526 TRAIN.STD 0.07544233 \
-TEST.SPLIT 'test1'
---distributed --cfg configs/seresnet_unet.yaml > se.log 2>&1 &
+DATASET.ROOT "/data/seismic" DATASET.NUM_CLASSES 6 DATASET.CLASS_WEIGHTS  "[0.84979262, 0.57790153, 0.95866329, 0.71236326, 0.99004844, 0.91123086]" \
+TRAIN.MEAN 0.0 TRAIN.STD 0.31477982 \
+TEST.SPLIT 'both'
+--cfg configs/unet.yaml > unet.log 2>&1 &
 
 """
 

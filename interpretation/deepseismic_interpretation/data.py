@@ -19,6 +19,9 @@ from torchvision.datasets.utils import iterable_to_str, verify_str_arg
 
 import segyio
 
+from shutil import copyfile
+
+
 _open_to_array = compose(np.array, Image.open)
 
 
@@ -60,6 +63,47 @@ def read_segy(filename):
 
     return data, data_info
 
+
+def write_segy(out_filename, in_filename, out_cube):
+    """
+    Writes out_cube to a segy-file (out_filename) with same header/size as in_filename
+
+    Args:
+        out_filename: output filename
+        in_filename: input file, whose metadata will be copied
+        out_cube: array which we write to out_filename
+
+    Returns:
+        Nothing
+    """
+
+    # Select last channel
+    if type(out_cube) is list:
+        out_cube = out_cube[-1]
+
+    print("Writing interpretation to " + out_filename)
+
+    # Copy segy file
+    copyfile(in_filename, out_filename)
+
+    # Moving temporal axis back again
+    out_cube = np.moveaxis(out_cube, 0, -1)
+
+    # Open out-file
+    with segyio.open(out_filename, "r+") as src:
+        iline_start = src.ilines[0]
+        dtype = src.iline[iline_start].dtype
+        # loop through inlines and insert output
+        for i in src.ilines:
+            iline = out_cube[i - iline_start, :, :]
+            src.iline[i] = np.ascontiguousarray(iline.astype(dtype))
+
+    # TODO: rewrite this whole function
+    # Moving temporal axis first again - just in case the user want to keep working on it
+    out_cube = np.moveaxis(out_cube, -1, 0)
+
+    print("Writing interpretation - Finished")
+    return
 
 def _get_classes_and_counts(mask_list):
     class_counts_dict = defaultdict(int)

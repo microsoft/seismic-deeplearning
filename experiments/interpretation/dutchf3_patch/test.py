@@ -27,11 +27,14 @@ from albumentations import Compose, Normalize, PadIfNeeded, Resize
 from toolz import compose, curry, itertoolz, pipe, take
 from torch.utils import data
 
+from interpretation.deepseismic_interpretation.data import write_segy
+
 from cv_lib.segmentation import models
 from cv_lib.segmentation.dutchf3.utils import current_datetime, git_branch, git_hash
 
 from cv_lib.utils import load_log_configuration, mask_to_disk, generate_path, image_to_disk
-from deepseismic_interpretation.dutchf3.data import add_patch_depth_channels, get_test_loader
+from deepseismic_interpretation.dutchf3.data import add_patch_depth_channels, get_test_loader, _test1_labels_for, \
+    _test2_labels_for
 from default import _C as config
 from default import update_config
 
@@ -44,6 +47,9 @@ _CLASS_NAMES = [
     "zechstein",
 ]
 
+# we can optionally supply a segy file whose geometry we will use to write out 3D test set predictions
+# if it doesn't exist, we won't output a segy file
+SEGY_INFILE = '/data/seismic_orig/TrainingData_Labels.segy'
 
 class runningScore(object):
     def __init__(self, n_classes):
@@ -93,6 +99,48 @@ class runningScore(object):
     def reset(self):
         self.confusion_matrix = np.zeros((self.n_classes, self.n_classes))
 
+
+def _compute_3D_metrics(gt_labels, pred, n_classes, split):
+    """
+    Compute 3D metrics on two 3D arrays. A good test case is to set gt==pred.
+
+    Args:
+        gt: ground truth 3D numpy array
+        pred: predictions 3D array
+        n_classes: number of classes
+        split: which test set split we're computing
+
+    Returns:
+        Nothing - stdout print
+
+    """
+
+    logger = logging.getLogger(__name__)
+
+    score = runningScore(n_classes)
+    score.update(gt_labels, pred)
+
+    score, class_iou = score.get_scores()
+
+    logger.info(f"--------------- 3D RESULTS {split} -----------------")
+    logger.info(f'Pixel Acc: {score["Pixel Acc: "]:.4f}')
+
+    logger.info(f'Mean Class Acc: {score["Mean Class Acc: "]:.4f}')
+    for cdx, class_name in enumerate(_CLASS_NAMES):
+        logger.info(f'     class {cdx} named {class_name} accuracy {score["Class Accuracy: "][cdx]:.4f}')
+
+    logger.info(f'Mean IoU: {score["Mean IoU: "]:0.4f}')
+
+    for cdx, class_name in enumerate(_CLASS_NAMES):
+        logger.info(f"     class {cdx} named {class_name} IoU {class_iou[cdx]:.4f}")
+    logger.info(f'Freq Weighted IoU: {score["Freq Weighted IoU: "]:.4f}')
+
+    # Save confusion matrix:
+    logger.info("writing confusion matrix")
+    confusion = score["confusion_matrix"]
+    np.savetxt(f"confusion_split_{split}.csv", confusion, delimiter=" ")
+
+    logger.info("----------------- 3D DONE ---------------------------")
 
 def _transform_CHW_to_HWC(numpy_array):
     return np.moveaxis(numpy_array, 0, -1)
@@ -307,6 +355,10 @@ def _evaluate_split(
 
     running_metrics_split = runningScore(n_classes)
 
+    n_inlines, n_crosslines, n_depth = test_set.labels.shape
+    accum_inline = np.zeros((n_classes, n_depth, n_crosslines, n_inlines))
+    accum_crossline = np.zeros((n_classes, n_depth, n_crosslines, n_inlines))
+
     # evaluation mode:
     with torch.no_grad():  # operations inside don't track history
         model.eval()
@@ -327,6 +379,21 @@ def _evaluate_split(
                 config.DATASET.MIN,
                 config.DATASET.MAX,
             )
+
+            # for debugging, if you set this to GT then you can test if
+            # the reconstructions matches test_set.labels
+            preds_numpy = outputs.detach().squeeze().numpy()
+
+            # direction is channel x depth x crossline x inline
+
+            # dealing with inline
+            if test_set.sections[i].startswith("i"):
+                accum_inline[:, :, :, i] = preds_numpy
+            # dealing with crossline
+            elif test_set.sections[i].startswith("x"):
+                accum_crossline[:, :, i, :] = preds_numpy
+            else:
+                raise Exception("we need either an inline or crossline split")
 
             pred = outputs.detach().max(1)[1].numpy()
             gt = labels.numpy()
@@ -364,6 +431,31 @@ def _evaluate_split(
     logger.info(f'Mean IoU: {score["Mean IoU: "]:0.3f}')
     running_metrics_split.reset()
 
+    ######################################################################
+    # 3D: now compute metrics on full 3D volume
+    ######################################################################
+
+    gt_labels = test_set.labels.swapaxes(0, 2)
+    assert gt_labels.shape == accum_inline.shape
+    assert gt_labels.shape == accum_crossline.shape
+
+    # compute mIoU here
+    logging.info("Simple average")
+    np.save()
+    pred_sum = accum_inline + accum_crossline
+    pred = pred_sum.argmax(0)
+    _compute_3D_metrics(gt_labels, pred, n_classes, split)
+    np.save(f"test_simple_avg_split_{split}.npy", pred)
+    if os.path.isfile(SEGY_INFILE):
+        write_segy(f"test_simple_avg_split_{split}.segy", SEGY_INFILE, pred)
+
+    logging.info("Geometric average")
+    pred_sum = np.sqrt(accum_inline*accum_crossline)
+    pred = pred_sum.argmax(0)
+    _compute_3D_metrics(gt_labels, pred, n_classes, split)
+    np.save(f"test_geometric_avg_split_{split}.npy", pred)
+    if os.path.isfile(SEGY_INFILE):
+        write_segy(f"test_geometric_avg_split_{split}.segy", SEGY_INFILE, pred)
 
 def _write_section_file(labels, section_file):
     # define indices of the array
@@ -381,7 +473,9 @@ def _write_section_file(labels, section_file):
     else:
         x_list = []
 
-    list_test = i_list + x_list
+    # TODO: revert
+    # list_test = i_list + x_list
+    list_test = i_list[0:1] + x_list[0:1]
 
     file_object = open(section_file, "w")
     file_object.write("\n".join(list_test))
