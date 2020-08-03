@@ -19,7 +19,7 @@ np.set_printoptions(linewidth=200)
 import logging
 
 # toggle to WARNING when running in production, or use CLI
-logging.getLogger().setLevel(logging.DEBUG)~/da
+logging.getLogger().setLevel(logging.DEBUG)
 # logging.getLogger().setLevel(logging.WARNING)
 import argparse
 
