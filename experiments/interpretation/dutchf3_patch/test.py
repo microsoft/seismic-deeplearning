@@ -21,6 +21,7 @@ from os import path
 
 import fire
 import numpy as np
+import segyio
 from sklearn import metrics
 import torch
 import torch.nn.functional as F
@@ -53,8 +54,8 @@ _CLASS_NAMES = [
 ]
 
 # we can optionally supply a segy file whose geometry we will use to write out 3D test set predictions
-# if it doesn't exist, we won't output a segy file
-SEGY_INFILE = "/data/seismic_orig/TrainingData_Labels.segy"
+# if it doesn't exist, we will write a blank segy file with same dimensions as the predictions array
+SEGY_INFILE = "/data/seismic/TrainingData_Labels.segy"
 
 
 class runningScore(object):
@@ -67,13 +68,13 @@ class runningScore(object):
         """
         speed-optimized but not memory-optimized version of the confusion matrix calculation
         """
-        logger = logging.getLogger(__name__)
+        # logger = logging.getLogger(__name__)
         mask = (label_true >= 0) & (label_true < n_class)
         bincount_arg = n_class * label_true[mask].astype(int) + label_pred[mask]
-        logger.info('bincount operation starting...')
+        # logger.info("bincount operation starting...")
         hist = np.bincount(bincount_arg, minlength=n_class ** 2,)
         hist = hist.reshape(n_class, n_class)
-        logger.info('finished')
+        # logger.info("finished")
         return hist
 
     # @profile
@@ -82,12 +83,10 @@ class runningScore(object):
         memory-optimized but not speed-optimized version of the confusion matrix calculation
         """
         mask = (label_true >= 0) & (label_true < n_class)
-        #bincount_arg = n_class * label_true[mask].astype(int) + label_pred[mask]
-        matrix = metrics.confusion_matrix(label_true[mask], label_pred[mask], labels = list(range(n_class)))
-        return matrix
+        return metrics.confusion_matrix(label_true[mask], label_pred[mask], labels=list(range(n_class)))
 
     # @profile
-    def update(self, label_trues, label_preds, fast_hist = True):
+    def update(self, label_trues, label_preds, fast_hist=True):
         for lt, lp in zip(label_trues, label_preds):
             if fast_hist:
                 self.confusion_matrix += self._fast_hist(lt.flatten(), lp.flatten(), self.n_classes)
@@ -145,13 +144,8 @@ def _compute_3D_metrics(gt_labels, pred, n_classes, split):
 
     logger = logging.getLogger(__name__)
 
-    # TODO: remove
-    #n = 300
-    #gt_labels = gt_labels[:n, :n, :n]
-    #pred = pred[:n, :n, :n]
-
     score = runningScore(n_classes)
-    score.update(gt_labels, pred, fast_hist=False)
+    score.update(gt_labels, pred, fast_hist=True)
 
     score, class_iou = score.get_scores()
 
@@ -321,9 +315,6 @@ def _patch_label_2d(
             output = output_processing(output)
             output_p[:, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size,] += output
 
-        # TODO remove
-        break
-
         # dump the data right before it's being put into the model and after scoring
         if debug:
             outdir = f"debug/test/batch_{split}"
@@ -482,10 +473,18 @@ def _evaluate_split(
     pred = pred_sum.argmax(0).astype(np.uint8)
     del pred_sum
     _compute_3D_metrics(gt_labels, pred, n_classes, split)
-    np.save(f"test_simple_avg_split_{split}.npy", pred)
+    np.save(os.path.join(output_dir, f"test_simple_avg_split_{split}.npy", pred))
     # use existing SEGY file as a template to write our data into
     if os.path.isfile(SEGY_INFILE):
-       write_segy(f"test_simple_avg_split_{split}.segy", SEGY_INFILE, pred)
+        # input segy file is the ground truth here
+        write_segy(os.path.join(output_dir, f"pred_simple_avg_split_{split}.segy"), SEGY_INFILE, pred.swapaxes(0, 2))
+    else:
+        # write array into segy using array dimensions for # of inlines and crosslines
+        # make sure directions are inline, crossline, depth
+        logging.info("writing segy files")
+        segyio.tools.from_array3D(os.path.join(output_dir, f"pred_simple_avg_split_{split}.segy"), pred.swapaxes(0, 2), dt=1000)
+        segyio.tools.from_array3D(os.path.join(output_dir, f"groundtruth_simple_avg_split_{split}.segy"), gt_labels.swapaxes(0, 2), dt=1000)
+        logging.info("done")
 
     logging.info("Geometric average")
     pred_sum = np.sqrt(accum_inline * accum_crossline)
@@ -495,7 +494,15 @@ def _evaluate_split(
     np.save(f"test_geometric_avg_split_{split}.npy", pred)
     # use existing SEGY file as a template to write our data into
     if os.path.isfile(SEGY_INFILE):
-       write_segy(f"test_geometric_avg_split_{split}.segy", SEGY_INFILE, pred)
+        # input segy file is the ground truth here
+        write_segy(os.path.join(output_dir, f"pred_geometric_avg_split_{split}.segy"), SEGY_INFILE, pred.swapaxes(0, 2))
+    else:
+        # write array into segy using array dimensions for # of inlines and crosslines
+        # make sure directions are inline, crossline, depth
+        logging.info("writing segy files")
+        segyio.tools.from_array3D(os.path.join(output_dir,f"pred_geometric_avg_split_{split}.segy"), pred.swapaxes(0, 2), dt=1000)
+        segyio.tools.from_array3D(os.path.join(output_dir,f"groundtruth_geometric_avg_split_{split}.segy"), gt_labels.swapaxes(0, 2), dt=1000)
+        logging.info("done")
 
 
 def _write_section_file(labels, section_file):
@@ -514,9 +521,7 @@ def _write_section_file(labels, section_file):
     else:
         x_list = []
 
-    # TODO: revert
-    # list_test = i_list + x_list
-    list_test = i_list[0:1] + x_list[0:1]
+    list_test = i_list + x_list
 
     file_object = open(section_file, "w")
     file_object.write("\n".join(list_test))
@@ -627,4 +632,3 @@ def test(*options, cfg=None, debug=False):
 
 if __name__ == "__main__":
     fire.Fire(test)
-

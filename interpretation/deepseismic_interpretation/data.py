@@ -77,13 +77,10 @@ def write_segy(out_filename, in_filename, out_cube):
         Nothing
     """
 
-    print("Writing interpretation to " + out_filename)
+    logging.info("Writing interpretation to " + out_filename)
 
     # Copy segy file
     copyfile(in_filename, out_filename)
-
-    # Moving temporal axis back again
-    out_cube = np.moveaxis(out_cube, 0, -1)
 
     # Open out-file
     with segyio.open(out_filename, "r+") as src:
@@ -91,31 +88,13 @@ def write_segy(out_filename, in_filename, out_cube):
         iline_start = src.ilines[0]
         # set type to inlines
         dtype = src.iline[iline_start].dtype
-        """
-        src.ilines = list(range(src.ilines[0], src.ilines[0] + out_cube.shape[0]))
-
-        # set crosslines to match the numpy array shape
-        xline_start = src.xlines[0]
-        src.xlines = list(range(src.xlines[0], src.xlines[0] + out_cube.shape[1]))
-
-        # set depth to match the numpy array shape
-        depth_start = src.depth[0]
-        src.depth = list(range(src))
-        """
 
         # loop through inlines and insert output
         for i in src.ilines:
-            if i>=out_cube.shape[0]:
-                break
             iline = out_cube[i - iline_start, :, :]
             src.iline[i] = np.ascontiguousarray(iline.astype(dtype))
 
-    # TODO: rewrite this whole function
-    # Moving temporal axis first again - just in case the user want to keep working on it
-    out_cube = np.moveaxis(out_cube, -1, 0)
-
-    print("Writing interpretation - Finished")
-    return
+    logging.info("Writing interpretation - finished")
 
 def _get_classes_and_counts(mask_list):
     class_counts_dict = defaultdict(int)
