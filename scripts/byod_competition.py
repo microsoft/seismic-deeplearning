@@ -9,11 +9,28 @@ python prepare_dutchf3.py split_train_val patch   --data_dir=<outdir from the pr
 
 # information to include in configuration file when running:
 
+clip
 INFO:root:[0.84979262 0.57790153 0.95866329 0.71236326 0.99004844 0.91123086]
 INFO:root:MEAN
 INFO:root:4.183678e-05
 INFO:root:STANDARD DEVIATION
 INFO:root:0.31477982
+
+noclip
+INFO:root:[0.84979262 0.57790153 0.95866329 0.71236326 0.99004844 0.91123086]
+INFO:root:MEAN
+INFO:root:0.0043642526
+INFO:root:STANDARD DEVIATION
+INFO:root:0.07544233
+
+reduced test size
+INFO:root:[0.84979262 0.57790153 0.95866329 0.71236326 0.99004844 0.91123086]
+INFO:root:[0.84979262 0.57790153 0.95866329 0.71236326 0.99004844 0.91123086]
+INFO:root:MEAN
+INFO:root:4.183678e-05
+INFO:root:STANDARD DEVIATION
+INFO:root:0.31477982
+
 
 # kick off run as:
 
@@ -168,8 +185,8 @@ def main(args):
 
 
 """ GLOBAL VARIABLES """
-INLINE_FRACTION = 0.7
-CROSSLINE_FRACTION = 0.78
+INLINE_FRACTION = 0.9
+CROSSLINE_FRACTION = 0.9
 N_CLASSES = 6
 
 parser.add_argument("--train", help="Name of train data", type=str, required=True)

@@ -391,7 +391,7 @@ def _evaluate_split(
     with torch.no_grad():  # operations inside don't track history
         model.eval()
         for i, (images, labels) in enumerate(test_loader):
-            logger.info(f"split: {split}, section: {i}")
+            logger.info(f"split: {split}, section: {test_set.sections[i]}")
             outputs = _patch_label_2d(
                 model,
                 images,
@@ -419,7 +419,7 @@ def _evaluate_split(
                 accum_inline[:, :, :, i] = preds_numpy
             # dealing with crossline
             elif test_set.sections[i].startswith("x"):
-                accum_crossline[:, :, i, :] = preds_numpy
+                accum_crossline[:, :, i-n_inlines, :] = preds_numpy
             else:
                 raise Exception("we need either an inline or crossline split")
 
@@ -473,7 +473,7 @@ def _evaluate_split(
     pred = pred_sum.argmax(0).astype(np.uint8)
     del pred_sum
     _compute_3D_metrics(gt_labels, pred, n_classes, split)
-    np.save(os.path.join(output_dir, f"test_simple_avg_split_{split}.npy", pred))
+    np.save(os.path.join(output_dir, f"test_simple_avg_split_{split}.npy"), pred)
     # use existing SEGY file as a template to write our data into
     if os.path.isfile(SEGY_INFILE):
         # input segy file is the ground truth here
@@ -491,7 +491,7 @@ def _evaluate_split(
     pred = pred_sum.argmax(0).astype(np.uint8)
     del pred_sum
     _compute_3D_metrics(gt_labels, pred, n_classes, split)
-    np.save(f"test_geometric_avg_split_{split}.npy", pred)
+    np.save(os.path.join(output_dir, f"test_geometric_avg_split_{split}.npy"), pred)
     # use existing SEGY file as a template to write our data into
     if os.path.isfile(SEGY_INFILE):
         # input segy file is the ground truth here
