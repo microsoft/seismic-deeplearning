@@ -37,6 +37,7 @@ from cv_lib.segmentation.dutchf3.engine import create_supervised_evaluator, crea
 from cv_lib.segmentation.dutchf3.utils import current_datetime, git_branch, git_hash
 from cv_lib.segmentation.metrics import class_accuracy, class_iou, mean_class_accuracy, mean_iou, pixelwise_accuracy
 from cv_lib.utils import generate_path, load_log_configuration
+from cv_lib.segmentation import lovasz_losses as L
 from deepseismic_interpretation.dutchf3.data import get_patch_loader
 from default import _C as config
 from default import update_config
@@ -236,7 +237,8 @@ def run(*options, cfg=None, local_rank=0, debug=False, input=None, distributed=F
     class_weights = torch.tensor(config.DATASET.CLASS_WEIGHTS, device=device, requires_grad=False)
 
     # Loss:
-    criterion = torch.nn.CrossEntropyLoss(weight=class_weights, ignore_index=255, reduction="mean")
+    #criterion = torch.nn.CrossEntropyLoss(weight=class_weights, ignore_index=255, reduction="mean")
+    criterion = lambda x, y: L.lovasz_softmax(x, y, classes = list(range(n_classes)), ignore=255)
 
     # Model:
     if distributed:
