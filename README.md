@@ -226,8 +226,9 @@ For seismic interpretation (segmentation), if you want to visualize cross-sectio
 
 To install [segyviewer](https://github.com/equinor/segyviewer) run:
 ```bash
-conda env create -n segyviewer python=2.7
+conda create -n segyviewer python=2.7
 conda activate segyviewer
+sudo apt install libqtwebkit4
 conda install -c conda-forge pyqt=4.11.4
 pip install segyviewer
 ```

@@ -238,7 +238,7 @@ def run(*options, cfg=None, local_rank=0, debug=False, input=None, distributed=F
 
     # Loss:
     #criterion = torch.nn.CrossEntropyLoss(weight=class_weights, ignore_index=255, reduction="mean")
-    criterion = lambda x, y: L.lovasz_softmax(x, y, classes = list(range(n_classes)), ignore=255)
+    criterion = lambda x, y: L.lovasz_softmax(x, y, classes = list(range(n_classes)), ignore=255, per_image = True)
 
     # Model:
     if distributed:
