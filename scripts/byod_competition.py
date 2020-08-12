@@ -5,7 +5,7 @@
 Run example:
 
 python byod_competition.py --train <input segy file> --label <input labels file> --outdir <where to output data>
-python prepare_dutchf3.py split_train_val patch   --data_dir=<outdir from the previous step> --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both --section_stride=100
+python prepare_dutchf3.py split_train_val patch   --data_dir=<outdir from the previous step> --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both
 
 # information to include in configuration file when running:
 
@@ -35,7 +35,7 @@ INFO:root:0.31477982
 # kick off run as:
 
 python byod_competition.py --train /home/maxkaz/data/seismic/TrainingData_Image.segy --label /home/maxkaz/data/seismic/TrainingData_Labels.segy --outdir /home/maxkaz/data/seismic
-python prepare_dutchf3.py split_train_val patch   --data_dir=/home/maxkaz/data/seismic --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both --section_stride=100
+python prepare_dutchf3.py split_train_val patch   --data_dir=/home/maxkaz/data/seismic --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both
 
 NGPU=2
 python -m torch.distributed.launch --nproc_per_node=${NGPU} train.py \

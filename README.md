@@ -158,7 +158,7 @@ wget -o /dev/null -O dataset.h5 https://zenodo.org/record/3924682/files/dataset.
 # convert penobscot
 python byod_penobscot.py --filename dataset.h5 --outdir <where to output data>
 # preprocess for experiments
-python prepare_dutchf3.py split_train_val patch --data_dir=<outdir from the previous step> --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both --section_stride=100
+python prepare_dutchf3.py split_train_val patch --data_dir=<outdir from the previous step> --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both
 ```
 
 ### Run Examples
