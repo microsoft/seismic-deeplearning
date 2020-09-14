@@ -5,7 +5,7 @@
 Run example:
 
 python byod_competition.py --train <input segy file> --label <input labels file> --outdir <where to output data>
-python prepare_dutchf3.py split_train_val patch   --data_dir=<outdir from the previous step> --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both
+python prepare_dutchf3.py split_train_val patch --data_dir=<outdir from the previous step> --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both
 
 # information to include in configuration file when running:
 
@@ -31,11 +31,10 @@ INFO:root:4.183678e-05
 INFO:root:STANDARD DEVIATION
 INFO:root:0.31477982
 
-
 # kick off run as:
 
 python byod_competition.py --train /home/maxkaz/data/seismic/TrainingData_Image.segy --label /home/maxkaz/data/seismic/TrainingData_Labels.segy --outdir /home/maxkaz/data/seismic
-python prepare_dutchf3.py split_train_val patch   --data_dir=/home/maxkaz/data/seismic --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both
+python prepare_dutchf3.py split_train_val patch --data_dir=/home/maxkaz/data/seismic --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both
 
 NGPU=2
 python -m torch.distributed.launch --nproc_per_node=${NGPU} train.py \
@@ -65,6 +64,8 @@ DATASET.ROOT "/data/seismic" DATASET.NUM_CLASSES 6 DATASET.CLASS_WEIGHTS  "[0.84
 TRAIN.MEAN 0.0 TRAIN.STD 0.31477982 \
 TEST.SPLIT 'both'
 --cfg configs/unet.yaml > unet.log 2>&1 &
+
+nohup time python test.py DATASET.ROOT "/data/seismic" DATASET.NUM_CLASSES 6 DATASET.CLASS_WEIGHTS  "[0.84979262, 0.57790153, 0.95866329, 0.71236326, 0.99004844, 0.91123086]" TRAIN.MEAN 0.0 TRAIN.STD 0.31477982 TEST.SPLIT 'both' MODEL.PRETRAINED /home/maxkaz/Downloads/hrnetv2_w48_imagenet_pretrained.pth TEST.MODEL_PATH --cfg configs/hrnet.yaml
 
 """
 
@@ -109,6 +110,7 @@ def main(args):
     logging.info("Running 3-sigma clipping")
     clip_scaling = 3.0
     mean, std = data.mean(), data.std()
+    logging.info(f"mean {mean} std {std}")
     data[data > mean + clip_scaling * std] = mean + clip_scaling * std
     data[data < mean - clip_scaling * std] = mean - clip_scaling * std
 
@@ -122,7 +124,9 @@ def main(args):
 
     # rescale to be within a certain range
     range_min, range_max = -1.0, 1.0
-    data_std = (data - data.min()) / (data.max() - data.min())
+    min, max = data.min(), data.max()
+    logging.info(f"min {min} max {max}")
+    data_std = (data - min) / (max - min)
     data = data_std * (range_max - range_min) + range_min
 
     """

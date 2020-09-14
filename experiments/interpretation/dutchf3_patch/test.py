@@ -474,9 +474,14 @@ def _evaluate_split(
     del pred_sum
     _compute_3D_metrics(gt_labels, pred, n_classes, split)
     np.save(os.path.join(output_dir, f"test_simple_avg_split_{split}.npy"), pred)
+
     # use existing SEGY file as a template to write our data into
+    SEGY_INFILE=f"/data/seismic/TestData_Image{split[-1]}.segy"
+
     if os.path.isfile(SEGY_INFILE):
         # input segy file is the ground truth here
+        # adjust for competition to make classes start from 1 and not 0
+        pred += 1
         write_segy(os.path.join(output_dir, f"pred_simple_avg_split_{split}.segy"), SEGY_INFILE, pred.swapaxes(0, 2))
     else:
         # write array into segy using array dimensions for # of inlines and crosslines
@@ -495,6 +500,7 @@ def _evaluate_split(
     # use existing SEGY file as a template to write our data into
     if os.path.isfile(SEGY_INFILE):
         # input segy file is the ground truth here
+        pred += 1
         write_segy(os.path.join(output_dir, f"pred_geometric_avg_split_{split}.segy"), SEGY_INFILE, pred.swapaxes(0, 2))
     else:
         # write array into segy using array dimensions for # of inlines and crosslines
