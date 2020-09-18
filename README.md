@@ -158,7 +158,7 @@ wget -o /dev/null -O dataset.h5 https://zenodo.org/record/3924682/files/dataset.
 # convert penobscot
 python byod_penobscot.py --filename dataset.h5 --outdir <where to output data>
 # preprocess for experiments
-python prepare_dutchf3.py split_train_val patch --data_dir=<outdir from the previous step> --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both --section_stride=100
+python prepare_dutchf3.py split_train_val patch --data_dir=<outdir from the previous step> --label_file=train/train_labels.npy --output_dir=splits --stride=50 --patch_size=100 --split_direction=both
 ```
 
 ### Run Examples
@@ -226,10 +226,18 @@ For seismic interpretation (segmentation), if you want to visualize cross-sectio
 
 To install [segyviewer](https://github.com/equinor/segyviewer) run:
 ```bash
-conda env create -n segyviewer python=2.7
+conda create -n segyviewer python=2.7
 conda activate segyviewer
-conda install -c anaconda pyqt=4.11.4
+sudo apt install libqtwebkit4
+conda install -c conda-forge pyqt=4.11.4
 pip install segyviewer
+```
+
+If you run into any QtPy4 related problems after the installation, try running:
+```bash
+sudo add-apt-repository ppa:rock-core/qt4
+sudo apt update
+sudo apt install libqt4-designer libqt4-opengl libqt4-svg libqtgui4 libqtwebkit4
 ```
 
 To visualize cross-sections of a 3D volume, you can run

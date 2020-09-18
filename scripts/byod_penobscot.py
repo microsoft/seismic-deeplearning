@@ -120,7 +120,7 @@ def main(args):
 
 """ GLOBAL VARIABLES """
 INLINE_FRACTION = 0.7
-CROSSLINE_FRACTION = 1.0
+CROSSLINE_FRACTION = 0.78
 N_CLASSES = 8
 
 parser.add_argument("--filename", help="Name of HDF5 data", type=str, required=True)

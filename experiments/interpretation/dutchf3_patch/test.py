@@ -21,17 +21,26 @@ from os import path
 
 import fire
 import numpy as np
+import segyio
+from sklearn import metrics
 import torch
 import torch.nn.functional as F
 from albumentations import Compose, Normalize, PadIfNeeded, Resize
 from toolz import compose, curry, itertoolz, pipe, take
 from torch.utils import data
 
+from deepseismic_interpretation.data import write_segy
+
 from cv_lib.segmentation import models
 from cv_lib.segmentation.dutchf3.utils import current_datetime, git_branch, git_hash
 
 from cv_lib.utils import load_log_configuration, mask_to_disk, generate_path, image_to_disk
-from deepseismic_interpretation.dutchf3.data import add_patch_depth_channels, get_test_loader
+from deepseismic_interpretation.dutchf3.data import (
+    add_patch_depth_channels,
+    get_test_loader,
+    _test1_labels_for,
+    _test2_labels_for,
+)
 from default import _C as config
 from default import update_config
 
@@ -44,23 +53,47 @@ _CLASS_NAMES = [
     "zechstein",
 ]
 
+# we can optionally supply a segy file whose geometry we will use to write out 3D test set predictions
+# if it doesn't exist, we will write a blank segy file with same dimensions as the predictions array
+SEGY_INFILE = "/data/seismic/TrainingData_Labels.segy"
+
 
 class runningScore(object):
     def __init__(self, n_classes):
         self.n_classes = n_classes
         self.confusion_matrix = np.zeros((n_classes, n_classes))
 
+    # @profile
     def _fast_hist(self, label_true, label_pred, n_class):
+        """
+        speed-optimized but not memory-optimized version of the confusion matrix calculation
+        """
+        # logger = logging.getLogger(__name__)
         mask = (label_true >= 0) & (label_true < n_class)
-        hist = np.bincount(n_class * label_true[mask].astype(int) + label_pred[mask], minlength=n_class ** 2,).reshape(
-            n_class, n_class
-        )
+        bincount_arg = n_class * label_true[mask].astype(int) + label_pred[mask]
+        # logger.info("bincount operation starting...")
+        hist = np.bincount(bincount_arg, minlength=n_class ** 2,)
+        hist = hist.reshape(n_class, n_class)
+        # logger.info("finished")
         return hist
 
-    def update(self, label_trues, label_preds):
-        for lt, lp in zip(label_trues, label_preds):
-            self.confusion_matrix += self._fast_hist(lt.flatten(), lp.flatten(), self.n_classes)
+    # @profile
+    def _confusion_matrix(self, label_true, label_pred, n_class):
+        """
+        memory-optimized but not speed-optimized version of the confusion matrix calculation
+        """
+        mask = (label_true >= 0) & (label_true < n_class)
+        return metrics.confusion_matrix(label_true[mask], label_pred[mask], labels=list(range(n_class)))
 
+    # @profile
+    def update(self, label_trues, label_preds, fast_hist=True):
+        for lt, lp in zip(label_trues, label_preds):
+            if fast_hist:
+                self.confusion_matrix += self._fast_hist(lt.flatten(), lp.flatten(), self.n_classes)
+            else:
+                self.confusion_matrix += self._confusion_matrix(lt.flatten(), lp.flatten(), self.n_classes)
+
+    # @profile
     def get_scores(self):
         """Returns accuracy score evaluation result.
             - overall accuracy
@@ -92,6 +125,49 @@ class runningScore(object):
 
     def reset(self):
         self.confusion_matrix = np.zeros((self.n_classes, self.n_classes))
+
+
+def _compute_3D_metrics(gt_labels, pred, n_classes, split):
+    """
+    Compute 3D metrics on two 3D arrays. A good test case is to set gt==pred.
+
+    Args:
+        gt: ground truth 3D numpy array
+        pred: predictions 3D array
+        n_classes: number of classes
+        split: which test set split we're computing
+
+    Returns:
+        Nothing - stdout print
+
+    """
+
+    logger = logging.getLogger(__name__)
+
+    score = runningScore(n_classes)
+    score.update(gt_labels, pred, fast_hist=True)
+
+    score, class_iou = score.get_scores()
+
+    logger.info(f"--------------- 3D RESULTS {split} -----------------")
+    logger.info(f'Pixel Acc: {score["Pixel Acc: "]:.4f}')
+
+    logger.info(f'Mean Class Acc: {score["Mean Class Acc: "]:.4f}')
+    for cdx, class_name in enumerate(_CLASS_NAMES):
+        logger.info(f'     class {cdx} named {class_name} accuracy {score["Class Accuracy: "][cdx]:.4f}')
+
+    logger.info(f'Mean IoU: {score["Mean IoU: "]:0.4f}')
+
+    for cdx, class_name in enumerate(_CLASS_NAMES):
+        logger.info(f"     class {cdx} named {class_name} IoU {class_iou[cdx]:.4f}")
+    logger.info(f'Freq Weighted IoU: {score["Freq Weighted IoU: "]:.4f}')
+
+    # Save confusion matrix:
+    logger.info("writing confusion matrix")
+    confusion = score["confusion_matrix"]
+    np.savetxt(f"confusion_split_{split}.csv", confusion, delimiter=" ")
+
+    logger.info("----------------- 3D DONE ---------------------------")
 
 
 def _transform_CHW_to_HWC(numpy_array):
@@ -307,11 +383,15 @@ def _evaluate_split(
 
     running_metrics_split = runningScore(n_classes)
 
+    n_inlines, n_crosslines, n_depth = test_set.labels.shape
+    accum_inline = np.zeros((n_classes, n_depth, n_crosslines, n_inlines), dtype=np.float32)
+    accum_crossline = np.zeros((n_classes, n_depth, n_crosslines, n_inlines), dtype=np.float32)
+
     # evaluation mode:
     with torch.no_grad():  # operations inside don't track history
         model.eval()
         for i, (images, labels) in enumerate(test_loader):
-            logger.info(f"split: {split}, section: {i}")
+            logger.info(f"split: {split}, section: {test_set.sections[i]}")
             outputs = _patch_label_2d(
                 model,
                 images,
@@ -327,6 +407,21 @@ def _evaluate_split(
                 config.DATASET.MIN,
                 config.DATASET.MAX,
             )
+
+            # for debugging, if you set this to GT then you can test if
+            # the reconstructions matches test_set.labels
+            preds_numpy = outputs.detach().squeeze().numpy().astype(np.float32)
+
+            # direction is channel x depth x crossline x inline
+
+            # dealing with inline
+            if test_set.sections[i].startswith("i"):
+                accum_inline[:, :, :, i] = preds_numpy
+            # dealing with crossline
+            elif test_set.sections[i].startswith("x"):
+                accum_crossline[:, :, i-n_inlines, :] = preds_numpy
+            else:
+                raise Exception("we need either an inline or crossline split")
 
             pred = outputs.detach().max(1)[1].numpy()
             gt = labels.numpy()
@@ -363,6 +458,57 @@ def _evaluate_split(
     logger.info(f'Freq Weighted IoU: {score["Freq Weighted IoU: "]:.3f}')
     logger.info(f'Mean IoU: {score["Mean IoU: "]:0.3f}')
     running_metrics_split.reset()
+
+    ######################################################################
+    # 3D: now compute metrics on full 3D volume
+    ######################################################################
+
+    gt_labels = test_set.labels.swapaxes(0, 2).astype(np.uint8)
+    assert gt_labels.shape == accum_inline.shape[1:]
+    assert gt_labels.shape == accum_crossline.shape[1:]
+
+    # compute mIoU here
+    logging.info("Simple average")
+    pred_sum = accum_inline + accum_crossline
+    pred = pred_sum.argmax(0).astype(np.uint8)
+    del pred_sum
+    _compute_3D_metrics(gt_labels, pred, n_classes, split)
+    np.save(os.path.join(output_dir, f"test_simple_avg_split_{split}.npy"), pred)
+
+    # use existing SEGY file as a template to write our data into
+    SEGY_INFILE=f"/data/seismic/TestData_Image{split[-1]}.segy"
+
+    if os.path.isfile(SEGY_INFILE):
+        # input segy file is the ground truth here
+        # adjust for competition to make classes start from 1 and not 0
+        pred += 1
+        write_segy(os.path.join(output_dir, f"pred_simple_avg_split_{split}.segy"), SEGY_INFILE, pred.swapaxes(0, 2))
+    else:
+        # write array into segy using array dimensions for # of inlines and crosslines
+        # make sure directions are inline, crossline, depth
+        logging.info("writing segy files")
+        segyio.tools.from_array3D(os.path.join(output_dir, f"pred_simple_avg_split_{split}.segy"), pred.swapaxes(0, 2), dt=1000)
+        segyio.tools.from_array3D(os.path.join(output_dir, f"groundtruth_simple_avg_split_{split}.segy"), gt_labels.swapaxes(0, 2), dt=1000)
+        logging.info("done")
+
+    logging.info("Geometric average")
+    pred_sum = np.sqrt(accum_inline * accum_crossline)
+    pred = pred_sum.argmax(0).astype(np.uint8)
+    del pred_sum
+    _compute_3D_metrics(gt_labels, pred, n_classes, split)
+    np.save(os.path.join(output_dir, f"test_geometric_avg_split_{split}.npy"), pred)
+    # use existing SEGY file as a template to write our data into
+    if os.path.isfile(SEGY_INFILE):
+        # input segy file is the ground truth here
+        pred += 1
+        write_segy(os.path.join(output_dir, f"pred_geometric_avg_split_{split}.segy"), SEGY_INFILE, pred.swapaxes(0, 2))
+    else:
+        # write array into segy using array dimensions for # of inlines and crosslines
+        # make sure directions are inline, crossline, depth
+        logging.info("writing segy files")
+        segyio.tools.from_array3D(os.path.join(output_dir,f"pred_geometric_avg_split_{split}.segy"), pred.swapaxes(0, 2), dt=1000)
+        segyio.tools.from_array3D(os.path.join(output_dir,f"groundtruth_geometric_avg_split_{split}.segy"), gt_labels.swapaxes(0, 2), dt=1000)
+        logging.info("done")
 
 
 def _write_section_file(labels, section_file):
