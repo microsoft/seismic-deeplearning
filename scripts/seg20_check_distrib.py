@@ -11,11 +11,7 @@ import collections
 from deepseismic_interpretation.data import read_segy
 
 """ libraries """
-import segyio
-
 import numpy as np
-from scipy import stats
-import os
 
 np.set_printoptions(linewidth=200)
 import logging
